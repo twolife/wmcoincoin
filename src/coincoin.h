@@ -167,7 +167,8 @@ struct _board_msg_info {
   /* utilisé par board_key_list_test_thread pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
   int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
-  short nb_refs BITFIELD(15);
+  int contagious_boitakon BITFIELD(1); /* repondre à la boitakon rend kon */
+  short nb_refs BITFIELD(14);
   board_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 
   /* pointeurs inter-sites: le point de depart est dans la structure boards,

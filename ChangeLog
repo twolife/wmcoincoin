@@ -1,3 +1,9 @@
+2002-09-25  pouaite  <c0in@altern.org>
+
+	* src/board.c (mi_check_boitakon): la boitakon qui rend kon
+	(+option pinnipede.hungry_boitakon) .. a utiliser avec parcimonie
+	sous peine de se sentir un peu seul
+
 2002-09-22  pouaite  <c0in@altern.org>
 
 	* src/pinnipede_pdfm.c: ajout du patch de Shift (css pour le pdfm)

@@ -124,7 +124,7 @@ key_list_get_state(KeyList *first, int num) {
 
   hk = first;
   while (hk) {
-    if (hk->num == num) {
+    if (hk->num >= num) {
       hash ^= (((int)hk->type) ^ bloup[cnt % 4]);
       hash ^= str_hache(hk->key, 100);
       cnt++;

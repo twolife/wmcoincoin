@@ -547,7 +547,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       rebuild_pinni = 1;
     }
 
-    if (G_KEY_LIST_COPY_IF_CHANGED(plopify_key_list)) {
+    if (G_KEY_LIST_COPY_IF_CHANGED(plopify_key_list) +
+	G_INT_OPT_COPY_IF_CHANGED(hungry_boitakon)) {
       boards_update_boitakon(dock->sites->boards);
       redraw_pinni = 1;
     }

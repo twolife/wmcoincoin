@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.11 2002/09/08 14:28:45 pouaite Exp $
+  rcsid=$Id: board.c,v 1.12 2002/09/25 22:02:15 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.12  2002/09/25 22:02:15  pouaite
+  hungry boitakon
+
   Revision 1.11  2002/09/08 14:28:45  pouaite
   bugfixes salutaires
 
@@ -801,6 +804,38 @@ do_url_replacements(char **pmessage)
   }
 }
 
+inline static void
+mi_check_boitakon(Boards *boards, board_msg_info *mi)
+{
+  int i, one_ref_in_bak, all_refs_in_bak;
+  KeyList *hk;
+
+  hk = board_key_list_test_mi_num(boards, mi, Prefs.plopify_key_list, 2);
+  mi->in_boitakon = 0;
+  mi->contagious_boitakon = 0;
+  if (hk) { /* bienvenu dans la boitakon */
+    mi->in_boitakon = 1;
+    if (hk->num == 3) mi->contagious_boitakon = 1;
+  }
+
+  /* maintenant on verifie si il repond à une boitakon contagieuse */
+  one_ref_in_bak = 0;
+  all_refs_in_bak = 1;
+  for (i=0; i < mi->nb_refs; i++) {
+    int j;
+    board_msg_info *mi2;
+    mi2 = mi->refs[i].mi;
+    for (j=0; mi2 && j < mi->refs[i].nbmi; j++) {
+      if (mi2->contagious_boitakon) one_ref_in_bak = 1;
+      else all_refs_in_bak = 0;
+    }
+  }
+  if (one_ref_in_bak) {
+    mi->in_boitakon = Prefs.hungry_boitakon ? 1 : (all_refs_in_bak || mi->in_boitakon);
+    mi->contagious_boitakon = mi->in_boitakon;
+  }
+}
+
 /*
   comme son nom l'indique ..
 */
@@ -809,10 +844,7 @@ boards_update_boitakon(Boards *boards)
 {
   board_msg_info *mi = boards->first;
   while (mi) {
-    KeyList *hk = board_key_list_test_mi_num(boards, mi, Prefs.plopify_key_list, 2);
-    if (hk) { /* bienvenu dans la boitakon */
-      mi->in_boitakon = 1;
-    } else mi->in_boitakon = 0;
+    mi_check_boitakon(boards, mi);
     mi = mi->g_next;
   }
   flag_board_updated = 1;
@@ -957,12 +989,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   /* evalue le potentiel trollesque */
   troll_detector(it);
 
-  {
-    KeyList *hk = board_key_list_test_mi_num(board->boards, it, Prefs.plopify_key_list, 2);
-    if (hk) { /* bienvenu dans la boitakon */
-      it->in_boitakon = 1;
-      BLAHBLAH(2, myprintf(_("Welcome to the message from '%.20s' in the boitakon\n"), it->login ? it->login : it->useragent));
-    }
+  mi_check_boitakon(board->boards, it);
+  if (it->in_boitakon) { /* bienvenu dans la boitakon */
+    BLAHBLAH(2, myprintf(_("Welcome to the message from '%.20s' in the boitakon\n"), it->login ? it->login : it->useragent));
   }
 
   /* oui faire ça ici c'est pas efficace, surtout quand le coincoin démarre
@@ -1122,6 +1151,9 @@ board_check_my_messages(Board *board, int old_last_post_id) {
     while (it) {
       flag_updating_board++;
       board_msg_find_refs(board, it); // rhoo il etait bien caché cet appel sournois
+      mi_check_boitakon(board->boards, it); /* ce deuxième appel est un peu redondant
+					       mais il permet de s'assurer de la contagion des
+					       boitakon */
       flag_updating_board--;
 
       if (board_msg_is_ref_to_me(board->boards, it)) {

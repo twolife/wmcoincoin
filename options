@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.42 2002/09/02 23:24:40 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.43 2002/09/25 22:02:15 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.43  2002/09/25 22:02:15  pouaite
+#%  hungry boitakon
+#%
 #%  Revision 1.42  2002/09/02 23:24:40  pouaite
 #%  bugfixes de la soiree
 #%
@@ -444,6 +447,8 @@
 ### niveau 1 à un superplopification (le message est remplacé par 'plop'
 ### et le niveau 2 correspond à une Boitakon, les messages du malotru
 ### deviennent invisibles
+### le niveau 3 est le niveau ultime de boitakonnage: la boitakon est contagieuse
+### et toutes le thread répondant sera boitakonné
 ### remarque: pour l'ua et le login, il faut indiquer l'ua (/le login) complète.
 #pinnipede.plop_keywords: LOGIN:2:"gros boulet",  \
 #                        "communiste", "fasciste" # etc selon le troll saoulant du moment ;)
@@ -462,6 +467,10 @@
 
 ### active ou vire la ligne rouge en pointillés
 #[.]pinnipede.mark_id_gaps: off
+
+### le style de la boitakon
+### off->normal, on->hungry (si le message repond à la boitakon et a un autre message, il passe dans la boite)
+#pinnipede.hungry_boitakon: 1
 
 ### listes des remplacements de <b>[url]</b> pour les sites connus
 pinnipede.url_replace: "google." => "[google]"
@@ -527,8 +536,9 @@ board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#0
 board.miniua_rule:  ua:"^jr-lamoule$"  => ua:="JR",symb:="cross",color:="#00ff80"
 board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
-board.miniua_rule:  ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w+)" => ua="pyc²/\1"
-board.miniua_rule:  ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w+)" => ua="wmc²/\1"
+board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pyc²/\1"
+board.miniua_rule: ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="wmc²/\1"
+board.miniua_rule: ua:"coincoin.net ([0-9.]+)" => ua="c².net/\1"
 
 ### Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1b) Gecko/20020
 board.miniua_rule:  ua:"Mozilla/5.0.* Linux ([^;]+).*; rv:([[:alnum:].]+)\)" => ua:="Moz\2/Lnx\1"
@@ -545,6 +555,10 @@ board.miniua_rule:  ua:"Mozilla/4.0.*Windows ([[:alnum:]]*).*Opera ([0-9.]+)" =>
 
 ###Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
 board.miniua_rule:  ua:"Mozilla/4.0 \(compatible; MSIE ([0-9.]+).*NT ([0-9.]+)" => ua:="IE\1/NT\2"
+
+### Mozilla/4.7 [fr] (WinNT; I)
+board.miniua_rule: ua:"Mozilla/([0-9.]+)+.*\(([^;]+); [UI]\)" => ua:="NS\1/\2"
+
 
 board.miniua_rule:               => symb="square", color="#ffffff"
 board.miniua_rule:   site:"dlfp" => symb="dtri", color="#ff8000"

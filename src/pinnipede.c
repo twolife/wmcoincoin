@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.79 2002/09/21 22:51:01 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.80 2002/09/25 22:02:15 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -488,6 +488,12 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
   if (hk_plop) {
     pv->is_plopified = (disable_plopify ? 1 : hk_plop->num+2);
   }
+
+  if (mi->in_boitakon) {
+    pv->is_plopified = 1; /* pour afficher les messages boitakonnés
+			     par contagion quand disable_plopify==1 */
+    assert(disable_plopify==1); /* un bon piège à bug */
+  } 
     
   /*
   printf("pv = %p\n", pv);
@@ -2196,6 +2202,9 @@ pp_check_survol(Dock *dock, int x, int y)
 		   key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
 	  hk = board_key_list_test_mi(boards, mi, hk->next);
 	}
+      } else if (mi->contagious_boitakon) {
+	snprintf(s, blah_sz, _("\nmessage plopified (level 3) because the boitakon is hungry"));
+	blah_sz -= strlen(s); s += strlen(s);
       }
       nrep = pp_count_backrefs(boards, mi);
 
@@ -2567,6 +2576,7 @@ pp_handle_shift_clic(Dock *dock, KeyList **pkl, int mx, int my, int plopify_leve
   num = 0;
   if (plopify_level == 2) num = 1;
   if (plopify_level == 3) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
+  if (plopify_level == 4) num = 3; /* j'ai la puissance de feu d'un croiseur */
 
   if (plopify_level) {
     boitakon_state = key_list_get_state(*pkl, 2);
@@ -2627,7 +2637,7 @@ pp_handle_shift_clic(Dock *dock, KeyList **pkl, int mx, int my, int plopify_leve
 	*/
 	if (plopify_level && mi && (hk = board_key_list_test_mi(boards, mi, *pkl))) {
 	  *pkl = key_list_remove(*pkl, hk->key, hk->type);
-	} else {
+	} else if (mi->in_boitakon==0) {
 	
 	  /* simplification du mot */
 	  s = strdup(pw->w);
@@ -2905,6 +2915,10 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
 	    (event->state & Mod4Mask)) {
 	  //	  printf("yo! %04x\n", event->state);
 	  plop_level = 3;
+	  if ((event->state & Mod1Mask) &&
+	      (event->state & Mod4Mask)) {
+	    plop_level = 4; /* prends ça dtc */
+	  }
 	}
       }
       pp_handle_shift_clic(dock, &Prefs.plopify_key_list, mx, my, plop_level);

@@ -854,6 +854,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
 			 "\"chuuu\",\"prout\",\"uuuurg\",\"blob\",\"ploop\",\"pl0p\",\"c0in\","
 			 "\"pouet\",\"coin!\",\"flebelebelblbll\",\"blop\",\"gloup\"",
 			 "", &p->plop_words, &p->nb_plop_words);
+  p->hungry_boitakon = 0;
   p->pp_xpos = -10000;
   p->pp_ypos = -10000;
   p->pp_width = 300;
@@ -1365,7 +1366,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_BOOL_ARG(p->pp_use_classical_tabs);
   } break; 
   case OPT_pinnipede_plop_keywords: {
-    CHECK_KEY_LIST(p->plopify_key_list,0,2);
+    CHECK_KEY_LIST(p->plopify_key_list,0,3);
   } break; 
   case OPT_pinnipede_hilight_keywords: {
     CHECK_KEY_LIST(p->hilight_key_list,0,4);
@@ -1381,6 +1382,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTSG_pinnipede_mark_id_gaps: {
     CHECK_BOOL_ARG(sp->mark_id_gaps);
   } break; 
+  case OPT_pinnipede_hungry_boitakon: {
+    CHECK_BOOL_ARG(p->hungry_boitakon);
+  } break;
   case OPTSG_locale: {
     if (strcasecmp(arg, "fr")==0) sp->locale = locFR;
     else sp->locale = locEN;

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.8 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.9 2002/09/25 22:02:15 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.9  2002/09/25 22:02:15  pouaite
+  hungry boitakon
+
   Revision 1.8  2002/09/07 16:21:15  pouaite
   ça va releaser en douce
 
@@ -324,7 +327,7 @@ board_key_list_test_mi_num(Boards *boards, board_msg_info *mi, KeyList *klist, i
   
   hk = klist;
   while (hk) {
-    if (hk->num == num)
+    if (hk->num >= num)
       if (board_key_list_test_mi_hk(boards,mi,hk)) return hk;
     hk = hk->next;
   }
