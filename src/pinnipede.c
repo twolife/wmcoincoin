@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.59 2002/04/24 19:44:00 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.60 2002/04/26 04:45:51 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.60  2002/04/26 04:45:51  pouaite
+  reconnaissance des horloges suivies de 3 pts de suspension
+
   Revision 1.59  2002/04/24 19:44:00  pouaite
   option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
 
@@ -3934,7 +3937,7 @@ pp_check_balloons(Dock *dock, int x, int y)
       case TSCORE: msg = "affiche/cache le score troll (les chiffres à gauche de certains messages)"; break;
       case FORTUNE: msg = "affiche/cache la fortune (pour qu'elle soit téléchargée, il faut soit que vous soyez identifié, soit que vous utilisiez l'option <tt>http.force_fortune_retrieval</tt>"; break;
       case FILTER: msg = "active/désactive le <b>filtre</b>. Pour filtrer des messages, faites <font color=#0000ff>ctrl+left clic</font> sur un mot/login/useragent ou une horloge (pour afficher un thread). Pour virer le filtre, il suffit de cliquer sur ce bouton"; break;
-      case PLOPIFY: msg = "change le type de plopification (attention, vous allez aussi voir les messages de la boitakon!). Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier, il suffit de recliquer au même endroit.<br> Pour accèder à la plopification de niveau 1, faire <font color=#0000ff>Mod1+shift+right clic</font><br> Pour mettre un login/ua/etc dans la <b>boitakon</b>, il faut utiliser la méga combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right clic</font>."; break;
+      case PLOPIFY: msg = "change le type de plopification (attention, vous allez aussi voir les messages de la boitakon!). <p> Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier (ou sortir quelqu'un de la boitakon), il suffit de recliquer au même endroit.<br> Pour accèder à la plopification de niveau 1, faire <font color=#0000ff>Mod1+shift+right clic</font><br> Pour mettre un login/ua/etc dans la <b>boitakon</b>, il faut utiliser la méga combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right clic</font>."; break;
       case REFRESH_NEWS: msg = "cliquer ici pour forcer le rafraichissement immédiat des news, messages, fortune et XP"; break;
       case REFRESH_TRIBUNE: msg = "cliquer ici pour forcer le rafraichissement immédiat de la tribune"; break;
       default: assert(0);

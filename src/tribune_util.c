@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.20 2002/04/24 19:44:00 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.21 2002/04/26 04:45:51 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.21  2002/04/26 04:45:51  pouaite
+  reconnaissance des horloges suivies de 3 pts de suspension
+
   Revision 1.20  2002/04/24 19:44:00  pouaite
   option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
 
@@ -317,9 +320,13 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
   } else {
     /* pour aider la reconnaissance des timestamp */
     if (*end >= '0' && *end <= '9') {
+      unsigned char last = *end;
       while (*end && 
 	     ((*end >= '0' && *end <= '9') || strchr(":.hm¹²³", *end))) {
 	end++;
+	if ((last < '0' || last > '9') && (*end < '0' || *end > '9'))
+	  break; /* deux caractères non numériques consécutifs, c'est la fin de l'horloge.. */
+	last = *end;
       }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
       if (end-start > 4 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
