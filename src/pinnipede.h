@@ -197,6 +197,8 @@ struct _Pinnipede {
 
 int filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter);
 int count_all_id_filtered(Boards *boards, struct _PinnipedeFilter *filter);
+id_type get_first_id_filtered(Boards *boards, struct _PinnipedeFilter *filter);
+id_type get_next_id_filtered(Boards *boards, id_type id, board_msg_info **nmi, struct _PinnipedeFilter *filter);
 id_type get_nth_id_filtered(Boards *boards, struct _PinnipedeFilter *filter, int n);
 id_type get_last_id_filtered(Boards *boards, struct _PinnipedeFilter *filter);
 void pp_selection_unselect(Pinnipede *pp);
@@ -229,7 +231,7 @@ void pp_update_fortune(Dock *dock);
 void pp_refresh_fortune(Dock *dock, Drawable d);
 void pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
 
-
+int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite);
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->zmsg_y2 - (pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2)
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1)

@@ -477,6 +477,7 @@ typedef struct _Dock {
   float trib_trollo_rate, trib_trollo_score;
 
   Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
+  pid_t wmccc_pid;
 } Dock;
 
 typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, Q_COMMENTS_UPDATE, Q_MESSAGES_UPDATE, 
@@ -497,7 +498,7 @@ void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browse
 void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
 void block_sigalrm(int bloque);
-int launch_wmccc();
+int launch_wmccc(Dock *dock);
 void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);
 void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.16 2002/09/08 14:28:45 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.17 2002/09/21 22:51:01 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.17  2002/09/21 22:51:01  pouaite
+##   ajout du patch de shift pour le pdfm
+##
 ##   Revision 1.16  2002/09/08 14:28:45  pouaite
 ##   bugfixes salutaires
 ##
@@ -65,7 +68,7 @@ wmcoincoin_SOURCES = cc_queue.c \
 	myprintf.c myprintf.h \
 	raster.c raster.h \
         troll_detector.c troll_data.h \
-	pinnipede.c pinnipede_widgets.c pinnipede.h \
+	pinnipede.c pinnipede_widgets.c pinnipede_pdfm.c pinnipede.h \
         palmipede.c \
 	dock.c dock.h \
         board.c \

@@ -56,7 +56,7 @@ ccqueue_push(ccqueue *q, ccqueue_elt_type what, int sid, char *ua, char *msg, in
   }
 
   if (is_dup) {
-    BLAHBLAH(0, myprintf("dupliquate request: %s for %s\n", ccqueue_elt_type_2_str(what), Prefs.site[sid]->site_name));
+    BLAHBLAH(0, myprintf("dupliquate request: %s %s%s\n", ccqueue_elt_type_2_str(what), sid >= 0 ? "for " : "", sid >= 0 ? Prefs.site[sid]->site_name : ""));
     return;
   }
 
@@ -265,6 +265,10 @@ void ccqueue_loop(Dock *dock) {
       if ((pid = waitpid(0, &status, WNOHANG))) {
 	if (pid > 1 && WIFEXITED(status)) {
 	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", pid, WEXITSTATUS(status));
+	}
+	if (pid == dock->wmccc_pid && dock->wmccc_pid > 1) {
+	  myfprintf(stderr, "wmccc RIP\n");
+	  dock->wmccc_pid = -1;
 	}
       }
     }

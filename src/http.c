@@ -980,7 +980,7 @@ http_request_send(HttpRequest *r)
 			  "Content-Length: %d" CRLF CRLF "%s", (int)strlen(r->post),r->post);
   }
   
-
+  header = str_cat_printf(header, "Connection: close" CRLF);
 
   if (r->proxy_name) {
     r->fd = http_connect(r->proxy_name, r->proxy_port);

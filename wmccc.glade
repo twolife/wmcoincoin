@@ -306,6 +306,21 @@ Les tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci perme
 		      <handler>on_bt_color_clicked</handler>
 		      <last_modification_time>Sat, 24 Aug 2002 19:18:08 GMT</last_modification_time>
 		    </signal>
+		    <signal>
+		      <name>expose_event</name>
+		      <handler>on_bt_color_expose_event</handler>
+		      <last_modification_time>Mon, 09 Sep 2002 20:55:26 GMT</last_modification_time>
+		    </signal>
+		    <signal>
+		      <name>draw</name>
+		      <handler>on_bt_color_draw</handler>
+		      <last_modification_time>Mon, 09 Sep 2002 21:17:25 GMT</last_modification_time>
+		    </signal>
+		    <signal>
+		      <name>draw_default</name>
+		      <handler>on_bt_color_draw_default</handler>
+		      <last_modification_time>Mon, 09 Sep 2002 21:30:30 GMT</last_modification_time>
+		    </signal>
 		    <relief>GTK_RELIEF_NORMAL</relief>
 		    <child>
 		      <left_attach>1</left_attach>

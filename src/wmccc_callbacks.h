@@ -391,3 +391,17 @@ on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
 void
 on_button_reset_ua_clicked             (GtkButton       *button,
                                         gpointer         user_data);
+
+gboolean
+on_bt_color_expose_event               (GtkWidget       *widget,
+                                        GdkEventExpose  *event,
+                                        gpointer         user_data);
+
+void
+on_bt_color_draw                       (GtkWidget       *widget,
+                                        GdkRectangle    *area,
+                                        gpointer         user_data);
+
+void
+on_bt_color_draw_default               (GtkWidget       *widget,
+                                        gpointer         user_data);

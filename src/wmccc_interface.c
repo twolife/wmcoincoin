@@ -4531,6 +4531,15 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (bt_dock_bgcolor), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (bt_dock_bgcolor), "expose_event",
+                      GTK_SIGNAL_FUNC (on_bt_color_expose_event),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (bt_dock_bgcolor), "draw",
+                      GTK_SIGNAL_FUNC (on_bt_color_draw),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (bt_dock_bgcolor), "draw_default",
+                      GTK_SIGNAL_FUNC (on_bt_color_draw_default),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (bt_dock_bgpixmap), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_pixmap_clicked),
                       NULL);

@@ -60,6 +60,84 @@ on_bt_color_clicked(GtkButton *button, gpointer user_data UNUSED) {
   option_color_selection(GTK_WIDGET(button));
 }
 
+
+void
+on_bt_color_draw                       (GtkWidget       *widget,
+                                        GdkRectangle    *area,
+                                        gpointer         user_data)
+{
+  int *col_ptr = gtk_object_get_data(GTK_OBJECT(widget), ColorPtrKey); 
+  if (col_ptr) {
+    GdkColor color;
+  
+    color.red   = ((((*col_ptr) & 0xff0000) >> 16)+ 127) * 256;
+    color.green = ((((*col_ptr) & 0x00ff00) >> 8) + 127) * 256;
+    color.blue  = ((((*col_ptr) & 0x0000ff)     ) + 127) * 256;
+    
+    if (gdk_colormap_alloc_color( gdk_colormap_get_system(), &color, FALSE, TRUE)) {
+      GdkGC *gc = NULL;
+
+      g_print("draw\n");
+      gc = gdk_gc_new( widget->window);
+      gdk_gc_set_foreground(gc, &color);
+      gdk_draw_rectangle( widget->window, gc, 1, 5, 5, 20, 20);
+      gdk_gc_unref(gc);
+    }
+  }  
+}
+
+
+
+void
+on_bt_color_draw_default               (GtkWidget       *widget,
+                                        gpointer         user_data)
+{
+  on_bt_color_draw(widget, NULL, user_data);
+
+  /*
+ http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/gtkextra/gtkextra/gtkextra/gtkcolorcombo.c?rev=1.6&content-type=text/vnd.viewcvs-markup
+      color_pixmap=gdk_pixmap_create_from_xpm_d(
+                             widget->window,
+                             NULL,
+                             &(widget->style->bg[GTK_STATE_NORMAL]),
+                             xpm_color);    
+       pixmap=gtk_pixmap_new(color_pixmap, NULL);
+       gtk_container_add(GTK_CONTAINER(color_combo->button[n]), pixmap);
+       gtk_widget_show(pixmap);
+       gdk_pixmap_unref(color_pixmap);
+  */
+
+}
+
+
+
+gboolean
+on_bt_color_expose_event(GtkWidget *widget, GdkEventExpose  *event, gpointer user_data UNUSED)
+{
+  int *col_ptr = gtk_object_get_data(GTK_OBJECT(widget), ColorPtrKey); 
+  g_print("plop:\n");
+  if (col_ptr) {
+    GdkColor color;
+  
+    color.red   = ((((*col_ptr) & 0xff0000) >> 16)+ 127) * 256;
+    color.green = ((((*col_ptr) & 0x00ff00) >> 8) + 127) * 256;
+    color.blue  = ((((*col_ptr) & 0x0000ff)     ) + 127) * 256;
+    
+    if (gdk_colormap_alloc_color( gdk_colormap_get_system(), &color, FALSE, TRUE)) {
+      GdkGC *gc = NULL;
+
+      g_print("plop:\n");
+      gc = gdk_gc_new(event->window);
+      gdk_gc_set_foreground(gc, &color);
+      gdk_draw_rectangle( event->window, gc, 1, 5, 5, 20, 20);
+      gdk_gc_unref(gc);
+    }
+  }
+  return FALSE;
+}
+
+
+
 void
 on_bt_colorsel_ok_clicked              (GtkButton       *button,
                                         gpointer         user_data UNUSED)
@@ -773,4 +851,3 @@ on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
   coincoin_default_useragent(default_ua, 1024);
   gtk_entry_set_text(GTK_ENTRY(wg), default_ua);
 }
-

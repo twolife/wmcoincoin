@@ -752,7 +752,7 @@ static int
 pp_minib_handle_button_press(Dock *dock, XButtonEvent *ev) {
   PPMinib *mb;
   mb = pp_minib_get_button(dock, ev->x, ev->y);
-  if (mb) {
+  if (mb && ev->button == Button1) {
     mb->clicked = 1;
     pp_minib_refresh(dock);
     return 1;
@@ -771,7 +771,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
   SitePrefs *main_prefs = pp->active_tab->site->prefs;
 
   pp_selection_unselect(pp);
-
+  if (event->button != Button1) return 0; /* anti boulay du genre shift qui donne de grands coup de roulette (== button4/5) sur le bouton wmccc */
 
   mb = pp_minib_get_button(dock, event->x, event->y);
   if (event->type == ButtonRelease  && mb && mb->clicked == 1) {
@@ -878,7 +878,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
       } break;
     case PREFS:
       {
-	launch_wmccc();
+	launch_wmccc(dock);
       } break;
     case CANCEL:
       {

@@ -1,232 +1,8 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.78 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.79 2002/09/21 22:51:01 pouaite Exp $
   ChangeLog:
-  $Log: pinnipede.c,v $
-  Revision 1.78  2002/09/07 16:21:15  pouaite
-  ça va releaser en douce
-
-  Revision 1.77  2002/09/03 22:42:17  pouaite
-  coin
-
-  Revision 1.76  2002/09/01 23:54:56  pouaite
-  completurage du wmc3 et compatibilitation avec new.linuxfr
-
-  Revision 1.75  2002/08/31 21:26:46  pouaite
-  ajout du wmccc
-
-  Revision 1.74  2002/08/29 00:15:53  pouaite
-  cosmétique et capillotraction
-
-  Revision 1.73  2002/08/26 00:52:22  pouaite
-  coin coin coin
-
-  Revision 1.72  2002/08/21 21:34:16  pouaite
-  coin
-
-  Revision 1.71  2002/08/21 20:22:16  pouaite
-  fix compil
-
-  Revision 1.70  2002/08/21 01:11:49  pouaite
-  commit du soir, espoir
-
-  Revision 1.69  2002/08/19 00:21:29  pouaite
-  "troll du soir, espoir"
-
-  Revision 1.68  2002/08/18 19:00:28  pouaite
-  plop
-
-  Revision 1.67  2002/08/18 00:29:30  pouaite
-  en travaux .. prière de porter le casque
-
-  Revision 1.66  2002/08/17 18:33:39  pouaite
-  grosse commition
-
-  Revision 1.65  2002/06/26 22:19:49  pouaite
-  ptit fix pour la tribune de f-cpu + patch de lordoric
-
-  Revision 1.64  2002/06/23 10:44:05  pouaite
-  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
-
-  Revision 1.63  2002/06/01 17:54:04  pouaite
-  nettoyage
-
-  Revision 1.62  2002/05/28 20:11:55  pouaite
-  modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
-
-  Revision 1.61  2002/05/27 18:39:14  pouaite
-  trucs du week-end + patch de binny
-
-  Revision 1.60  2002/04/26 04:45:51  pouaite
-  reconnaissance des horloges suivies de 3 pts de suspension
-
-  Revision 1.59  2002/04/24 19:44:00  pouaite
-  option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
-
-  Revision 1.58  2002/04/23 23:31:02  pouaite
-  je suis une buse
-
-  Revision 1.57  2002/04/23 23:16:29  pouaite
-  \o/ j'ai enfin réussi à chopper le bug mysterieux de l'autoscroll du pinni \o/
-
-  Revision 1.56  2002/04/22 14:38:17  pouaite
-  bugfix du bugfix du slip
-
-  Revision 1.55  2002/04/22 13:03:03  pouaite
-  un ptit bug tout naze dans le survol des horloges (fantomes)
-
-  Revision 1.54  2002/04/15 19:56:38  pouaite
-  v2.3.7a
-
-  Revision 1.53  2002/04/14 23:24:22  pouaite
-  re-fix pour kde ..
-
-  Revision 1.52  2002/04/13 11:55:19  pouaite
-  fix kde3 + deux trois conneries
-
-  Revision 1.51  2002/04/12 12:49:56  pouaite
-  *** empty log message ***
-
-  Revision 1.50  2002/04/11 23:16:54  pouaite
-  boitakon mega combo
-
-  Revision 1.49  2002/04/11 10:15:28  pouaite
-  fix compil
-
-  Revision 1.48  2002/04/10 22:53:44  pouaite
-  un commit et au lit
-
-  Revision 1.47  2002/04/09 23:38:29  pouaite
-  boitakon et son cortège de bugfixes
-
-  Revision 1.46  2002/04/09 00:28:19  pouaite
-  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
-
-  Revision 1.45  2002/04/03 20:15:11  pouaite
-  plop
-
-  Revision 1.44  2002/04/02 22:29:29  pouaite
-  bugfixes transparence
-
-  Revision 1.43  2002/04/01 22:56:03  pouaite
-  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
-
-  Revision 1.42  2002/04/01 01:39:38  pouaite
-  grosse grosse commition (cf changelog)
-
-  Revision 1.41  2002/03/28 00:06:15  pouaite
-  le clic sur un login ouvre le palmipede en remplissant '/msg lelogin '
-
-  Revision 1.40  2002/03/27 20:45:06  pouaite
-  deuxième vague de bugfix
-
-  Revision 1.39  2002/03/24 23:26:38  pouaite
-  patch de lordoric + bricoles à deux francs
-
-  Revision 1.38  2002/03/21 22:53:07  pouaite
-  ajout d'une icone pour la fenetre du pinnipede et des news
-
-  Revision 1.37  2002/03/19 09:55:58  pouaite
-  bugfixes compilation
-
-  Revision 1.36  2002/03/18 22:46:49  pouaite
-  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
-
-  Revision 1.35  2002/03/10 22:45:36  pouaite
-  <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
-
-  Revision 1.34  2002/03/10 16:07:10  pouaite
-  pseudo transp basique dans le pinnipede (en cours..)
-
-  Revision 1.33  2002/03/09 19:45:52  pouaite
-  microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
-
-  Revision 1.32  2002/03/09 00:25:12  pouaite
-  coin coin
-
-  Revision 1.31  2002/03/08 23:53:40  pouaite
-  derniers bugfixes pour la v2.3.6
-
-  Revision 1.30  2002/03/07 18:54:34  pouaite
-  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
-
-  Revision 1.29  2002/03/05 21:04:28  pouaite
-  bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
-
-  Revision 1.28  2002/03/03 10:10:04  pouaite
-  bugfixes divers et variés
-
-  Revision 1.27  2002/03/01 00:27:40  pouaite
-  trois fois rien
-
-  Revision 1.26  2002/02/28 01:12:33  pouaite
-  scrollcoin dans la fenetre des news
-
-  Revision 1.25  2002/02/27 00:32:19  pouaite
-  modifs velues
-
-  Revision 1.24  2002/02/26 22:02:07  pouaite
-  bugfix gruikissime pour les pbs de lag sous cygwin
-
-  Revision 1.23  2002/02/26 09:18:23  pouaite
-  bugfixes divers
-
-  Revision 1.22  2002/02/25 18:02:35  pouaite
-  bugfixes de la journee
-
-  Revision 1.21  2002/02/25 01:36:58  pouaite
-  bugfixes pour la compilation
-
-  Revision 1.20  2002/02/24 22:13:57  pouaite
-  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
-
-  Revision 1.19  2002/02/03 23:07:32  pouaite
-  *** empty log message ***
-
-  Revision 1.18  2002/02/02 23:49:17  pouaite
-  plop
-
-  Revision 1.17  2002/01/30 21:03:48  pouaite
-  correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
-
-  Revision 1.16  2002/01/20 20:53:22  pouaite
-  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
-
-  Revision 1.15  2002/01/20 02:17:13  pouaite
-  modifs d'ordre esthetique (!) sans grand interet
-
-  Revision 1.14  2002/01/19 19:56:09  pouaite
-  petits crochets pour la mise en valeur de certains messages (cf changelog)
-
-  Revision 1.13  2002/01/18 00:28:42  pouaite
-  le ménage continue + grosses modifs (experimentales pour l'instant)
-
-  Revision 1.12  2002/01/16 00:35:26  pouaite
-  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
-
-  Revision 1.11  2002/01/14 23:54:06  pouaite
-  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
-
-  Revision 1.10  2002/01/13 15:19:00  pouaite
-  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
-
-  Revision 1.9  2002/01/12 19:03:54  pouaite
-  bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
-
-  Revision 1.7  2002/01/06 17:06:27  pouaite
-  enlevage du patch de glandium (enfin j'essaye..)
-
-  Revision 1.5  2001/12/16 20:28:45  pouaite
-  bugfixes divers
-
-  Revision 1.4  2001/12/16 16:46:12  pouaite
-  Clippouille joins C0IN C0IN
-
-  Revision 1.3  2001/12/16 01:43:33  pouaite
-  filtrage des posts, meilleure gestion des posts multiples
-
-  Revision 1.2  2001/12/02 18:20:58  pouaite
-  correction (enfin!) du bug d'affichage lorsque plusieurs posts ont le même timestamp
-
+    Revision 1.78  2002/09/21 11:41:25  pouaite 
+    suppression du changelog
 */
 
 #include "pinnipede.h"
@@ -266,7 +42,7 @@ filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter)
 /* les deux fonctions suivantes permettent de se balader dans la liste des posts 
  (de maniere bourrine... c pas pour 250000 messages )
 */
-static id_type
+id_type
 get_next_id_filtered(Boards *boards, id_type id, board_msg_info **nmi, struct _PinnipedeFilter *filter) 
 {
   board_msg_info *mi;
@@ -325,7 +101,7 @@ get_last_id_filtered(Boards *boards, struct _PinnipedeFilter *filter) {
   return id_type_invalid_id();
 }
 
-static id_type
+id_type
 get_first_id_filtered(Boards *boards, struct _PinnipedeFilter *filter) {
   board_msg_info *mi;
 
@@ -2491,133 +2267,6 @@ int pp_ismapped(Dock *dock) {
 }
 
 
-/* --------------------------- section plateau de fruit de mer, veuillez insulter lordOric 
-   pour tous les bugs liès à cette partie ;) ---------------------------------------------
-*/
-
-/* 23/03/2002 pitit patch pour protéger les > et < pour le validator */
-char *
-pp_boardshot_encode( const char *chaine )
-{
-  char *tmp;
-  char *retour;
-
-  const char *key[] = { "<", ">", "&" };
-  const char *subst[] = { "&lt;", "&gt;", "&amp;" };
-  const char *key2[] = { "\t&lt;", "\t&gt;" };
-  const char *subst2[] = { "<", ">" };
-  
-  if (chaine == NULL) return NULL;
-
-  /* Passage des <> en &lt; et &gt; */
-  tmp = str_multi_substitute( chaine, key, subst, 3 );
-  
-  /* Restauration des balises '<' et '>' précédés d'une tabulation (cad ceux qui sont
-     d'authentiques tags */
-  retour = str_multi_substitute( tmp, key2, subst2, 2 );
-  free(tmp);
-  return retour;
-}
-
-/* --------- patch de lordOric, aka "plateau de fruits de mer" ------------*/
-/* Scrinchote d'un message */
-int 
-pp_boardshot_save_msg( board_msg_info *mi, FILE *file )
-{
-  char time[10];
-  
-  char *tmp;
-  
-  assert(file); assert(mi);
-	
-  snprintf(time, 10, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
-	
-  if ( mi->troll_score )
-    fprintf( file, "<tr><td><FONT color=red><b>%d</b></FONT></td>\n",mi->troll_score);
-  else
-    fprintf( file, "<tr><td></td>\n");
-	
-  tmp = pp_boardshot_encode( mi->useragent );
-  fprintf(file,"<td> <span title='%s'> %s </span> </td>\n",tmp, time);	 
-  free (tmp);
-	
-  if ( mi->login && strlen(mi->login)) {
-    tmp = pp_boardshot_encode( mi->login );
-    fprintf(file,"<td align=CENTER><FONT color=red>%s</FONT></td>\n", tmp);
-    free(tmp);
-  } else {
-    char *p;
-    p = mi->miniua.name;
-    tmp = pp_boardshot_encode(p);
-    fprintf( file, "<td align=CENTER><FONT color=brown>%.12s</FONT></td>\n", tmp);
-    free(tmp);
-  }
-	
-  tmp = pp_boardshot_encode(mi->msg);
-  fprintf( file,"<td>%s</td></tr>\n", tmp);
-  free(tmp);
-  
-  return 0;
-}
-
-
-/* Tribuneshot : un chouette plateau de fruits de mer ;) */
-int
-pp_boardshot_kikoooo(Dock *dock ) 
-{
-  Boards *boards = dock->sites->boards;
-  char *file_name;
-  FILE *file;
-  time_t time_shot;
-  int file_exist;
-  board_msg_info *msg = boards->first;
-  
-  file_name = str_substitute(Prefs.board_scrinechote, "~", getenv("HOME"));
-  file = fopen( file_name, "r");
-  file_exist = (file!=NULL);
-  if ( file_exist ) fclose( file ); 
-  
-  file = fopen( file_name, "a");
-  if ( ! file ) {
-    char errmsg[512];
-    snprintf(errmsg, 512, _("Error while opening %s\n"), file_name);
-    msgbox_show(dock, errmsg);
-    free(file_name);
-    return -1;
-  }
-  
-  if ( ! file_exist ) {
-    fprintf( file, 
-	     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
-	     "<html><head><title>Scrinechote tribune</title>"
-	     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-15\">"
-	     "</head>");
-    fprintf( file, "<body>");
-  }
-  
-  time( &time_shot );
-  fprintf( file, "<br><br><center><h2> *** Scrinechote - %s *** </h2></center><br>", ctime( &time_shot ) );
-  fprintf( file, "<table align=CENTER>");
-  
-  while ( msg ) {
-    pp_boardshot_save_msg(msg, file);
-    msg = msg->g_next;
-  }
-  
-  fprintf( file, "</table><br>\n");
-  fclose( file);
-  
-  {
-    char infomsg[512];
-    snprintf(infomsg,512,"Scrinechote de la tribune (%s) à %s", file_name, ctime(&time_shot));
-    msgbox_show(dock, infomsg);
-  }
-  free(file_name);
-  return 0;
-}
-
-/* ------------ fin tribuneshot ------------*/
-
 void
 pp_balloon_help(Dock *dock, int x, int y)
 {
@@ -3218,7 +2867,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       pp_handle_left_clic(dock, mx, my);
     }
   } else if (event->button == Button2) {
-    if ((event->state & ControlMask)==0) {    
+    if ((event->state & (ControlMask|ShiftMask|Mod1Mask|Mod4Mask))==0) {
       PostWord *pw;
 
       pw = pp_get_pw_at_xy(pp, mx, my);
@@ -3241,9 +2890,11 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       }
     } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
       pp_handle_alt_clic(dock, event);
-    } else {
+    } else if (event->state & ControlMask) {
+      int save_all = (event->state & ShiftMask) ? 1 : 0;
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
-      pp_boardshot_kikoooo(dock);
+      pp_boardshot_kikoooo(dock, save_all, 1);
+
     }
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {

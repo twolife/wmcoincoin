@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.64 2002/09/08 18:44:08 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.65 2002/09/21 22:51:01 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.65  2002/09/21 22:51:01  pouaite
+  ajout du patch de shift pour le pdfm
+
   Revision 1.64  2002/09/08 18:44:08  pouaite
   mouaissssss
 
@@ -556,33 +559,34 @@ flush_expose(Window w) {
 */
 
 int
-launch_wmccc()
+launch_wmccc(Dock *dock)
 {
-  pid_t wmccc_pid;
   char *spid = str_printf("%u", (unsigned)getpid());
   char *stmpopt = get_wmcc_tmp_options_filename();
-  switch ( wmccc_pid = fork() ) {
-  case -1: /* arrrrg */
-    {
-      fprintf(stderr, _("Fork failed...(%s)..\n you sux\n"), strerror(errno));
-      free(stmpopt); free(spid);
-      return -1;
-    } break;
-  case 0: /* fiston (wmccc) */
-    {
-      int retExec;      
-      retExec = execlp("wmccc", "wmccc", "-wmccpid", spid, 
-		       get_wmcc_options_filename(), stmpopt, 
-		       NULL);
-      if( retExec==-1 ) {
-	fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux (wmccc not in path?)\n"), strerror(errno));
-      }
-      exit(retExec);
-    } break;
-  default: /* pôpa (wmcc) */
-    {
-    } break;
-  }  
+  if (dock->wmccc_pid < 1) {
+    switch ( dock->wmccc_pid = fork() ) {
+    case -1: /* arrrrg */
+      {
+	fprintf(stderr, _("Fork failed...(%s)..\n you sux\n"), strerror(errno));
+	free(stmpopt); free(spid);
+	return -1;
+      } break;
+    case 0: /* fiston (wmccc) */
+      {
+	int retExec;      
+	retExec = execlp("wmccc", "wmccc", "-wmccpid", spid, 
+			 get_wmcc_options_filename(), stmpopt, 
+			 NULL);
+	if( retExec==-1 ) {
+	  fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux (wmccc not in path?)\n"), strerror(errno));
+	}
+	exit(retExec);
+      } break;
+    default: /* pôpa (wmcc) */
+      {
+      } break;
+    }
+  }
   free(spid);
   free(stmpopt);
   return 0;
@@ -1862,6 +1866,8 @@ main(int argc, char **argv)
     dock_set_horloge_mode(dock);
     dock_refresh_horloge_mode(dock);
   }
+
+  dock->wmccc_pid = -1;
 
   /* essaye de restorer la taille / position du pinnipede / newswin */
   wmcc_save_or_restore_state(dock, 1);
