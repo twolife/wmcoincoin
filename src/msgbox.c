@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.7 2003/01/19 18:52:23 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.8 2003/02/25 23:05:58 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.8  2003/02/25 23:05:58  pouaite
+  fix warning
+
   Revision 1.7  2003/01/19 18:52:23  pouaite
   patch gle (couleur de fond du palmi)
 
@@ -73,7 +76,7 @@ static void
 msgbox_refresh(Dock *dock, Drawable d)
 {
   MsgBox *m = dock->msgbox;
-  const char *title;
+  char *title;
   int tw;
 
   title = str_printf("%s " VERSION,_("MESSAGE FROM WMCOINCOIN"));
