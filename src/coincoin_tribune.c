@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.24 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.25 2002/03/27 19:02:04 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.25  2002/03/27 19:02:04  pouaite
+  bugfix pour le nouveau format du backend
+
   Revision 1.24  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -340,7 +343,7 @@ nettoie_message_tags(const char *inmsg)
     if (strncmp(s, "\t<!--",4)==0 && in_comment == 0) {
       w = strstr(s, "--\t>");
       if (w) {
-	in_comment = w+3-s;
+	in_comment = w+4-s;
       }
     }
     if (in_comment == 0) {

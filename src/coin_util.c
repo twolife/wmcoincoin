@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.14 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.15 2002/03/27 19:02:04 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.15  2002/03/27 19:02:04  pouaite
+  bugfix pour le nouveau format du backend
+
   Revision 1.14  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -293,8 +296,8 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
   static const struct {
     char *sign;
     char *c;
-  } tab[] = {{"lt;", "\t<"}, /* les deux premier sont utilisés si 'special_encode_lt_gt' non nul */
-	     {"gt;", "\t>"},
+  } tab[] = {//{"lt;", "\t<"}, /* les deux premier sont utilisés si 'special_encode_lt_gt' non nul */
+	     //{"gt;", "\t>"},
 	     {"amp;", "&"},
 	     {"quot;", "\"",},
 	     {"gt;",">",},
@@ -458,6 +461,9 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
     } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-2) { // cas particulier pour l'odieux EURO (encodage windows) 
       dest[id++] = '¤';
       is++;
+    } else if (src[is] == '<' || src[is] == '>') {
+      dest[id++] = '\t';
+      dest[id++] = src[is++];
     } else {
       dest[id] = src[is];
       id++; is++;
