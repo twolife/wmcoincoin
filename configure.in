@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.7  2002/01/13 20:38:31  pouaite
+dnl   fix du configure.in qui detecte cygwin a tors et à travers avec les v. recentes de autoconf
+dnl
 dnl   Revision 1.6  2002/01/10 09:03:07  pouaite
 dnl   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
 dnl
@@ -54,14 +57,28 @@ AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
-
-AC_CYGWIN
-if test -n "${CYGWIN}"; then
-  AC_CHECK_LIB(wsock32,select)
-  dnl correct a bug in cygwin: incorrect regex included in -lm
-  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
-  LIBS="${LIBS} /lib/libregex.a -lm"
-fi
+  
+case "$host" in
+    *-linux-*)
+          echo "vous utilisez linux, c'est bien !"
+          ;;
+    *-solaris*)
+          echo "oh oh !! wmcc sur solaris marche a peu pres, bon courage !"
+          ;;
+    *bsd*)
+          echo "bsd detected!"
+	  ;;
+    *-cygwin*)
+	  echo "cygwin detected !"
+     	  AC_CHECK_LIB(wsock32,select)
+	  dnl correct a bug in cygwin: incorrect regex included in -lm
+	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
+	  LIBS="${LIBS} /lib/libregex.a -lm"        
+			       ;;
+    *)
+         echo "vous compilez sur $host , c'est original"
+         ;;
+esac
 
 dnl Checks for library functions.
 dnl ============================
