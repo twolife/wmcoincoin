@@ -334,11 +334,11 @@ wmcc_prefs_relecture(Dock *dock)
       XMoveWindow(dock->display, DOCK_WIN(dock), newPrefs.dock_xpos, newPrefs.dock_ypos);
     }
     if (STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) || INT_OPT_COPY_IF_CHANGED(dock_bgcolor)) {
-      STR_OPT_COPY_IF_CHANGED(dock_bgpixmap);
+      int showed;
       if ((errmsg=dock_build_pixmap_porte(dock))) {
 	fprintf(stderr, errmsg);
       }
-      int showed;
+
       if ((showed = editw_ismapped(dock->editw))) editw_unmap(dock, dock->editw);
       editw_reload_colors(dock, dock->editw);
       if (showed) editw_show(dock, dock->editw,0);

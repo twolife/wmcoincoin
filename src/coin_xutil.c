@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.2 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.3 2002/04/01 23:04:11 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.3  2002/04/01 23:04:11  pouaite
+  fix compilation avec gcc 2.9x
+
   Revision 1.2  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -269,8 +272,8 @@ get_rootwin_pixmap(const RGBAContext *rc)
           r = (r*cshade)/256; \
           g = (g*cshade)/256; \
           b = (b*cshade)/256; \
-          _c2; } else { _c1; \
-          int l = (r*76)/256 + (g*150)/256 + (b*30)/256; \
+          _c2; } else { int l; _c1; \
+          l = (r*76)/256 + (g*150)/256 + (b*30)/256; \
           r = (l*wr + (256-l)*br)/256; \
 	  g = (l*wg + (256-l)*bg)/256; \
 	  b = (l*wb + (256-l)*bb)/256; _c2; } }
