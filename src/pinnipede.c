@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.30 2002/03/07 18:54:34 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.31 2002/03/08 23:53:40 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.31  2002/03/08 23:53:40  pouaite
+  derniers bugfixes pour la v2.3.6
+
   Revision 1.30  2002/03/07 18:54:34  pouaite
   raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
 
@@ -430,33 +433,65 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 
   static char *not_plop[] = {"alors", 
 			     "amha", 
+			     "apres",
 			     "aura", 
-			     "aurait", 
-			     "autant", 
+			     "auras",
+			     "auraient",
+			     "aurais",
+			     "aurait",
+			     "aurez",
+			     "auront",
+			     "aussi",
+			     "autant",
+			     "avant", 
 			     "avec", 
-			     "avec", 
-			     "beaucoup"
+			     "avoir", 
+			     "beaucoup",
+			     "ben",
+			     "bof",
+			     "celle",
 			     "ces", 
 			     "cette", 
+			     "ceux",
+			     "chez", 
 			     "comme",
 			     "comment", 
 			     "dans",
+			     "deja",
+			     "depuis", 
 			     "des", 
+			     "devez",
+			     "devons",
+			     "devrez",
+			     "devrons",
+			     "dire",
+			     "dois",
+			     "doivent",
 			     "donc", 
+			     "dont",
 			     "elle", 
-			     "elles", 
+			     "elles",
+			     "encore",
 			     "entre", 
 			     "est", 
 			     "etait", 
+			     "ete",
 			     "etes", 
+			     "etre",
 			     "fait", 
+			     "fallait",
+			     "falloir",
 			     "fallu",
+			     "faudra",
+			     "faudrait",
+			     "faut",
 			     "fera", 
 			     "ils", 
 			     "la", 
 			     "les", 
 			     "leur", 
-			     "leurs"
+			     "leurs",
+			     "lui",
 			     "mais",
 			     "meme", 
 			     "mes", 
@@ -476,28 +511,34 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 			     "pas", 
 			     "pas", 
 			     "peu", 
+			     "peux",
 			     "plus", 
 			     "pour", 
 			     "pourquoi", 
+			     "pourtant",
 			     "puis", 
 			     "quand", 
 			     "que", 
-			     "quel", 
+			     "quel",
+			     "qui",
 			     "quoi", 
+			     "sais",
+			     "sait",
 			     "sans", 
 			     "sera", 
 			     "ses", 
-			     "sien"
+			     "sien",
 			     "son", 
 			     "sont", 
 			     "sur", 
 			     "tant", 
 			     "tien", 
+			     "toujours",
 			     "tous", 
 			     "tout", 
 			     "toutes", 
 			     "une", 
-			     "vais",
+			     "vas",
 			     "vais", 
 			     "vos", 
 			     "votre", 
@@ -2909,7 +2950,7 @@ ET aussi
    un useragent/login/mot clef
 */
 static void
-pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int deplopification_flag)
+pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int plopify_flag)
 {
   Pinnipede *pp = dock->pinnipede;
   PostWord *pw;
@@ -2937,7 +2978,12 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
       snprintf(sid, 15, "%d", mi->id);
       *pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD);
     } else if (mi && pw->attr & PWATTR_NICK) {
-      *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA);
+      if (plopify_flag == 0) {
+	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA);
+      } else {
+	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);
+	else tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN);
+      }
     } else if (pw->attr & PWATTR_LOGIN) {
       *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);
     } else if (pw->attr & PWATTR_TSTAMP) {
@@ -2952,7 +2998,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	 puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
 	 en 'plop' ou 'pikaa' ...
       */
-      if (deplopification_flag && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
+      if (plopify_flag && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
 	*pkl = tribune_key_list_remove(*pkl, hk->key, hk->type);
       } else {
 	

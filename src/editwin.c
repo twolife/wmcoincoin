@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.12 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.13 2002/03/08 23:53:40 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.13  2002/03/08 23:53:40  pouaite
+  derniers bugfixes pour la v2.3.6
+
   Revision 1.12  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -721,8 +724,9 @@ editw_colorize(EditW *ew, unsigned char *ctab)
 	j = word_start;
 	while( j<word_end ) {
 	  if( !isalpha(ew->buff[j]) ) {
-	    if( ew->buff[j]!='<' )
-	      ctab[j] = EWC_NORMAL;
+	    ctab[j] = EWC_NORMAL;
+	    if( ew->buff[j]!='<' ) 
+	      ;
 	    /* detection des balises connues */
 	    else if ( strncmp(ew->buff+j, "<i>", 3)==0 ||
 		      strncmp(ew->buff+j, "</i>", 4)==0 ||
@@ -739,7 +743,7 @@ editw_colorize(EditW *ew, unsigned char *ctab)
 	    ++j;
 	    /* Detection des mots pleins de fautes */
 	  } else if( spelled_faults!=NULL && (unsigned)j==spelled_faults->offset ) {
-	    for(; isalpha(ew->buff[j]); ++j)
+	    for(; isalpha(ew->buff[j]) || ew->buff[j]=='\''; ++j)
 	      ctab[j] = EWC_SPELLWORD;
 	    spelled_faults = spelled_faults->next;
 	  } else {
@@ -1578,24 +1582,17 @@ static void editw_del_char(EditW *ew, int backspace)
 }
 
 static void
-editw_balise_ital(EditW *ew) {
+editw_balise(EditW *ew, const char *bstart, const char *bend) {
   int i;
-  i = editw_insert_string(ew, "<i></i>"); if (i<4) editw_move_cursor_rel(ew,-4+i);
-}
-static void
-editw_balise_bold(EditW *ew) {
-  int i;
-  i = editw_insert_string(ew, "<b></b>"); if (i<4) editw_move_cursor_rel(ew,-4);
-}
-static void
-editw_balise_strike(EditW *ew) {
-  int i;
-  i = editw_insert_string(ew, "<s></s>"); if (i<4) editw_move_cursor_rel(ew,-4);
-}
-static void
-editw_balise_underline(EditW *ew) {
-  int i;
-  i = editw_insert_string(ew, "<u></u>"); if (i<4) editw_move_cursor_rel(ew,-4);
+  int i0, i1;
+  int lstart, lend;
+  char *s;
+  lstart = strlen(bstart); lend = strlen(bend);
+  editw_get_sel_bounds(ew, &i0, &i1); i0=MAX(i0,0); i1=MAX(i1,0);
+  s = malloc(i1-i0+lstart+lend+1); 
+  strcpy(s, bstart); strncpy(s+lstart, ew->buff+i0, i1-i0); strcpy(s+lstart+i1-i0, bend);
+  i = editw_insert_string(ew, s); if (i<lend && i1!=i0) editw_move_cursor_rel(ew,-lend+i);
+  free(s);
 }
 
 /*
@@ -1633,13 +1630,16 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   } else if (event->xkey.state & Mod1Mask) {
     switch (ksym) {
     case 'I':
-    case 'i': editw_balise_ital(ew); break;
+    case 'i': editw_balise(ew,"<i>", "</i>"); break;
     case 'B':
-    case 'b': editw_balise_bold(ew); break;
+    case 'b': editw_balise(ew, "<b>", "</b>"); break;
     case 'U':
-    case 'u': editw_balise_underline(ew); break;
+    case 'u': editw_balise(ew, "<u>", "</u>"); break;
     case 'S':
-    case 's': editw_balise_strike(ew); break;
+    case 's': editw_balise(ew, "<s>", "</s>"); break;
+    case 'M':
+    case 'm': editw_balise(ew, "====> <b>Moment ", "</b> <===="); break;
+
       /*
     case 'T':
     case 't': editw_balise_tt(ew); break;
@@ -1888,10 +1888,10 @@ editw_handle_button_release(Dock *dock, EditW *ew, XButtonEvent *event)
       switch (b) {
       case BT_CLOSE: editw_hide(dock, ew); break;
       case BT_CHANGE: editw_select_buff(dock, ew, 1-ew->buff_num); break;
-      case BT_ITAL: editw_balise_ital(ew); break;
-      case BT_BOLD: editw_balise_bold(ew); break;
-      case BT_UNDERLINE: editw_balise_underline(ew); break;
-      case BT_STRIKE: editw_balise_strike(ew); break;
+      case BT_ITAL: editw_balise(ew, "<i>", "</i>"); break;
+      case BT_BOLD: editw_balise(ew, "<b>", "</b>"); break;
+      case BT_UNDERLINE: editw_balise(ew, "<u>", "</u>"); break;
+      case BT_STRIKE: editw_balise(ew, "<s>", "</s>"); break;
 	//      case BT_TT: editw_balise_tt(ew); break;
       case BT_UNDO: editw_undo(dock,ew); break;
       case BT_DEFAULTUA: editw_erase(ew);

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.12  2002/03/08 23:53:40  pouaite
+dnl   derniers bugfixes pour la v2.3.6
+dnl
 dnl   Revision 1.11  2002/03/05 21:04:28  pouaite
 dnl   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
 dnl
@@ -36,7 +39,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.6dev)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.6)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name
@@ -78,7 +81,7 @@ CFLAGS="$CFLAGS $X_CFLAGS"
   
 case "$host" in
     *-linux-*)
-          echo "vous utilisez linux, c'est bien !"
+          echo "vous utilisez linux, c'est Bien(c)(tm) !"
           ;;
     *-solaris*)
           echo "oh oh !! wmcc sur solaris marche a peu pres, bon courage !"

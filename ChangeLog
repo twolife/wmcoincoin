@@ -1,3 +1,14 @@
+--------------------------v2.3.6-----------------------------------------
+
+2002-03-08  pouaite  <c0in@altern.org>
+
+	* src/editwin.c: modif mineures sur les balises (alt-b avec du
+	texte selectionne insere les balise autour du texte, au lieu de
+	l'effacer). Et Alt-M permet d'inserer des moments conformes à la
+	RFC moule 42 (histoire qu'il n'y ait pas que des bugfix dans la
+	2.3.6). La plopification sur un useragent ne plopifie plus les
+	utilisateurs authentifiés dont le useragent est le même.
+
 2002-03-06  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (plopify_word): integration du patch d'estian

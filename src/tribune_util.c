@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.9 2002/03/03 11:58:55 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.10 2002/03/08 23:53:40 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.10  2002/03/08 23:53:40  pouaite
+  derniers bugfixes pour la v2.3.6
+
   Revision 1.9  2002/03/03 11:58:55  pouaite
   bugfix du crash avec les posts autoreferants (gniiii)
 
@@ -602,7 +605,11 @@ tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klis
       if (strcmp(hk->key, mi->useragent) == 0) {
 	return hk;
       }
-    } else if (hk->type == HK_LOGIN) {
+    } else if (hk->type == HK_UA_NOLOGIN) {
+      if (mi->login[0]==0 && strcmp(hk->key, mi->useragent) == 0) {
+	return hk;
+      }
+    }  else if (hk->type == HK_LOGIN) {
       if (strcmp(hk->key, mi->login) == 0) {
 	return hk;
       }

@@ -147,7 +147,7 @@ struct _tribune_msg_info {
    commencer à faire mouliner coincoin (a voir..)
 */
 typedef struct _KeyList KeyList;
-typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_ALL} KeyListType;
+typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_UA_NOLOGIN,HK_ALL} KeyListType;
 struct _KeyList {
   unsigned char *key;
   KeyListType type;

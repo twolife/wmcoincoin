@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.26 2002/03/07 18:54:34 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.27 2002/03/08 23:53:40 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.27  2002/03/08 23:53:40  pouaite
+  derniers bugfixes pour la v2.3.6
+
   Revision 1.26  2002/03/07 18:54:34  pouaite
   raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
 
@@ -935,7 +938,7 @@ void initx(Dock *dock, int argc, char **argv) {
   dock->rootwin = RootWindow(dock->display, dock->screennum);
 
   dock->rgba_context = RGBACreateContext(dock->display, dock->screennum);    
-  
+
   /* set size hints 64 x 64 */
   xsh.flags = USSize | USPosition;
   xsh.width = 64;
