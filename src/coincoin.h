@@ -536,6 +536,8 @@ typedef struct _Dock {
   */
   enum { WMCC_UPDATING_NEWS, WMCC_UPDATING_COMMENTS, WMCC_UPDATING_MESSAGES, WMCC_UPDATING_BOARD, WMCC_SENDING_COINCOIN, WMCC_IDLE } wmcc_state_info;
 
+
+  Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
 } Dock;
 
 

@@ -1,3 +1,19 @@
+2002-03-18  pouaite  <c0in@altern.org>
+
+	* configure.in src/raster.c (RGBACreatePixmapFromXpmData) etc..:
+	suppression de la dépendance à la libXpm, c'est un peu sale mais
+	ça passe.
+	
+--------------------------v2.3.6-3-----------------------------------------
+
+2002-03-09  pouaite  <c0in@altern.org>
+
+	* src/wmcoincoin.c src/coincoin_prefs.c: fix d'un petit pb quand
+	dlfp répond après un post sur la tribune (caractères bidons
+	affichés), j'en ai aussi profité pour mettre posts.php3 à la place
+	de myposts.php3 (qui semble voué a disparaitre)
+
+
 --------------------------v2.3.6-2-----------------------------------------
 	
 2002-03-09  pouaite  <c0in@altern.org>

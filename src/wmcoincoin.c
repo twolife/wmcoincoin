@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.31 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.32 2002/03/21 22:53:07 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.32  2002/03/21 22:53:07  pouaite
+  ajout d'une icone pour la fenetre du pinnipede et des news
+
   Revision 1.31  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -914,6 +917,66 @@ void createXBMfromXPM(char *xbm, char **xpm, int sx, int sy) {
   }
 }
 
+void
+wmcc_set_wm_icon(Dock *dock) {
+  XIconSize *isz;
+  int nbsz;
+  int w,h,z,i,j,c;
+  RGBAImage *in_img, *out_img;
+#include "../xpms/icon.xpm"
+
+  fprintf(stderr,"creation de l'icone des fenetres, si ça fait planter votre wm faites-moi signe!\n");
+  if (XGetIconSizes(dock->display, dock->win, &isz, &nbsz) != 0) {
+    int i;
+    printf("nbsz=%d\n", nbsz);
+    for (i=0; i < nbsz; i++) {
+      printf("icon sz %d: [%d..%d]x[%d..%d], step=%d,%d\n", i, isz[i].min_width, isz[i].max_width, isz[i].min_height, isz[i].max_height, isz[i].width_inc, isz[i].height_inc);      
+      if (i == 0) {
+	w = (isz[i].max_width/16) * 16; h = (isz[i].max_height/16)*16;
+	w = MAX(w, isz[i].min_width); h = MAX(h, isz[i].min_height);
+      }
+    }
+  } else {
+    printf("pas de taille d'icone par défaut, voila un wmanager qui suce des ours\n");
+    w = 48; h = 48;
+  }
+  XFree(isz);
+
+  in_img = RGBACreateRImgFromXpmData(icon_xpm); assert(in_img);
+  assert(in_img->w == 16 && in_img->w == 16);
+  out_img = RGBACreateImage(w, h); assert(out_img);
+  for (i=0; i < w; i++) {
+    for (j=0; j < h; j++) {
+      for (c=0; c < 4; c++) {
+	out_img->data[j][i].rgba[c] = 0;
+      }
+    }
+  }
+  z = MAX(MIN(w/16, h/16),1);
+  
+  for (i=0; i < 16; i++) {
+    for (j=0; j < 16; j++) {
+      int ii, jj;
+      for (ii = 0; ii < z; ii++) {
+	for (jj = 0; jj < z; jj++) {
+	  int di, dj;
+	  
+	  di = MIN(MAX(w/2 + ((i-8)*z+ii),0),w);
+	  dj = MIN(MAX(h/2 + ((j-8)*z+jj),0),h);
+	  for (c = 0; c < 4; c++) {
+	    out_img->data[dj][di].rgba[c] = in_img->data[j][i].rgba[c];
+	  }
+	}
+      }
+    }
+  }
+  dock->wm_icon_pix = RGBAImage2Pixmap(dock->rgba_context, out_img); assert(dock->wm_icon_pix);
+  dock->wm_icon_mask = alpha2pixmap_mask(dock->display, DOCK_WIN(dock), w, h, 
+					 (unsigned char *)out_img->data, 255);  
+  RGBADestroyImage(in_img);
+  RGBADestroyImage(out_img);
+}
+
 /* x initialization crap */
 void initx(Dock *dock, int argc, char **argv) {
   int i;
@@ -1111,6 +1174,8 @@ void initx(Dock *dock, int argc, char **argv) {
   XSync(dock->display, True);
   XCopyArea(dock->display, dock->coinpix, DOCK_WIN(dock), dock->NormalGC, 0, 0, 64, 64, 0, 0);
   XFlush(dock->display);
+
+  wmcc_set_wm_icon(dock);
 }
 
 /*

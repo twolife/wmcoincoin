@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.5 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.6 2002/03/21 22:53:07 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.6  2002/03/21 22:53:07  pouaite
+  ajout d'une icone pour la fenetre du pinnipede et des news
+
   Revision 1.5  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -210,17 +213,18 @@ RGBAImage2Pixmap(RGBAContext *ctx, RGBAImage *rimg)
 /*
   dans la catégorie des fonctions à ne pas appeler trop souvent, 
   ni sur des wallpaper 1600x1200 , voici un clone de XpmCreatePixmapFromData ... 
+
+  Update: coupée en deux
 */
-Pixmap
-RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
+RGBAImage *
+RGBACreateRImgFromXpmData(char **xpm)
 {
   int w,h,ncolor,cpp;
   RGBAImage *rimg;
-  Pixmap pix;
 
   struct xpm_color {
     char char_color[4];
-    int r,g,b;
+    int r,g,b,a;
   } *col_tab;
   
   int i, rgb;
@@ -247,11 +251,15 @@ RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
       col_tab[i].r = (rgb & 0xff0000) >> 16;
       col_tab[i].g = (rgb & 0x00ff00) >> 8;
       col_tab[i].b = (rgb & 0x0000ff);
+      col_tab[i].a = 255;
+      
       //printf("couleur %d: %x [s='%s']\n", i, rgb, xpm[i+1]);
     } else {
       col_tab[i].r = 0;
       col_tab[i].g = 0;
       col_tab[i].b = 0;
+      col_tab[i].a = 0;
+      
     }
   }
 
@@ -275,13 +283,23 @@ RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
       rimg->data[i][j].rgba[0] = col_tab[k].r;
       rimg->data[i][j].rgba[1] = col_tab[k].g;
       rimg->data[i][j].rgba[2] = col_tab[k].b;
+      rimg->data[i][j].rgba[3] = col_tab[k].a;
     }
   }
 
-  pix = RGBAImage2Pixmap(ctx, rimg);
   free(col_tab);  
+  return rimg;
+}
+
+Pixmap
+RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
+{
+  RGBAImage *rimg;
+  Pixmap pix;
+
+  rimg = RGBACreateRImgFromXpmData(xpm);
+  pix = RGBAImage2Pixmap(ctx, rimg);
   RGBADestroyImage(rimg);
-  
   return pix;
 }
 

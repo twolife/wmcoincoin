@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.37 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.38 2002/03/21 22:53:07 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.38  2002/03/21 22:53:07  pouaite
+  ajout d'une icone pour la fenetre du pinnipede et des news
+
   Revision 1.37  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -2263,6 +2266,9 @@ pp_update_bg_pixmap(Dock *dock)
   }
 }
 
+
+
+
 /*
   un petit mot: j'ai enfin compris comment faire apparaitre cette fenetre
    ou je veux: il suffit de donner la position dans xcreatewindow
@@ -2318,10 +2324,12 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     int rc;
     //    XWMHints* win_hints;
     XClassHint *class_hint;
+    XWMHints *wm_hint;
     char s[512];
 
     rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
     XSetWMName(dock->display, pp->win, &window_title_property);
+    XSetWMIconName(dock->display, pp->win, &window_title_property);
     win_size_hints= XAllocSizeHints(); assert(win_size_hints);
 
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
@@ -2352,6 +2360,13 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     class_hint->res_class = s;
     XSetClassHint(dock->display, pp->win, class_hint);
     XFree(class_hint);
+
+    wm_hint = XAllocWMHints(); assert(wm_hint);
+    wm_hint->icon_pixmap = dock->wm_icon_pix;
+    wm_hint->icon_mask = dock->wm_icon_mask;
+    wm_hint->flags = IconPixmapHint | IconMaskHint;
+    XSetWMHints(dock->display, pp->win, wm_hint);
+    XFree(wm_hint);
   }
 
   /* pour etre informé de la fermeture de la fenetre demandee par le windowmanager */

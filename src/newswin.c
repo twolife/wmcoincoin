@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.6 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.7 2002/03/21 22:53:07 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.7  2002/03/21 22:53:07  pouaite
+  ajout d'une icone pour la fenetre du pinnipede et des news
+
   Revision 1.6  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -348,6 +351,7 @@ newswin_createXWindow(Dock *dock)
   char *window_title;
   XSizeHints* win_size_hints;
   XClassHint *class_hint;
+  XWMHints *wm_hint;
   int rc;
   char s[512];
   int xpos, ypos;
@@ -399,6 +403,13 @@ newswin_createXWindow(Dock *dock)
   class_hint->res_class = s;
   XSetClassHint(dock->display, nw->window, class_hint);
   XFree(class_hint);
+
+  wm_hint = XAllocWMHints(); assert(wm_hint);
+  wm_hint->icon_pixmap = dock->wm_icon_pix;
+  wm_hint->icon_mask = dock->wm_icon_mask;
+  wm_hint->flags = IconPixmapHint | IconMaskHint;
+  XSetWMHints(dock->display, nw->window, wm_hint);
+  XFree(wm_hint);
 
   /* pour etre informé de la fermeture de la fenetre demandee par le windowmanager */
   XSetWMProtocols(dock->display, nw->window, &dock->atom_WM_DELETE_WINDOW, 1);

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.13 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.14 2002/03/21 22:53:07 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.14  2002/03/21 22:53:07  pouaite
+  ajout d'une icone pour la fenetre du pinnipede et des news
+
   Revision 1.13  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -270,7 +273,6 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
 			  &child_win);
   } 
 }
-
 
 /*
   with_bug_amp : le remote.rdf a été deux fois interprete par une moulinette,
