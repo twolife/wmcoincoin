@@ -1,3 +1,11 @@
+2003-03-12  pouaite  <c0in@altern.org>
+
+	* src/fake-getnameinfo.[ch] src/inet_aton.[ch]: et hop le patch de
+	gle pour cygwin est integré!
+	
+	* src/wmcoincoin.c ajout d'un slash à la fin du referer pour
+	pouvoir à nouveau poster sur linuxfr.
+
 --------------------------v2.4.4-b-----------------------------------------
 2003-03-09  pouaite  <c0in@altern.org>
 

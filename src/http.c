@@ -2,7 +2,8 @@
 #  define __USE_W32_SOCKETS
 #  include "windows.h"
 #  include "winsock.h"
-//#  include "ws2tcpip.h"
+#  include <unistd.h>
+#define AI_NUMERICHOST 4
 #define __INSIDE_HTTP
 #include "global.h"
 #include "http.h"
@@ -89,8 +90,13 @@ HostEntry *dns_cache = NULL;
 int http_close(SOCKET fd);
 
 /* pas de fioritures */
+#include <ctype.h>
+#include "inet_aton.h"
 #include "fake-getaddrinfo.h"
+#include "fake-getnameinfo.h"
+#include "inet_aton.c"
 #include "fake-getaddrinfo.c"
+#include "fake-getnameinfo.c"
 
 static void 
 dns_cache_destroy(HostEntry *h) {

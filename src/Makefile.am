@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.19 2003/03/11 23:40:36 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.20 2003/03/12 21:09:44 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.20  2003/03/12 21:09:44  pouaite
+##   mega patch de gle + micro fix du referer
+##
 ##   Revision 1.19  2003/03/11 23:40:36  pouaite
 ##   rajout fake-getaddrinfo .. si ça compile alors cygwin remarche (pas testé)
 ##
@@ -64,7 +67,7 @@ bin_PROGRAMS = wmcoincoin @WMCCC@
 EXTRA_PROGRAMS = wmccc
 
 # include dans http.c
-EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c fake-getaddrinfo.c
+EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c fake-getaddrinfo.c fake-getnameinfo.c inet_aton.c
 
 #salete d'autoconf j'y comprends rien
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
@@ -107,7 +110,8 @@ wmccc_SOURCES = \
 	prefs.c prefs.h \
 	coin_util.c coin_util.h \
 	options_list.h \
-	keylist.c keylist.h fake-getaddrinfo.h
+	keylist.c keylist.h \
+	fake-getaddrinfo.h fake-getnameinfo.h inet_aton.h
 
 wmccc_LDADD = @GTK_LIBS@
 

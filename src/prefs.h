@@ -6,6 +6,8 @@
 #include <sys/types.h> /* obligatoire pour regex.h sous bsd 
 			  mais pas compatible avec les winsock ..
 			*/
+#else
+#include <cygwin/types.h>
 #endif
 #include <regex.h>
 #include "options_list.h" /* liste des noms des options */

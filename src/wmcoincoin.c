@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.78 2003/03/02 17:56:26 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.79 2003/03/12 21:09:50 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.79  2003/03/12 21:09:50  pouaite
+  mega patch de gle + micro fix du referer
+
   Revision 1.78  2003/03/02 17:56:26  pouaite
   wmcoincoin-2.4.4a.tar.gz is ready for distribution
 
@@ -618,6 +621,9 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
   r.referer = str_printf("http://%s:%d/%s/", site->prefs->site_root, site->prefs->site_port, site->prefs->site_path);
+  url_au_coiffeur(r.referer, 0); 
+  if (r.referer[strlen(r.referer)-1] != '/') strcat(r.referer,"/");/*y'a la place pour et comme dlfp impose le slash a la fin.. */
+
   if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
   r.user_agent = strdup(ua);
   r.post = str_printf(site->prefs->board_post, urlencod_msg);  free(urlencod_msg);

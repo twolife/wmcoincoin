@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.25  2003/03/12 21:09:35  pouaite
+dnl   mega patch de gle + micro fix du referer
+dnl
 dnl   Revision 1.24  2003/03/11 23:40:32  pouaite
 dnl   rajout fake-getaddrinfo .. si ça compile alors cygwin remarche (pas testé)
 dnl
@@ -160,7 +163,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.4b, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.4c, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -276,7 +279,9 @@ AC_CHECK_HEADERS(sys/select.h sys/utsname.h pwd.h signal.h windows.h)
 AC_HEADER_TIME
 AC_CHECK_FUNCS(strdup strstr strcasecmp strncasecmp)
 AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
-AC_CHECK_FUNCS(uname getaddrinfo freeaddrinfo gai_strerror )
+AC_CHECK_FUNCS(uname)
+dnl les fonctions bidon pour cygouin
+AC_CHECK_FUNCS(getaddrinfo freeaddrinfo gai_strerror getnameinfo inet_aton)
 
 AC_C_CONST
 AC_C_INLINE
