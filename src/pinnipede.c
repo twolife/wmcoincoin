@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.28 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.29 2002/03/05 21:04:28 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.29  2002/03/05 21:04:28  pouaite
+  bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+
   Revision 1.28  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -418,9 +421,9 @@ pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr
    en regardant aussi le mot precedent
 */
 static void
-plopify_word(unsigned char *s, int sz, int bidon)
+plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 {
-  unsigned char s_simple[sz];
+  unsigned char s_simple[sz], s_dest[sz];
 
   static char *not_plop[] = {"alors", 
 			     "amha", 
@@ -432,6 +435,7 @@ plopify_word(unsigned char *s, int sz, int bidon)
 			     "beaucoup"
 			     "ces", 
 			     "cette", 
+			     "comme",
 			     "comment", 
 			     "dans",
 			     "des", 
@@ -513,21 +517,17 @@ plopify_word(unsigned char *s, int sz, int bidon)
 				 "ez", "é", "ée", "és", "es", "s", "e"};
   */
 
-  unsigned i, slen;
+  unsigned i;
   unsigned hache_s;
+  unsigned src_pos, dest_pos, s_len;
 
-  /* enleve les accents et vérifie que le mot ne contient que des lettres */
-  strcpy(s_simple, s);
-  str_noaccent_tolower(s_simple);
-  
-  for (i = 0; s[i]; i++) {
-    s_simple[i] = chr_noaccent_tolower(s[i]);
-    if (!(s_simple[i] >= 'a' && s_simple[i] <= 'z')) 
-      return;
-  }
+
 
   /* comptage des mots à ne pas plopifier, et 'hachage' des ces mots
-     (pour les detecter plus rapidement) */
+     (pour les detecter plus rapidement) 
+
+     ici: initialisation des données (éxécuté au premier appel)
+  */
   if (nb_not_plop == 0) {
     while (not_plop[nb_not_plop] != NULL) {
       nb_not_plop++;
@@ -541,20 +541,69 @@ plopify_word(unsigned char *s, int sz, int bidon)
     while (plop[nb_plop_subst]) nb_plop_subst++;
   }
 
-  slen = strlen(s);
-  hache_s = str_hache(s_simple, slen);
-  for (i=0; i < nb_not_plop; i++) {
-    if (hache_s == not_plop_hached[i]) return;
-  }
 
-
-  /* longeur > 15 => substitution assurée */
-  hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(slen,15))*nb_plop_subst)/8);
+  /* enleve les accents et vérifie que le mot ne contient que des lettres */
   
-  if (hache_s < nb_plop_subst) {
-    strncpy(s, plop[hache_s], sz); s[sz-1] = 0;
-  }
+  src_pos = 0; dest_pos = 0;
+  do {
+    int do_plopify;
+
+    do_plopify = 1;
+
+    /* on copie les caractères bizarres qui peuvent preceder le mot */
+    while (s_src[src_pos] && strchr("'\",;:/!+=)]@^_\\-|([{}#~",s_src[src_pos]) && 
+	   dest_pos < sz) { 
+      s_dest[dest_pos++] = s_src[src_pos++]; 
+    }
+    if (s_src[src_pos]==0) break;
+
+    /* on copie le mot dans s_simple */
+    s_len = 0;
+    while (s_src[src_pos+s_len] && !strchr("'\",;:/!+=)]@^_\\-|([{}#~", s_src[src_pos+s_len])) {
+      s_simple[s_len] = s_src[src_pos+s_len]; s_len++;
+    }
+    s_simple[s_len] = 0;    assert(s_len > 0);
+
+    //    strcpy(s_simple, s);
+    str_noaccent_tolower(s_simple);
+  
+    
+    for (i = 0; i < s_len; i++) {
+      if (!(s_simple[i] >= 'a' && s_simple[i] <= 'z')) {
+	do_plopify = 0; break;
+      }
+    }
+    
+    if (do_plopify) {
+      hache_s = str_hache(s_simple, s_len);
+      for (i=0; i < nb_not_plop; i++) {
+	if (hache_s == not_plop_hached[i]) { do_plopify = 0; break; }
+      }
+    }
+
+    if (do_plopify) {
+      /* longeur > 15 => substitution assurée */
+      hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(s_len,15))*nb_plop_subst)/8);
+      if (hache_s >= nb_plop_subst) do_plopify = 0;
+    }
+    
+    if (do_plopify) {
+      i = 0; 
+      while (plop[hache_s][i] && dest_pos < sz) {
+	s_dest[dest_pos++] = plop[hache_s][i++];
+      }
+      src_pos += s_len;
+    } else {
+      i = 0;
+      while (i < s_len && dest_pos < sz) {
+	s_dest[dest_pos++] = s_src[src_pos++]; i++;
+      }
+    }
+  } while (s_src[src_pos]);
+  s_dest[dest_pos] = 0;
+  strcpy(s_src, s_dest);
 }
+
 
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
@@ -708,8 +757,13 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 
       if (pv->is_plopified) {
 	attr &= ~(PWATTR_U | PWATTR_BD | PWATTR_S | PWATTR_IT);
-	if (pv->is_plopified >1 && strlen(s) >= 3) {
-	  plopify_word(s, PVTP_SZ,  (char*)p - (char*)mi->msg);
+	
+	if (pv->is_plopified >1) {
+	  int i;
+	  for (i=0; s[i]; i++) { if (s[i] >= 'A' && s[i] <= 'Z') s[i] = s[i]+'a'-'A'; }
+	  if (strlen(s) >= 3) {
+	    plopify_word(s, PVTP_SZ,  (char*)p - (char*)mi->msg);
+	  }
 	}
       }
 
@@ -3014,6 +3068,7 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
       
       mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
       if (mi) {
+#ifdef BOULAI_MODE
 	PostWord *trouve;
 	int i;
 	/* si le message referencé est déjà affiché, on ne fait rien */
@@ -3033,6 +3088,10 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	  trouve = pp->lignes[0];
 	}
 	pp_refresh(dock, trib, pp->win, trouve);
+#else
+	pp_update_content(dock, trib, mi->id, 0, 0, 0);
+	pp_refresh(dock, trib, pp->win, NULL);
+#endif
       }
     } 
   } /* if (pw) */  
@@ -3211,7 +3270,7 @@ pp_selection_find_pos(Dock *dock, PostWord *first_pw, int x, PostWord **sel_pw, 
 
   if (first_pw == NULL) return 0;
 
-
+  /* sans commentaires c'est mieux */
   while (pw && pw->ligne == first_pw->ligne) {
     x_sel = (pw == first_pw) ? 0 : pw->xpos;
     if (x < pw->xpos) 

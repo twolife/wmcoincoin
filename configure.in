@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.11  2002/03/05 21:04:28  pouaite
+dnl   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+dnl
 dnl   Revision 1.10  2002/02/24 22:13:56  pouaite
 dnl   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 dnl
@@ -33,7 +36,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.5)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.6dev)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name

@@ -177,8 +177,8 @@ scrollcoin_compute_pixel_pos(ScrollCoin *sc, int pos) {
   }
   
 
-  /*  printf("pos=%d, vmin=%d, vmax=%d, nxpos = %d, pixel_pos = %d\n",
-      pos, sc->vmin, sc->vmax, nxpos, sc->pixel_pos);*/
+  //  printf("pos=%d, vmin=%d, vmax=%d, nxpos = %d, pixel_pos = %d\n",
+  //	 pos, sc->vmin, sc->vmax, nxpos, sc->pixel_pos);
 }
 
 void
@@ -384,6 +384,8 @@ scrollcoin_handle_motion(ScrollCoin *sc, XMotionEvent *ev, Drawable d)
     pix_pos = sc->drag_pixel_pos0 + decal;
     marge = sc->h - 2*BT_H - sc->bar_sz - 1;
 
+    if (marge <= 0) return 1;
+
     pix_pos = MAX(pix_pos, BT_H);
     pix_pos = MIN(pix_pos, BT_H + marge);
 
@@ -393,6 +395,7 @@ scrollcoin_handle_motion(ScrollCoin *sc, XMotionEvent *ev, Drawable d)
     //    printf("coef=%f , rmarge = %d, sc->y = %d, marge=%d pos=%d\n", coef, pix_pos - sc->y - BT_H, sc->y, marge, pos);
 
     if (pos != sc->pos) {
+      //      printf("scrollcoin_handle_motion: requested_pos <- %d\n", pos);
       sc->requested_pos = pos;
     }
     if (pix_pos != sc->pixel_pos) {

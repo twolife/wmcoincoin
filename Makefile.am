@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.4 2001/12/16 16:46:12 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.5 2002/03/05 21:04:28 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.5  2002/03/05 21:04:28  pouaite
+##   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+##
 ##   Revision 1.4  2001/12/16 16:46:12  pouaite
 ##   Clippouille joins C0IN C0IN
 ##
@@ -29,4 +32,4 @@ rpm-dist: dist
 bin-dist: all
 	cp src/wmcoincoin .
 	strip wmcoincoin
-	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz README wmcoincoin
+	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README wmcoincoin

@@ -1,3 +1,12 @@
+2002-03-05  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (plopify_word): amélioration du plopifieur,
+	retour (suite à une forte pression moulesque) de l'ancien
+	comportement du clic sur une horloge (affiche le post en BAS du
+	pinnipède). Bugfix très partiel du "ouups linufr a repondu O"
+	(d'où vient ce bug, pourquoi ne se produit-il que sur certaines
+	machines?)
+
 --------------------------v2.3.5-----------------------------------------
 
 2002-03-02  pouaite  <c0in@altern.org>

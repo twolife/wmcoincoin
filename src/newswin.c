@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.4 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.5 2002/03/05 21:04:28 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.5  2002/03/05 21:04:28  pouaite
+  bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+
   Revision 1.4  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -149,6 +152,7 @@ phview_draw(Dock *dock, Drawable d, PHView *phv, unsigned long bg_pixel, int tit
   XSetClipMask(dock->display, nw->gc, None);
 
   if (phv->sc) {
+    //    printf("decal = %d\n", phv->decal);
     scrollcoin_setpos(phv->sc, phv->decal);
     scrollcoin_refresh(phv->sc, d, 1);
   }
@@ -585,6 +589,7 @@ newswin_testscroll(Dock *dock)
   int pos, redraw = 0;
   if (nw->phv_titles.sc && scrollcoin_read_requested_pos(nw->phv_titles.sc, &pos)) {
     if (nw->phv_titles.decal != pos) {
+      //      printf("scrollup: decal <- %d\n", pos);
       nw->phv_titles.decal = pos; redraw = 1;
     }
   }
@@ -600,6 +605,7 @@ static void
 newswin_scrollup(Dock *dock, PHView *phv, int q)
 {
   phv->decal = MAX(0, phv->decal-q);
+  //  printf("scrollup: decal <- %d\n", phv->decal);
   newswin_draw(dock);
 }
 
@@ -608,6 +614,7 @@ newswin_scrolldown(Dock *dock, PHView *phv, int q)
 {
   phv->decal = MIN(phv->decal + q, phv->ph_h +10 - phv->h);
   phv->decal = MAX(0, phv->decal);
+  //  printf("scrolldown: decal <- %d\n", phv->decal);
   newswin_draw(dock);
 }
 
@@ -660,7 +667,7 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
 		 nw->win_xpos + nw->phv_news.x + pi->x, 
 		 nw->win_ypos + nw->phv_news.y + pi->y, 2);
       } else if (event->button == Button3) {
-	printf("copy! %s\n",pi->link_str);
+	//	printf("copy! %s\n",pi->link_str);
 	editw_cb_copy(dock, nw->window, pi->link_str, strlen(pi->link_str));
       }
     }

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.23 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.24 2002/03/05 21:04:28 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.24  2002/03/05 21:04:28  pouaite
+  bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+
   Revision 1.23  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -353,8 +356,8 @@ exec_coin_coin(Dock *dock)
 	 'vous etes blackliste', ou 'mot interdit', ou autre .. */
       if ((got=http_iread(fd, s+l, 2047-l))>0) {
 	s[l+got] = 0;
-      //      myprintf("REPONSE RECUE: '%<YEL %s>'\n", s);
-	if (got) {
+	myprintf("REPONSE RECUE: '%<YEL %s>' [got=%d]\n", s,got);
+	if (got > 1) {
 	  msgbox_show(dock, s);
 	}
       }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.8 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.9 2002/03/05 21:04:28 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.9  2002/03/05 21:04:28  pouaite
+  bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
+
   Revision 1.8  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -467,7 +470,7 @@ troll_detector(tribune_msg_info *mi) {
   }
 
 
-  if (Prefs.verbosity >= 1) {
+  if (Prefs.verbosity > 1) {
     Word *w;
     w = wlst;
     myprintf("liste de mots: (smiley_flag = %<bld %d>, bizarre_cnt = %<bld %d>, exclam_cnt=%<bld %d>, majuscule_cnt=%<bld %d>, tag_cnt=%<bld %d>\n",
