@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.9 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.10 2002/08/18 20:52:15 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.10  2002/08/18 20:52:15  pouaite
+  les locales des sites fonctionnent (c bon pour les news)
+
   Revision 1.9  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -90,6 +93,28 @@ patterns_t patterns[] =
       "sss" }*/
   };
 
+
+const char *
+site_locale_str(SitePrefs *sp, const char *s) {
+  struct {
+    const char *ref;
+    const char *trad[2];
+  } traduc[] = {{"Approved on ", {NULL, "Approuvé le "}}, 
+		{"Posted by"   , {NULL, "Posté par"}},
+		{"Topic:"      , {NULL, NULL}},
+		{"Theme:"      , {NULL, "Thème:"}},
+		{NULL,           {NULL,NULL}}};
+  int i = 0;
+  while (traduc[i].ref) {
+    if (strcmp(s, traduc[i].ref) == 0) {
+      const char *t = traduc[i].trad[sp->locale];
+      if (t == NULL) return s; else return t;
+    }
+    i++;
+  }
+  assert(0);		
+}
+
 char *
 mystrndup(const char *s, int n)
 {
@@ -117,7 +142,7 @@ after_substr(const char *s, const char *substr)
 
 /* remplace pat_news */
 void
-extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens)
+extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens)
 {
   const unsigned char *p, *p2=NULL;
 
@@ -125,7 +150,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
 
   
   p = after_substr(s, "class=\"newsinfo\"");
-  p = after_substr(s, _("Approved on "));
+  p = after_substr(s, site_locale_str(sp, "Approved on "));
   if (p) {
     p2 = strchr(p, '<');
     if (p2) {
@@ -136,9 +161,9 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   //  printf("p_date = '%s'\n", *p_date);
 
   p = after_substr(s, "class=\"newsinfo\"");
-  p = after_substr(s, _("Posted by"));
+  p = after_substr(s, site_locale_str(sp, "Posted by"));
   if (p) {
-    p2 = strstr(p, _("Approved on "));
+    p2 = strstr(p, site_locale_str(sp, "Approved on "));
     if (p2) {
       *p_auteur = mystrndup(p, p2-p);
     }
@@ -146,8 +171,9 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   if (*p_auteur == NULL) { *p_auteur = strdup("???"); }
 
   /* recherche de la section */
-  p = after_substr(s, _("Topic:"));
-  if (p == NULL) p = after_substr(s, _("Theme:")); /* actuellement (16/12/2001) c'est cette chaine qui est utilisee */
+  p2 = p;
+  p = after_substr(s, site_locale_str(sp, "Topic:"));
+  if (p == NULL) p = after_substr(s, site_locale_str(sp, "Theme:")); /* actuellement (16/12/2001) c'est cette chaine qui est utilisee */
   if (p) {
     p = strchr(p, '>');
     if (p) {
@@ -160,7 +186,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   }
   if (*p_section == NULL) *p_section = strdup("???");
 
-  p = after_substr(p, "class=\"newstext\"");
+  p = after_substr(p2, "class=\"newstext\"");
   p = after_substr(p, ">");  
   if (p) {
     p2 = strstr(p, "</td>");

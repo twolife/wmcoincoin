@@ -110,7 +110,7 @@ typedef struct _SitePrefs {
   unsigned pp_bgcolor;
   int proxy_nocache; /* desactive le cache du proxy lors des requetes */
   int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
-  enum { locFR, locEN } locale; /* "localisation" du site (pour quelques mots-clefs + problèmes d'horloges AM/PM) */
+  enum { locEN=0, locFR=1 } locale; /* "localisation" du site (pour quelques mots-clefs + problèmes d'horloges AM/PM) */
   int use_AM_PM;
   char **all_names; /* liste des noms possibles du site (tous les alias) */
   int  nb_names;

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.49 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.50 2002/08/18 20:52:15 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.50  2002/08/18 20:52:15  pouaite
+  les locales des sites fonctionnent (c bon pour les news)
+
   Revision 1.49  2002/08/18 19:00:28  pouaite
   plop
 
@@ -183,7 +186,7 @@
 #include <X11/extensions/shape.h>
 #include <locale.h>
 
-#include "gettext.h"
+#include <libintl.h>
 #define _(String) gettext (String)
 
 #include "coincoin.h"
@@ -1655,9 +1658,14 @@ main(int argc, char **argv)
 
   {
     Site *s;
-    myprintf("Site          Board           News       Comments     Messages\n");
+    myprintf("Site         Locale     Board           News       Comments     Messages\n");
     for (s = dock->sites->list; s; s = s->next) {
-      myprintf("%<YEL %.10s>        ", s->prefs->site_name);
+      myprintf("%<YEL %10.10s>   \t", s->prefs->site_name);
+      switch (s->prefs->locale) {
+      case locEN: myprintf("EN\t"); break;
+      case locFR: myprintf("FR\t"); break;
+      default: myprintf("BUG!!!!"); break;
+      }
       if (s->prefs->check_board) {
 	switch (s->prefs->board_backend_type) {
 	case 1:  myprintf(_("%<YEL modern style      >")); break;

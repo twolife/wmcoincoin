@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: news.c,v 1.3 2002/08/18 20:52:15 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.3  2002/08/18 20:52:15  pouaite
+  les locales des sites fonctionnent (c bon pour les news)
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -403,7 +406,7 @@ site_news_update_txt(Site *site, id_type id)
     n->heure = 0;
 
     
-    extract_news_txt(s, &date, &auteur, &section, &texte, &liens); /* fonction definie dans regexp.c */
+    extract_news_txt(site->prefs, s, &date, &auteur, &section, &texte, &liens); /* fonction definie dans regexp.c */
 
     /*    fprintf(stderr, "\n--\n%s\n--\n", p);*/
     /*

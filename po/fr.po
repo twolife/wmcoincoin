@@ -2,12 +2,11 @@
 # Copyright (C) YEAR Free Software Foundation, Inc.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
 "POT-Creation-Date: 2002-08-18 20:50+0200\n"
-"PO-Revision-Date: 2002-08-18 20:50+0200\n"
+"PO-Revision-Date: 2002-08-18 21:31+0200\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -26,12 +25,12 @@ msgstr ""
 #: src/board.c:751
 #, c-format
 msgid "message logged: '%s'\n"
-msgstr ""
+msgstr "message loggué: '%s'\n"
 
 #: src/board.c:866
 #, c-format
-msgid "Welcome to the message from '%.20s' in the boitakon\n"
-msgstr ""
+msgid "'%.20s' says hello from the assholebox\n"
+msgstr "Kikoo de '%.20s' depuis la boitakon\n"
 
 #: src/board.c:1158
 msgid "Original message: '%<CYA %s>'\n"
@@ -195,7 +194,7 @@ msgstr ""
 #: src/comments.c:292
 #, c-format
 msgid "There has been %d/%d answers to the comment %d\n"
-msgstr ""
+msgstr "Il y a eu %d/%d réponses au commentaire %d\n"
 
 #: src/comments.c:309
 #, c-format

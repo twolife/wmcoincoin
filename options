@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.32 2002/08/18 19:00:27 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.33 2002/08/18 20:52:15 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.33  2002/08/18 20:52:15  pouaite
+#%  les locales des sites fonctionnent (c bon pour les news)
+#%
 #%  Revision 1.32  2002/08/18 19:00:27  pouaite
 #%  plop
 #%
@@ -438,18 +441,35 @@
 ### pour les ua, il s'agit des regex posix en mode étendu (cf man regex)
 ### et le remplacement des ua peut faire intervenir des \1, \2 etc (regarder
 ### par exemple la regle pour internet explorer)
-board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:"un bot!",symb:"circ",color:"ffffff".
-board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:"dae",symb:"cross",color:"00ff00".
 
-board.miniua_rule:  ua:".*py[Cc].*/([0-9]\.[0-9]).*" => ua:"pyc²/\1"
-board.miniua_rule:  ua:".*wm[Cc].*/([0-9]\.[0-9]).*" => ua:"pyc²/\1"
+board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:="un bot!",symb:="circ",color:="#ffffff"
+board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#00ff00"
+board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
-board.miniua_rule:               => symb:"square", color:"#500000"...
-board.miniua_rule:   site:"dlfp" => symb:"dtri", color:"#ff0000"...
-board.miniua_rule:   site:"woof" => symb:"square"...
-board.miniua_rule:   site:"glandium" => symb:"rutri", color:"0000ff" .
-board.miniua_rule:  login:"kadreg" => color:"80ff00"
+board.miniua_rule:  ua:"py[Cc].*/([0-9]\.[0-9.]+)" => ua="pyc²/\1"
+board.miniua_rule:  ua:"wm[Cc].*/([0-9]\.[0-9.]+)" => ua="wmc²/\1"
 
+### Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1b) Gecko/20020
+board.miniua_rule:  ua:"Mozilla/5.0.* Linux ([^;]+).*; rv:([[:alnum:].]+)\)" => ua:="Moz\2/Lnx\1"
+
+### Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.1b) Gec
+board.miniua_rule:  ua:"Mozilla/5.0.*; Windows ([^;]+).*; rv:([0-9.]+)" => ua:="Moz\2/Win\1"
+
+### Mozilla/5.0 Galeon/1.2.5 (X11; Linux ppc; U;) Gecko/0
+### Mozilla/5.0 Galeon/1.2.5 (X11; Linux i686; U;) Gecko/20020610 Debian/1.2.5-1 [ IPv4 ]
+board.miniua_rule:  ua:"Mozilla/5.0 Galeon/([0-9.]+).*Linux ([^;]+)" => ua:="Galeon\1/\2"
+
+###Mozilla/4.0 (compatible; MSIE 5.0; Windows XP) Opera 6.02  
+board.miniua_rule:  ua:"Mozilla/4.0.*Windows ([[:alnum:]]*).*Opera ([0-9.]+)" => ua:="Opera\2/Win\1"
+
+###Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+board.miniua_rule:  ua:"Mozilla/4.0 \(compatible; MSIE ([0-9.]+).*NT ([0-9.]+)" => ua:="IE\1/NT\2"
+
+board.miniua_rule:               => symb="square", color="#ffffff"
+board.miniua_rule:   site:"dlfp" => symb="dtri", color="#ff8000"
+board.miniua_rule:   site:"woof" => symb="square", color="#ffff00"
+board.miniua_rule:   site:"glandium" => symb="rutri", color="#0000ff" 
+board.miniua_rule:  login:"kadreg" => color="#80ff00"
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker

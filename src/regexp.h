@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.5 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.6 2002/08/18 20:52:15 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.6  2002/08/18 20:52:15  pouaite
+  les locales des sites fonctionnent (c bon pour les news)
+
   Revision 1.5  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -42,7 +45,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #include <stdarg.h>
-
+#include "prefs.h"
 typedef enum { pat_xp, pat_votes, pat_news, pat_news_no_sec } pat_type_t;
 
 typedef struct _patterns_t
@@ -60,11 +63,11 @@ typedef struct _patterns_t
 */
 
 extern patterns_t patterns[];
-
+const char *site_locale_str(SitePrefs *sp, const char *s);
 int regexp_extract(const char *str, pat_type_t pattern, ...);
 
 /* et une fonction speciale qui n'utilise pas les regex.. */
-void extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens);
+void extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens);
 
 /* et deux fonctions à la con qui peuvent etre utiles */
 char *mystrndup(const char *s, int n);
