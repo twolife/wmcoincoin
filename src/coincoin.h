@@ -228,8 +228,8 @@ struct _Board {
      3 =>  "       "  80 "
      etc...     
   */
-  volatile int update_request;
-  volatile int enabled;
+  volatile int update_request, update_in_progress;
+  volatile int enabled; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
 };
 
 typedef struct _SiteNameHash {
@@ -626,6 +626,7 @@ void pp_set_word_filter(Dock *dock, char *word);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
 Site *pp_tabs_get_main_site(Dock *dock);
+void pp_set_download_info(char *site, char *what);
 
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);

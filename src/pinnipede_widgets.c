@@ -1,5 +1,14 @@
 #include "pinnipede.h"
 
+static char *dl_info_site = NULL;
+static char *dl_info_what = NULL;
+
+void pp_set_download_info(char *site, char *what) {
+  if (dl_info_site) { free(dl_info_site); dl_info_site = NULL; }
+  if (dl_info_what) { free(dl_info_what); dl_info_what = NULL; }
+  dl_info_site = site ? strdup(site) : NULL;
+  dl_info_what = what ? strdup(what) : NULL;
+}
 
 /* --------------------------- gestion des tabs ------------------- */
 /* a appeler apres update fortune et modif minib*/
@@ -32,6 +41,7 @@ pp_tabs_set_pos(Pinnipede *pp)
     
     if (pp->use_minibar && tabs_min_w + pp->mb_min_width > pp->win_width) {
       y -= MINIB_H;
+      tabs_w = pp->win_width+1;
     } else {
       /* "reduction" de la largeur pour loger dans la minibar */
       tab_w = MIN((pp->win_width - pp->mb_min_width) / pp->nb_tabs, tab_max_w);
@@ -46,9 +56,9 @@ pp_tabs_set_pos(Pinnipede *pp)
 
   for (cnt = 0; cnt < pp->nb_tabs; cnt++) {
     PinnipedeTab *pt = &pp->tabs[cnt];
-    pt->x = x;
+    pt->x = (cnt * tabs_w) / pp->nb_tabs;
     pt->y = y;
-    pt->w = tab_w;
+    pt->w = ((cnt+1) * tabs_w) / pp->nb_tabs - x;
     pt->h = PPT_H;
     x += pt->w;
   }
@@ -169,18 +179,31 @@ pp_tabs_refresh(Dock *dock)
       }
 
       {
-	const char *t = pp->tabs[i].site->prefs->site_name;
-	int tw = strlen(t) * MINIB_FN_W;
-	int tx = pt->x + (pt->w - tw)/2;
-	int ty = pp->fn_minib->ascent+1 + pp->tabs[i].clicked*2;
-	if (!pt->selected) {
-	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x808080));
+	char *t; 
+	int tw, tx, ty;
+	unsigned long fgpixel = 0x303030;
+	int main_site = 0;
+	if (pp->tabs[i].site->board->update_request) {
+	  int l = ABS((wmcc_tic_cnt % 30) - 15)*10;
+	  t = "-queued-";
+	  fgpixel = 0x303030 + (l<<16) + (l<<8) + l;
 	} else {
-	  if (pt == pp->active_tab) {
+	  t = pp->tabs[i].site->prefs->site_name;
+	  if (pt == pp->active_tab) main_site = 1;
+	  if (!pt->selected) fgpixel = 0x909090;
+	}
+	tw = strlen(t) * MINIB_FN_W;
+	tx = pt->x + (pt->w - tw)/2;
+	ty = pp->fn_minib->ascent+1 + pp->tabs[i].clicked*2;
+	
+	if (!pt->selected) {
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(fgpixel));
+	} else {
+	  if (main_site) {
 	    XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x80ff80));
 	    XDrawString(dock->display, pp->lpix, dock->NormalGC, tx+1, ty+1, t, strlen(t));
 	  }
-	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x006000));
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(fgpixel));
 	}
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, tx, ty, t, strlen(t));
       }
@@ -323,7 +346,7 @@ pp_minib_set_pos(Pinnipede *pp)
     pp->mb[i].y = pp->win_height - MINIB_H;
     pp->mb[i].h = MINIB_H;
   }
-  pp->mb_min_width = MIN(pp->win_width, 200 + pp->mb_buttonbar_width);
+  pp->mb_min_width = MIN(pp->win_width, 230 + pp->mb_buttonbar_width);
 }
 
 
@@ -366,55 +389,70 @@ pp_minib_refresh(Dock *dock)
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
     XDrawString(dock->display, pp->lpix, dock->NormalGC, 5+pp->mb_x0, pp->fn_minib->ascent+2, s_filtre, strlen(s_filtre));
   } else {
-    
-    /* affichage de la charge du serveur de dlfp */
+    /* affichage d'infos diverses */
 
-    char s_cpu[20];
-    char s_xp[20], s_votes[20], s_nb_messages[20], s_http_stats[40];
+    char s_site[20], s_what[50], s_xp[20], s_votes[20], s_nb_messages[20], s_http_stats[40];
     int x, w;
-    s_xp[0] = 0; s_cpu[0] = 0; s_votes[0] = 0; s_nb_messages[0] = 0;
-    if (main_prefs->user_cookie || main_prefs->force_fortune_retrieval) {
-      if (flag_updating_comments == 0) {
-	/*
-	  
-	le CPU a disparu (ouuiiiinnn!)
-	if (dock->dlfp->CPU != -1.0) {
-	snprintf(s_cpu, 20, "cpu:%1.2f", dock->dlfp->CPU);
-	} else snprintf(s_cpu, 20, "cpu: ??");
-	*/
-	if (main_site->xp >= 0) {
-	  snprintf(s_xp, 20, "xp:%d", main_site->xp);
-	  snprintf(s_votes, 20, "[%d/%d]", main_site->votes_cur, main_site->votes_max);
+    s_site[0] = 0; s_what[0] = 0; s_xp[0] = 0; s_votes[0] = 0; s_nb_messages[0] = 0;
+    if (dl_info_site) snprintf(s_site, 20, "[%s]", dl_info_site);
+    if (dl_info_what) snprintf(s_what, 50, "[%s]", dl_info_what);
+    else {
+      if (main_prefs->user_cookie || main_prefs->force_fortune_retrieval) {
+	if (main_prefs->check_comments && flag_updating_comments == 0) {
+	  if (main_site->xp >= 0) {
+	    snprintf(s_xp, 20, "xp:%d", main_site->xp);
+	    snprintf(s_votes, 20, "[%d/%d]", main_site->votes_cur, main_site->votes_max);
+	  }
 	}
       }
     }
     snprintf(s_nb_messages, 20, "%d msg", count_all_id_filtered(boards, &pp->filter));
     snprintf(s_http_stats, 40, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);
-    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     
     x = 5+pp->mb_x0;
-    w = MINIB_FN_W*strlen(s_cpu);
-    if (x+w < x_minib) {
-      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_cpu, strlen(s_cpu));
+    w = MINIB_FN_W*strlen(s_site);
+    if (x+w < x_minib && w) {
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x3030ff));
+      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_site, strlen(s_site));
+      x += w + 6;
     }
-    x += w + 6;
+
+    w = MINIB_FN_W*strlen(s_what);
+    if (x+w < x_minib && w) {
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x6060ff));
+      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_what, strlen(s_what));
+      x += w + 6;
+    }
+
+    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     w = MINIB_FN_W*strlen(s_xp);
     if (strlen(s_xp)) {
-      if (x+w < x_minib) {
+      if (x+w < x_minib && w) {
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_xp, strlen(s_xp));
+	x += w + 6;
       }
     }
-    x += w + 6;
     w = MINIB_FN_W*strlen(s_votes);
     if (strlen(s_votes)) {
-      if (x+w < x_minib) {
+      if (x+w < x_minib && w) {
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_votes, strlen(s_votes));
+	x += w + 6;
       }
     }
-    x += w + 6;
+
+
+
+    w=MINIB_FN_W*(strlen(s_nb_messages) + strlen(s_http_stats))+6;
+    if (x + w < x_minib) {
+      x = x_minib - w - 6;
+    } else {
+      x = x_minib - MINIB_FN_W*strlen(s_nb_messages) - 6;
+    }
+
+
     w = MINIB_FN_W*strlen(s_nb_messages);
     if (strlen(s_nb_messages)) {
-      if (x+w < x_minib) {
+      if (x+w < x_minib && w) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_msgcnt_pixel);	
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_nb_messages, strlen(s_nb_messages));
       }
@@ -467,8 +505,14 @@ pp_minib_refresh(Dock *dock)
     case PREFS:
       {
 	char *s;
-	s = "wmc³";
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
+	if (flag_update_prefs_request == 0) {
+	  s = "wmc³";
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
+	} else {
+	  if ((wmcc_tic_cnt % 24) < 12) s = "updt!";
+	  else s = "wait";
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xff3000 + (wmcc_tic_cnt & 0xff)));
+	}
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
       } break;
       /*    case REFRESH_TRIBUNE:
@@ -960,7 +1004,7 @@ pp_scrollcoin_move_resize(Dock *dock)
   /*  int y;
   y = LINEY0(0);
   scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));*/
-  scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, pp->zmsg_y1, pp->zmsg_h);
+  scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, pp->zmsg_y1, pp->zmsg_h+1);
 }
 
 

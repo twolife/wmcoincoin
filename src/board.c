@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.6 2002/08/26 00:52:22 pouaite Exp $
+  rcsid=$Id: board.c,v 1.7 2002/08/29 00:15:53 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.7  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.6  2002/08/26 00:52:22  pouaite
   coin coin coin
 
@@ -864,14 +867,15 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   /* insertion dans la grande chaine de messages globale (inter-sites)*/
   {
     board_msg_info *g_it, *pg_it;
-    g_it = boards->first;
-    pg_it = NULL;
+    g_it = pit ? pit : boards->first; /* on demarre sur le dernier message de la même tribune d'id inférieur
+					 histoire de respecter inconditionnellement l'ordre par tribune
+					 (sinon il y a des problèmes quand un backend laggue et qu'il y
+					 a des sauts de 'time_shift' */
+    pg_it = g_it ? g_it->g_prev : NULL;
     while (g_it &&
 	   (it->timestamp +  board->boards->btab[it->id.sid]->time_shift > 
-	    g_it->timestamp +board->boards->btab[g_it->id.sid]->time_shift ||
-	    (it->timestamp + board->boards->btab[it->id.sid]->time_shift ==
-	     g_it->timestamp+board->boards->btab[g_it->id.sid]->time_shift && 
-	     it->id.sid == g_it->id.sid && it->id.lid > g_it->id.lid))) {
+	    g_it->timestamp +board->boards->btab[g_it->id.sid]->time_shift)) {
+      if (it->id.sid == g_it->id.sid && it->id.lid < g_it->id.lid) break; /* respect de l'ordre sur le site */
       pg_it = g_it;
       g_it = g_it->g_next;
     }
@@ -1284,6 +1288,9 @@ board_update(Board *board)
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
   board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
 
+  board->update_in_progress = 1;
+  pp_set_download_info(board->site->prefs->site_name, "updating board");
+
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(board->site->prefs->site_path) ? "/" : ""), 
 	     board->site->prefs->site_path, board->site->prefs->path_board_backend);
@@ -1448,6 +1455,9 @@ board_update(Board *board)
 
   board_check_my_messages(board, old_last_post_id);
   board_update_time_shift(board, old_last_post_id);
+
+  board->update_in_progress = 0;
+  pp_set_download_info(NULL, NULL);
 
   flag_board_updated = 1;  
 

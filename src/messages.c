@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.5 2002/08/22 00:10:14 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.6 2002/08/29 00:15:53 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.6  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.5  2002/08/22 00:10:14  pouaite
   prout
 
@@ -150,6 +153,8 @@ site_msg_dl_and_update(Site *site)
   
   BLAHBLAH(3,printf("site_msg_update_messages...\n"));
 
+  pp_set_download_info(site->prefs->site_name, "updating messages");
+
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(site->prefs->site_path) ? "/" : ""), site->prefs->site_path, site->prefs->path_messages);
   } else {
@@ -266,6 +271,7 @@ site_msg_dl_and_update(Site *site)
   } else {
     myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
   }
+  pp_set_download_info(NULL,NULL);
 }
 
 

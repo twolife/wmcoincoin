@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.56 2002/08/28 00:42:32 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.57 2002/08/29 00:15:53 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.57  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.56  2002/08/28 00:42:32  pouaite
   wmccc aware
 
@@ -472,6 +475,7 @@ exec_coin_coin(Dock *dock)
     myprintf("???? site %s has no board ! (bug!)\n", site->prefs->site_name);
     return;
   }
+  pp_set_download_info(site->prefs->site_name, "posting ...");
 
   flag_sending_coin_coin = 1;
 
@@ -516,6 +520,7 @@ exec_coin_coin(Dock *dock)
   if (dock->post_anonyme) { site->board->just_posted_anonymous = 1; }
 
   flag_sending_coin_coin = 0;
+  pp_set_download_info(NULL,NULL);
 }
 
 /*
@@ -1464,6 +1469,19 @@ void *Timer_Thread(void *arg UNUSED)
 }
 #endif 
 
+/* is there a board to update ? */
+int
+is_board_update_requested(SiteList *sl)
+{
+  Site *site;
+  for (site = sl->list; site; site = site->next) {
+    if (site->prefs->check_board && site->board->update_request == 1) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* ----------------------------------- */
 /*        Main Network thread          */
 /* ----------------------------------- */
@@ -1506,42 +1524,45 @@ void *Net_loop (Dock *dock) {
     if (flag_update_prefs_request) {
       wmcc_prefs_relecture(dock, flag_update_prefs_request); flag_update_prefs_request = 0;
     }
+    
 
     /* update loop for all sites */
     for (site = dock->sites->list; site; site = site->next) {
       if (flag_update_prefs_request) break; /* priorité !! */
-
-      if (site->prefs->check_board && site->board->update_request > 1)
-	site->board->update_request--;
+      if (dock->coin_coin_request > 0) break;
+      if (site->prefs->check_board && site->board->update_request > 1) {
+	  site->board->update_request--;
+      }
 
       if (site->news_update_request > 1)
 	site->news_update_request--;
 
-      /* this is a good example of how long variable names may lead
-	 to an unreadable source code */
-      if (site->news_refresh_cnt > site->news_refresh_delay || 
-	  site->news_update_request == 1) {
-	site->news_refresh_cnt = 0;
-	site->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
-	if (site->prefs->check_news) {
-	  dock->wmcc_state_info = WMCC_UPDATING_NEWS;
-	  site_news_dl_and_update(site); ALLOW_X_LOOP;
+      if (!is_board_update_requested(dock->sites)) {
+	/* this is a good example of how long variable names may lead
+	   to an unreadable source code */
+	if (site->news_refresh_cnt > site->news_refresh_delay || 
+	    site->news_update_request == 1) {
+	  site->news_refresh_cnt = 0;
+	  site->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
+	  if (site->prefs->check_news) {
+	    dock->wmcc_state_info = WMCC_UPDATING_NEWS;
+	    site_news_dl_and_update(site); ALLOW_X_LOOP;
+	  }
+	  if (flag_update_prefs_request) break; /* priorité !! */
+	  
+	  if (site->prefs->check_comments && !is_board_update_requested(dock->sites)) {
+	    dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
+	    site_yc_dl_and_update(site); ALLOW_X_LOOP;
+	  }
+	  if (flag_update_prefs_request) break; /* priorité !! */
+	  
+	  if (site->prefs->check_messages && !is_board_update_requested(dock->sites)) {
+	    dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
+	    site_msg_dl_and_update(site); ALLOW_X_LOOP;
+	  }
+	  site->news_update_request = 0;
 	}
-	if (flag_update_prefs_request) break; /* priorité !! */
-
-	if (site->prefs->check_comments) {
-	  dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
-	  site_yc_dl_and_update(site); ALLOW_X_LOOP;
-	}
-	if (flag_update_prefs_request) break; /* priorité !! */
-
-	if (site->prefs->check_messages) {
-	  dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
-	  site_msg_dl_and_update(site); ALLOW_X_LOOP;
-	}
-	site->news_update_request = 0;
       }
-   
     
       if (site->prefs->check_board &&
 	  (site->board->board_refresh_cnt > site->board->board_refresh_delay ||

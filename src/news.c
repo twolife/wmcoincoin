@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.5 2002/08/21 23:20:57 pouaite Exp $
+  rcsid=$Id: news.c,v 1.6 2002/08/29 00:15:53 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.6  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.5  2002/08/21 23:20:57  pouaite
   coin
 
@@ -362,6 +365,12 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
   char *url_tab[MAX_URL];
   char *url_tab_desc[MAX_URL];
   int nb_url = 0;
+
+  {
+    char *s = str_printf("news #%d", id_type_lid(n->id));
+    pp_set_download_info(site->prefs->site_name, s);
+    free(s);
+  }
 
   err = 1;
 
@@ -715,7 +724,7 @@ site_news_dl_and_update(Site *site)
 
   /* on se protege */
   flag_updating_news++;
-
+  pp_set_download_info(site->prefs->site_name, "d/l news backend");
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(site->prefs->site_path) ? "/" : ""), 
 	     site->prefs->site_path, site->prefs->path_news_backend); 
@@ -917,6 +926,7 @@ site_news_dl_and_update(Site *site)
   if (site_news_count(site) == 0) {
     site->news_updated = 1; // pour forcer l'affiche d'un message particulier quand ttes les news sont trop vieilles 
   }
+  pp_set_download_info(NULL, NULL);
 
 
   flag_updating_news--;

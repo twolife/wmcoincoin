@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.11 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: http.h,v 1.12 2002/08/29 00:15:53 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.12  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.11  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -81,6 +84,8 @@ typedef struct {
 
   int        content_length;
   int        error;
+
+  int        response; /* 404, 200, 502 etc.. */
 
   char * post;
 } HttpRequest;

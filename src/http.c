@@ -445,7 +445,8 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
 static HostEntry *
 http_resolv_name(const char *host_name, int force_dns_query)
 {
-  HostEntry *h;
+  HostEntry *h = NULL;
+  int h_found = 0;
   
   int do_dns_query = force_dns_query;
 
@@ -453,10 +454,12 @@ http_resolv_name(const char *host_name, int force_dns_query)
   h = dns_cache;
   while (h) {
     if (strcasecmp(host_name, h->host_name) == 0) {
+      h_found = 1;
       break;
     }
     h = h->next;
   }
+
   if (h == NULL) {
     h = (HostEntry*) calloc(1, sizeof(HostEntry)); assert(h);
     h->host_name = strdup(host_name);
@@ -467,18 +470,19 @@ http_resolv_name(const char *host_name, int force_dns_query)
   if (do_dns_query) {
     flag_gethostbyname = 1;
 
-    printf("gethostbyname..\n");
 #ifndef DONOTFORK_GETHOSTBYNAME	  
     gethostbyname_nonbloq(host_name, h->host_addr);
 #else
     gethostbyname_bloq(host_name, h->host_addr);
 #endif
     flag_gethostbyname = 0;
-    if (h->host_addr[0]) {
-      dns_cache = h;
-    } else {
-      free(h->host_name); free(h);
-      h = NULL;
+    if (h_found == 0) {
+      if (h->host_addr[0]) {
+	dns_cache = h;
+      } else {
+	free(h->host_name); free(h);
+	h = NULL;
+      }
     }
   }
   if (h && h->host_addr[0]) {
@@ -669,6 +673,7 @@ http_skip_header(HttpRequest *r)
 	  j = 0;
 	  while (buff[j] != ' ' && buff[j]) j++;
 	  if (buff[j] == ' ') {
+	    r->response = atoi(buff+j+1);
 	    if (strcasecmp("304 Not Modified\n", buff+j+1) == 0) {
 	      r->content_length = 0; /* ça sert à rien d'essayer de lire un truc vide 
 					c'est pas super joli de faire ça ici mais ça ira pour cette fois
@@ -679,7 +684,7 @@ http_skip_header(HttpRequest *r)
 		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
-	      printf(_("http_skip_header[%s]: error detected: '%s'"), http_last_url, buff+j+1);
+	      myprintf(_("[%<MAG %s>]: %<yel %s>"), http_last_url, buff+j+1);
 	      r->error = 1;
 	    }
 	  }
@@ -813,6 +818,8 @@ http_get_line(HttpRequest *r, char *s, int sz)
 #else
   WSASetLastError(0);
 #endif
+  //  if (r->response != 0 && r->response != 200) return 0;
+
   do {
 
     while (r->error == 0 && (got = http_read(r, s+i, 1)) > 0) {
@@ -1008,7 +1015,6 @@ http_request_send(HttpRequest *r)
   return;
 
  error_close:
-  printf(_("error in the answer...\n"));
   http_request_close(r); r->fd = SOCKET_ERROR;
   if (header) free(header);
   r->error = 1;

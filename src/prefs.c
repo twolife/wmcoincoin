@@ -994,7 +994,7 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg)
   sp = calloc(1, sizeof(SitePrefs));
   p->site[p->nb_sites-1] = sp;
   wmcc_site_prefs_copy(sp, global_sp);
-  if ((err == option_get_string_list(arg, wmcc_options_strings[OPT_site], &sp->all_names, &sp->nb_names))) return err;
+  if ((err = option_get_string_list(arg, wmcc_options_strings[OPT_site], &sp->all_names, &sp->nb_names))) return err;
   assert(sp->all_names);
   sp->site_name = sp->all_names[0];
   return NULL;

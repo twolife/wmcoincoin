@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.73 2002/08/26 00:52:22 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.74 2002/08/29 00:15:53 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.74  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.73  2002/08/26 00:52:22  pouaite
   coin coin coin
 
@@ -1244,7 +1247,13 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   if (pw) {
     Board *board = dock->sites->boards->btab[id_type_sid(pw->parent->id)];
     if (id_type_lid(pw->parent->id) > board->last_post_id_prev) {
-      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8080ff));
+      unsigned long pixel = 0x8080ff;
+      if ((wmcc_tic_cnt - board->wmcc_tic_cnt_last_check) > 10*(1000/WMCC_TIMER_DELAY_MS)) {
+	pixel = ((((bgpixel & 0xff0000) + (pixel & 0xff0000))/2 & 0xff0000) + 
+		 (((bgpixel & 0x00ff00) + (pixel & 0x00ff00))/2 & 0x00ff00) + 
+		 (((bgpixel & 0x0000ff) + (pixel & 0x0000ff))/2 & 0x0000ff));
+      }
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(pixel));
       XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 5, pp->fn_h);
     }
   }

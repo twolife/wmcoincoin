@@ -12,10 +12,13 @@
 /* --------------- gestion des commentaire -------------- */
 
 /*
-  rcsid=$Id: comments.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: comments.c,v 1.3 2002/08/29 00:15:53 pouaite Exp $
 
   ChangeLog:
   $Log: comments.c,v $
+  Revision 1.3  2002/08/29 00:15:53  pouaite
+  cosmétique et capillotraction
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -140,7 +143,8 @@ site_yc_dl_and_update(Site *site)
     snprintf(path, 2048, "%s/wmcoincoin/test/%s/posts.php3", getenv("HOME"),site->prefs->site_name);
     myprintf(_("DEBUG: opening %<RED %s>\n"), path);
   }
-
+  
+  pp_set_download_info(site->prefs->site_name, "updating comments");
 
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
   if (site->prefs->use_if_modified_since) { r.p_last_modified = &site->comments_last_modified; }
@@ -348,6 +352,7 @@ site_yc_dl_and_update(Site *site)
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      site->prefs->site_name, path, http_error());
   }
+  pp_set_download_info(NULL,NULL);
 }
 
 /* detruit tous les commentaires */
