@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.67 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.68 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.68  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.67  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -695,8 +698,8 @@ pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode
 
   if (nick_mode) {
     char *p;
-#define SUA_SZ 15
-    char short_ua[SUA_SZ];
+    //#define SUA_SZ 15
+    //char short_ua[SUA_SZ];
     int is_login;
 
     /*
@@ -707,8 +710,8 @@ pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode
       p = mi->tatouage->name;
       if (strcmp(mi->tatouage->name, "?") == 0) {
     */
-	make_short_name_from_ua(mi->useragent, short_ua, SUA_SZ);
-	p = short_ua;
+    //make_short_name_from_ua(mi->useragent, short_ua, SUA_SZ);
+	p = mi->miniua.name;
 	/*      }
     } else p = "[???]";
 	*/
@@ -2326,14 +2329,7 @@ pp_boardshot_save_msg( board_msg_info *mi, FILE *file )
     free(tmp);
   } else {
     char *p;
-    p = mi->tatoo.name;
-    /*    char short_ua[15];
-    if (mi->tatouage) {
-      if (strcmp(mi->tatouage->name, "?") == 0) {
-	make_short_name_from_ua(mi->useragent, short_ua, 15);
-	p = short_ua;
-      }
-      } else p = "[???]";*/
+    p = mi->miniua.name;
     tmp = pp_boardshot_encode(p);
     fprintf( file, "<td align=CENTER><FONT color=brown>%.12s</FONT></td>\n", tmp);
     free(tmp);

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.48 2002/08/17 18:33:40 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.49 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.49  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.48  2002/08/17 18:33:40  pouaite
   grosse commition
 
@@ -180,7 +183,7 @@
 #include <X11/extensions/shape.h>
 #include <locale.h>
 
-#include <libintl.h>
+#include "gettext.h"
 #define _(String) gettext (String)
 
 #include "coincoin.h"
@@ -372,9 +375,6 @@ check_if_board_was_updated(Dock *dock)
     if (flag_board_updated) {
       Site *s;
       int i;
-
-      for (i=0; i < 5; i++) dock->board_time[i] = 'x';
-      dock->board_time[5] = 0;
 
       dock->trib_trollo_rate = 0;
       dock->trib_trollo_score = 0;
@@ -1814,7 +1814,6 @@ main(int argc, char **argv)
   dock->newstitles_pos = 0; 
   dock->newstitles_char_dec = 0;
   dock->newstitles[0] = 0;
-  memset(dock->board_time, 0, 6);
 
   if (Prefs.start_in_boss_mode == 0) {
     dock_refresh_normal(dock);

@@ -305,7 +305,9 @@ destroy_string_list(char ***list, int *nb_elt) {
   }
 }
 
-/* lecture d'une liste de chaines, séparées par des virgules */
+/* lecture d'une liste de chaines, séparées par des virgules 
+   les doubles quotes " dans la chaine doivent être slashées
+*/
 char*
 option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *nb_elt)
 { 
@@ -329,7 +331,7 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
       s++;
       i = 0;
       while (*s && i < 1023) {
-	if (*s == '\\' && *(s+1) != '"') {
+	if (*s == '\\' && *(s+1) == '"') {
 	  s++;
 	} else if (*s == '"') {
 	  break;
@@ -405,7 +407,7 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
     s++;
     i = 0;
     while (*s && i < 1023) {
-      if (*s == '\\' && *(s+1) != '"') {
+      if (*s == '\\' && *(s+1) == '"') {
 	s++;
       } else if (*s == '"') {
 	break;
@@ -427,6 +429,149 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
  erreur:
   return str_printf(_("Invalid argument for option '%s', word %d: you have to specify a list of [UA|LOGIN|ID|etc]:[NUM:]\"a word\" separated with commas\n"), optname, cnt);
 }
+
+
+/*
+  encore plus compliquée ;) on reprends la precedente et on la bidouille 
+*/
+char*
+option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
+{
+  int cnt;
+  char mot[1024];
+  unsigned char *s, *s_tok;
+  MiniUARule *r, *pr;
+  int rule_section = 1;
+
+  /* on insere à la fin de la liste pour respecter l'ordre des regles
+     (pt1 j'ai mis longtemps à comprendre pour ces *** de regex marchaient bizarrement)
+  */
+  ALLOC_OBJ(r, MiniUARule); r->next = NULL;
+  pr = rules->first;
+  if (pr) {
+    while (pr->next) pr = pr->next;
+    pr->next = r;
+  } else rules->first = r;
+
+  r->rgx = NULL;
+  r->site_name = NULL;
+  r->user_login = NULL;
+  r->rua = NULL;
+  r->color = -1;
+  r->symb = -1;
+  r->ua_terminal = 0;
+  r->color_terminal = 0;
+  r->symb_terminal = 0;
+  s = optarg; s_tok = s;
+  cnt = 0;
+  do {
+    enum { MATCH_UA, MATCH_LOGIN, MATCH_SITE, REPL_UA, REPL_COL, REPL_SYMB, TOKERR } tok_type;
+    int separ_ok = 0;
+    int i;
+    s_tok = s; /* juste pour pouvoir signaler sur que element s'est produit l'erreur */
+    if (strncmp(s, "=>", 2) == 0 && rule_section == 1) { separ_ok = 1; rule_section = 0; s += 2; }
+    else if (s == optarg) separ_ok = 1;
+    else if (*s == ',') { separ_ok = 1; s++; }
+    else goto erreur;
+
+    while (*s && *s <= ' ') s++;
+    
+    tok_type = TOKERR;
+    if (rule_section) {
+      if (strncasecmp(s, "ua:", 3) == 0) { tok_type = MATCH_UA; s+= 3; }
+      if (strncasecmp(s, "login:", 6) == 0) { tok_type = MATCH_LOGIN; s+= 6; }
+      if (strncasecmp(s, "site:", 5) == 0) { tok_type = MATCH_SITE; s+= 5; }
+    } else {
+      if (strncasecmp(s, "color=" , 6) == 0) { tok_type = REPL_COL; s+= 6; }
+      if (strncasecmp(s, "color:=", 7) == 0) { tok_type = REPL_COL; s+= 7; r->color_terminal = 1; }
+      if (strncasecmp(s, "ua="    , 3) == 0) { tok_type = REPL_UA; s+= 3; }
+      if (strncasecmp(s, "ua:="   , 4) == 0) { tok_type = REPL_UA; s+= 4; r->ua_terminal = 1; }
+      if (strncasecmp(s, "symb="  , 5) == 0) { tok_type = REPL_SYMB; s+= 5; }
+      if (strncasecmp(s, "symb:=" , 6) == 0) { tok_type = REPL_SYMB; s+= 6; r->symb_terminal = 1; }
+    }
+
+    if (tok_type == TOKERR) goto erreur;
+    if (*s != '"') goto erreur;
+    s++;
+    i = 0;
+    while (*s && i < 1023) {
+      if (*s == '\\' && *(s+1) == '"') {
+	s++;
+      } else if (*s == '"') {
+	break;
+      }
+      mot[i++] = *s; s++;
+    }
+    mot[i++] = 0;
+    if (*s != '"') goto erreur;
+    s++;
+    while (*s && *s <= ' ') s++;
+
+    switch (tok_type) {
+    case MATCH_UA: 
+      {
+	int err;
+	if (r->rgx) goto erreur;
+
+	ALLOC_OBJ(r->rgx,regex_t);
+	err = regcomp(r->rgx, mot, REG_EXTENDED);
+	if (err != 0) {
+	  char *errmsg;
+	  int regex_errbuffsz;
+	  char *regex_errbuf;
+	  
+	  /* cf man regex */
+	  regex_errbuffsz = regerror(err, r->rgx, 0, 0);
+	  regex_errbuf = calloc(regex_errbuffsz+1, sizeof(char));
+	  regerror(err, r->rgx, regex_errbuf, regex_errbuffsz);
+	  
+	  errmsg = str_printf(_("%s : '%s' is a wrong regexp: %s"), optname, mot, regex_errbuf);
+	  free(regex_errbuf);
+	  return errmsg;
+	}
+      } break;
+    case MATCH_SITE:
+      {
+	if (r->site_name) goto erreur;
+	r->site_name = strdup(mot);
+      } break;
+    case MATCH_LOGIN:
+      {
+	if (r->user_login) goto erreur;
+	r->user_login = strdup(mot);
+      } break;
+    case REPL_UA:
+      {
+	if (r->rua) goto erreur;
+	r->rua = strdup(mot);
+      } break;
+    case REPL_COL:
+      {
+	if (r->color >= 0) goto erreur;
+	if (sscanf(mot, "#%06x", &r->color) != 1) goto erreur;
+      } break;
+    case REPL_SYMB:
+      {
+	int symb;
+	if (r->symb >= 0) goto erreur;
+	for (symb=0; symb < NB_SYMBOLES; symb++) {
+	  if (strcasecmp(mot, symboles[symb].name) == 0) break;
+	}
+	if (symb == NB_SYMBOLES) goto erreur;
+	r->symb = symb;
+      } break;
+    default:
+      assert(0);
+    }
+    cnt++;
+  } while (*s);
+  return NULL;
+
+ erreur:
+  return str_printf(_("Invalid argument for option '%s' here: '%.20s'\n"), optname, s_tok);
+}
+
+
 
 /* remplit la structure des prefs de site avec les valeurs par défaut */
 void
@@ -450,7 +595,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->proxy_name = NULL;
   p->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   p->proxy_nocache = 0;
-  ASSIGN_STRING_VAL(p->site_root, "linuxfr.org");
+  ASSIGN_STRING_VAL(p->site_root, "www.linuxfr.org");
   p->site_port = 80;
   ASSIGN_STRING_VAL(p->site_path, "");
   ASSIGN_STRING_VAL(p->path_board_backend, "board/remote.xml");
@@ -644,6 +789,8 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   ASSIGN_STRING_VAL(p->board_scrinechote, "~/wmcc_board_shot.html");  
   p->pinnipede_open_on_start = 0;
   
+  p->miniuarules.first = NULL;
+
   p->nb_sites = 0;
   { 
     int i;
@@ -685,6 +832,18 @@ wmcc_prefs_destroy(GeneralPrefs *p)
     wmcc_site_prefs_destroy(p->site[i]); free(p->site[i]); p->site[i] = NULL; 
   }
   p->nb_sites = 0;
+  {
+    MiniUARule *r, *r_next;
+    for (r = p->miniuarules.first; r; r = r_next) {
+      FREE_STRING(r->site_name);
+      FREE_STRING(r->user_login);
+      FREE_STRING(r->rua);
+      if (r->rgx) regfree(r->rgx); 
+      r->rgx = NULL;
+      r_next = r->next;
+      free(r);
+    }
+  }
 }
 
 SitePrefs *
@@ -884,7 +1043,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTSG_http_path_messages: {
     ASSIGN_STRING_VAL(sp->path_messages, arg); 
   } break; 
-  case OPTSG_http_cookie: {
+  case OPTS_http_cookie: {
     ASSIGN_STRING_VAL(sp->user_cookie, arg); 
   } break; 
   case OPTSG_http_force_fortune_retrieval: {
@@ -1105,7 +1264,11 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPT_spell_dict: {
     ASSIGN_STRING_VAL(p->ew_spell_dict, arg); 
   } break;   
-  default: printf(_("Attention chérie, ça va trancher\n")); assert(0);
+  case OPT_board_miniua_rule: {
+    char *err;
+    if ((err = option_miniua_rule(arg, opt_name, &p->miniuarules))) return err;
+  } break;
+  default: printf(_("Watch out darling, it's gonnah cut\n")); assert(0);
   }
   return NULL;
 }

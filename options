@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.31 2002/08/18 00:29:30 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.32 2002/08/18 19:00:27 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.32  2002/08/18 19:00:27  pouaite
+#%  plop
+#%
 #%  Revision 1.31  2002/08/18 00:29:30  pouaite
 #%  en travaux .. prière de porter le casque
 #%
@@ -421,6 +424,32 @@
 
 ### ouvre le pinnipede des le lancement du coincoin
 #pinnipede.auto_open: off
+
+
+### cette option remplace l'ancien fichier useragents
+### elle est mieux(c)(tm)
+### les regles sont testées dans l'ordre, les regles non terminal se signalent par '...'
+### et les regles terminales par un seul point.
+### on peut matcher 
+###   'ua:' , 'site:', 'login:'
+### et remplacer (après le '=>')
+###   'ua:' , 'symb:', 'color:'
+### symb et color n'affectent que le trolloscope
+### pour les ua, il s'agit des regex posix en mode étendu (cf man regex)
+### et le remplacement des ua peut faire intervenir des \1, \2 etc (regarder
+### par exemple la regle pour internet explorer)
+board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:"un bot!",symb:"circ",color:"ffffff".
+board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:"dae",symb:"cross",color:"00ff00".
+
+board.miniua_rule:  ua:".*py[Cc].*/([0-9]\.[0-9]).*" => ua:"pyc²/\1"
+board.miniua_rule:  ua:".*wm[Cc].*/([0-9]\.[0-9]).*" => ua:"pyc²/\1"
+
+board.miniua_rule:               => symb:"square", color:"#500000"...
+board.miniua_rule:   site:"dlfp" => symb:"dtri", color:"#ff0000"...
+board.miniua_rule:   site:"woof" => symb:"square"...
+board.miniua_rule:   site:"glandium" => symb:"rutri", color:"0000ff" .
+board.miniua_rule:  login:"kadreg" => color:"80ff00"
+
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker

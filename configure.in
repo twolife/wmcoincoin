@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.30  2002/08/18 19:00:27  pouaite
+dnl   plop
+dnl
 dnl   Revision 1.29  2002/08/17 18:33:37  pouaite
 dnl   grosse commition
 dnl
@@ -87,7 +90,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8cvs)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8oulala)
 AM_CONFIG_HEADER(config.h)
 
 dnl Checks for host/os name
@@ -187,5 +190,5 @@ esac
 
 
 
-AC_OUTPUT(Makefile src/Makefile doc/Makefile po/Makefile.in m4/Makefile ) 
+AC_OUTPUT(Makefile src/Makefile doc/Makefile po/Makefile.in m4/Makefile  intl/Makefile ) 
 

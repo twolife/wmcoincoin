@@ -105,12 +105,12 @@ struct _Message {
   Site *site;
 };
 
-
-typedef struct _board_msg_info_tatoo {
+#define MINIUA_SZ 20
+typedef struct _MiniUA {
   unsigned char R,G,B;
   unsigned char symb; /* numero du symbole */
-  char name[20];
-} board_msg_info_tatoo;
+  char name[MINIUA_SZ];
+} MiniUA;
 
 typedef struct _board_msg_info board_msg_info;
 
@@ -162,7 +162,7 @@ struct _board_msg_info {
     describes how the message will appear in the trolloscope 
      also contains a hopefully useful short name describing the useragent
   */
-  board_msg_info_tatoo tatoo;
+  MiniUA miniua;
 
   /* le niveau de trollitude du post (cf troll_detector.c) */
   int troll_score BITFIELD(13); 
@@ -326,107 +326,6 @@ typedef struct Leds {
 } Leds;
 
 
-typedef struct _SymboleDef {
-  char *s[5];
-  char *name;
-} SymboleDef;
-
-
-#define NB_SYMBOLES 16
-
-
-/* et attention, on peut faire de l'antialiasing (hum..)
-   # -> le pixel est éclairci (rgb*5/4)
-   X -> le pixel est a la couleur complete
-   x -> divise le rgb par 2
-   : -> divise par 3
-   . -> divise par 4
-   c'est-y-pas cool ?
-*/
-#ifndef GLOBALS_HERE
-extern SymboleDef symboles[NB_SYMBOLES];
-#else
-SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
-				      "     ",
-				      "     ",
-				      "     ",
-				      "     "},"ignore"},
-				    {{"xxxxX",
-				      "xXXX#",
-				      "xXXX#",
-				      "xXXX#",
-				      "X####"},"carre"},
-				    {{" ::: ",
-				      ":X##X",
-				      ":# :#",
-				      ":#::#",
-				      " X##."},"trou"},
-				    {{"  x  ",
-				      " :X: ",
-				      " XXX ",
-				      ":XXX:",
-				      "XXXXX"},"trianglebas"},
-				    {{"XXXXX",
-				      ":XXX:",
-				      " XXX ",
-				      " :X: ",
-				      "  x  "},"triangle"},
-				    {{"X:   ",
-				      "XXX: ",
-				      "XXXXX",
-				      "XXX: ",
-				      "X:   "},"trianglegauche"},
-				    {{"   :X",
-				      " :XXX",
-				      "XXXXX",
-				      " :XXX",
-				      "   XX"},"triangledroite"},
-				    {{"   :X",
-				      "  :X#",
-				      " :X# ",
-				      ":X#  ",
-				      "X#   "},"antislash"},
-				    {{"Xx   ",
-				      "xXx  ",
-				      " xXx ",
-				      "  xXx",
-				      "   xX"},"slash"}
-,				    {{"X. .X",
-				      ".X.X.",
-				      " .X. ",
-				      ".X.X.",
-				      "X. .X"},"croix"},
-				    {{"x    ",
-				      "xX   ",
-				      "xXX  ",
-				      "xXXX ",
-				      "X####"},"coin11"},
-				    {{"    X",
-				      "   x#",
-				      "  xX#",
-				      " xXX#",
-				      "X####"},"coin12"},
-				    {{"xxxxX",
-				      "xXX# ",
-				      "xX#  ",
-				      "x#   ",
-				      "X    "},"coin21"},
-				    {{"xxxxX",
-				      " XXX#",
-				      "  XX#",
-				      "   X#",
-				      "    X"},"coin22"},
-				    {{"  X  ",
-				      "  X  ",
-				      "XXXXX",
-				      "  X  ",
-				      "  X  "},"plus"},
-				    {{"  x  ",
-				      " xXX ",
-				      "xXXX#",
-				      " XX# ",
-				      "  #  "}, "losange"}};
-#endif
 
 #define DOCK_WIN(d) ((Prefs.use_iconwin ? (d)->iconwin : (d)->win))
 
@@ -533,8 +432,6 @@ typedef struct _Dock {
     (contient l'id, ce n'est pas un flag 0/1) */
   id_type view_id_in_newstitles;
   int view_id_timer_cnt;
-
-  char board_time[6];
 
   volatile int coin_coin_request;
 
@@ -734,8 +631,6 @@ Board *board_create(Site *site, Boards *boards);
 void board_tatouage(Board *trib, board_msg_info *it);
 /* renvoie l'age du message, en secondes */
 time_t board_get_msg_age(const Board *trib, const board_msg_info *it);
-/* renvoie l'estimation de l'heure actuelle sur la board -- en MINUTES */
-time_t board_get_time_now(const Board *trib);
 void board_frequentation(const Board *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt);
 void board_get_trollo_rate(const Board *trib, float *trate, float *tscore);
 void boards_update_boitakon(Boards *boards);

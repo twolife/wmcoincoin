@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.16 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.17 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.17  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.16  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -396,7 +399,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
   free(col_tab);  
   return rimg;
  ralala:
-  fprintf(stderr, _("dommage, vous avez trouvé une pouille dans le 'parseur' de .xpm\n VOTRE fichier .xpm n'est pas conforme à MON standard xpm\nerr=%d, la ligne qui pose problème est: '%s'\n En le réécrivant avec un autre logiciel ça devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n"), err, xpm[i+1]);
+  fprintf(stderr, _("dommage, vous avez trouve une pouille dans le 'parseur' de .xpm\n VOTRE fichier .xpm n'est pas conforme a MON standard xpm\nerr=%d, la ligne qui pose probleme est: '%s'\n En le reecrivant avec un autre logiciel ca devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n"), err, xpm[i+1]);
   exit(1);
   return NULL;
 }

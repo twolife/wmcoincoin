@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.29 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.30 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.30  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.29  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -95,6 +98,7 @@
 
 
 /* construit un 'nom' à partir des premiers mots du useragent */
+
 void
 make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_sz)
 {
@@ -106,10 +110,10 @@ make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_s
   if ((int)strlen(name) >= name_sz-1) {
     int i;
 
-    /* essaye de ramener l'useragent à une longueur correcte sans tronquer de mot */
+    // essaye de ramener l'useragent à une longueur correcte sans tronquer de mot 
     i = name_sz-2;
     
-    /* cas facile: des espaces */
+    // cas facile: des espaces 
     if (name[i] == ' ') {
       while (name[i] == ' ' && i) i--;
       name[i+1] = 0;

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: board.c,v 1.3 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.3  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -328,44 +331,98 @@ board_frequentation(const Board *board, int nb_minutes, int *ua_cnt, int *msg_cn
   }
 }
 
-/* 
-   essaye d'identifier le user agent selon
-   les regle (regular expression) definies dans board->rules 
 
-   ce système est tout vieux (depuis la v1.0beta!) et tout moche
-*/
-void
-board_tatouage(Board *board UNUSED, board_msg_info *it)
+/* je l'aime bien celle la */
+static void
+miniua_eval_from_ua(MiniUARules *rules, board_msg_info *mi)
 {
-/*   board_load_rule *r; */
-/*   int rcnt; */
+#define MUA_MAX_MATCH 9
 
-  it->tatoo.R = 255; it->tatoo.G = 255; it->tatoo.B = 0;
-  it->tatoo.symb = 0;
-  strcpy(it->tatoo.name, "plop");
-  
-/*   r = board->rules; */
-/*   if (r == NULL) { */
-/*     BLAHBLAH(1, printf(_("Unable to tattoo: no rules\n"))); */
-/*     return; */
-/*   } */
-/*   rcnt = 0; */
-/*   while (r) { */
-/*     int ca_colle; */
-/*     ALLOW_X_LOOP; // car les regex, ça prend du temps !  */
-/*     ca_colle = regexec(&r->rule, it->useragent, (size_t)0, (regmatch_t*)NULL, 0); */
-/*     if (ca_colle == 0) { */
-/*       it->tatouage = r;  */
-/*       BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA recognized> in the %d regexp.\n"),it->useragent, rcnt)); */
-/*       break; */
+  MiniUARule *r;
+  int sid, matched;
+  int color_done = 0, ua_done = 0, symb_done = 0;
+
+  assert(mi);
+  MiniUA *mua = &mi->miniua;
+  sid = id_type_sid(mi->id);
+
+  /* valeur par defaut */
+  mua->R = 0x80;
+  mua->G = 0x80;
+  mua->B = 0x80;
+  mua->symb = 0;
+  make_short_name_from_ua(mi->useragent, mua->name, MINIUA_SZ);
+
+  for (r = rules->first; r; r = r->next) {
+    int res;
+    
+    matched = 0;
+
+    /* ça colle pour le login / nom du site ? */
+    if ((r->site_name == NULL || strcasecmp(Prefs.site[sid]->site_name, r->site_name) == 0) &&
+	(r->user_login == NULL || strcasecmp(mi->login, r->user_login) == 0)) {
+      regmatch_t match[MUA_MAX_MATCH];
+
+      /* y'a-t-il une regexp à matcher ? */
+      if (r->rgx) {
+	res = regexec(r->rgx, mi->useragent, MUA_MAX_MATCH, match, 0);
+	if (res == 0) { /*       \o/      */
+	  matched = 1;
+	  /* y'a -t-il une regle de remplacement de l'ua ? */
+	  if (r->rua && ua_done == 0) {
+	    const char *keys[] = {"\\0", "\\1", "\\2", "\\3", "\\4", "\\5", "\\6", "\\7", "\\8", "\\9"};
+	    char *repl[MUA_MAX_MATCH];
+	    char *s;
+	    int i;
+
+	    for (i = 0; i < MUA_MAX_MATCH; i++) {
+	      int i0, i1;
+	      i0 = match[i].rm_so; i1 = match[i].rm_eo;
+	      if (i0 != -1 && i1 != -1) { 
+		assert(i0 <= i1);
+		repl[i] = malloc(i1-i0 + 1);
+		strncpy(repl[i], mi->useragent + i0, i1-i0);
+		repl[i][i1-i0] = 0;
+	      } else repl[i] = strdup("<!>");
+	    }
+	    /* sale cast */
+	    s = str_multi_substitute(r->rua, keys, (const char **)repl, MUA_MAX_MATCH);
+	    
+	    /* printf("miniua <--- '%s' 1:'%s' 2:'%s' 3:'%s'\n", s, repl[0], repl[1], repl[2]); */
+
+	    strncpy(mua->name, s, MINIUA_SZ); mua->name[MINIUA_SZ-1] = 0;
+	    free(s);
+	    for (i = 0; i < MUA_MAX_MATCH; i++) free(repl[i]);
+
+	    ua_done = r->ua_terminal;
+	  }
+	}
+      } else {
+	matched = 1;
+	if (r->rua) { /* une regle statique */
+	  strncpy(mua->name, r->rua, MINIUA_SZ); mua->name[MINIUA_SZ-1] = 0;
+	}
+      }
+    }
+
+    if (matched) {
+      if (r->color >= 0 && color_done == 0) {
+	mua->R = (r->color & 0xff0000) >> 16;
+	mua->G = (r->color & 0x00ff00) >> 8;
+	mua->B = (r->color & 0x0000ff);
+	color_done = r->color_terminal;
+      }
+      if (r->symb >= 0 && symb_done == 0) {
+	mua->symb = r->symb;
+	symb_done = r->symb_terminal;
+      }
+    }
+/*     if (matched) { */
+/*       printf("msg %d [%.20s] matched width {%s,%s,%p} %s\n", id_type_lid(mi->id), mi->useragent, r->site_name, r->rua, r->rgx, r->terminal ? "[TERMINAL]" : ""); */
 /*     } */
-/*     rcnt++;	        */
-/*     r = r->next; */
-/*   } */
-/*   if (it->tatouage == NULL) { */
-/*     BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA not recognized> in the regexps\n"), it->useragent)); */
-/*   } */
-
+    if (color_done && ua_done && symb_done)
+      break;
+  }
 }
 
 /* 
@@ -374,17 +431,7 @@ board_tatouage(Board *board UNUSED, board_msg_info *it)
 time_t
 board_get_msg_age(const Board *board, const board_msg_info *it)
 {
-  time_t linuxfr_time_now;
-  linuxfr_time_now = board->last_post_timestamp + board->nbsec_since_last_msg;
-  return (linuxfr_time_now - it->timestamp);
-}
-
-/* renvoie l'estimation de l'heure actuelle sur la tribune --
- en secondes */
-time_t
-board_get_time_now(const Board *board)
-{
-  return (board->last_post_timestamp + board->nbsec_since_last_msg);
+  return MAX(time(NULL) - (it->timestamp + board->time_shift),0);
 }
 
 /*
@@ -810,7 +857,7 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   it->is_answer_to_me = 0;
 
   /* essaye d'identifier le user agent */
-  board_tatouage(board, it);
+  miniua_eval_from_ua(&Prefs.miniuarules, it);
 
   /* evalue le potentiel trollesque */
   troll_detector(it);

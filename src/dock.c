@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.18 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.19 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.19  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.18  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -151,7 +154,7 @@ dock_update_pix_trolloscope(Dock *dock)
     }
   }
   
-  for (it = boards->first; it; it = it->next) {
+  for (it = boards->first; it; it = it->g_next) {
     Site *site;
     int age;
 
@@ -159,13 +162,12 @@ dock_update_pix_trolloscope(Dock *dock)
     assert(site);
     assert(site->prefs->check_board);
     assert(site->board);
-    tnow = (board_get_time_now(site->board) + col_nb_sec - 1)/col_nb_sec;
-
+    tnow = (time(NULL) + col_nb_sec - 1)/col_nb_sec;
 
     /* age = board_get_msg_age(trib, it) / 60 / col_nb_min; */
-    age = (tnow - (it->timestamp + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
-    BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_sec=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_sec,tnow));
-    assert(age >= 0);
+    age = (tnow - (it->timestamp + site->board->time_shift + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
+    BLAHBLAH(4, myprintf("sid=%d/id=%<YEL %5d>, age=%<RED %5d> ts=%02d:%02d:%02d, col_nb_sec=%4d, tnow=%8d\n", id_type_sid(it->id), id_type_lid(it->id), age,(it->timestamp/3600)%24, (it->timestamp/60)%60, it->timestamp%60,col_nb_sec,tnow));
+    if (age < 0) age = 0; /* avec les fluctuations du time_shift .. */
     if (age < trib_ncol) {
       /* on empile les message sur la pile d'age 'age' (je suis clair?)*/
       i = 0;
@@ -174,10 +176,10 @@ dock_update_pix_trolloscope(Dock *dock)
       }
       if (i < trib_nrow) {
 	dock->trolloscope[i][age].id = it->id;
-	dock->trolloscope[i][age].R = it->tatoo.R;
-	dock->trolloscope[i][age].G = it->tatoo.G;
-	dock->trolloscope[i][age].B = it->tatoo.B;
-	dock->trolloscope[i][age].symb = it->tatoo.symb;
+	dock->trolloscope[i][age].R = it->miniua.R;
+	dock->trolloscope[i][age].G = it->miniua.G;
+	dock->trolloscope[i][age].B = it->miniua.B;
+	dock->trolloscope[i][age].symb = it->miniua.symb;
       }
     }
   }
@@ -200,6 +202,7 @@ dock_update_pix_trolloscope(Dock *dock)
 	g = dock->trolloscope[i][j].G;
 	b = dock->trolloscope[i][j].B;
 	symb = dock->trolloscope[i][j].symb;
+	//	printf("troll[%3d:%3d] = #%02x%02x%02x / %d\n", i, j, r, g, b, symb);
       } else { 
 	r = trolloscope_bgr; g = trolloscope_bgg; b = trolloscope_bgb; symb = 0;
       }
@@ -562,7 +565,7 @@ refresh_msginfo(Dock *dock)
       if (flag_updating_board == 0) {
 	board_msg_info *mi = boards_find_id(dock->sites->boards, dock->tl_item_survol->id);
 	if (mi) {
-	  strncpy(dock->msginfo, mi->tatoo.name, MAX_MSGINFO_LEN);
+	  strncpy(dock->msginfo, mi->miniua.name, MAX_MSGINFO_LEN);
 	  dock->msginfo[MAX_MSGINFO_LEN-1]=0;
 	}
       } else strcpy(dock->msginfo, "plz wait");
@@ -573,16 +576,26 @@ refresh_msginfo(Dock *dock)
     } else if (dock->flag_survol_led1) {
       sprintf(dock->msginfo, "vit.def:%d",dock->trolloscope_speed);
     } else if (flag_updating_board == 0) {
-      Site *s;
       int nbsec_since_last_msg = 1000000;
-      for (s=dock->sites->list;s; s=s->next) {
-	if (s->board) 
-	  nbsec_since_last_msg = MIN(nbsec_since_last_msg, 
-				     s->board->nbsec_since_last_msg);
-      }
-      sprintf(dock->msginfo, "%s+%02d%s", dock->board_time,
-	      nbsec_since_last_msg,
-	      nbsec_since_last_msg < 100 ? "s" : "");
+      board_msg_info *mi = dock->sites->boards->last;
+      if (mi) {
+	SitePrefs *sp = Prefs.site[id_type_sid(mi->id)];
+	Board *b = dock->sites->boards->btab[id_type_sid(mi->id)];
+	assert(sp);
+	assert(b);
+	nbsec_since_last_msg = time(NULL) - (mi->timestamp + b->time_shift);
+	if (nbsec_since_last_msg < 600) {
+	  sprintf(dock->msginfo, "%.6s+%02ds", sp->site_name,
+		  nbsec_since_last_msg);
+	} else {
+	  if ((nbsec_since_last_msg % 42) == 0) {
+	    sprintf(dock->msginfo, "GNU/HOLE!!");
+	  } else {
+	    sprintf(dock->msginfo, "%.6s+%02dm", sp->site_name,
+		    nbsec_since_last_msg/60);
+	  }
+	}
+      } else sprintf(dock->msginfo, "  ...  ");
     }  else {
       /* strcpy(dock->msginfo, "updating"); */
     }
@@ -834,7 +847,7 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
 	}
 	dock->view_id_in_newstitles = dock->tl_item_survol->id;
 	dock->view_id_timer_cnt = 0;
-	/* myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].tatoo.name); */
+	/* myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].miniua.name); */
       } else {
 	dock->tl_item_clicked = 0;
 	dock->msginfo_defil = 0;

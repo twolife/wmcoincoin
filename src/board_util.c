@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.3 2002/08/18 19:00:28 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.3  2002/08/18 19:00:28  pouaite
+  plop
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -215,7 +218,7 @@ board_key_list_test_thread(Boards *boards, board_msg_info *mi, id_type thread_id
 {
   int i;
   (*antibug)++;
-  if (*antibug > 10000) { printf(_("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n")); return 0; }
+  if (*antibug > 10000) { printf(_("sniff? sniff ? soit vous vous amusez a faire de threads de folie, soit ca sent le BEUGGUE!\n")); return 0; }
 
   if (mi == NULL) return 0;
 

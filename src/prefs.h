@@ -3,6 +3,7 @@
 #include <string.h>
 #include "options_list.h" /* liste des noms des options */
 #include "keylist.h"
+#include "regex.h"
 
 /* valeur absolument maximale de la longueur d'un message envoyé
    (selon les prefs par sites, des valeurs inférieure sont fixées */
@@ -31,6 +32,28 @@ typedef struct {
   unsigned opaque;
   unsigned transp;
 } BiColor;
+
+/*
+  les regles de marquage visuel des messages (pour le trolloscope et les ua raccourcis du pinni)
+*/
+typedef struct _MiniUARule {
+  char     *site_name;   /* si non-nul, doit matcher le site du message */
+  char     *user_login;  /* si non-nul, doit matcher le login du posteur */
+  regex_t  *rgx;         /* si non-nul, l'ua doit matcher la regexp */
+  char     *rua;         /* si non-nul, indique l'ua raccourcie de remplacement (peut
+			    avoir des \1, \2 etc pour faire des truc avec rgx) */
+  int      color;        /* si positif, indique la couleur imposée dans le trolloscope */
+  int      symb;         /* si positif, indique la forme imposée dans le trolloscope */
+  int      ua_terminal:1;     /* si c'est une regle terminale pour l'ua */
+  int      color_terminal:1;  /* si c'est une regle terminale pour la couleur */
+  int      symb_terminal:1;   /* si c'est une regle terminale pour le symbole */
+  struct _MiniUARule *next;
+} MiniUARule;
+
+typedef struct _MiniUARules {
+  MiniUARule *first;
+} MiniUARules;
+
 
 #define NB_PP_KEYWORD_CATEG 5
 
@@ -196,10 +219,111 @@ typedef struct _GeneralPrefs{
   unsigned nb_plop_words;
   int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */
 
+  MiniUARules miniuarules;
 
   int nb_sites;
   SitePrefs *site[MAX_SITES];
 } GeneralPrefs;
+
+
+/* et attention, on peut faire de l'antialiasing (hum..)
+   # -> le pixel est éclairci (rgb*5/4)
+   X -> le pixel est a la couleur complete
+   x -> divise le rgb par 2
+   : -> divise par 3
+   . -> divise par 4
+   c'est-y-pas cool ?
+*/
+#define NB_SYMBOLES 16
+typedef struct _SymboleDef {
+  char *s[5];
+  char *name;
+} SymboleDef;
+
+#ifndef GLOBALS_HERE
+extern SymboleDef symboles[NB_SYMBOLES];
+#else
+SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
+				      "     ",
+				      "     ",
+				      "     ",
+				      "     "},"ignore"},
+				    {{"xxxxX",
+				      "xXXX#",
+				      "xXXX#",
+				      "xXXX#",
+				      "X####"},"square"},
+				    {{" ::: ",
+				      ":X##X",
+				      ":# :#",
+				      ":#::#",
+				      " X##."},"circ"},
+				    {{"  x  ",
+				      " :X: ",
+				      " XXX ",
+				      ":XXX:",
+				      "XXXXX"},"dtri"},
+				    {{"XXXXX",
+				      ":XXX:",
+				      " XXX ",
+				      " :X: ",
+				      "  x  "},"tri"},
+				    {{"X:   ",
+				      "XXX: ",
+				      "XXXXX",
+				      "XXX: ",
+				      "X:   "},"ltri"},
+				    {{"   :X",
+				      " :XXX",
+				      "XXXXX",
+				      " :XXX",
+				      "   XX"},"rtri"},
+				    {{"   :X",
+				      "  :X#",
+				      " :X# ",
+				      ":X#  ",
+				      "X#   "},"antislash"},
+				    {{"Xx   ",
+				      "xXx  ",
+				      " xXx ",
+				      "  xXx",
+				      "   xX"},"slash"}
+,				    {{"X. .X",
+				      ".X.X.",
+				      " .X. ",
+				      ".X.X.",
+				      "X. .X"},"cross"},
+				    {{"x    ",
+				      "xX   ",
+				      "xXX  ",
+				      "xXXX ",
+				      "X####"},"ldtri"},
+				    {{"    X",
+				      "   x#",
+				      "  xX#",
+				      " xXX#",
+				      "X####"},"rdtri"},
+				    {{"xxxxX",
+				      "xXX# ",
+				      "xX#  ",
+				      "x#   ",
+				      "X    "},"lutri"},
+				    {{"xxxxX",
+				      " XXX#",
+				      "  XX#",
+				      "   X#",
+				      "    X"},"rutri"},
+				    {{"  X  ",
+				      "  X  ",
+				      "XXXXX",
+				      "  X  ",
+				      "  X  "},"plus"},
+				    {{"  x  ",
+				      " xXX ",
+				      "xXXX#",
+				      " XX# ",
+				      "  #  "}, "diamond"}};
+#endif
 
 
 
