@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.19 2002/03/09 19:45:52 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.20 2002/03/10 22:45:36 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.20  2002/03/10 22:45:36  pouaite
+  <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
+
   Revision 1.19  2002/03/09 19:45:52  pouaite
   microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
 
@@ -1270,7 +1273,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->path_news_backend = strdup("backend.rss");
   The_Prefs->path_end_news_url = strdup(",0,-1,6.html");
   The_Prefs->path_tribune_add = strdup("board/add.php3");
-  The_Prefs->path_myposts = strdup("users/myposts.php3?order=id");
+  The_Prefs->path_myposts = strdup("users/posts.php3?order=id");
   The_Prefs->path_messages = strdup("messages/");
   The_Prefs->default_trollo_speed = 4;
   The_Prefs->user_cookie = NULL; 

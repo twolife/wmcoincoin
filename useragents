@@ -1,4 +1,4 @@
-#useragents rcsid=$Id: useragents,v 1.3 2002/03/10 16:07:10 pouaite Exp $ 
+#useragents rcsid=$Id: useragents,v 1.4 2002/03/10 22:45:36 pouaite Exp $ 
 #syntaxe: forme[tab]couleur_hexa[tab]regexp[tab]nom[fin_de_ligne]
 #Utilisez bien des TABULATIONS pour separer les champs
 #les formes disponibles:
@@ -22,6 +22,7 @@ croix		00ff00		.*[Dd]ae.*		Dae
 croix		4040ff		.*[Kk]ad.*		Kadreg
 croix		00ffff		jr-lamoule		JR
 carre		ff00ff		.*OmniWeb.*		MACOS X
+carre		ff00ff		.*StarOffice/.*		StarOffice
 trianglegauche	ffff00		.*Nautilus.*		Nautilus
 carre		00d0a0		.*Galeon.*		Galeon
 carre		ff0000		.*MSIE 6.0; Windows NT 5.1.*	IE6/WinXP

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.34 2002/03/10 16:07:10 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.35 2002/03/10 22:45:36 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.35  2002/03/10 22:45:36  pouaite
+  <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
+
   Revision 1.34  2002/03/10 16:07:10  pouaite
   pseudo transp basique dans le pinnipede (en cours..)
 
@@ -2589,7 +2592,8 @@ pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
    else
      fprintf( file, "<tr><td></td>\n");
    
-   fprintf(file,"<td>%s</td>\n", time);
+   fprintf(file,"<td> <span title='%s'> %s </span> </td>\n",mi->useragent, time);
+
    if ( mi->login && strlen(mi->login))
      fprintf(file,"<td><FONT color=red><center>%s</center></FONT></td>\n",mi->login);
    else {

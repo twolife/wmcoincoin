@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.28 2002/03/09 19:45:52 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.29 2002/03/10 22:45:36 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.29  2002/03/10 22:45:36  pouaite
+  <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
+
   Revision 1.28  2002/03/09 19:45:52  pouaite
   microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
 
@@ -367,7 +370,7 @@ exec_coin_coin(Dock *dock)
 	 'vous etes blackliste', ou 'mot interdit', ou autre .. */
       if ((got=http_iread(fd, reponse, 2047))>0) {
 	char *s_reponse = NULL;
-	reponse[l+got] = 0;
+	reponse[got] = 0;
 	if (chunk_encoding) { /* pffff c'est passe-pouille */
 	  int sz = -1;
 	  sscanf(reponse, "%x", &sz);
