@@ -1,3 +1,12 @@
+/*
+  rcsid=$Id: http_win.c,v 1.2 2001/12/02 18:26:06 pouaite Exp $
+  ChangeLog:
+  $Log: http_win.c,v $
+  Revision 1.2  2001/12/02 18:26:06  pouaite
+  modif http (affreux hack pr ispell + http.c fait maintenant un #include de http_unix/win.c )
+
+*/
+
 #define __INSIDE_HTTP
 #include "global.h"
 #include "http.h"
@@ -311,7 +320,7 @@ http_connect(const char *host_name, int port)
       /* pris dans wget, donc ca doit etre du robuste */
       memcpy (&dest_addr.sin_addr, host->h_addr_list[0], host->h_length);
 
-      bzero(&(dest_addr.sin_zero), 8);
+      memset(&(dest_addr.sin_zero), 0, 8);
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les

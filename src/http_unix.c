@@ -1,3 +1,12 @@
+/*
+  rcsid=$Id: http_unix.c,v 1.2 2001/12/02 18:26:06 pouaite Exp $
+  ChangeLog:
+  $Log: http_unix.c,v $
+  Revision 1.2  2001/12/02 18:26:06  pouaite
+  modif http (affreux hack pr ispell + http.c fait maintenant un #include de http_unix/win.c )
+
+*/
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -20,7 +29,6 @@
 
 //test gethostbyname
 //#include <sys/times.h>
-
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -95,7 +103,7 @@ http_select_fd (int fd, int maxtime_sec, int writep)
   /* HPUX reportedly warns here.  What is the correct incantation?  */
   retval = select (fd + 1, writep ? NULL : &fds, writep ? &fds : NULL,
 		 &exceptfds, &timeout);
-  ALLOW_X_LOOP_MSG("http_select_fd");
+  ALLOW_X_LOOP_MSG("http_select_fd"); ALLOW_ISPELL;
   return retval;
 }
 #endif /* HAVE_SELECT */
@@ -123,7 +131,7 @@ http_iread (SOCKET fd, char *buf, int len)
 	  do
 	    {
 	      res = http_select_fd (fd, Prefs.http_timeout, 0);	
-	      ALLOW_X_LOOP;
+	      ALLOW_X_LOOP; ALLOW_ISPELL; 
 	      if ((wmcc_tic_cnt - tic0) > Prefs.http_timeout*(1000/WMCC_TIMER_DELAY_MS)) {
 		errno = ETIMEDOUT;
 		printf("timeout (t=%d millisecondes)..\n", (wmcc_tic_cnt - tic0)*WMCC_TIMER_DELAY_MS);
@@ -141,20 +149,20 @@ http_iread (SOCKET fd, char *buf, int len)
 	}
 #endif
       res = read(fd, buf, len); 
-      ALLOW_X_LOOP;
+      ALLOW_X_LOOP; ALLOW_ISPELL; 
     }
   while (res == -1 && errno == EINTR);
 
   flag_http_error = 0;
   flag_http_transfert--;
 
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
   return res;
 
  error:
   flag_http_error = 1;
   flag_http_transfert--;
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
   return -1;
 }
 
@@ -184,7 +192,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 	      do
 		{
 		  res = http_select_fd (fd, Prefs.http_timeout, 1);
-		  ALLOW_X_LOOP;
+		  ALLOW_X_LOOP; ALLOW_ISPELL;
 		}
 	      while (res == -1 && errno == EINTR);
 	      if (res <= 0)
@@ -198,7 +206,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 	    }
 #endif
 	  res = write(fd, buf, len);
-	  ALLOW_X_LOOP;
+	  ALLOW_X_LOOP; ALLOW_ISPELL;
 	}
       while (res == -1 && errno == EINTR);
       if (res <= 0)
@@ -208,7 +216,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
     }
   flag_http_error = 0;
   flag_http_transfert--;
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
   return res;
 
  error:
@@ -235,11 +243,11 @@ net_tcp_connect(int fd, struct sockaddr_in *sock)
   printf("connect basique (susceptible de BLOQUER LE COINCOIN)..\n");
 
   do {
-    ALLOW_X_LOOP;
+    ALLOW_X_LOOP; ALLOW_ISPELL;
   block_sigalrm(1);
     ret = connect (fd, (struct sockaddr *) sock, sizeof (struct sockaddr_in));
   block_sigalrm(0);
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
 //    printf("connect: ret=%d, errno=%d (%s)\n", ret, errno, strerror(errno));
   } while (errno == EINTR);
   return ret;
@@ -260,7 +268,7 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
    */
   if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
     return -1;
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
   /*
    * Setup the connection timeout.
    */
@@ -275,7 +283,7 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
      */
     if (connect (fd, (struct sockaddr *) sock,
 		 sizeof (struct sockaddr_in)) < 0) {
-      ALLOW_X_LOOP;
+      ALLOW_X_LOOP; ALLOW_ISPELL;
       /* le test sur EISCONN special BSD -> bsd connecte plus vite que l'éclair? */
       if (errno == EISCONN) goto cassos;
       if (errno != EAGAIN && errno != EINPROGRESS) {
@@ -298,7 +306,7 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
     FD_SET (fd, &write_fds);
 
     while (select (getdtablesize (), NULL, &write_fds, NULL, &timeout) < 0) {
-      ALLOW_X_LOOP;
+      ALLOW_X_LOOP; ALLOW_ISPELL;
       if (errno != EINTR) {
 	perror ("net_tcp_connect_with_timeout: select");
 	return -1;
@@ -308,11 +316,11 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
       printf("Connection timed out (timeout=%d sec)!\n", timeout_secs);
       return -1;
     }
-    ALLOW_X_LOOP;
+    ALLOW_X_LOOP; ALLOW_ISPELL;
   }
 cassos:
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
-  ALLOW_X_LOOP;
+  ALLOW_X_LOOP; ALLOW_ISPELL;
   return 0;
 }
 
@@ -344,9 +352,9 @@ http_connect(const char *host_name, int port)
 	  myprintf("%<CYA gethostname>: "); fflush(stdout);
 	  t0 = times(NULL);*/
 	  BLAHBLAH(1, printf("gethostbyname('%s') -> si le reseau rame, on risque de bloquer le coincoin ici\n", host_name));
-	  ALLOW_X_LOOP_MSG("gethostbyname(1)");
+	  ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
 	  host = gethostbyname(host_name); /* rahhh comme c'est lent :-( */
-	  ALLOW_X_LOOP_MSG("gethostbyname(2)");
+	  ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
 	  /*	  t1 = times(NULL);
 		  printf(" %f millisecondes\n", (t1-t0)*10.0);*/
 	}
@@ -359,7 +367,7 @@ http_connect(const char *host_name, int port)
       }
 
       sockfd = socket(AF_INET, SOCK_STREAM, 0); /* Vérification d'erreurs! */
-      ALLOW_X_LOOP;
+      ALLOW_X_LOOP; ALLOW_ISPELL;
       if (sockfd == -1) {
 	snprintf(http_errmsg, HTTP_ERRSZ, "Impossible de creer un socket ! (%s)", strerror(errno));
 	return -1;
@@ -371,7 +379,7 @@ http_connect(const char *host_name, int port)
       /* pris dans wget, donc ca doit etre du robuste */
       memcpy (&dest_addr.sin_addr, host->h_addr_list[0], host->h_length);
 
-      bzero(&(dest_addr.sin_zero), 8);
+      memset(&(dest_addr.sin_zero), 0, 8);
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les
@@ -389,7 +397,7 @@ http_connect(const char *host_name, int port)
 	{
 	  snprintf(http_errmsg, HTTP_ERRSZ, "connect(): %s", strerror(errno));
 	  do {
-	    close(sockfd); ALLOW_X_LOOP;
+	    close(sockfd); ALLOW_X_LOOP; ALLOW_ISPELL;
 	  } while (errno == EINTR);
 	  BLAHBLAH(4, printf("connection failed: %s..\n", http_errmsg));
 	  host = NULL;
