@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.13 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.14 2002/08/17 18:33:40 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.14  2002/08/17 18:33:40  pouaite
+  grosse commition
+
   Revision 1.13  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -40,11 +43,14 @@
 
 */
 
-#include "config.h"
-#include "coincoin.h"
-
 #include <libintl.h>
 #define _(String) gettext (String)
+
+#include "config.h"
+#include "coincoin.h"
+#include "coin_util.h"
+#include "myprintf.h"
+
 
 #define MI_MAX_LEN 512  /* lg max du message prise en compte */
 #define MI_MAX_WORD 200 /* nb max de mots pris en compte */
@@ -87,7 +93,7 @@ typedef struct _Word {
 } Word;
 
 int cnt_anti_blocage; /* anti recursions qui se comportent en O(n!) (genre avec 30 coins..)*/
-#define MAX_CNT_ANTI_BLOCAGE 400000
+#define MAX_CNT_ANTI_BLOCAGE 600000
 
 
 static Word*
@@ -256,7 +262,7 @@ eval_best_troll(Word *wlst, int nb_mots, int filter_categ, int level, int bonus_
 
   assert(wlst);
 
-  if (level > 5) return 0; /* faut pas exagerer */
+  if (level > 6) return 0; /* faut pas exagerer */
 
   /* liste des mots déjà selectionnés à des level inférieurs */
   for (i=0; i < nb_mots; i++) {
@@ -339,7 +345,7 @@ eval_best_troll(Word *wlst, int nb_mots, int filter_categ, int level, int bonus_
 }
 
 void
-troll_detector(tribune_msg_info *mi) {
+troll_detector(board_msg_info *mi) {
   int score;
 
   unsigned char *trans_simple  = "éèëêÊËÉÈàâáäÀÂÁÄûüùÙçÇîïíìÏÎÍÌôóòõÔÓÒÕñ";

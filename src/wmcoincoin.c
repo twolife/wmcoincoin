@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.47 2002/06/26 22:19:49 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.48 2002/08/17 18:33:40 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.48  2002/08/17 18:33:40  pouaite
+  grosse commition
+
   Revision 1.47  2002/06/26 22:19:49  pouaite
   ptit fix pour la tribune de f-cpu + patch de lordoric
 
@@ -193,6 +196,10 @@
 #include "coin_util.h"
 #include "coin_xutil.h"
 #include "http.h"
+#include "dock.h"
+#include "site.h"
+#include "newswin.h"
+
 
 /* quelques images */
 #include "../xpms/coin.xpm"
@@ -209,7 +216,7 @@
 int temps_depuis_dernier_event = 0; /* incrémenté 25 fois / sec */
 
 
-structPrefs Prefs;
+GeneralPrefs Prefs;
 
 int opened_cnt; /* ça c'est de la bonne vieille variable qui date de la v0.9...*/
 
@@ -268,7 +275,7 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
 
   if (bcmd == NULL) {
     snprintf(s, CMDSZ, _("You didn't define the external browser in ~/.wmcoincoin/options (%s), no need to click on the <b>[url]</b>..."),
-	     (browser_num == 1) ? _("http.browser: thecommand") : _("http.browser2: thecommand"));
+	     (browser_num == 1) ? "http.browser: thecommand" : "http.browser2: thecommand");
     if (balloon_x > 0 && balloon_y > 0) {
       balloon_show(_dock, balloon_x, balloon_y, 10, 10, s, 300);
     } else {
@@ -359,52 +366,63 @@ dock_get_icon_pos(Dock *dock, int *iconx, int *icony)
 
 /* déclenche la mise à jour du trolloscope, du pinnipede etc.. */
 void
-checkout_tribune(Dock *dock, DLFP *dlfp)
+check_if_board_was_updated(Dock *dock)
 {
-  if (flag_updating_tribune == 0) {
-    if (flag_tribune_updated) {
+  if (flag_updating_board == 0) {
+    if (flag_board_updated) {
+      Site *s;
       int i;
-      for (i=0; i < 5; i++) dock->tribune_time[i] = dlfp->tribune.last_post_time[i];
-      dock->tribune_time[5] = 0;
 
-      dlfp_tribune_get_trollo_rate(&dlfp->tribune, &dock->trib_trollo_rate, &dock->trib_trollo_score);
+      for (i=0; i < 5; i++) dock->board_time[i] = 'x';
+      dock->board_time[5] = 0;
+
+      dock->trib_trollo_rate = 0;
+      dock->trib_trollo_score = 0;
+      for (s = dock->sites->list; s; s = s->next) {
+	if (s->board) {
+	  float tr, ts;
+	  board_get_trollo_rate(s->board, &tr, &ts);
+	  i++;
+	  dock->trib_trollo_rate  = MAX(dock->trib_trollo_rate, tr);
+	  dock->trib_trollo_score = MAX(dock->trib_trollo_score, ts);
+	}
+      }
       BLAHBLAH(2,myprintf("%<red checkout_tribune>: %<WHT trollo_rate <- %f, trollo_score <- %f>\n", dock->trib_trollo_rate, dock->trib_trollo_score));
 
-      assert(dock->trib_trollo_rate < 10000);
+      dock_update_pix_trolloscope(dock);
 
-      dock_update_pix_trolloscope(dock, &dlfp->tribune);
+      pp_set_board_updated(dock);
 
-      pp_set_tribune_updated(dock);
-
-      flag_tribune_updated = 0;
+      flag_board_updated = 0;
     }
   }
 }
 
 void
-wmcc_init_http_request(HttpRequest *r, char *url_path)
+wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path)
 {
   http_request_init(r);
   r->type = HTTP_GET;
-  r->host = strdup(Prefs.site_root);
-  r->port = Prefs.site_port;
+  r->host = strdup(sp->site_root);
+  r->port = sp->site_port;
   r->host_path = strdup(url_path);
-  if (Prefs.proxy_name) r->proxy_name = strdup(Prefs.proxy_name);
-  if (Prefs.proxy_auth) r->proxy_user_pass = strdup(Prefs.proxy_auth);
-  if (Prefs.proxy_port) r->proxy_port = Prefs.proxy_port;
-  r->pragma_nocache = Prefs.proxy_nocache;
+  if (sp->proxy_name) r->proxy_name = strdup(sp->proxy_name);
+  if (sp->proxy_auth) r->proxy_user_pass = strdup(sp->proxy_auth);
+  if (sp->proxy_port) r->proxy_port = sp->proxy_port;
+  r->pragma_nocache = sp->proxy_nocache;
+  r->use_if_modified_since = sp->use_if_modified_since;
   r->user_agent = strdup(app_useragent);
   r->cookie = NULL;
   r->p_last_modified = NULL;
 }
 
 void
-wmcc_init_http_request_with_cookie(HttpRequest *r, char *url_path)
+wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path)
 {
   char *cookie;
-  wmcc_init_http_request(r, url_path);
-  if (Prefs.user_cookie) {
-    cookie = str_printf("session_id=%s", Prefs.user_cookie); 
+  wmcc_init_http_request(r, sp, url_path);
+  if (sp->user_cookie) {
+    cookie = str_printf("session_id=%s", sp->user_cookie); 
     r->cookie = cookie;
   }
 }
@@ -419,19 +437,31 @@ exec_coin_coin(Dock *dock)
   HttpRequest r;
   char *urlencod_msg;
   char path[2048];
+  Site *site;
 
   BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), dock->real_coin_coin_message));
   BLAHBLAH(1, myprintf(_("    (useragent: '%<CYA %s>\n"), dock->real_coin_coin_useragent));
+
+  site = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
+  if (site == NULL) {
+    myprintf("?? unable to find site id %d (bug?)\n", dock->real_coin_coin_site_id);
+    return;
+  }
+  if (site->board == NULL) {
+    myprintf("???? site %s has no board ! (bug!)\n", site->prefs->site_name);
+    return;
+  }
+
   flag_sending_coin_coin = 1;
 
   urlencod_msg = http_url_encode(dock->real_coin_coin_message); assert(urlencod_msg);
 
-  snprintf(path, 2048, "%s%s/%s", strlen(Prefs.site_path) ? "/" : "", Prefs.site_path, Prefs.path_tribune_add);
+  snprintf(path, 2048, "%s%s/%s", strlen(site->prefs->site_path) ? "/" : "", site->prefs->site_path, site->prefs->path_board_add);
 
-  wmcc_init_http_request_with_cookie(&r, path);
+  wmcc_init_http_request_with_cookie(&r, site->prefs, path);
   if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
-  r.referer = str_printf("http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
+  r.referer = str_printf("http://%s:%d/%s/", site->prefs->site_root, site->prefs->site_port, site->prefs->site_path);
   if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
   r.user_agent = strdup(dock->real_coin_coin_useragent);
   r.post = str_printf("message=%s", urlencod_msg);  free(urlencod_msg);
@@ -447,8 +477,8 @@ exec_coin_coin(Dock *dock)
     if ((got=http_read(&r, reponse, 2047))>0) {
       char *s;
       reponse[got] = 0;
-      s = str_printf(_("Ooops, there must have been a little problem, "
-	       "the server answered:<p>%s"), reponse);
+      s = str_printf(_("[%s] Ooops, there must have been a little problem, "
+	       "the server answered:<p>%s"), site->prefs->site_name, reponse);
       msgbox_show(dock, s);
       free(s);
     }
@@ -456,13 +486,13 @@ exec_coin_coin(Dock *dock)
   } else {
     char *s;
     /* si la reponse n'est pas un 302 Found */
-    s = str_printf(_("Damned ! There has been an error<p>%s"), http_error());
+    s = str_printf(_("[%s] Damned ! There has been an error<p>%s"), site->prefs->site_name, http_error());
     msgbox_show(dock, s);
     free(s);
   }
 
   /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
-  if (dock->post_anonyme) { dock->dlfp->tribune.just_posted_anonymous = 1; }
+  if (dock->post_anonyme) { site->board->just_posted_anonymous = 1; }
 
   flag_sending_coin_coin = 0;
 }
@@ -481,14 +511,17 @@ flush_expose(Window w) {
 */
 
 /* sauvegarde ou restaure l'état du wmcc
-   (position du pinnipede/newswin) */
+   (position du pinnipede/newswin) 
+   decalage horaire des boards
+*/
 void
 wmcc_save_or_restore_state(Dock *dock, int do_restore)
 {
   char *fname;
   FILE *f;
+  Site *site;
 
-  fname = str_printf("%s/.wmcoincoin/%s/wmcc_state", getenv("HOME"), Prefs.site_root); assert(fname);
+  fname = str_printf("%s/.wmcoincoin/wmcc_state", getenv("HOME")); assert(fname);
   if ((f=fopen(fname, (do_restore ? "r" : "w")))==NULL) {
     myfprintf(stderr, _("Unable to open '%s' for writing to save the state of the beast\n"), fname);
   } else {
@@ -504,6 +537,24 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
     fclose(f);
   }
   free(fname);
+
+  for (site=dock->sites->list; site; site = site->next) {
+    fname = str_printf("%s/.wmcoincoin/wmcc_state_%s", getenv("HOME"), site->prefs->site_name); 
+    assert(fname);
+    if ((f=fopen(fname, (do_restore ? "r" : "w")))==NULL) {
+      myfprintf(stderr, _("Unable to open '%s' for writing to save the state of the beast\n"), fname);
+    } else {
+      if (do_restore == 0) {
+	fprintf(f, "#do not edit this file\n");
+	site_save_state(dock,f, site);
+      } else {
+	char *bidon = str_fget_line(f); free(bidon);
+	site_restore_state(dock,f,site);
+      }
+      fclose(f);
+    }
+    free(fname);    
+  }
 }
 
 /* declenchement des ballons d'aide...*/
@@ -521,11 +572,10 @@ void check_balloons(Dock *dock)
 
       if (dock->door_state == CLOSED && dock->horloge_mode == 0) {
 	char s[2048];
-	snprintf(s,2048,_("<p align=center><b>Titles of the news from <font color=blue>%s</font></b></p>"
-		 "<font color=blue><tt>Left Click</tt></font><tab>: display the article currently scrolling<br>"
-		 "<font color=blue><tt>Middle Click</tt></font><tab>: instant update of the list of news<br>"
-		 "<font color=blue><tt>Right Click</tt></font><tab>: open/close the news window<br>"),
-		 Prefs.site_root);
+	snprintf(s,2048,_("<p align=center><b>Titles of the news</b></p>"
+			  "<font color=blue><tt>Left Click</tt></font><tab>: display the article currently scrolling<br>"
+			  "<font color=blue><tt>Middle Click</tt></font><tab>: instant update of the list of news<br>"
+			  "<font color=blue><tt>Right Click</tt></font><tab>: open/close the news window<br>"));
 	balloon_test(dock,x,y,iconx,icony,0,3,3,57,11,
 		     s);
 	balloon_test(dock,x,y,iconx,icony,0,TROLLOSCOPE_X,TROLLOSCOPE_Y,TROLLOSCOPE_WIDTH,TROLLOSCOPE_HEIGHT,
@@ -588,13 +638,17 @@ wmcoincoin_dispatch_events(Dock *dock)
 {
   XEvent event;
 
+  /* grosse boucle */
   while (XPending(dock->display)) {
+
     XNextEvent(dock->display, &event);
     
     /* des que la souris bouge, le ballon disparait */
     balloon_check_event(dock, &event);
     
-    /* gestion de la souris (pour le declenchement des ballons) 
+    /* 
+       c'est pas le switch principal des evenements, 
+       juste la gestion du declenchement des ballons
        + on ramene le focus dans editw (quand elle est active)
        + on remet à 0 le temps depuis le dernier déplacement */
     switch (event.type) {
@@ -629,13 +683,15 @@ wmcoincoin_dispatch_events(Dock *dock)
 	break;
       }
 #endif
-
     case ButtonRelease:
     case KeyPress:
       {
 	dock->mouse_cnt = 0;
       } break;
     }
+
+
+
 
     /* attention le champ window n'est pas utilise pour les evenement du clavier 
        gare au bug */
@@ -646,10 +702,10 @@ wmcoincoin_dispatch_events(Dock *dock)
     } else if (msgbox_ismapped(dock) && event.xany.window == msgbox_get_win(dock)) {
       msgbox_dispatch_event(dock, &event);
     } else if (event.xany.window == pp_get_win(dock) && event.xany.window) {
-      pp_dispatch_event(dock, &dock->dlfp->tribune, &event);
+      pp_dispatch_event(dock, &event);
     } else if (newswin_is_used(dock)) {
       if (event.xany.window == newswin_get_window(dock)) {
-	newswin_dispatch_event(dock, dock->dlfp, &event);
+	newswin_dispatch_event(dock, &event);
       }
     }
   }
@@ -706,7 +762,7 @@ sigpipe_signal(int signum UNUSED) {
 /* poreil ! */
 void
 sigchld_signal(int signum UNUSED) {
-  BLAHBLAH(2,fprintf(stderr, _("Got a SIGCHLD !\n")));
+  //  BLAHBLAH(0,fprintf(stderr, _("Got a SIGCHLD !\n")));
   /* je comprends pas pourquoi un wait() ici n'élimine pas les zombies ... 
      tant pis, ça marche bien comme ça avec le bon gros kill_ispell d'ours */
 }
@@ -757,11 +813,11 @@ void X_loop()
   timer_cnt++;
 
   if (timer_cnt % 10 == 0) {
-    check_if_should_kill_ispell(0);
+    check_if_should_kill_ispell(0); /* pan ? */
   }
   
   if (timer_cnt % 5 == 0) {
-    pp_animate(dock);
+    pp_animate(dock);   /* omg ! il bouge ! */
   }
 
   if (timer_cnt % 1 == 0) {
@@ -774,6 +830,8 @@ void X_loop()
     /* gestion des animations du dock */
     if (dock->door_state == OPENING) {
       dock->door_state_step++;
+      /* note pour les generations futures: cette partie du code est une des plus anciennes,
+	 elle remonte à la v1.0beta */
       if (dock->door_state_step > 25+13) {
 	dock->door_state_step = 25+13;
 	dock->door_state = OPENED;
@@ -811,46 +869,52 @@ void X_loop()
       int clign = 0;
       if (dock->flamometre.xp_change_decnt) { dock->flamometre.xp_change_decnt--; clign = 1; }
       if (dock->flamometre.comment_change_decnt) { dock->flamometre.comment_change_decnt--; clign = 1; }
-      if (dock->flamometre.tribune_answer_decnt) { dock->flamometre.tribune_answer_decnt--; clign = 1; }
+      if (dock->flamometre.board_answer_decnt) { dock->flamometre.board_answer_decnt--; clign = 1; }
 
       if (clign) {
-	dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+	dock_update_pix_trolloscope(dock);
       }
     }
     /* déclenchement du clignotement du flamometre */
-    if (flag_updating_comments == 0 && flag_updating_tribune == 0) {
-      if (dock->dlfp->xp_change_flag) {
-	dock->dlfp->xp_change_flag = 0;
-
+    if (flag_updating_comments == 0 && flag_updating_board == 0) {
+      Site *site;
+      if ((site = sl_find_xp_change(dock->sites))) {
+	site->xp_change_flag = 0;
 	/* on s'assure de rajouter une quantité divisible par FLAMOMETRE_XP_CLIGN_SPEED */
 	dock->flamometre.xp_change_decnt += (((FLAMOMETRE_XP_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 					      FLAMOMETRE_XP_CLIGN_SPEED)*FLAMOMETRE_XP_CLIGN_SPEED);
       }
-      if (dock->dlfp->comment_change_flag) {
-	dock->dlfp->comment_change_flag = 0;
-	if (dlfp_yc_find_modified(dock->dlfp,NULL)) { /* les inconsistences sont possibles */
+      if ((site = sl_find_comment_change(dock->sites))) {
+	site->comment_change_flag = 0;
+	if (site_yc_find_modified(site)) { /* les inconsistences sont possibles */
 	  dock->flamometre.comment_change_decnt += (((FLAMOMETRE_COMMENT_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 						     FLAMOMETRE_COMMENT_CLIGN_SPEED)*FLAMOMETRE_COMMENT_CLIGN_SPEED);
 	}
       }
 
-      if (flag_tribune_answer_to_me) {
-	flag_tribune_answer_to_me = 0;
-	dock->flamometre.tribune_answer_decnt += (((FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
+      if ((site=sl_find_board_answer_to_me(dock->sites))) {
+	site->board->flag_answer_to_me = 0;
+	dock->flamometre.board_answer_decnt += (((FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 						   FLAMOMETRE_TRIB_CLIGN_SPEED)*FLAMOMETRE_TRIB_CLIGN_SPEED);
       }
     }
 
 
-    dock_checkout_newstitles(dock, dock->dlfp);
-    checkout_tribune(dock, dock->dlfp);
+    dock_checkout_newstitles(dock);
+    check_if_board_was_updated(dock);
 
-    /* affichage effectif du coincoin */
+    /* 
+       affichage effectif du coincoin 
+
+       c'est le genre de petite instruction de rien du tout qu'on met des jours à retrouver
+       et paradoxalement dont l'absence se ferait immédiatement remarquer
+    */
     XCopyArea(dock->display, dock->coinpix, DOCK_WIN(dock), dock->NormalGC,
 	      0,0, 64, 64, 0,0);
 
     //    if (timer_cnt % 2048 == 0) reread_messages();
     
+    /* aaaaaaaaaaaaaarf oula je croyais avoir mis toutes ces merdes dans dock.c */
     if (strlen(dock->newstitles)>10) {
       dock->newstitles_char_dec+=2;
       if (dock->newstitles_char_dec >= 6) {
@@ -866,16 +930,16 @@ void X_loop()
     }
 
     /* faut-il autoscroller le pinnipede teletype ? */
-    pp_check_tribune_updated(dock, &dock->dlfp->tribune);
+    pp_check_board_updated(dock);
 
     /* update la fenetre des news si necessaire */
     if (newswin_is_used(dock)) {
       if (flag_news_updated && flag_updating_news == 0) {
-	newswin_update_content(dock, dock->dlfp, 0);
+	newswin_update_content(dock, 0);
 	newswin_draw(dock);
 	flag_news_updated = 0;
       } else if (flag_updating_news) {
-	newswin_update_info(dock, dock->dlfp, 0, 0); /* juste pour afficher 'maj de news en cours' */
+	newswin_update_info(dock, 0, 0); /* juste pour afficher 'maj de news en cours' */
       }
     }
   }
@@ -902,15 +966,15 @@ void X_loop()
     if (dock->discretion_saved_state.last_sig_is_usr1) { /* on vient de tout cacher ? */
       if (dock->discretion_saved_state.newswin_used && 
 	  newswin_is_used(dock)==0) {
-	newswin_show(dock, dock->dlfp, -2);
+	newswin_show(dock, id_type_invalid_id());
       }
       if (dock->discretion_saved_state.palmipede_used &&
 	  editw_ismapped(dock->editw) == 0) {
-	editw_show(dock, dock->editw,0);
+	editw_show(dock, NULL, 0);
       }
       if (dock->discretion_saved_state.pinnipede_used && 
 	  pp_ismapped(dock)==0) {
-	pp_show(dock, &dock->dlfp->tribune);
+	pp_show(dock);
       }
     } else { /* si on ne vient pas de tout cacher, on considère qu'il faut "raise" les fenetres */
       if (newswin_is_used(dock)) XRaiseWindow(dock->display, newswin_get_window(dock));
@@ -998,6 +1062,10 @@ void createXBMfromXPM(char *xbm, char **xpm, int sx, int sy) {
   }
 }
 
+/*
+  ben ça fait l'icone, quoi
+*/
+  
 void
 wmcc_set_wm_icon(Dock *dock) {
   XIconSize *isz;
@@ -1006,9 +1074,13 @@ wmcc_set_wm_icon(Dock *dock) {
   RGBAImage *in_img, *out_img;
 #include "../xpms/icon.xpm"
 
+  /* 
+     ça a l'air super tordu, mais en fait y'a tout une partie qui sert à rien
+  */
   w = 0; h = 0;
   BLAHBLAH(2,fprintf(stderr,_("Creating the windows icon. Just tell me if it makes your WM crash.\n")));
   if (XGetIconSizes(dock->display, dock->win, &isz, &nbsz) != 0) {
+    /* aucun wm ne propose de taille d'icone, ce code n'a donc jamais ete teste */
     int i;
     printf("nbsz=%d\n", nbsz);
     for (i=0; i < nbsz; i++) {
@@ -1020,6 +1092,7 @@ wmcc_set_wm_icon(Dock *dock) {
     }
     XFree(isz);
   } else {
+    /* pas la peine de raler, *tous* les wm suxent des ours */
     //    printf("pas de taille d'icone par défaut, voila un wmanager qui suce des ours\n");
     w = 48; h = 48;
   }
@@ -1036,7 +1109,7 @@ wmcc_set_wm_icon(Dock *dock) {
     }
   }
   z = MAX(MIN(w/16, h/16),1);
-  
+  /* ça c'est un zoom */
   for (i=0; i < 16; i++) {
     for (j=0; j < 16; j++) {
       int ii, jj;
@@ -1060,7 +1133,7 @@ wmcc_set_wm_icon(Dock *dock) {
   RGBADestroyImage(out_img);
 }
 
-/* x initialization crap */
+/* x initialization crap , not nice */
 void initx(Dock *dock, int argc, char **argv) {
   int i;
 
@@ -1080,11 +1153,8 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   
-  // je veux pas que atof("1,1") renvoie 1.1 et atof("1.1") 
-  // renvoie 1 !!! (comme c'est naze les locales des fois..)
-  //  setlocale(LC_ALL, "");
-  // setlocale(LC_CTYPE, ""); 
-  XSetLocaleModifiers("@im=none");
+  /* la magie des locales */
+  XSetLocaleModifiers("@im=none"); /* si quelqu'un sait ce que ça veut dire, je suis interessé */
   dock->input_method = XOpenIM(dock->display, NULL, NULL, NULL);
   if (!dock->input_method) {
     printf("Erreur ! echec de XOpenIM(), ca pue !\n");
@@ -1164,9 +1234,9 @@ void initx(Dock *dock, int argc, char **argv) {
   dock->clock_pixmask = XCreateBitmapFromData(dock->display, dock->win, 
 					     clock_mask, 64, 64);
   
-  dock->led = RGBACreatePixmapFromXpmData(dock->rgba_context, led_xpm);assert(dock->led != None);
+  dock->led = RGBACreatePixmapFromXpmData(dock->rgba_context, led_xpm); assert(dock->led != None);
   
-  dock->month = RGBACreatePixmapFromXpmData(dock->rgba_context, month_xpm);assert(dock->month != None);
+  dock->month = RGBACreatePixmapFromXpmData(dock->rgba_context, month_xpm); assert(dock->month != None);
   
   dock->date = RGBACreatePixmapFromXpmData(dock->rgba_context, date_xpm); assert(dock->date != None);
   
@@ -1210,7 +1280,7 @@ void initx(Dock *dock, int argc, char **argv) {
      * rec_class doit etre le nom de l'executable
      * et la ligne de commande, je la mets ou ?
      
-     pour l'instant, pas de sauvegarde de session kde..
+     --> utiliser l'option "dock.iconwin: false"
   */
 
 
@@ -1285,14 +1355,14 @@ wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
   delay = 25*delay_base;
 
   /* verifie si on a demandé d'éteindre le coincoin au bout d'un certain nb de minutes */
-  if (Prefs.dlfp_switch_off_coincoin_delay != 0) {
-    if (temps_depuis_dernier_event/(25*60) > Prefs.dlfp_switch_off_coincoin_delay) {
+  if (Prefs.switch_off_coincoin_delay != 0) {
+    if (temps_depuis_dernier_event/(25*60) > Prefs.switch_off_coincoin_delay) {
       if (dock->horloge_mode == 0) flag_discretion_request = 1; /* passage en horloge :) */
       delay = 10000000; return delay;
     }
   }
 
-  if (Prefs.dlfp_max_refresh_delay == 0) return delay;
+  if (Prefs.max_refresh_delay == 0) return delay;
 
   if (temps_depuis_dernier_event/25 < 300) {
     delay = 25*delay_base;
@@ -1303,7 +1373,7 @@ wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
   } else {                                                    /* apres 1h30 */
     delay = 25*60*delay_base;                                /* on passe aux delai_max (qui est exprime en minutes) */ 
   }
-  delay = MIN(delay, Prefs.dlfp_max_refresh_delay*25*60);
+  delay = MIN(delay, Prefs.max_refresh_delay*25*60);
   return delay;
 }
 
@@ -1340,57 +1410,81 @@ void *Net_loop (Dock *dock) {
   strcpy(dock->newstitles, _("Transfer in progress..."));
 
   while (wmcc_run) {
-    
-    /* ces deux lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
+    Site *site;
+    /* ces 5 lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
        (si le coincoin rafraichissait 1fois/15min, il va faire très rapidement un refresh) 
 
        par contre, le delai ne peut être accru que juste après un refresh (c'est mieux pour l'affichage du
        temps avant le prochain refresh dans le pinni, ça évite des sauts)
     */
-    dock->news_refresh_delay = MIN(dock->news_refresh_delay, wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_news_check_delay));
-    dock->tribune_refresh_delay = MIN(dock->tribune_refresh_delay, wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_tribune_check_delay));
-
-    if (dock->coin_coin_request > 0) {
-      //      printf("coincoin request\n");
-      dock->wmcc_state_info = WMCC_SENDING_COINCOIN;
-      exec_coin_coin(dock); ALLOW_X_LOOP;
-      dock->coin_coin_request = -50; /* on va le repasser progressivement à zero (pour permettre à la led
-					de s'éteindre progressivement) */
-
-      dock->tribune_update_request = 2; /* va falloir mettre la tribune à jour */
-    }
-    //    printf("%d\n", dock->tribune_update_request);
-    if (dock->tribune_update_request > 1)
-      dock->tribune_update_request--;
-    if (dock->news_update_request > 1)
-      dock->news_update_request--;
-
-    if (dock->news_refresh_cnt > dock->news_refresh_delay || 
-	dock->news_update_request == 1) {
-      dock->news_refresh_cnt = 0;
-      dock->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_news_check_delay);
-      dock->wmcc_state_info = WMCC_UPDATING_NEWS;
-      dlfp_updatenews(dock->dlfp); ALLOW_X_LOOP;
-      dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
-      dlfp_yc_update_comments(dock->dlfp); ALLOW_X_LOOP;
-      dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
-      dlfp_msg_update_messages(dock->dlfp); ALLOW_X_LOOP;
-      dock->news_update_request = 0;
-    }
-    
-    if (dock->tribune_refresh_cnt > dock->tribune_refresh_delay ||
-	dock->tribune_update_request == 1) {
-      dock->tribune_refresh_cnt = 0;
-      dock->tribune_refresh_delay = wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_tribune_check_delay);
-      if (dock->tribune_updatable) {
-	dock->wmcc_state_info = WMCC_UPDATING_BOARD;
-	dlfp_tribune_update(dock->dlfp, dock->real_coin_coin_useragent); 
-	ALLOW_X_LOOP;
-	dock->tribune_update_request = 0;
-      } else {
-	dock->tribune_update_request = 1;
+    for (site = dock->sites->list; site; site = site->next) {
+      site->news_refresh_delay = 
+	MIN(site->news_refresh_delay, 
+	    wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay));
+      if (site->board) {
+	site->board->board_refresh_delay = 
+	  MIN(site->board->board_refresh_delay, 
+	      wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay));
       }
     }
+
+    /* envoi du message ? */
+    if (dock->coin_coin_request > 0) {
+      Site *s;
+      dock->wmcc_state_info = WMCC_SENDING_COINCOIN;
+      exec_coin_coin(dock); 
+      dock->coin_coin_request = -50; /* on va le repasser progressivement à zero (pour permettre à la led
+					de s'éteindre progressivement) */
+      s = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
+      if (s && s->board)
+	s->board->update_request = 2; /* va falloir mettre la tribune à jour */
+      ALLOW_X_LOOP;
+    }
+
+    /* update loop for all sites */
+    for (site = dock->sites->list; site; site = site->next) {
+      if (site->prefs->check_board && site->board->update_request > 1)
+	site->board->update_request--;
+
+      if (site->news_update_request > 1)
+	site->news_update_request--;
+
+      /* this is a good example of how long variable names may lead
+	 to an unreadable source code */
+      if (site->news_refresh_cnt > site->news_refresh_delay || 
+	  site->news_update_request == 1) {
+	site->news_refresh_cnt = 0;
+	site->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
+	if (site->prefs->check_news) {
+	  dock->wmcc_state_info = WMCC_UPDATING_NEWS;
+	  site_news_dl_and_update(site); ALLOW_X_LOOP;
+	}
+	if (site->prefs->check_comments) {
+	  dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
+	  site_yc_dl_and_update(site); ALLOW_X_LOOP;
+	}
+	if (site->prefs->check_messages) {
+	  dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
+	  site_msg_dl_and_update(site); ALLOW_X_LOOP;
+	}
+	site->news_update_request = 0;
+      }
+   
+    
+      if (site->prefs->check_board &&
+	  (site->board->board_refresh_cnt > site->board->board_refresh_delay ||
+	   site->board->update_request == 1)) {
+	site->board->board_refresh_cnt = 0;
+	site->board->board_refresh_delay = 
+	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay);
+
+	dock->wmcc_state_info = WMCC_UPDATING_BOARD;
+	board_update(site->board);
+	ALLOW_X_LOOP;
+	site->board->update_request = 0;
+      }
+    }
+
     if (Prefs.ew_do_spell) ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);
     
     /* sauvegarde auto de la pos/dim du pinni & newswin */
@@ -1406,8 +1500,10 @@ void *Net_loop (Dock *dock) {
     pause(); 
 #endif
     ALLOW_X_LOOP;
-    dock->news_refresh_cnt++;
-    dock->tribune_refresh_cnt++;
+    for (site = dock->sites->list; site; site = site->next) {
+      site->news_refresh_cnt++;
+      site->board->board_refresh_cnt++;
+    }
     temps_depuis_dernier_event++;
     save_state_cnt++;
   }
@@ -1527,7 +1623,10 @@ main(int argc, char **argv)
   textdomain (PACKAGE);
 
   srand(time(NULL));
-  ALLOC_OBJ(dock, Dock);
+
+  /* la structure de base */
+  ALLOC_OBJ(dock, Dock); dock->sites = NULL;
+
   _dock = dock; /* la vilaine variable globale (pour les sighandlers) */
 
   myprintf(_("%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"),VERSION, __DATE__);
@@ -1543,8 +1642,10 @@ main(int argc, char **argv)
     
   printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, NULL));
   
-  memset(&Prefs, 0, sizeof(structPrefs));
+  memset(&Prefs, 0, sizeof(Prefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);
+  
+  dock->sites = sl_create();
 
   http_init();
 
@@ -1552,33 +1653,55 @@ main(int argc, char **argv)
     _Xdebug = 1; /* oblige la synchronisation */
   }
 
-  myprintf(_("%<yel we consider the backend is >"));
-  switch (Prefs.tribune_backend_type) {
-  case 1: myprintf(_("%<YEL modern style>\n")); break;
-  case 2: myprintf(_("%<YEL old style>\n")); break;
-  case 3: myprintf(_("%<YEL without underpants>\n")); break;
-  default: myprintf(_("%<YEL prrrrrrt>\n")); break;
+  {
+    Site *s;
+    myprintf("Site          Board           News       Comments     Messages\n");
+    for (s = dock->sites->list; s; s = s->next) {
+      myprintf("%<YEL %.10s>        ", s->prefs->site_name);
+      if (s->prefs->check_board) {
+	switch (s->prefs->board_backend_type) {
+	case 1:  myprintf(_("%<YEL modern style      >")); break;
+	case 2:  myprintf(_("%<YEL old style         >")); break;
+	case 3:  myprintf(_("%<YEL without underpants>")); break;
+	default: myprintf(_("%<YEL prrrrrrt          >")); break;
+	}
+      } else {
+	myprintf("       none       ");
+      }
+      myprintf("    %3s     ", s->prefs->check_news ? "Yes" : "No");
+      myprintf("    %3s     ", s->prefs->check_comments ? "Yes" : "No");
+      myprintf("    %3s     ", s->prefs->check_messages ? "Yes" : "No");
+      myprintf("\n");
+    }
   }
 
   ALLOC_VEC(dock->newstitles,MAX_NEWSTITLES_LEN, unsigned char);
-  ALLOC_VEC(dock->newstitles_id,MAX_NEWSTITLES_LEN, int);
+  ALLOC_VEC(dock->newstitles_id,MAX_NEWSTITLES_LEN, id_type);
+  {
+    int i;
+    for (i=0; i < MAX_NEWSTITLES_LEN; i++) dock->newstitles_id[i]= id_type_invalid_id();
+  }
   ALLOC_VEC(dock->msginfo,MAX_MSGINFO_LEN, unsigned char);
   /* le trolloscope */
-  ALLOC_ARR(dock->trolloscope, TROLLOSCOPE_HEIGHT, TROLLOSCOPE_WIDTH, TL_item);
+  {
+    int i,j;
+    ALLOC_ARR(dock->trolloscope, TROLLOSCOPE_HEIGHT, TROLLOSCOPE_WIDTH, TL_item);
+    for (i=0; i < TROLLOSCOPE_HEIGHT; i++) {
+      for (j=0; j < TROLLOSCOPE_WIDTH; j++) {
+	dock->trolloscope[i][j].id = id_type_invalid_id();
+      }
+    }
+  }
 
   /* recopie du message et du useragent des preferences */
-  if (Prefs.user_name) {
-    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s> %s", Prefs.user_name, Prefs.coin_coin_message);
-  } else {
-    strncpy(dock->coin_coin_message, Prefs.coin_coin_message, MESSAGE_MAX_LEN); 
-  }
-  dock->coin_coin_message[MESSAGE_MAX_LEN] = 0;
+  strncpy(dock->coin_coin_message, Prefs.coin_coin_message, MESSAGE_MAXMAX_LEN); 
+  dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
   free(Prefs.coin_coin_message); Prefs.coin_coin_message = NULL; //dock->coin_coin_message; /* pas beau */
 
-  strncpy(dock->coin_coin_useragent, Prefs.user_agent, USERAGENT_MAX_LEN); 
-  dock->coin_coin_useragent[USERAGENT_MAX_LEN] = 0;
-  strncpy(dock->real_coin_coin_useragent, Prefs.user_agent, USERAGENT_MAX_LEN); 
-  dock->real_coin_coin_useragent[USERAGENT_MAX_LEN] = 0;
+  dock->real_coin_coin_useragent[0] = 0;
+  dock->real_coin_coin_site_id = -1;
+  dock->coin_coin_site_id = -1;
+
   /* pour les http_get, on utilisera Prefs.user_agent, qui est non modifiable
      pour les http_post, on utilisera dock->coin_coin_useragent */
 
@@ -1587,17 +1710,14 @@ main(int argc, char **argv)
 
   dock->flamometre.xp_change_decnt = 0;
   dock->flamometre.comment_change_decnt = 0;
-  dock->flamometre.tribune_answer_decnt = 0;
+  dock->flamometre.board_answer_decnt = 0;
 
   /*  dock->trolloscope_bgr = dock->trolloscope_bgb = dock->trolloscope_bgg = 0;
       dock->trolloscope_clign_step = -1;*/
 
-  dock->news_update_request = 0;
-  dock->tribune_update_request = 0;
-  dock->tribune_updatable = 1;
   dock->coin_coin_request = 0;
 
-  dock->view_id_in_newstitles = 0;
+  dock->view_id_in_newstitles = id_type_invalid_id();
   dock->flag_survol_trollo = 0;
   dock->flag_survol_led1 = 0;
   dock->flag_trib_load_cursor = 0;
@@ -1615,15 +1735,9 @@ main(int argc, char **argv)
   dock->mask_porte_haut = None;
   dock->mask_porte_bas = None;
 
-  dock->news_refresh_delay    = Prefs.dlfp_news_check_delay*25;
-  dock->tribune_refresh_delay = Prefs.dlfp_tribune_check_delay*25;
-  dock->news_refresh_cnt      = dock->news_refresh_delay-100;
-  dock->tribune_refresh_cnt   = dock->tribune_refresh_delay-10;
-
   dock->wmcc_state_info = WMCC_IDLE; /* moyennement vrai au début ! */
 
   dock->trib_trollo_rate = 0; dock->trib_trollo_score = 0;
-  dock->dlfp = dlfp_create();
 
   {
     char *errmsg;
@@ -1684,13 +1798,14 @@ main(int argc, char **argv)
   newswin_build(dock);
   balloon_build(dock);
   msgbox_build(dock);
-  dock->editw = editw_build(dock);
+  editw_build(dock);
   pp_build(dock);
   
-
-  if (useragents_file_read_initial(dock, dock->dlfp) != 0) /* a faire APRES msgbox_build */
+  /* a faire APRES msgbox_build */
+  /*
+  if (useragents_file_read_initial(dock, dock->dlfp) != 0) 
     return 1;
-  
+  */  
 
   dock->door_state = CLOSED; dock->door_state_step = 0;
   dock->red_button_press_flag = 0; dock->red_button_press_state = 0;
@@ -1699,7 +1814,7 @@ main(int argc, char **argv)
   dock->newstitles_pos = 0; 
   dock->newstitles_char_dec = 0;
   dock->newstitles[0] = 0;
-  memset(dock->tribune_time, 0, 6);
+  memset(dock->board_time, 0, 6);
 
   if (Prefs.start_in_boss_mode == 0) {
     dock_refresh_normal(dock);
@@ -1711,19 +1826,18 @@ main(int argc, char **argv)
   /* essaye de restorer la taille / position du pinnipede / newswin */
   wmcc_save_or_restore_state(dock, 1);
 
-	if (Prefs.pinnipede_open_on_start == 1) {
-		pp_show (dock, &dock->dlfp->tribune);
-	}
+  if (Prefs.pinnipede_open_on_start == 1) {
+    pp_show (dock);
+  }
 
 #ifndef NOSIGNALS
   install_sighandlers();
 #endif
 
-  /* launching the network update thread */
 
 #ifdef __CYGWIN__ 
+  /* signals sux under cygwin */
   pthread_create (&timer_thread, NULL, Timer_Thread, NULL);
-
 #else
 #  ifndef NOSIGNALS
   {
@@ -1736,55 +1850,8 @@ main(int argc, char **argv)
   }
 #  endif
 #endif  
+  /* launching the network update thread */
   Net_loop(dock);
-#ifdef TEST_MEMLEAK
 
-#define tfree(x) if (x!=NULL) free(x); x = NULL;
-  block_sigalrm(1);
-  pp_destroy(dock);
-  newswin_destroy(dock);
-  dlfp_destroy(dock->dlfp);
-  balloon_destroy(dock);
-  tfree(dock->msgbox);
-  tfree(dock->editw);
-
-  tfree(dock->newstitles);
-  tfree(dock->newstitles_id);
-  tfree(dock->msginfo);
-  FREE_ARR(dock->trolloscope);
-  tfree(Prefs.font_encoding); 
-  tfree(Prefs.news_fn_family); 
-  tfree(Prefs.user_agent); 
-  tfree(Prefs.proxy_auth); 
-  tfree(Prefs.proxy_name); 
-  //tfree(Prefs.coin_coin_message); déjà fait plus tôt
-  tfree(Prefs.user_name); 
-  tfree(Prefs.balloon_fn_family);
-  tfree(Prefs.bgpixmap); 
-  //  tfree(Prefs.app_name); non mallocé
-  tfree(Prefs.site_root); 
-  tfree(Prefs.site_path);
-  tfree(Prefs.options_file_name); 
-  tfree(Prefs.path_tribune_backend); 
-  tfree(Prefs.path_news_backend);
-  tfree(Prefs.path_end_news_url); 
-  tfree(Prefs.path_tribune_add); 
-  tfree(Prefs.path_myposts);
-  tfree(Prefs.path_messages); 
-  tfree(Prefs.site_path_remote); 
-  tfree(Prefs.site_theme_num);
-  tfree(Prefs.user_cookie); 
-  tfree(Prefs.user_login); 
-  tfree(Prefs.browser_cmd); 
-  tfree(Prefs.browser2_cmd);
-  tfree(Prefs.pp_fn_family); 
-  tfree(Prefs.pp_fortune_fn_family); 
-  tfree(Prefs.ew_spell_cmd);
-  tfree(Prefs.ew_spell_dict); 
-  tfree(Prefs.post_cmd); 
-  tfree(Prefs.tribune_scrinechote);
-  XCloseDisplay(dock->display);
-  tfree(dock);
-#endif  
   return 0;
 }

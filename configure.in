@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.29  2002/08/17 18:33:37  pouaite
+dnl   grosse commition
+dnl
 dnl   Revision 1.28  2002/06/26 22:19:48  pouaite
 dnl   ptit fix pour la tribune de f-cpu + patch de lordoric
 dnl
@@ -184,5 +187,5 @@ esac
 
 
 
-AC_OUTPUT(Makefile src/Makefile doc/Makefile intl/Makefile po/Makefile.in) 
+AC_OUTPUT(Makefile src/Makefile doc/Makefile po/Makefile.in m4/Makefile ) 
 

@@ -1,3 +1,16 @@
+2002-08-17  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Remove intl.
+
+2002-08-17  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add m4.
+	(SUBDIRS): Remove intl.
+	(ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): Add config.rpath.
+	* configure.in (AC_OUTPUT): Add m4/Makefile.
+	(AC_OUTPUT): Remove intl/Makefile.
+
 2002-06-24  pouaite  <c0in@altern.org>
 
 	* correction du bug des votes négatifs, deux trois bugfixes et

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.65 2002/06/26 22:19:49 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.66 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.66  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.65  2002/06/26 22:19:49  pouaite
   ptit fix pour la tribune de f-cpu + patch de lordoric
 
@@ -190,183 +193,24 @@
 
 */
 
-#include <libintl.h>
-#define _(String) gettext (String)
-
-#include "coincoin.h"
-#include "time.h"
-#include "scrollcoin.h"
-#include "coin_xutil.h"
-
-/* chuis con, les bitfields c pas pour les chiens */
-#define PWATTR_BD 1
-#define PWATTR_IT 2
-#define PWATTR_U  4
-#define PWATTR_S  8
-#define PWATTR_LNK 16
-#define PWATTR_TSTAMP 32
-//#define PWATTR_UA 64
-#define PWATTR_NICK 128
-#define PWATTR_REF 256 /* reference vers un autre post */
-#define PWATTR_TMP_EMPH 512
-#define PWATTR_HAS_INITIAL_SPACE 1024 /* indique si un espace doit etre insere entre ce mot et le
-			     suivant (utilise par justif */
-#define PWATTR_TROLLSCORE 2048
-#define PWATTR_LOGIN 4096
-
-typedef struct _PostVisual PostVisual;
-typedef struct _PostWord PostWord;
-
-/* une liste de mots avec leurs attributs */
-struct _PostWord {
-  unsigned char *w; /* non mallocé, stocke dans la même zone que cette structure */
-  unsigned char *attr_s;
-  unsigned short attr;
-  short xpos, xwidth, ligne;
-  struct _PostWord *next;
-  struct _PostVisual *parent;
-};
-
-/* liste chainée de posts */
-struct _PostVisual {
-  int id; // message id 
-  PostWord *first; /* la liste des mots */
-  time_t tstamp;
-  signed char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
-  int nblig BITFIELD(12); // nombre de lignes necessaire pour afficher ce message
-  int ref_cnt BITFIELD(9); // compteur de references
-
-  int is_my_message BITFIELD(1);
-  int is_answer_to_me BITFIELD(1);
-  int is_hilight_key BITFIELD(4);
-  int is_skipped_id BITFIELD(1); /* non nul si le message (id-1) n'existe pas */
-  int is_plopified BITFIELD(3);
-  /* non nul si le message a été plopifié
-			  =1, le message apparait en gris, tags html enleves
-			  =2, le message est plopifié (mots remplacés par plop, grouik..)
-			  =3, le message est superplopifié (message remplacé par 'plop')
-			*/
-  struct _PostVisual *next;
-};
-
-struct _PinnipedeFilter {
-  int filter_mode;
-  char *filter_name; /* contient le 'nom' du filtre) 
-		      */
-  char *ua;
-  char *login;
-  char *word;
-  //  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
-  int *id; int nid; /* liste des id des messages affichés dans le filtre de threads */
-  int filter_boitakon;
-};
-
-typedef struct _PinnipedeLignesSel {
-  int x0, x1;
-  int trashed;
-  PostWord *first_pw;
-  PostWord *last_pw;
-  int first_pw_pos, last_pw_pos;
-} PinnipedeLignesSel;
-
-typedef struct _PPMinib {
-#define NB_MINIB 11
-#define MINIB_H 10
-#define MINIB_FN_W 6
-#define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, REFRESH_TRIBUNE, REFRESH_NEWS, UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY, TRANSPARENT } type;
-  int x, y;
-  int w, h;
-  int clicked;
-} PPMinib;
-
-struct _Pinnipede {
-  Window win;
-  unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
-    emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
-    popup_fgpixel, popup_bgpixel, sel_bgpixel,
-    hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
-    plopify_pixel, 
-    minib_pixel, minib_dark_pixel, minib_msgcnt_pixel, 
-    minib_updlcnt_pixel, minib_progress_bar_pixel;
-  int mapped;
-  int win_width, win_height, win_xpos, win_ypos;
-
-  int zmsg_y, zmsg_h; /* zone d'affichage des messages */
-  XFontStruct *fn_base, *fn_it, *fn_bd, *fn_itbd, *fn_minib;
-  int fn_h;
-  //  Pixmap minipix;
-
-  PostVisual *pv;
-
-  int nb_lignes;
-  PostWord **lignes;
-
-  ScrollCoin *sc;
-
-  PinnipedeLignesSel *lignes_sel; /* utilisé uniquement pendant les selections */
-  int sel_anchor_x, sel_anchor_y;
-  int sel_head_x, sel_head_y;
-  int sel_l0, sel_l1;
-  time_t time_sel; /* pour la deselection automatique quand il est *vraiment* temps de rafraichir le pinnipede */
-
-  char *last_selected_text; /* stockage temporaire à usage interne au pinnipede */
-
-  int id_base, decal_base;
-  int last_post_id; /* utilise pour savoir si la tribune a ete mise a jour.. */
-
-  int colle_en_bas; /* pour savoir si on scrolle lors de nouveaux messages */
-
-  //  int html_mode;
-  int nick_mode; /* 0 : n'affiche rien, 
-		    1:  affiche les useragent raccourcis, 
-		    2: affiche les logins, 
-		    3: affiche les deux, 
-		    4: affiche useragent ou login */
-  int nosec_mode; /* supprime les secondes sur les posts ou c'est possible */
-  int trollscore_mode;
-  int survol_hash; /* pour determiner (a peu pres) si on affcihe une nouvelle info de survol... (apprixmatif...) */
-  int use_minibar; /* les miniboutons sont-ils affichés ? */
-
-  PPMinib mb[NB_MINIB];
-
-  int minib_pressed; /* numero du minibouton enfonce, -1 si aucun */
-  int fortune_mode;
-  int disable_plopify;
-
-  int hilight_my_message_mode;
-  int hilight_answer_to_me_mode;
-  int hilight_key_mode;
-
-  
-  volatile int flag_tribune_updated;
-  Pixmap lpix;
-
-  PicoHtml *ph_fortune;
-  int fortune_h, fortune_w;
-
-  struct _PinnipedeFilter filter;
-
-  Pixmap bg_pixmap;
-  int transparency_mode;
-  //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
-};
+#include "pinnipede.h"
 
 inline static int
-pp_thread_filter_find_id(const struct _PinnipedeFilter *f, int id) {
+pp_thread_filter_find_id(const struct _PinnipedeFilter *f, id_type id) {
   int i;
   for (i=0; i < f->nid; i++) {
-    if (f->id[i] == id) return 1;
+    if (id_type_eq(f->id[i],id)) return 1;
   }
   return 0;
 }
 
-inline static int
-filter_msg_info(const tribune_msg_info *mi, const struct _PinnipedeFilter *filter)
+inline int
+filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter)
 {
   /* cas particulier: la boitakon */
   if (mi->in_boitakon && filter->filter_boitakon) return 0;
 
+  if (filter->visible_sites[id_type_sid(mi->id)] == 0) return 0;
   if (filter->filter_mode == 0) return 1;
   if (filter->ua) {
     return (strcmp(filter->ua, mi->useragent) == 0);
@@ -384,133 +228,126 @@ filter_msg_info(const tribune_msg_info *mi, const struct _PinnipedeFilter *filte
 
 
 /* les deux fonctions suivantes permettent de se balader dans la liste des posts 
- (de maniere bourrine... c pas pour 25000 messages )
+ (de maniere bourrine... c pas pour 250000 messages )
 */
-static int 
-get_next_id(DLFP_tribune *trib, int id, tribune_msg_info **nmi, struct _PinnipedeFilter *filter) 
+static id_type
+get_next_id_filtered(Boards *boards, id_type id, board_msg_info **nmi, struct _PinnipedeFilter *filter) 
 {
-  tribune_msg_info *mi;
-  int nid;
+  board_msg_info *mi;
+  id_type nid;
 
-  mi = trib->msg;
-  nid = -1;
-  while (mi) {
-    if (mi->id > id) {
+  nid = id_type_invalid_id();
+  mi = boards_find_id(boards, id);
+  if (mi) {
+    mi = mi->g_next;
+    while (mi) {
       if (filter == NULL || filter_msg_info(mi,filter)) {
 	nid = mi->id;
 	break;
       }
+      mi = mi->g_next;
     }
-    mi = mi->next;
   }
   if (nmi) *nmi = mi;
   return nid;
 }
 
-
-
-static int 
-get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, const struct _PinnipedeFilter *filter) 
+static id_type
+get_prev_id_filtered(Boards *boards, id_type id, board_msg_info **prev, const struct _PinnipedeFilter *filter) 
 {
-  tribune_msg_info *mi;
+  board_msg_info *mi;
 
-  while ((mi = tribune_find_previous_from_id(trib, id))) {
-    if (filter == NULL || filter_msg_info(mi,filter)) {
-      break;
-    } else {
-      id = mi->id;
+  mi = boards_find_id(boards, id);
+  if (mi) {
+    mi = mi->g_prev;
+    while (mi) {
+      if (filter == NULL || filter_msg_info(mi,filter)) {
+	break;
+      }
+      mi = mi->g_prev;
     }
   }
 
   if (prev) *prev = mi;
-  if (mi) return mi->id;
-  else return -1;
-
-  /*
-  tribune_msg_info *mi,*pmi;
-
-  mi = trib->msg;
-  pmi = NULL;
-  while (mi) {
-    if (mi && pmi) {
-      if (pmi->id < id && mi->id >= id) {
-	if (prev) *prev = pmi;
-	return pmi->id;
-      }
-    }
-    if (filter == NULL || filter_msg_info(mi,filter)) {
-      pmi = mi;
-    }
-    mi = mi->next;
+  if (mi) {
+    return mi->id;
   }
-  if (prev) *prev = NULL;
-  return -1;
-  */
+  else return id_type_invalid_id();
 }
 
-/* plutot lente */
-static int
-get_last_id(DLFP_tribune *trib, struct _PinnipedeFilter *filter) {
-  tribune_msg_info *mi;
-  int nid;
+id_type
+get_last_id_filtered(Boards *boards, struct _PinnipedeFilter *filter) {
+  board_msg_info *mi;
 
-  mi = trib->msg;
-  nid = -1;
+  mi = boards->last;
   while (mi) {
     if (filter == NULL || filter_msg_info(mi,filter)) {
-      nid = mi->id;
+      return mi->id;
     }
-    mi = mi->next;
+    mi = mi->g_prev;
   }
-  return nid;  
+  return id_type_invalid_id();
 }
 
+static id_type
+get_first_id_filtered(Boards *boards, struct _PinnipedeFilter *filter) {
+  board_msg_info *mi;
 
-static int
-count_all_id(DLFP_tribune *trib, struct _PinnipedeFilter *filter) {
-  tribune_msg_info *mi;
+  mi = boards->first;
+  while (mi) {
+    if (filter == NULL || filter_msg_info(mi,filter)) {
+      return mi->id;
+    }
+    mi = mi->g_next;
+  }
+  return id_type_invalid_id();
+}
+
+int
+count_all_id_filtered(Boards *boards, struct _PinnipedeFilter *filter) {
+  board_msg_info *mi;
   int nid;
 
-  mi = trib->msg;
+  mi = boards->first;
   nid = 0;
   while (mi) {
     if (filter == NULL || filter_msg_info(mi,filter)) {
       nid++;
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
   return nid;
 }
 
-static int
-get_nth_id(DLFP_tribune *trib, struct _PinnipedeFilter *filter, int n) {
-  tribune_msg_info *mi, *last_mi;
+id_type
+get_nth_id_filtered(Boards *boards, struct _PinnipedeFilter *filter, int n) {
+  board_msg_info *mi, *last_mi;
 
-  mi = trib->msg; last_mi = NULL;
+  mi = boards->first; last_mi = NULL;
   while (mi && n > 0) {
     if (filter == NULL || filter_msg_info(mi,filter)) {
       n--;
       last_mi = mi;
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
-  return (last_mi ? last_mi->id : -1);
+  return (last_mi ? last_mi->id : id_type_invalid_id());
 }
 
 static int
-get_id_count(DLFP_tribune *trib, struct _PinnipedeFilter *filter, int id) {
-  tribune_msg_info *mi;
+get_id_count_filtered(Boards *boards, struct _PinnipedeFilter *filter, id_type id) {
+  board_msg_info *mi;
   int cnt = 1;
 
-  mi = trib->msg;
+  mi = boards->first;
   while (mi) {
     if (filter == NULL || filter_msg_info(mi,filter)) {
-      if (mi->id == id) {
+      if (id_type_eq(mi->id, id)) {
 	return cnt;
       }
       cnt++;
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
   return -1;
 }
@@ -781,7 +618,7 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
-pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode, int disable_plopify) {
+pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode, int disable_plopify, KeyList *hk_plop, KeyList *hk_hili) {
 #define PVTP_SZ 512
 
   PostVisual *pv;
@@ -794,7 +631,6 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   unsigned short attr;
   int add_word;
   int has_initial_space; // indique si le prochain mot est collé au precedent
-  KeyList *hk_plop, *hk_hili;
 
   ALLOC_OBJ(pv, PostVisual);
 
@@ -810,18 +646,17 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->is_my_message = mi->is_my_message;
   pv->is_answer_to_me = mi->is_answer_to_me;
 
-  pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
-  hk_hili = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list);
+  pv->is_skipped_id = board_find_id(board, mi->id.lid-1) ? 0 : 1;
+
   pv->is_hilight_key = 0;
   if (hk_hili) {
     pv->is_hilight_key = hk_hili->num+1; assert(hk_hili->num < NB_PP_KEYWORD_CATEG);
   }
   pv->is_plopified = 0;
-  hk_plop = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
   if (hk_plop) {
     pv->is_plopified = (disable_plopify ? 1 : hk_plop->num+2);
   }
-
+    
   /*
   printf("pv = %p\n", pv);
   printf("  pv = %d\n", pv->id);
@@ -861,13 +696,19 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
     char short_ua[SUA_SZ];
     int is_login;
 
+    /*
+
+    popopo !! a reparer
+
     if (mi->tatouage) {
       p = mi->tatouage->name;
       if (strcmp(mi->tatouage->name, "?") == 0) {
+    */
 	make_short_name_from_ua(mi->useragent, short_ua, SUA_SZ);
 	p = short_ua;
-      }
+	/*      }
     } else p = "[???]";
+	*/
 
     is_login = 0;
     if (nick_mode == 4 && strlen(mi->login) != 0) {
@@ -896,7 +737,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   has_initial_space = 1;
   while (p) {
     add_word = 1;
-    if (tribune_get_tok(&p,&np,s,PVTP_SZ, &has_initial_space) == NULL) { break; }
+    if (board_get_tok(&p,&np,s,PVTP_SZ, &has_initial_space) == NULL) { break; }
 
     /* nouveau (v2.3.5) tous les '<' et '>' provenant d'authentiques tags
        html ont été préfixés d'une tabulation par 'convert_to_ascii', ce qui évite
@@ -922,6 +763,10 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 	attr |= PWATTR_S; 
       } else if (strcasecmp(s,"\t</s\t>")==0) {
 	attr &= (~PWATTR_S);
+      } else if (strcasecmp(s,"\t<tt\t>")==0) {
+	attr |= PWATTR_TT;
+      } else if (strcasecmp(s,"\t</tt\t>")==0) {
+	attr &= (~PWATTR_TT);
       } else if (strncasecmp(s,"\t<a href=\"", 10)==0) {
 	int i;
 	char *url;
@@ -934,7 +779,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 	  if (url[1] == '.') url+=2;
 	  /* quick & ugly fix, ne marche pas quand le site n'est pas lesite/board mais
 	     lesite/blah/blah/board .. pff */
-	  snprintf(attr_s, PVTP_SZ, "http://%s%s", Prefs.site_root, url);
+	  snprintf(attr_s, PVTP_SZ, "http://%s%s", board->site->prefs->site_root, url);
 	} else {
 	  strncpy(attr_s, url, PVTP_SZ); 
 	}
@@ -947,9 +792,9 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
     }
     if (add_word) {
       int is_ref;
-      tribune_msg_info *ref_mi;
+      board_msg_info *ref_mi;
 
-      ref_mi = check_for_horloge_ref(trib, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
+      ref_mi = check_for_horloge_ref(board->boards, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
       if (is_ref) {
 	attr |= PWATTR_REF;
       }
@@ -991,8 +836,10 @@ pv_get_font(Pinnipede *pp, unsigned attr)
     fn = pp->fn_itbd;
   } else if (attr & PWATTR_IT) {
     fn = pp->fn_it;
-  } else if (attr & (PWATTR_BD)) { //|PWATTR_TMP_EMPH)) {
+  } else if (attr & (PWATTR_BD)) {
     fn = pp->fn_bd;
+  } else if (attr & (PWATTR_TT)) {
+    fn = pp->fn_minib;
   } else {
     fn = pp->fn_base;
   }
@@ -1044,32 +891,32 @@ pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
 }
 
 static PostVisual *
-pp_find_pv(Pinnipede *pp, int id)
+pp_find_pv(Pinnipede *pp, id_type id)
 {
   PostVisual *pv;
 
   pv = pp->pv;
   while (pv) {
-    if (pv->id == id) return pv;
+    if (id_type_eq(pv->id,id)) return pv;
     pv = pv->next;
   }
   return NULL;
 }
 
 /* ajout (si necessaire) du message 'id' dans la liste */
-static PostVisual *
-pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
+PostVisual *
+pp_pv_add(Pinnipede *pp, Boards *boards, id_type id)
 {
   PostVisual *pv;
   int with_seconds = 1;
 
-  pv = pp_find_pv(pp,id);
+  pv = pp_find_pv(pp, id);
   if (pv) {
     pv->ref_cnt++;
   } else {
-    tribune_msg_info *mi;
+    board_msg_info *mi;
 
-    mi = tribune_find_id(trib,id);
+    mi = boards_find_id(boards,id);
     if (mi == NULL) {
       return NULL;
     }
@@ -1078,8 +925,10 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
       with_seconds = mi->hmsf[3];
     }
 
-    pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, 
-			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify); 
+    pv = pv_tmsgi_parse(boards->btab[mi->id.sid], mi, with_seconds, 1, 
+			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify,
+			board_key_list_test_mi(boards, mi, Prefs.plopify_key_list),
+			board_key_list_test_mi(boards, mi, Prefs.hilight_key_list)); 
     pv_justif(pp, pv, 8, pp->win_width - (pp->sc ? SC_W-1 : 0));
     assert(pv);
     pv->next = pp->pv;
@@ -1127,7 +976,7 @@ pp_pv_garbage_collect(Pinnipede *pp) {
   return cnt;
 }
 
-static void
+void
 pp_pv_destroy(Pinnipede *pp) {
   PostVisual *pv;
 
@@ -1138,35 +987,7 @@ pp_pv_destroy(Pinnipede *pp) {
 }
 
 
-
-/* a appeler quand la fortune est changée */
-static void
-pp_update_fortune(Dock *dock)
-{
-  Pinnipede *pp = dock->pinnipede;
-  
-  assert(flag_updating_comments == 0);
-  if (!picohtml_isempty(pp->ph_fortune)) {
-    picohtml_freetxt(pp->ph_fortune);
-  }
-  pp->fortune_h = 0; /* quand pp->fortune_h != 0 => il y a une fortune à afficher */
-  pp->fortune_w = 0;
-  if (pp->fortune_mode && dock->dlfp->fortune) {
-    char *s;
-    s = dock->dlfp->fortune;
-    if (s == NULL) s = "pas de fortune pour l'instant...<br>";
-    picohtml_parse(dock, pp->ph_fortune, s, pp->win_width - 6);
-    picohtml_gettxtextent(pp->ph_fortune, &pp->fortune_w, &pp->fortune_h);
-    if (!picohtml_isempty(pp->ph_fortune)) { /* on s'arrête si la fortune est vide (s == "" par ex..)
-						(ça peut arriver et ça declenche le assert(!isempty) de refresh_fortune) */
-      pp->fortune_h += 3; 
-      pp->fortune_h = MIN(pp->fortune_h, pp->win_height/2); /* faut pas exagerer */
-    }
-  }
-}
-
-
-static void
+void
 pp_selection_unselect(Pinnipede *pp) {
   if (pp->lignes_sel) free(pp->lignes_sel);
   pp->lignes_sel = NULL;
@@ -1175,74 +996,32 @@ pp_selection_unselect(Pinnipede *pp) {
   pp->sel_anchor_y = pp->sel_head_y = 0;
 }
 
-
-
-/* macros pour le calcul des differentes positions d'affichage des lignes */
-#define LINEY0(l) (pp->win_height-(pp->use_minibar ? MINIB_H:0)-(pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2) //(pp->zmsg_y + (l)*pp->fn_h)
-#define LINEY1(l) (LINEY0(l)+pp->fn_h-1) //(pp->zmsg_y + (l+1)*pp->fn_h-1)
-#define LINEBASE(l) (LINEY0(l) + pp->fn_base->ascent) //(pp->zmsg_y + pp->fn_base->ascent + (l-1)*pp->fn_h)
-
-/* positionnenement de la scrollbar */
-static void
-pp_scrollcoin_move_resize(Dock *dock)
-{
+unsigned long
+pp_get_win_bgcolor(Dock *dock) {
   Pinnipede *pp = dock->pinnipede;
-  int y;
-  y = LINEY0(0);
-  scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));
+
+  if (pp->active_tab) {
+    int sid = pp->active_tab->site->site_id; assert(sid>=0);
+    return pp->win_bgpixel[sid];
+  } else return WhitePixel(dock->display, dock->screennum);
 }
 
-
-/*
-  ça tient du vilain bricolage.. mais bon: la scrollbar doit connaitre ses bornes
-  le chiffre qu'elle renvoie correspond à l'id du message affiché sur la dernière ligne du pinnipede
-  
-  le problème est alors la borne vmin: c'est l'id du dernier message de la première page,
-  ce qui demande un certain nombre de manip pour le determiner
-
-  (si scroll_coin avait travaillé par ligne plutot que par id, ça aurait été encore pire)
-*/
-
-static void
-pp_scrollcoin_update_bounds(Dock *dock, DLFP_tribune *trib)
-{
-  Pinnipede *pp = dock->pinnipede;
-  tribune_msg_info *mi;
-  int lcnt;
-
-  int vmin, vmax;
-
-  if (pp->sc == NULL) return;
-  
-  //  myprintf("%<YEL pp_scrollcoin_update_bounds>\n");
-  vmax = count_all_id(trib, &pp->filter);
-  vmin = 0;
-  lcnt = 0;
-  mi = trib->msg; /* premier message */
-  while (lcnt < pp->nb_lignes && mi) {
-    if (filter_msg_info(mi,&pp->filter)) {
-      PostVisual *pv;
-      pv = pp_pv_add(pp, trib, mi->id); 
-      if (pv) { lcnt += pv->nblig; vmin++; }
-    }
-    mi = mi->next;
-  }
-  scrollcoin_setbounds(pp->sc, vmin, vmax);
-  pp_scrollcoin_move_resize(dock);
-}
 
 
 /* mise à jour du contenu du pinnipede (reparse tous les messages affichés etc...
    c'est une des fonctions les plus importantes) */
 /* adjust: param interne, appeler toujours avec adjust  = 0 */
 void
-pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int adjust, int update_scrollbar_bounds)
+pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds)
 {
   Pinnipede *pp = dock->pinnipede;
-  int cur_lig, id, plig;
+  Boards *boards = dock->sites->boards;
+
+  int cur_lig, plig;
+  id_type id;
   PostVisual *pv;
 
-  if (flag_updating_tribune) return;
+  if (flag_updating_board) return;
 
 
   if (pp->lignes_sel) {
@@ -1254,29 +1033,34 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
 
   pp_update_fortune(dock);
 
+  
+
   //  printf("[colle_en_bas=%d] ..", pp->colle_en_bas);
-  if (id_base == -1 || id_base == get_last_id(trib, &pp->filter)) pp->colle_en_bas = 1;
-  else pp->colle_en_bas = 0;
+  if (id_type_is_invalid(id_base) ||
+      id_type_eq(id_base, get_last_id_filtered(boards, &pp->filter))) {
+    pp->colle_en_bas = 1;
+  } else pp->colle_en_bas = 0;
 
-  //  printf("id_base = %d, pp->id_base=%d, last_id=%d, colle_en_bas=%d\n",
-  //	 id_base, pp->id_base, get_last_id(trib, &pp->filter), pp->colle_en_bas);
 
-  pp->last_post_id = trib->last_post_id;
+  pp->last_post_id = boards_last_id(boards);
 
-  pp->zmsg_y = pp->fortune_h == 0 ? 3 : pp->fortune_h;
-  pp->zmsg_h = pp->win_height - pp->zmsg_y - (pp->use_minibar ? MINIB_H : 0);
+  /* pour determiner la position de la zone d'affichage */
+  pp_widgets_set_pos(dock);
 
+/*   printf("id_base = %d/%d, pp->id_base=%d, last_id=%d, colle_en_bas=%d decal=%d\n", */
+/*   	 id_base.sid,id_base.lid, pp->id_base.lid,  */
+/* 	 get_last_id_filtered(boards, &pp->filter).lid, pp->colle_en_bas, decal); */
 
   pp->nb_lignes = pp->zmsg_h / pp->fn_h;
   cur_lig = pp->nb_lignes;
 
   /* on s'aligne sur le premier message qui n'est pas dans la boitakon */
   if (pp->disable_plopify == 0) {
-    tribune_msg_info *mi;
-    mi = tribune_find_id(trib, id_base);
+    board_msg_info *mi;
+    mi = boards_find_id(boards, id_base);
     while (mi && mi->in_boitakon) {
       decal = 0;
-      id_base = get_prev_id(trib, id_base, &mi, &pp->filter);
+      id_base = get_prev_id_filtered(boards, id_base, &mi, &pp->filter);
     }
   }
 
@@ -1287,14 +1071,15 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   //printf("entree update_content: id_base = %d (%d), decal = %d (%d), adjust=%d\n",
   //id_base,pp->id_base, decal, pp->decal_base, adjust);
 
-  pp->id_base = -1;
+  pp->id_base = id_type_invalid_id();
 
+  /* 'reduit' le decalage */
   while (decal > 0) {
-    int nid;
-    nid = get_next_id(trib, id, NULL, &pp->filter);
-    if (nid == -1) { decal = 0; break; }
+    id_type nid;
+    nid = get_next_id_filtered(boards, id, NULL, &pp->filter);
+    if (id_type_is_invalid(nid)) { decal = 0; break; }
     id = nid;
-    pv = pp_pv_add(pp, trib, id);
+    pv = pp_pv_add(pp, boards, id);
     if (pv == NULL) { decal = 0; break; }
     decal -= pv->nblig;
   }
@@ -1305,29 +1090,30 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   ALLOC_VEC(pp->lignes, pp->nb_lignes, PostWord*);
 
   while (cur_lig >= 0) {
-    //printf("cur_lig = %d, id=%d", cur_lig, id);
-    pv = pp_pv_add(pp, trib, id); 
+    pv = pp_pv_add(pp, boards, id); 
+    //    printf("cur_lig = %d, id=%d pv=%p\n", cur_lig, id.lid, pv);
     if (pv == NULL) { /* on n'arrive pas a remplir jusqu'en haut ? */
       if (adjust == 0) {
-	if (pp->id_base >= 0) {
-	  pp_update_content(dock,trib,pp->id_base,pp->decal_base+cur_lig, 1, update_scrollbar_bounds); /* pas joli-joli */
+	if (!id_type_is_invalid(pp->id_base)) {
+	  pp_update_content(dock,pp->id_base,pp->decal_base+cur_lig, 1, update_scrollbar_bounds); /* pas joli-joli */
 	} else {
-	  id = get_next_id(trib, -1, NULL, &pp->filter); /* premier id */
-	  if (id >= 0) { /* sinon ça veut dire que la tribune est comptelemt vide */
-	    pp_update_content(dock,trib,id,0, 0, update_scrollbar_bounds); /* pas joli-joli */
+	  id = get_first_id_filtered(boards, &pp->filter); /* premier id affichable */
+
+	  if (!id_type_is_invalid(id)) { /* sinon ça veut dire que la tribune est comptelemt vide */
+	    pp_update_content(dock,id,0, 0, update_scrollbar_bounds); /* pas joli-joli */
 	  }
 	}
       }
       break;
     }
     pv->ref_cnt = 0;
-    id = get_prev_id(trib, id, NULL, &pp->filter);
+    id = get_prev_id_filtered(boards, id, NULL, &pp->filter);
 
     //printf("pv->nblig=%d, , pid=%d\n",pv->nblig, id);
     if (decal + pv->nblig > 0) { // test si le 'scroll up a été suffisant
       PostWord *pw;
 
-      if (pp->id_base == -1) { /* on sauve l'id_base et le decal soigneusement calculé */
+      if (id_type_is_invalid(pp->id_base)) { /* on sauve l'id_base et le decal soigneusement calculé */
 	pp->id_base = pv->id;
 	pp->decal_base = decal;
       }
@@ -1353,417 +1139,24 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   pp_pv_garbage_collect(pp); // rhooooo
 
   if (pp->sc) {
-    if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock, trib); }
-    else { pp_scrollcoin_move_resize(dock); }
-
-    scrollcoin_setpos(pp->sc, get_id_count(trib, &pp->filter, pp->id_base));
-  }
+    if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock); }
+/*     else { pp_scrollcoin_move_resize(dock); } */
+     scrollcoin_setpos(pp->sc, get_id_count_filtered(boards, &pp->filter, pp->id_base)); 
+  } 
 }
+
 
 void
-pp_minib_initialize(Pinnipede *pp)
-{
-  int i;
-
-  int x;
-
-  x = pp->win_width; //(pp->sc ? SC_W : 0);
-  i = 0;
-  pp->mb[i].type = HELP;            pp->mb[i].w = SC_W-1; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = TRANSPARENT;     pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = UA;              pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = TSCORE;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = FORTUNE;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = FILTER;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = REFRESH_NEWS;    pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = REFRESH_TRIBUNE; pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-
-  assert(i == NB_MINIB);
-
-  for (i=0; i < NB_MINIB; i++) {
-    pp->mb[i].clicked = 0;
-    pp->mb[i].y = pp->win_height - MINIB_H;
-    pp->mb[i].h = MINIB_H;
-  }
-}
-
-
-/* a nice piece of shit, if i can say */
-static void
-pp_minib_refresh(Dock *dock)
-{
-  Pinnipede *pp = dock->pinnipede;
-  int i,x,y;
-
-  int x_minib;
-
-  if (pp->use_minibar == 0) return;
-
-  /* dessin general */
-  XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
-  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 1, pp->win_width, MINIB_H-1);
-  XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, 0);
-
-  x_minib = pp->mb[0].x;
-  for (i=0; i < NB_MINIB; i++) x_minib = MIN(x_minib, pp->mb[i].x);
-
-  XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
-  if (pp->filter.filter_mode) {
-    char s_filtre[70];
-    
-    if (pp->filter.filter_name) {
-      snprintf(s_filtre, 60, "%.40s [match:%d msg]", 
-	       pp->filter.filter_name, count_all_id(&dock->dlfp->tribune, &pp->filter));
-    } else {
-      snprintf(s_filtre, 60, _("FILTER UNDEFINED"));
-    }
-    XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
-  } else {
-    
-    /* affichage de la charge du serveur de dlfp */
-
-    char s_cpu[20];
-    char s_xp[20], s_votes[20], s_nb_messages[20], s_http_stats[40];
-    int x, w;
-    s_xp[0] = 0; s_cpu[0] = 0; s_votes[0] = 0; s_nb_messages[0] = 0;
-    if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
-      if (flag_updating_comments == 0) {
-	/*
-	  
-	le CPU a disparu (ouuiiiinnn!)
-	if (dock->dlfp->CPU != -1.0) {
-	snprintf(s_cpu, 20, "cpu:%1.2f", dock->dlfp->CPU);
-	} else snprintf(s_cpu, 20, "cpu: ??");
-	*/
-	if (dock->dlfp->xp >= 0) {
-	  snprintf(s_xp, 20, "xp:%d", dock->dlfp->xp);
-	  snprintf(s_votes, 20, "[%d/%d]", dock->dlfp->votes_cur, dock->dlfp->votes_max);
-	}
-      }
-    }
-    snprintf(s_nb_messages, 20, "%d msg", count_all_id(&dock->dlfp->tribune, &pp->filter));
-    snprintf(s_http_stats, 40, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);
-    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
-    
-    x = 5;
-    w = MINIB_FN_W*strlen(s_cpu);
-    if (x+w < x_minib) {
-      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_cpu, strlen(s_cpu));
-    }
-    x += w + 6;
-    w = MINIB_FN_W*strlen(s_xp);
-    if (strlen(s_xp)) {
-      if (x+w < x_minib) {
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_xp, strlen(s_xp));
-      }
-    }
-    x += w + 6;
-    w = MINIB_FN_W*strlen(s_votes);
-    if (strlen(s_votes)) {
-      if (x+w < x_minib) {
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_votes, strlen(s_votes));
-      }
-    }
-    x += w + 6;
-    w = MINIB_FN_W*strlen(s_nb_messages);
-    if (strlen(s_nb_messages)) {
-      if (x+w < x_minib) {
-	XSetForeground(dock->display, dock->NormalGC, pp->minib_msgcnt_pixel);	
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_nb_messages, strlen(s_nb_messages));
-      }
-    }
-    x += w + 6;
-    w = MINIB_FN_W*strlen(s_http_stats);
-    if (strlen(s_http_stats)) {
-      if (x+w < x_minib) {
-	XSetForeground(dock->display, dock->NormalGC, pp->minib_updlcnt_pixel);
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_http_stats, strlen(s_http_stats));
-      }
-    }
-
-  }
-
-  /* dessin des boutons */
-  for (i=0;i < NB_MINIB; i++) {
-    int xc;
-
-    x = pp->mb[i].x;
-    xc = x + pp->mb[i].w / 2;
-    y = 1;
-
-    XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, x, 0, pp->mb[i].w, pp->mb[i].h);
-
-
-    if (pp->mb[i].clicked && pp->mb[i].type != REFRESH_TRIBUNE && pp->mb[i].type != REFRESH_NEWS) {
-      XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-      XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x, 1, pp->mb[i].w, pp->mb[i].h);
-    }    
-    switch (pp->mb[i].type) {
-    case SCROLLBAR:
-      {
-	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, 8);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, 7);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, 6);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, 7);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, 6);
-      } break;
-    case TRANSPARENT:
-      {
-	int j;
-	for (j=0; j < 7; j++) {
-	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, 7);
-	}
-      } break;
-    case REFRESH_TRIBUNE:
-      {
-	char *s;
-
-	s = "board";
-	if (pp->mb[i].clicked == 0) {
-	  int w, draw_bar = 0;
-	  unsigned long bar_pixel = pp->minib_progress_bar_pixel;
-
-	  if (dock->wmcc_state_info == WMCC_SENDING_COINCOIN) { s = "post.."; draw_bar = 0; }
-	  else if (dock->wmcc_state_info == WMCC_UPDATING_BOARD) { s = "updating"; draw_bar = 0; }
-	  else if (dock->tribune_update_request) { s = "queued"; draw_bar = 0; }
-	  else { draw_bar = 1; if (dock->wmcc_state_info != WMCC_IDLE) bar_pixel = IRGB2PIXEL(0xffc0c0); }
-	  
-	  if (draw_bar) {
-	    XSetForeground(dock->display, dock->NormalGC, bar_pixel);
-	    if (dock->tribune_refresh_delay > 0) {
-	      w = ((pp->mb[i].w-2)*MIN(dock->tribune_refresh_cnt,dock->tribune_refresh_delay))/dock->tribune_refresh_delay;
-	      w = (pp->mb[i].w-2 - w);
-	      //	      printf("cnt: %d delai: %d w=%d\n", dock->tribune_refresh_cnt, dock->tribune_refresh_delay, w);
-	      if (w > 0) {
-		XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, 1, w, pp->mb[i].h-1);
-	      }
-	    }
-	  }
-	}
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+1, s, strlen(s));
-      } break;
-
-    case REFRESH_NEWS:
-      {
-	char *s;
-
-	s = "news/msg";
-	if (pp->mb[i].clicked == 0) {
-	  int w, draw_bar = 0;
-	  unsigned long bar_pixel = pp->minib_progress_bar_pixel;
-	  
-	  if (dock->wmcc_state_info == WMCC_UPDATING_NEWS) { s = "dl news"; draw_bar = 0; }
-	  else if (dock->wmcc_state_info == WMCC_UPDATING_COMMENTS) { s = "dl com"; draw_bar = 0; }
-	  else if (dock->wmcc_state_info == WMCC_UPDATING_MESSAGES) { s = "dl msg"; draw_bar = 0; }
-	  else if (dock->news_update_request) { s = "queued"; draw_bar = 0; }
-	  else { draw_bar = 1; if (dock->wmcc_state_info != WMCC_IDLE) bar_pixel = IRGB2PIXEL(0xffc0c0); }
-	  
-	  if (draw_bar) {
-	    XSetForeground(dock->display, dock->NormalGC, bar_pixel);
-	    if (dock->news_refresh_delay > 0) {
-	      w = ((pp->mb[i].w-2)*MIN(dock->news_refresh_cnt,dock->news_refresh_delay))/dock->news_refresh_delay;
-	      w = (pp->mb[i].w-2 - w);
-	      //	      printf("news : cnt: %d delai: %d w=%d\n", dock->news_refresh_cnt, dock->news_refresh_delay, w);
-	      if (w > 0) {
-		XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, 1, w, pp->mb[i].h-1);
-	      }
-	    }
-	  }
-	}
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+1, s, strlen(s));
-      } break;
-    case HELP:
-      {
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-MINIB_FN_W/2+1, pp->fn_minib->ascent+1, "?", 1);
-      } break;
-    case SECOND:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel);
-	
-	if (pp->nosec_mode) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case TSCORE:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->trollscore_pixel);
-	
-	if (pp->trollscore_mode) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case FORTUNE:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8f8060));
-	
-	if (pp->fortune_mode) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case FILTER:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->lnk_pixel);
-	
-	if (pp->filter.filter_mode) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case PLOPIFY:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->plopify_pixel);
-	
-	if (pp->disable_plopify) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case UA:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->nick_pixel);
-	
-	XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	if (pp->nick_mode == 3) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	} else if (pp->nick_mode == 1) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx,ry,xc-rx+1,rh);
-	} else if (pp->nick_mode == 2) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, xc,ry,xc-rx+1,rh);
-	} else if (pp->nick_mode == 4) {
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, ry, xc, ry+rh-1);
-	}
-      } break;
-    default:
-      abort(); break;
-    }
-  }
-
-  /* et hop */
-  XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
-	    0,0,pp->win_width, MINIB_H, 0, MINIB_Y0);
-}
-
-
-static PPMinib *
-pp_minib_get_button(Dock *dock, int x, int y)
-{
-  Pinnipede *pp = dock->pinnipede;
-  int i;
-
-  for (i=0; i < NB_MINIB; i++) {
-    if (x >= pp->mb[i].x && x < pp->mb[i].x+pp->mb[i].w && 
-	y >= pp->mb[i].y && y < pp->mb[i].y+pp->mb[i].h) {
-      return &pp->mb[i];
-    }
-  }
-  return NULL;
-}
-
-static PPMinib *
-pp_minib_pressed_button(Dock *dock)
-{
-  Pinnipede *pp = dock->pinnipede;
-  int i;
-
-  for (i=0; i < NB_MINIB; i++) {
-    if (pp->mb[i].clicked)
-      return &pp->mb[i];
-  }
-  return NULL;
-}
-
-static void
-pp_minib_show(Dock *dock) 
-{
-  Pinnipede *pp = dock->pinnipede;
-  pp->use_minibar = 1;
-  pp_minib_initialize(pp);
-}
-
-void 
-pp_minib_hide(Dock *dock) 
-{
-  Pinnipede *pp = dock->pinnipede;
-  pp->use_minibar = 0;
-}
-
-
-static void
 pp_clear_win_area(Dock *dock, int x, int y, int w, int h)
 {
   Pinnipede *pp = dock->pinnipede;
   if (pp->transparency_mode == 0 && w > 0 && h > 0) {
-    XClearArea(dock->display, pp->win, x, y, w, h, False);
+    //    XClearArea(dock->display, pp->win, x, y, w, h, False);
+    XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
+    XFillRectangle(dock->display, pp->win, dock->NormalGC, x, y, w, h);
   } else {
     XCopyArea(dock->display, pp->bg_pixmap, pp->win, dock->NormalGC, x, y, 
 	      w, h, x, y);
-  }
-}
-
-/* redessine la fortune */
-void
-pp_refresh_fortune(Dock *dock, Drawable d)
-{
-  Pinnipede *pp = dock->pinnipede;
-  Pixmap fpix;
-
-  if (pp->fortune_h > 0) {
-    int x;
-    assert(pp->fortune_h < 10000); /* tout de meme */
-
-    fpix = XCreatePixmap(dock->display, pp->win, pp->win_width, pp->fortune_h, 
-			 DefaultDepth(dock->display,dock->screennum));
-    XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.pp_fortune_bgcolor));
-    XFillRectangle(dock->display, fpix, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h);
-    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(128,128,128));
-    XDrawLine(dock->display, fpix, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width, pp->fortune_h-1);
-
-    assert(!picohtml_isempty(pp->ph_fortune));
-
-    x = (pp->win_width - pp->fortune_w)/2;
-    picohtml_render(dock, pp->ph_fortune, fpix, dock->NormalGC, x, 0);
-    XCopyArea(dock->display, fpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h, 0, 0);
-    XFreePixmap(dock->display, fpix);
-  } else {
-  /* nettoyage ligne du haut */
-    assert(LINEY0(0)>0);
-    pp_clear_win_area(dock, 0, 0, pp->win_width, LINEY0(0));
   }
 }
 
@@ -1777,6 +1170,16 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   int old_pos;
   unsigned long pixel, old_pixel;
   int y;
+  int site_num = -1;
+
+  if (pw) {
+    assert(pw->parent);
+    site_num = id_type_sid(pw->parent->id);
+  } else {
+    assert(pp->active_tab);
+    site_num = pp->active_tab->site->site_id;
+  }
+  assert(site_num >=0 && site_num < MAX_SITES);
 
   XSetForeground(dock->display, dock->NormalGC, bgpixel);
   if (use_bg_pixmap == 0) {
@@ -1809,7 +1212,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   }
 
   XSetBackground(dock->display, dock->NormalGC, bgpixel);
-  old_pixel = pp->win_bgpixel;
+  old_pixel = bgpixel;
 
   pixel = 0L;
   y = pp->fn_base->ascent;
@@ -1874,18 +1277,18 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
     while (pw && pw->ligne == pl) {
 	
       if (pw->attr & PWATTR_TSTAMP) {
-	pixel = pp->timestamp_pixel;
+	pixel = pp->timestamp_pixel[site_num];
 //	if (pw->parent->is_my_message) { pixel = IRGB2PIXEL(0x000080); }
       } else if (pw->attr & (PWATTR_LNK|PWATTR_REF)) {
-	pixel = pp->lnk_pixel;
+	pixel = pp->lnk_pixel[site_num];
       } else if (pw->attr & PWATTR_NICK) {
-	pixel = pp->nick_pixel;
+	pixel = pp->nick_pixel[site_num];
       } else if (pw->attr & PWATTR_LOGIN) {
-	pixel = pp->login_pixel;
+	pixel = pp->login_pixel[site_num];
       } else if (pw->attr & PWATTR_TROLLSCORE) {
-	pixel = pp->trollscore_pixel;
+	pixel = pp->trollscore_pixel[site_num];
       } else {
-	pixel = pp->txt_pixel;
+	pixel = pp->txt_pixel[site_num];
       }
 
       if (pw->parent->is_plopified) {
@@ -1930,9 +1333,8 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
       if (pw->attr & PWATTR_S) {	  
 	int x1;
-	pixel = pp->strike_pixel; XSetForeground(dock->display, dock->NormalGC, pixel); old_pixel = pixel;
-	/*	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y - fn->ascent + 2, pw->xpos+pw->xwidth-1, y+fn->descent - 2);
-	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y + fn->descent - 2, pw->xpos+pw->xwidth-1, y-fn->ascent + 2);*/
+	pixel = pp->strike_pixel[site_num]; 
+	XSetForeground(dock->display, dock->NormalGC, pixel); old_pixel = pixel;
 	if (pw->next && pw->next->ligne == pw->ligne && (pw->next->attr & PWATTR_S)) {
 	  x1 = pw->next->xpos;
 	} else {
@@ -1950,12 +1352,12 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   return pw;
 }
 
-void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp, int sub_timestamp) {
+void pp_refresh_hilight_refs(Pinnipede *pp, Boards *boards, time_t timestamp, int sub_timestamp) {
   int l;
 
   for (l=0; l < pp->nb_lignes; l++) {
     if (pp->lignes[l]) {
-      tribune_msg_info *ref2_mi;
+      board_msg_info *ref2_mi;
       int pl;
       PostWord *pw;
 
@@ -1965,7 +1367,7 @@ void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp
 	if (pw->attr & PWATTR_REF) {
 	  int bidon, ref2_num;
 
-	  ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, &ref2_num); assert(bidon);
+	  ref2_mi = check_for_horloge_ref(boards, pw->parent->id, pw->w, NULL, 0, &bidon, &ref2_num); assert(bidon);
 	  if (ref2_mi && ref2_mi->timestamp == timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
 	    if (ref2_num == -1                                 /* ref à plusieurs posts */
 		|| (ref2_num==0 && sub_timestamp <= 0) /* au cas on a mis un ¹ inutile par inadvertance */
@@ -1989,17 +1391,19 @@ void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp
 
 */
 void
-pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
+pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
+
   int l;
-  tribune_msg_info *ref_mi, *caller_mi;
+  board_msg_info *ref_mi, *caller_mi;
   unsigned char ref_comment[200];
   int ref_in_window = 0; /* mis a 1 si le message souligné par pw_ref est affiché parmi
 			    les autres messages. sinon, on l'affiche en haut, dans une petite fenetre */
 
 #define MAXANTIREF 60
-  int anti_ref_id[MAXANTIREF];
+  id_type anti_ref_id[MAXANTIREF];
   /* les antireferences : si on survolle un timestamp, on emphasize les commentaires qui
      lui font reference */
   int nb_anti_ref;
@@ -2016,14 +1420,19 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   /* effacage des bandes blanches */
   {
     int y,h;
-    y = LINEY0(pp->nb_lignes);
-    h = (pp->win_height - y) - (pp->use_minibar ? (MINIB_H) : 0);
+    /* en haut */
+    y = LINEY0(0);
+    h = LINEY0(0)-pp->zmsg_y1;
     if (h>0) {
       pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
     }
-  }
-  if (LINEY0(0) > pp->fortune_h) {
-    pp_clear_win_area(dock, 0, pp->fortune_h, pp->win_width, LINEY0(0)-pp->fortune_h);
+
+    /* en bas */
+    y = LINEY0(pp->nb_lignes);
+    h = (pp->zmsg_y2 - y) + 1;
+    if (h>0) {
+      pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
+    }
   }
 
   caller_mi = NULL;
@@ -2034,9 +1443,9 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   if (pw_ref && (pw_ref->attr & PWATTR_REF)) {
     int bidon;
 
-    ref_mi = check_for_horloge_ref(trib, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon, &ref_num); assert(bidon);
+    ref_mi = check_for_horloge_ref(boards, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon, &ref_num); assert(bidon);
     if (ref_mi) { 
-      tribune_msg_info *mi;
+      board_msg_info *mi;
 
       /* on verifie que la ref apparait *entierement* dans la fenetre 
 	 -> on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
@@ -2046,7 +1455,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	ref_in_window = 0;
 	for (l=0; l < pp->nb_lignes; l++) {
 	  if (pp->lignes[l]) {
-	    if (pp->lignes[l]->parent->id == ref_mi->id) {
+	    if (id_type_eq(pp->lignes[l]->parent->id, ref_mi->id)) {
 	      if (ref_in_window == 0) {
 		/* sale ruse... si toutes les lignes sont là, a la fin du FOR on obtient ref_in_window = 1 */
 		ref_in_window = pp->lignes[l]->parent->nblig;
@@ -2060,16 +1469,16 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  ref_in_window = 0;
 	  break;
 	}
-	get_next_id(trib, mi->id, &mi, NULL);
+	get_next_id_filtered(boards, mi->id, &mi, NULL);
 	if (ref_num != -1) break; /* si c'est pas une ref à un multipost sans précision, break (chuis pas clair) */
       }
 	
       /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
 	 temporairement en gras (ça c vraiment pour faire le cakos)*/
-      pp_refresh_hilight_refs(pp, trib, ref_mi->timestamp, ref_mi->sub_timestamp);
+      pp_refresh_hilight_refs(pp, boards, ref_mi->timestamp, ref_mi->sub_timestamp);
     }
   } else if (pw_ref && (pw_ref->attr & PWATTR_TSTAMP)) {
-    pp_refresh_hilight_refs(pp, trib, pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
+    pp_refresh_hilight_refs(pp, boards, pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
   }
 
 
@@ -2081,43 +1490,49 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   for (l=0; l < pp->nb_lignes; l++) {
     PostWord *pw;
     unsigned long bgpixel;
-
+    int opaque_bg;
+    
     pw = pp->lignes[l];
-
-    bgpixel = pp->win_bgpixel;
-    if (pw) {
-      int i;
-
+    opaque_bg = 0;
+    bgpixel = pp->win_bgpixel[pp->active_tab->site->site_id];
+    
+   if (pw) {
+     int site_num;
+     int i;
+     
+     site_num = id_type_sid(pw->parent->id);
+     bgpixel = pp->win_bgpixel[site_num];
+      
       /* if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel; */
       /*      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;*/
-
-      if (ref_mi) {
-	if (ref_num == -1) {
-	  if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
-	    bgpixel = pp->emph_pixel; 
-	  }
-	} else {
-	  if (pw->parent->id == ref_mi->id && ref_in_window) {
-	    bgpixel = pp->emph_pixel; 
-	  }
-	}
-      }
-      for (i = 0; i < nb_anti_ref; i++) {
-	if (anti_ref_id[i] == pw->parent->id) {
-	  bgpixel = pp->emph_pixel; 
-	}
-      }
-    }
-
+     
+     if (ref_mi) {
+       if (ref_num == -1) {
+	 if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
+	   bgpixel = pp->emph_pixel; opaque_bg = 1;
+	 }
+       } else {
+	 if (id_type_eq(pw->parent->id, ref_mi->id) && ref_in_window) {
+	   bgpixel = pp->emph_pixel; opaque_bg = 1;
+	 }
+       }
+     }
+     for (i = 0; i < nb_anti_ref; i++) {
+       if (id_type_eq(anti_ref_id[i], pw->parent->id)) {
+	 bgpixel = pp->emph_pixel; opaque_bg = 1;
+       }
+     }
+   }
+   
     pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
-		 pp->transparency_mode && bgpixel == pp->win_bgpixel, LINEY0(l));
+		 pp->transparency_mode && !opaque_bg, LINEY0(l));
 
     XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
   }
 
   if (pw_ref && ref_in_window == 0) {
     int y;
-    tribune_msg_info *mi;
+    board_msg_info *mi;
     
     y = 3;
     /* affichage de la reference tout en haut du pinnipede */
@@ -2129,17 +1544,17 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     while (mi && mi->timestamp == ref_mi->timestamp) {
       PostVisual *pv;
       if (mi->in_boitakon == 0 || pp->disable_plopify) {
-	pv = pp_pv_add(pp, trib, mi->id);
+	pv = pp_pv_add(pp, boards, mi->id);
 	if (pv) {
 	  PostWord *pw = pv->first;
 	  while (pw) {
-	    pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); //WhitePixel(dock->display, dock->screennum));
+	    pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); 
 	    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
 	    y += pp->fn_h;
 	  }
 	}
       }
-      get_next_id(trib, mi->id, &mi, NULL);
+      get_next_id_filtered(boards, mi->id, &mi, NULL);
       if (ref_num != -1) break;
     }
 
@@ -2150,7 +1565,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
 	XSetBackground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
 	XSetFont(dock->display, dock->NormalGC, pp->fn_it->fid);
-	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel);	
+	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel[pp->active_tab->site->site_id]);
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_base->ascent, ref_comment, strlen(ref_comment));
 	XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
 	y += pp->fn_h;
@@ -2164,23 +1579,22 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     }
   }
 
-  if (pp->use_minibar) {
-    pp_minib_refresh(dock);
-  }
-  if (pp->sc) { scrollcoin_refresh(pp->sc, pp->win, 1); }
+  pp_widgets_refresh(dock);
 }
 
 
 /* appelée depuis wmcoincoin.c, pour gèrer l'autoscroll et rafraichir l'affichage */
 void
-pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
+pp_check_board_updated(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
-  if (pp && pp->mapped && flag_updating_tribune == 0) {
+  Boards *boards = dock->sites->boards;
+
+  if (pp && pp->mapped && flag_updating_board == 0) {
     /* test si on scrolle qutomatiquement pour afficher le nouveau message */
     //    if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
-    if (pp->flag_tribune_updated) {
-      int last_id;
+    if (pp->flag_board_updated) {
+      id_type last_id;
 
       /* eh oui, il faut pas autoscroller ou rafraichir alors qu'une selection est active 
 	 (le update_content deselectionne automatiquement, mais faut être sûr que
@@ -2195,19 +1609,20 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
       }
 
       if (pp->sc) { 
-	pp_scrollcoin_update_bounds(dock, trib); 
+	pp_scrollcoin_update_bounds(dock); 
       }      
-      last_id = get_last_id(trib, &pp->filter);
-      if (trib->last_post_id != pp->last_post_id && pp->colle_en_bas) { // && pp->decal_base == 0) {
-	//	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
-	pp_update_content(dock, trib, last_id, 0, 0, 0);
+      last_id = get_last_id_filtered(boards, &pp->filter);
+      if ((!id_type_eq(last_id, pp->last_post_id)) && 
+	  pp->colle_en_bas) { // && pp->decal_base == 0) {
+	//	myprintf("pp_check_board_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
+	pp_update_content(dock, last_id, 0, 0, 0);
       } else {
 	/*	if (trib->last_post_id != pp->last_post_id)
-		printf("pp_check_tribune_updated, on laisse filer de %d à %d (pos=%d/%d)\n", pp->last_post_id, trib->last_post_id, pp->id_base, pp->decal_base);*/
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0, 0);
+		printf("pp_check_board_updated, on laisse filer de %d à %d (pos=%d/%d)\n", pp->last_post_id, trib->last_post_id, pp->id_base, pp->decal_base);*/
+	pp_update_content(dock, pp->id_base, pp->decal_base, 0, 0);
       }
-      pp_refresh(dock, trib, pp->win, NULL);
-      pp->flag_tribune_updated = 0;
+      pp_refresh(dock, pp->win, NULL);
+      pp->flag_board_updated = 0;
     }
   }
 }
@@ -2216,9 +1631,10 @@ void
 pp_animate(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
-  if (pp && pp->mapped /*&& flag_updating_tribune == 0*/) {
+  if (pp && pp->mapped /*&& flag_updating_board == 0*/) {
     /* pour affichage du temps restant avant refresh */
     pp_minib_refresh(dock);
+    pp_tabs_refresh(dock);
   }
 }
 
@@ -2292,16 +1708,20 @@ pp_set_prefs_colors(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
   int i;
-  pp->win_bgpixel = IRGB2PIXEL(Prefs.pp_bgcolor);
-
-  pp->timestamp_pixel = GET_BICOLOR(Prefs.pp_tstamp_color);
-  pp->lnk_pixel = GET_BICOLOR(Prefs.pp_url_color);
-  pp->strike_pixel = GET_BICOLOR(Prefs.pp_strike_color);
-  pp->txt_pixel = GET_BICOLOR(Prefs.pp_fgcolor);
+  
+  for (i=0; i <MAX_SITES; i++) {
+    if (Prefs.site[i] == NULL) continue;
+    pp->win_bgpixel[i] = IRGB2PIXEL(Prefs.site[i]->pp_bgcolor);
+    pp->timestamp_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_tstamp_color);
+    pp->lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_url_color);
+    pp->strike_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_strike_color);
+    pp->txt_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_fgcolor);
+    pp->nick_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_useragent_color);
+    pp->login_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_login_color);
+    pp->trollscore_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_trollscore_color);
+  }
   pp->popup_fgpixel = GET_BICOLOR(Prefs.pp_popup_fgcolor);
   pp->popup_bgpixel = GET_BICOLOR(Prefs.pp_popup_bgcolor);
-  pp->nick_pixel = GET_BICOLOR(Prefs.pp_useragent_color);
-  pp->login_pixel = GET_BICOLOR(Prefs.pp_login_color);
   pp->minib_pixel = GET_BICOLOR(Prefs.pp_buttonbar_bgcolor);
   pp->minib_dark_pixel = GET_BICOLOR(Prefs.pp_buttonbar_fgcolor);
   pp->minib_msgcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color);
@@ -2309,7 +1729,6 @@ pp_set_prefs_colors(Dock *dock)
   pp->minib_progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
   pp->sel_bgpixel = GET_BICOLOR(Prefs.pp_sel_bgcolor);
   pp->emph_pixel = GET_BICOLOR(Prefs.pp_emph_color);
-  pp->trollscore_pixel = GET_BICOLOR(Prefs.pp_trollscore_color);
   pp->hilight_my_msg_pixel = GET_BICOLOR(Prefs.pp_my_msg_color);
   pp->hilight_answer_my_msg_pixel = GET_BICOLOR(Prefs.pp_answer_my_msg_color);
   for (i=0; i < NB_PP_KEYWORD_CATEG; i++) {
@@ -2345,7 +1764,7 @@ pp_build(Dock *dock)
   pp->bg_pixmap = None;
   pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
 
-  pp->id_base = -1; pp->decal_base = 0;
+  pp->id_base = id_type_invalid_id(); pp->decal_base = 0;
   pp->colle_en_bas = 1;
 
   pp->win_width = Prefs.pp_width;
@@ -2387,6 +1806,7 @@ pp_build(Dock *dock)
   picohtml_set_parag_skip(pp->ph_fortune, 1.0);
   picohtml_set_line_skip(pp->ph_fortune, 1.0);
 
+  
 
   pp->pv = NULL;
   pp->survol_hash = 0;
@@ -2400,12 +1820,15 @@ pp_build(Dock *dock)
 
   pp->use_minibar = Prefs.pp_minibar_on;
 
-  if (pp->use_minibar)
-    pp_minib_initialize(pp);
+  //  if (pp->use_minibar)
+  //    pp_minib_initialize(pp);
+  pp_widgets_set_pos(dock);
 
   pp->fn_minib = dock->fixed_font;
 
-  pp->flag_tribune_updated = 0;
+  pp_tabs_build(dock);
+
+  pp->flag_board_updated = 0;
 }
 
 void
@@ -2418,12 +1841,13 @@ pp_destroy(Dock *dock)
   picohtml_destroy(dock->display, pp->ph_fortune);
   XFreeFont(dock->display, pp->fn_base); XFreeFont(dock->display, pp->fn_it); 
   XFreeFont(dock->display, pp->fn_bd); XFreeFont(dock->display, pp->fn_itbd);
+  pp_tabs_destroy(pp);
   free(pp); dock->pinnipede = NULL;
 }
 
 
 
-static void
+void
 pp_update_bg_pixmap(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -2458,12 +1882,29 @@ pp_update_bg_pixmap(Dock *dock)
    les champs x et y n'ont aucune influence)
 */
 void
-pp_show(Dock *dock, DLFP_tribune *trib)
+pp_show(Dock *dock)
 {
+  Boards *boards = dock->sites->boards;
   XSetWindowAttributes wa;
   Pinnipede *pp = dock->pinnipede;
   int xpos, ypos;
 
+  /*
+  {
+    board_msg_info *mi = boards->first;
+    int cnt = 1;
+    while (mi) {
+      myprintf("%3d sid=%2d lid=%<YEL %5d> login=%.10s msg=%.60s\n", cnt++,
+	       id_type_sid(mi->id), id_type_lid(mi->id), mi->login, mi->msg);
+      mi = mi->g_next;
+    }
+  }
+  */
+
+  if (pp->active_tab == NULL) {
+    msgbox_show(dock, "looks like you fucked your options file, no board ");
+    return;
+  }
   if (pp->win_xpos == -10000 && pp->win_ypos == -10000) {
     xpos = 700; ypos = 500; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
   } else {
@@ -2474,7 +1915,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
   pp->win = XCreateSimpleWindow (dock->display, dock->rootwin, 
 				 xpos, ypos, pp->win_width,pp->win_height, 0,
 				 WhitePixel(dock->display, dock->screennum),
-				 pp->win_bgpixel);
+				 pp_get_win_bgcolor(dock));
   wa.event_mask =
     ButtonPressMask | 
     ButtonReleaseMask | 
@@ -2511,7 +1952,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     char s[512];
 
     /* nom de la fenetre */
-    window_title = str_printf("pinnipede teletype from %s", Prefs.site_root);
+    window_title = str_printf("pinnipede teletype");
     rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
     XSetWMName(dock->display, pp->win, &window_title_property);
     XFree(window_title_property.value);
@@ -2548,7 +1989,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
     class_hint = XAllocClassHint();
     class_hint->res_name = "pinnipede_teletype";
-    sprintf(s, "wmcoincoin_%s", Prefs.site_root);
+    sprintf(s, "wmcoincoin");
     class_hint->res_class = s;
     XSetClassHint(dock->display, pp->win, class_hint);
     XFree(class_hint);
@@ -2584,7 +2025,9 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
   //  XMoveWindow(dock->display, pp->win, 100, 100);
   pp->mapped = 1;
-  pp_update_content(dock, trib, pp->colle_en_bas ? get_last_id(trib, &pp->filter) : pp->id_base, 0, 0, 1);
+  pp_update_content(dock, pp->colle_en_bas ? 
+		    get_last_id_filtered(boards, &pp->filter) : 
+		    pp->id_base, 0, 0, 1);
     
   pp->survol_hash = 0;
 }
@@ -2595,7 +2038,7 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
   PostWord *pw;
   int l;
   pw = NULL;
-  if (y >= pp->zmsg_y && y < pp->zmsg_y + pp->zmsg_h) {
+  if (y >= pp->zmsg_y1 && y <= pp->zmsg_y2) {
     int trouve = 0;
     for (l=0; l < pp->nb_lignes; l++) {
       pw = pp->lignes[l];
@@ -2660,11 +2103,12 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
 }
 
 /* renvoie le nombre de references vers le message base_mi (sauf ipot) */
+/* to do: comptage inter-sites */
 static int
-pp_count_backrefs(tribune_msg_info *base_mi)
+pp_count_backrefs(board_msg_info *base_mi)
 {
   int nb_backrefs = 0;
-  tribune_msg_info *mi;
+  board_msg_info *mi;
   
   if (base_mi == NULL) return 0;
 
@@ -2674,11 +2118,12 @@ pp_count_backrefs(tribune_msg_info *base_mi)
     int i;
     /* on regarde toutes ses references */
     for (i = 0; i < mi->nb_refs; i++) {
-      tribune_msg_info *ref_mi;
+      board_msg_info *ref_mi;
       int j;
 
       /* pour chaque ref, on regarde la liste (generalement de taille 1 ou 0) des messages pointés */
       for (j = 0, ref_mi = mi->refs[i].mi; j < mi->refs[i].nbmi; j++, ref_mi=ref_mi->next) {
+	/* on notera qu'on fait bien ref_mi->next et pas ref_mi->g_next */
 	assert(ref_mi);
 
 	/* si on pointe vers le bon */
@@ -2699,9 +2144,10 @@ pp_count_backrefs(tribune_msg_info *base_mi)
    et d'agir le cas echeant (de maniere un peu désordonnée)
 */
 void
-pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
+pp_check_survol(Dock *dock, int x, int y)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
   PostWord *pw;
   char survol[1024];
   char *p;
@@ -2714,14 +2160,14 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
     if (pw->attr_s) { /* pour les [url] */
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
     } else if (pw->attr & PWATTR_TSTAMP) {
-      tribune_msg_info *mi;
+      board_msg_info *mi;
       char blah[1024];
       char *s;
       int blah_sz = 1024;
 
       int nrep;
       KeyList *hk;
-      mi = tribune_find_id(trib, pw->parent->id);
+      mi = boards_find_id(boards, pw->parent->id);
 
       s = blah; s[0] = 0;
       if (mi->is_my_message) {
@@ -2730,27 +2176,30 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       if (mi->is_answer_to_me && blah_sz>30) {
 	snprintf(s, blah_sz, _("\n[this message answers to one of yours]")); blah_sz -= strlen(s); s += strlen(s);
       }
-      hk = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list);
+      hk = board_key_list_test_mi(boards, mi, Prefs.hilight_key_list);
       if (hk && blah_sz > 60) {
 	snprintf(s, blah_sz, _("\nmessage 'boxed' because: ")); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
 	  snprintf(s, blah_sz, " {%s='%.20s'}", 
-		   tribune_key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
-	  hk = tribune_key_list_test_mi(trib, mi, hk->next);
+		   key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
+	  hk = board_key_list_test_mi(boards, mi, hk->next);
 	}
       }
-      hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
+      hk = board_key_list_test_mi(boards, mi, Prefs.plopify_key_list);
       if (hk && blah_sz > 60) {
 	snprintf(s, blah_sz, _("\nmessage plopified (level %d) because: "), hk->num); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
 	  snprintf(s, blah_sz, " {%s='%.20s'}", 
-		   tribune_key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
-	  hk = tribune_key_list_test_mi(trib, mi, hk->next);
+		   key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
+	  hk = board_key_list_test_mi(boards, mi, hk->next);
 	}
       }
       nrep = pp_count_backrefs(mi);
 
-      snprintf(survol, 1024, "id=%d ua=%s\n%d %s%s", pw->parent->id, (mi ? mi->useragent : ""), 
+      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%d %s%s", 
+	       Prefs.site[pw->parent->id.sid]->site_name,
+	       pw->parent->id.lid, 
+	       (mi ? mi->useragent : ""), 
 	       nrep, (nrep > 1) ? _("answers") : _("answer"), blah);
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
@@ -2771,7 +2220,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
   /* on evite de reafficher tant qu'on survolle le meme objet (pour eviter le clignotement) */
   if (pp->survol_hash != survol_hash) {
     if (is_a_ref || strlen(survol) == 0) {
-      pp_refresh(dock, trib, pp->win, is_a_ref ? pw : NULL);
+      pp_refresh(dock, pp->win, is_a_ref ? pw : NULL);
     }
     pp_popup_show_txt(dock, survol);
     pp->survol_hash = survol_hash;
@@ -2787,7 +2236,7 @@ pp_unmap(Dock *dock)
 
   /* le pp_refresh a juste pour but de 'delocker' le PostVisual sauvé dans le cache
      oui c'est de la bidouille qui sent les remugles nauséabonds */
-  pp_refresh(dock, &dock->dlfp->tribune, pp->win, NULL);
+  pp_refresh(dock, pp->win, NULL);
 
   /* on sauve la position de la fenetre (en prenant en compte les decorations du WM ) */
   get_window_pos_with_decor(dock->display, pp->win, &pp->win_xpos, &pp->win_ypos);
@@ -2817,7 +2266,7 @@ int pp_ismapped(Dock *dock) {
 
 /* 23/03/2002 pitit patch pour protéger les > et < pour le validator */
 char *
-pp_tribuneshot_encode( const char *chaine )
+pp_boardshot_encode( const char *chaine )
 {
   char *tmp;
   char *retour;
@@ -2842,7 +2291,7 @@ pp_tribuneshot_encode( const char *chaine )
 /* --------- patch de lordOric, aka "plateau de fruits de mer" ------------*/
 /* Scrinchote d'un message */
 int 
-pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
+pp_boardshot_save_msg( board_msg_info *mi, FILE *file )
 {
   char time[10];
   
@@ -2857,30 +2306,30 @@ pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
   else
     fprintf( file, "<tr><td></td>\n");
 	
-  tmp = pp_tribuneshot_encode( mi->useragent );
+  tmp = pp_boardshot_encode( mi->useragent );
   fprintf(file,"<td> <span title='%s'> %s </span> </td>\n",tmp, time);	 
   free (tmp);
 	
   if ( mi->login && strlen(mi->login)) {
-    tmp = pp_tribuneshot_encode( mi->login );
+    tmp = pp_boardshot_encode( mi->login );
     fprintf(file,"<td align=CENTER><FONT color=red>%s</FONT></td>\n", tmp);
     free(tmp);
   } else {
     char *p;
-    char short_ua[15];
+    p = mi->tatoo.name;
+    /*    char short_ua[15];
     if (mi->tatouage) {
-      p = mi->tatouage->name;
       if (strcmp(mi->tatouage->name, "?") == 0) {
 	make_short_name_from_ua(mi->useragent, short_ua, 15);
 	p = short_ua;
       }
-    } else p = "[???]";
-    tmp = pp_tribuneshot_encode(p);
+      } else p = "[???]";*/
+    tmp = pp_boardshot_encode(p);
     fprintf( file, "<td align=CENTER><FONT color=brown>%.12s</FONT></td>\n", tmp);
     free(tmp);
   }
 	
-  tmp = pp_tribuneshot_encode(mi->msg);
+  tmp = pp_boardshot_encode(mi->msg);
   fprintf( file,"<td>%s</td></tr>\n", tmp);
   free(tmp);
   
@@ -2890,15 +2339,16 @@ pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
 
 /* Tribuneshot : un chouette plateau de fruits de mer ;) */
 int
-pp_tribuneshot_kikoooo(Dock *dock, DLFP_tribune *tribune ) 
+pp_boardshot_kikoooo(Dock *dock ) 
 {
+  Boards *boards = dock->sites->boards;
   char *file_name;
   FILE *file;
   time_t time_shot;
   int file_exist;
-  tribune_msg_info *msg = tribune->msg;
+  board_msg_info *msg = boards->first;
   
-  file_name = str_substitute(Prefs.tribune_scrinechote, "~", getenv("HOME"));
+  file_name = str_substitute(Prefs.board_scrinechote, "~", getenv("HOME"));
   file = fopen( file_name, "r");
   file_exist = (file!=NULL);
   if ( file_exist ) fclose( file ); 
@@ -2926,8 +2376,8 @@ pp_tribuneshot_kikoooo(Dock *dock, DLFP_tribune *tribune )
   fprintf( file, "<table align=CENTER>");
   
   while ( msg ) {
-    pp_tribuneshot_save_msg(msg, file);
-    msg = msg->next;
+    pp_boardshot_save_msg(msg, file);
+    msg = msg->g_next;
   }
   
   fprintf( file, "</table><br>\n");
@@ -2985,185 +2435,53 @@ pp_balloon_help(Dock *dock, int x, int y)
 }
 
 
-static int
-pp_minib_handle_button_press(Dock *dock, XButtonEvent *ev) {
-  PPMinib *mb;
-  mb = pp_minib_get_button(dock, ev->x, ev->y);
-  if (mb) {
-    mb->clicked = 1;
-    pp_minib_refresh(dock);
-    return 1;
-  } else return 0;
-}
-
-
-int
-pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
-{
-  Pinnipede *pp = dock->pinnipede;
-  PPMinib *mb;
-  int i, need_refresh;
-
-  pp_selection_unselect(pp);
-
-  mb = pp_minib_get_button(dock, event->x, event->y);
-  if (event->type == ButtonRelease  && mb && mb->clicked == 1) {
-    switch (mb->type) {
-
-    case REFRESH_TRIBUNE:
-      {
-	dock->tribune_update_request = 1; pp_minib_refresh(dock);
-      } break;
-
-    case REFRESH_NEWS:
-      {
-	dock->news_update_request = 1; pp_minib_refresh(dock);
-      } break;
-
-    case HELP:
-      {
-	pp_minib_refresh(dock);
-	pp_balloon_help(dock, mb->x-20, mb->y-20);
-      } break;
-    case UA:
-      {
-	pp->nick_mode = (pp->nick_mode + 1) % 5;
-	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, trib, pp->win, NULL);	    
-      } break;
-    case SECOND:
-      {
-	pp->nosec_mode = (1-pp->nosec_mode);
-	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, trib, pp->win, NULL);	    
-      } break;
-    case FILTER:
-      {
-	pp->filter.filter_mode = (1-pp->filter.filter_mode);
-
-	if (pp->filter.filter_mode) pp->id_base = -1; /* reset du scroll (necessaire, faut etre que le post 'id_base' soit bien affiché par le filtre) */
-
-	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, trib, pp->win, NULL);	    	    
-      } break;
-    case PLOPIFY:
-      {
-	pp->disable_plopify = (1-pp->disable_plopify);
-	pp->filter.filter_boitakon = 1-pp->disable_plopify;
-
-	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, trib, pp->win, NULL);	    	    
-      } break;
-    case TSCORE:
-      {
-	if (Prefs.enable_troll_detector) {
-	  pp->trollscore_mode = (1-pp->trollscore_mode);
-	  pp_pv_destroy(pp);
-	  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	  pp_refresh(dock, trib, pp->win, NULL);	    	    
-	} else {
-	  msgbox_show(dock, _("Don't click on this button, the troll_detector is deactivated (see the option 'tribune.enable_troll_detector')."));
-	}
-      } break;
-    case FORTUNE:
-      {
-	if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
-	  pp->fortune_mode = (1-pp->fortune_mode);
-	  pp_pv_destroy(pp);
-	  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	  pp_refresh(dock, trib, pp->win, NULL);	    	    	
-	} else {
-	  msgbox_show(dock, _("Don't click on this button if you don't have given a cookie to wmcoincoin, nor activated the 'http.force_fortune_retrieval' option."));
-	}
-      } break;
-    case SCROLLBAR:
-      {
-	if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
-	else { pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, 
-					  pp->win_height-20, pp->transparency_mode); }
-	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, trib, pp->win, NULL);
-      } break;
-    case TRANSPARENT:
-      {
-	if (Prefs.use_fake_real_transparency) {
-	  pp_unmap(dock); XFlush(dock->display); 
-	  usleep(150); /* pour laisser le temps aux autres applis de se refresher
-			  on atteint des sommets de laideur
-			  pas sur que c'était une bonne idée cette option use_fake_real_transparency
-		       */
-	}
-	pp_change_transparency_mode(dock, 1-pp->transparency_mode);
-	if (Prefs.use_fake_real_transparency) 
-	  pp_show(dock, trib);
-	else {
-	  pp_update_bg_pixmap(dock);
-	}
-	pp_refresh(dock, trib, pp->win, NULL);
-      } break;
-    default:
-      assert(0); 
-    }
-  }
-  for (i=0, need_refresh=0; i < NB_MINIB; i++) {
-    if (pp->mb[i].clicked) {
-      pp->mb[i].clicked = 0; need_refresh++;
-    }
-  }
-  if (need_refresh) { pp_minib_refresh(dock); }
-  return need_refresh;
-}
-
 #define THREAD_FILTER_SZ_REALLOC 10
 
+/* pas glop */
 static void
-pp_thread_filter_add_refs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tribune_msg_info *base_mi)
+pp_thread_filter_add_refs(Boards *boards, struct _PinnipedeFilter *f, board_msg_info *base_mi)
 {
   int i,j;
   if (base_mi == NULL) return;
 
   /* on inspecte toutes les references */
   for (i = 0; i < base_mi->nb_refs; i++) {
-    tribune_msg_info *mi;
+    board_msg_info *mi;
     
     mi = base_mi->refs[i].mi;
 
     for (j = 0; j < base_mi->refs[i].nbmi; j++) {
       /* realloc la liste si il faut */
       if ((f->nid)%THREAD_FILTER_SZ_REALLOC == 0) {
-	f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC) * sizeof(int)); assert(f->id);
+	f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC) * sizeof(id_type)); assert(f->id);
       }
       /* si la ref n'etait pas déjà dans la liste, on l'ajoute */
       if (pp_thread_filter_find_id(f, mi->id)==0) {
 	//myprintf("    ref(%d): ajout de %<YEL %d> <-- %<MAG %d>\n", f->nid, mi->id, base_mi->id);
 	f->id[f->nid++] = mi->id;
 	/* et on recurse ... */
-	pp_thread_filter_add_refs(trib, f, mi);
+	pp_thread_filter_add_refs(boards, f, mi);
       }
-      mi = mi->next;
+      mi = mi->next; /* et pas g_next, car multi-ref sur un même site  */
     }
   }
 }
 
+/* rolala y'a des features qui font mal à la tête */
 static void
-pp_thread_filter_add_backrefs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tribune_msg_info *base_mi)
+pp_thread_filter_add_backrefs(Boards *boards, struct _PinnipedeFilter *f, board_msg_info *base_mi)
 {
-  tribune_msg_info *mi;
+  board_msg_info *mi;
   
   if (base_mi == NULL) return;
 
   /* on parcourt tous les message postérieurs à base_mi */
-  mi = base_mi->next;
+  mi = base_mi->g_next;
   while (mi) {
     int i;
     /* on regarde toutes ses references */
     for (i = 0; i < mi->nb_refs; i++) {
-      tribune_msg_info *ref_mi;
+      board_msg_info *ref_mi;
       int j;
 
       /* pour chaque ref, on regarde la liste (generalement de taille 1 ou 0) des messages pointés */
@@ -3183,25 +2501,25 @@ pp_thread_filter_add_backrefs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tr
 	    
 	    f->id[f->nid++] = mi->id;
 	    /* et hop ça recurse un coup */
-	    pp_thread_filter_add_backrefs(trib, f, mi);
+	    pp_thread_filter_add_backrefs(boards, f, mi);
 	  }
 	}
       }
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
 }
 
 void
-pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
+pp_set_thread_filter(Dock *dock, id_type base_id)
 {
-  
   Pinnipede *pp = dock->pinnipede;
-  char fname[200];
-  tribune_msg_info *mi;
+  Boards *boards = dock->sites->boards;
 
-  
-  mi = tribune_find_id(trib, base_id);
+  char fname[200];
+  board_msg_info *mi;
+
+  mi = boards_find_id(boards, base_id);
   if (mi == NULL) return;
 
   if (mi->hmsf[3] == 0) {
@@ -3209,7 +2527,6 @@ pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
   } else {
     snprintf(fname, 200, "thread: %02d:%02d:%02d", mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
   }
-
 
   pp_unset_filter(&pp->filter);
   pp->filter.filter_mode = 1;
@@ -3220,20 +2537,21 @@ pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
   pp->filter.id[0] = base_id;
 
 
-  pp_thread_filter_add_refs(trib, &pp->filter, mi);
-  pp_thread_filter_add_backrefs(trib, &pp->filter, mi);
+  pp_thread_filter_add_refs(boards, &pp->filter, mi);
+  pp_thread_filter_add_backrefs(boards, &pp->filter, mi);
 
 
   BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
-  pp_update_content(dock, trib, -1, 0, 0, 1);
-  pp_refresh(dock, trib, pp->win, NULL);
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);
 }
 
 
 void
-pp_set_login_filter(Dock *dock, DLFP_tribune *trib, char *login)
+pp_set_login_filter(Dock *dock, char *login)
 {
   Pinnipede *pp = dock->pinnipede;
+
   char fname[200];
 
   snprintf(fname, 200, "login: <%s>", login);
@@ -3243,12 +2561,12 @@ pp_set_login_filter(Dock *dock, DLFP_tribune *trib, char *login)
   pp->filter.login = strdup(login);
 
   BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
-  pp_update_content(dock, trib, -1, 0, 0, 1);
-  pp_refresh(dock, trib, pp->win, NULL);	  
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);	  
 }
 
 void
-pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua)
+pp_set_ua_filter(Dock *dock, char *ua)
 {
   Pinnipede *pp = dock->pinnipede;
   char fname[200];
@@ -3260,12 +2578,12 @@ pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua)
   pp->filter.ua = strdup(ua);
 
   BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
-  pp_update_content(dock, trib, -1, 0, 0, 1);
-  pp_refresh(dock, trib, pp->win, NULL);
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);
 }
 
 void
-pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word)
+pp_set_word_filter(Dock *dock, char *word)
 {
   Pinnipede *pp = dock->pinnipede;
   char fname[200];
@@ -3277,37 +2595,38 @@ pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word)
   pp->filter.word = strdup(word);
 
   BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
-  pp_update_content(dock, trib, -1, 0, 0, 1);
-  pp_refresh(dock, trib, pp->win, NULL);	  
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);	  
 }
 
 /* gestion des ctrl+left click sur un mot du pinnipede
    --> permet l'activation du filtre sur le mot */
 static void
-pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
+pp_handle_control_left_clic(Dock *dock, int mx, int my)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
 
   if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
-    pp_set_word_filter(dock, trib, pp->last_selected_text);
+    pp_set_word_filter(dock, pp->last_selected_text);
   } else {
     PostWord *pw;
     pw = pp_get_pw_at_xy(pp, mx, my);
     if (pw) {
       if (pw->attr & PWATTR_TSTAMP) {
 	/* control+clic sur l'horloge -> activation du filtre */
-	pp_set_thread_filter(dock, trib, pw->parent->id); 
+	pp_set_thread_filter(dock, pw->parent->id); 
       } else if (pw->attr & PWATTR_LOGIN) {
 	/* control+clic sur un <login> -> filtre ! */
-	pp_set_login_filter(dock, trib, pw->w);
+	pp_set_login_filter(dock, pw->w);
       } else if (pw->attr & PWATTR_NICK) {
 	/* control+clic sur un useragent raccourci -> filtre ! */
 	
-	tribune_msg_info *mi;
+	board_msg_info *mi;
 	
-	mi = tribune_find_id(trib, pw->parent->id);
+	mi = boards_find_id(boards, pw->parent->id);
 	if (mi) {
-	  pp_set_ua_filter(dock, trib, mi->useragent);
+	  pp_set_ua_filter(dock, mi->useragent);
 	}
       } else if (strlen(pw->w) > 0) {
 	/* control+clic sur un mot normal -> filtre ! */
@@ -3318,9 +2637,9 @@ pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	p = s;
 	while (*p && !isalnum((unsigned char)*p)) p++;
 	if (strlen(p)) {
-	  pp_set_word_filter(dock, trib, p);
+	  pp_set_word_filter(dock, p);
 	} else {
-	  pp_set_word_filter(dock, trib, pw->w);
+	  pp_set_word_filter(dock, pw->w);
 	}
 	free(s);
       }
@@ -3365,9 +2684,10 @@ ET aussi
    un useragent/login/mot clef
 */
 static void
-pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int plopify_level)
+pp_handle_shift_clic(Dock *dock, KeyList **pkl, int mx, int my, int plopify_level)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
   int num;
   unsigned boitakon_state=0;
 
@@ -3376,13 +2696,13 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
   if (plopify_level == 3) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
 
   if (plopify_level) {
-    boitakon_state = tribune_key_list_get_state(*pkl, 2);
+    boitakon_state = key_list_get_state(*pkl, 2);
   }
 
   /* shift clic alors que du texte est selectionné: on applique le truc sur le texte selectionné */  
 
   if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
-    *pkl = tribune_key_list_swap(*pkl, pp->last_selected_text, HK_WORD, 0);
+    *pkl = key_list_swap(*pkl, pp->last_selected_text, HK_WORD, 0);
   } else {
     PostWord *pw;
     int thread_clic;
@@ -3403,27 +2723,27 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 
 
     if (pw) {
-      tribune_msg_info *mi;
+      board_msg_info *mi;
 
-      mi = tribune_find_id(trib, pw->parent->id);
+      mi = boards_find_id(boards, pw->parent->id);
 
       if (mi && thread_clic) {
 	char sid[15];
-	snprintf(sid, 15, "%d", mi->id);
-	*pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD, num);
+	snprintf(sid, 15, "%d", id_type_to_int(mi->id));
+	*pkl = key_list_swap(*pkl, sid, HK_THREAD, num);
       } else if (mi && pw->attr & PWATTR_NICK) {
 	if (plopify_level == 0) {
-	  *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA, num);
+	  *pkl = key_list_swap(*pkl, mi->useragent, HK_UA, num);
 	} else {
-	  if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
-	  else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
+	  if (mi->login[0]) *pkl = key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+	  else *pkl = key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
 	}
       } else if (pw->attr & PWATTR_LOGIN) {
-	*pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+	*pkl = key_list_swap(*pkl, mi->login, HK_LOGIN, num);
       } else if (pw->attr & PWATTR_TSTAMP) {
 	char sid[10];
-	snprintf(sid,10,"%d", pw->parent->id);
-	*pkl = tribune_key_list_swap(*pkl, sid, HK_ID, num);
+	snprintf(sid,10,"%d", id_type_to_int(pw->parent->id));
+	*pkl = key_list_swap(*pkl, sid, HK_ID, num);
       } else {
 	char *s, *p;
 	KeyList *hk;
@@ -3432,8 +2752,8 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	   puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
 	   en 'plop' ou 'pikaa' ...
 	*/
-	if (plopify_level && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
-	  *pkl = tribune_key_list_remove(*pkl, hk->key, hk->type);
+	if (plopify_level && mi && (hk = board_key_list_test_mi(boards, mi, *pkl))) {
+	  *pkl = key_list_remove(*pkl, hk->key, hk->type);
 	} else {
 	
 	  /* simplification du mot */
@@ -3445,7 +2765,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	
 	  if (strlen(p) == 0) p = pw->w;
 	
-	  *pkl = tribune_key_list_swap(*pkl, p, HK_WORD, num);
+	  *pkl = key_list_swap(*pkl, p, HK_WORD, num);
 	  free(s);
 	}
       }
@@ -3453,34 +2773,39 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
       return; /* pour eviter un refresh inutile */
     }
   }
-  *pkl = tribune_key_list_cleanup(trib, *pkl); /* supprime les key faisant ref à des messages detruits */
+  *pkl = board_key_list_cleanup(boards, *pkl); /* supprime les key faisant ref à des messages detruits */
   
   /* vérifie si la boitakon a été modifiée */
   if (plopify_level) {
-    if (boitakon_state != tribune_key_list_get_state(*pkl, 2)) {
-      tribune_update_boitakon(trib);
+    if (boitakon_state != key_list_get_state(*pkl, 2)) {
+      boards_update_boitakon(boards);
     }
   }
 
   pp_pv_destroy(pp); /* force le rafraichissement complet */
-  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-  pp_refresh(dock, trib, pp->win, NULL);
+  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
+  pp_refresh(dock, pp->win, NULL);
 }
 
 static void
-pp_open_login_home_in_browser(Dock *dock, int mx, int my, char *w, int bnum) {
+pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int bnum) {
   Pinnipede *pp = dock->pinnipede;
   char *s;
   assert(w);
-  s = str_printf("http://%s:%d/%s~%s", Prefs.site_root, Prefs.site_port, Prefs.site_path, w);
+  assert(Prefs.site[sid]);
+  s = str_printf("http://%s:%d/%s~%s", 
+		 Prefs.site[sid]->site_root, 
+		 Prefs.site[sid]->site_port, 
+		 Prefs.site[sid]->site_path, w);
   open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, bnum);
   free(s);
 }
 
 static void
-pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
+pp_handle_left_clic(Dock *dock, int mx, int my)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
   PostWord *pw;
 
   /* affichage/masquage du 'crochet' à gauche des messages mis en valeur */
@@ -3495,17 +2820,17 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	/* pareil */
 	/* pp->hilight_answer_to_me_mode = 1-pp->hilight_answer_to_me_mode; */
       } else if (pw->parent->is_hilight_key) {
-	tribune_msg_info *mi;
+	board_msg_info *mi;
 	KeyList *hk;
-	mi = tribune_find_id(trib, pw->parent->id);
-	if (mi && (hk = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list))) {
-	  Prefs.hilight_key_list = tribune_key_list_remove(Prefs.hilight_key_list, hk->key, hk->type);
+	mi = boards_find_id(boards, pw->parent->id);
+	if (mi && (hk = board_key_list_test_mi(boards, mi, Prefs.hilight_key_list))) {
+	  Prefs.hilight_key_list = key_list_remove(Prefs.hilight_key_list, hk->key, hk->type);
 	}
       } else changed = 0;
       if (changed) {
 	pp_pv_destroy(pp); /* force le rafraichissement complet */
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,0);
-	pp_refresh(dock, trib, pp->win, NULL);
+	pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+	pp_refresh(dock, pp->win, NULL);
       }
     }
   }
@@ -3535,17 +2860,18 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
       snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
 	
       if (editw_ismapped(dock->editw) == 0) {
-	if (Prefs.user_name) {
-	  snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
-		   Prefs.user_name, s_ts);
+	char *username = Prefs.site[id_type_sid(pw->parent->id)]->user_name;
+	if (username) {
+	  snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s %s ",
+		   username, s_ts);
 	} else {
-	  snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
+	  snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s ",
 		   s_ts);
 	}
 	//	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
 	// strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
-	dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
-	editw_show(dock, dock->editw, 0);
+	dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
+	editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
 	editw_move_end_of_line(dock->editw, 0);
 	editw_refresh(dock, dock->editw);
       } else {
@@ -3557,11 +2883,11 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
     } else if (pw->attr & PWATTR_REF) {
       /* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
 	 pinnipede */
-      tribune_msg_info *mi;
+      board_msg_info *mi;
       int bidon;
       int ref_num;
 
-      mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, &ref_num); assert(bidon);
+      mi = check_for_horloge_ref(boards, pw->parent->id, pw->w, NULL, 0, &bidon, &ref_num); assert(bidon);
 
 
 
@@ -3578,14 +2904,14 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	if (trouve == NULL) {
 	  PostVisual *pv;
 	  /* c'est un peu lourd pour positionner le message juste en haut du pinnipede.. */
-	  pv = pp_pv_add(pp, trib, mi->id);
+	  pv = pp_pv_add(pp, mi->id);
 	  if (pv) {
 	    int ligne = pp->nb_lignes - pv->nblig; // - (my-LINEY0(0))/(LINEY0(1)-LINEY0(0));
-	    pp_update_content(dock, trib, mi->id, ligne, 0, 0);
+	    pp_update_content(dock, mi->id, ligne, 0, 0);
 	  }
 	  trouve = pp->lignes[0];
 	}
-	pp_refresh(dock, trib, pp->win, trouve);
+	pp_refresh(dock, pp->win, trouve);
 #else
 	/* si la reference désigne plusieurs post de la même heure ,
 	   on se déplace vers le dernier du bloc
@@ -3596,12 +2922,12 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	  }
 	}
 
-	pp_update_content(dock, trib, mi->id, 0, 0, 0);
-	pp_refresh(dock, trib, pp->win, NULL);
+	pp_update_content(dock, mi->id, 0, 0, 0);
+	pp_refresh(dock, pp->win, NULL);
 #endif
       }
     } else if (pw->attr & PWATTR_LOGIN) {
-      pp_open_login_home_in_browser(dock, mx, my, pw->w,1);
+      pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id),mx, my, pw->w,1);
     }
   } /* if (pw) */  
 }
@@ -3609,9 +2935,10 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 /* gestion du relachement du bouton souris (si on n'est pas en train de 'tirer' la fenetre, 
    et si on n'a pas cliqué sur la barre de petits boutons */
 void 
-pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
+pp_handle_button_release(Dock *dock, XButtonEvent *event)
 {
   Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
   int mx,my;
   static Time previous_clic = 0;
   static int q = 1;
@@ -3629,22 +2956,22 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
   
   if (event->button == Button4) {
     /* un coup de roulette */
-    pp_update_content(dock, trib, pp->id_base, pp->decal_base-q,0,0);
-    pp_refresh(dock, trib, pp->win, NULL);
+    pp_update_content(dock, pp->id_base, pp->decal_base-q,0,0);
+    pp_refresh(dock, pp->win, NULL);
     //    printf("scroll up  : id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button5) {
-    pp_update_content(dock, trib, pp->id_base, pp->decal_base+q,0,0);
-    pp_refresh(dock, trib, pp->win, NULL);
+    pp_update_content(dock, pp->id_base, pp->decal_base+q,0,0);
+    pp_refresh(dock, pp->win, NULL);
     //printf("scroll down: id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button1) {
     if (event->state & ShiftMask) {
-      pp_handle_shift_clic(dock, trib, &Prefs.hilight_key_list, mx, my, 0);
+      pp_handle_shift_clic(dock, &Prefs.hilight_key_list, mx, my, 0);
     } else if (event->state & ControlMask) {
-      pp_handle_control_left_clic(dock, trib, mx, my);
+      pp_handle_control_left_clic(dock, mx, my);
     } else if (event->state & (Mod1Mask | Mod4Mask) ) { /* on est gentil, les deux marchent */
       pp_handle_alt_clic(dock, event);
     } else {
-      pp_handle_left_clic(dock, trib, mx, my);
+      pp_handle_left_clic(dock, mx, my);
     }
   } else if (event->button == Button2) {
     if ((event->state & ControlMask)==0) {    
@@ -3653,8 +2980,8 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       pw = pp_get_pw_at_xy(pp, mx, my);
       /* middle clic sur une horloge, on copie le contenu du message dans le clipboard */
       if (pw && (pw->attr & PWATTR_TSTAMP)) {
-	tribune_msg_info *mi;
-	mi = tribune_find_id(trib, pw->parent->id);
+	board_msg_info *mi;
+	mi = boards_find_id(boards, pw->parent->id);
 	if (mi) {
 	  if (mi->msg && strlen(mi->msg)) {
 	    editw_cb_copy(dock, pp->win, mi->msg, strlen(mi->msg));
@@ -3666,13 +2993,13 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 2);
 	}
       } else if (pw && pw->attr & PWATTR_LOGIN) {
-	pp_open_login_home_in_browser(dock, mx, my, pw->w,2);
+	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);
       }
     } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
       pp_handle_alt_clic(dock, event);
     } else {
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
-      pp_tribuneshot_kikoooo(dock, trib);
+      pp_boardshot_kikoooo(dock);
     }
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {
@@ -3685,7 +3012,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  plop_level = 3;
 	}
       }
-      pp_handle_shift_clic(dock, trib, &Prefs.plopify_key_list, mx, my, plop_level);
+      pp_handle_shift_clic(dock, &Prefs.plopify_key_list, mx, my, plop_level);
     } else {
       PostWord *pw;
       
@@ -3698,8 +3025,8 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	}
       } else if (pw && (pw->attr & PWATTR_TSTAMP)) {
 	/* right clic sur une horloge, on copy l'useragent dans le clipboard */
-	tribune_msg_info *mi;
-	mi = tribune_find_id(trib, pw->parent->id);
+	board_msg_info *mi;
+	mi = boards_find_id(boards, pw->parent->id);
 	if (mi) {
 	  if (mi->useragent && strlen(mi->useragent)) {
 	    editw_cb_copy(dock, pp->win, mi->useragent, strlen(mi->useragent));	  
@@ -3711,12 +3038,12 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	char *s;
 	s = str_printf("/msg %s ", pw->w);
 	if (editw_ismapped(dock->editw) == 0) {
-	  strncpy(dock->coin_coin_message, s, MESSAGE_MAX_LEN);
-	  dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
-	  editw_show(dock, dock->editw, 0);
+	  strncpy(dock->coin_coin_message, s, MESSAGE_MAXMAX_LEN);
+	  dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
+	  editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
 	  editw_move_end_of_line(dock->editw, 0);
 	} else {
-	  editw_erase(dock->editw);editw_erase(dock->editw); // deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme)
+	  editw_erase(dock->editw); editw_erase(dock->editw); // deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme)
 	  editw_insert_string(dock->editw, s);
 	}
 	free(s);
@@ -3729,8 +3056,8 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  } else {
 	    pp_minib_hide(dock);
 	  }
-	  pp_update_content(dock, trib, pp->id_base, 0,0,1);
-	  pp_refresh(dock, trib, pp->win, NULL);	    	    
+	  pp_update_content(dock, pp->id_base, 0,0,1);
+	  pp_refresh(dock, pp->win, NULL);	    	    
 	}
       }
     }
@@ -3785,12 +3112,6 @@ flush_consecutive_mouse_motions(Dock *dock, Window w, XEvent *ev_init) {
 
   if (cnt) return &ev; else return ev_init;
 }
-
-/*
-int
-has_pending_expose_events(Display *dpy, Window w) {
-}
-*/
 
 /* 
    pour la selection (reperer quel mots sont à tel position, et quel caractère précisement.. )
@@ -3925,9 +3246,13 @@ pp_selection_refresh(Dock *dock)
   for (l=0; l < pp->nb_lignes; l++) {
 
     if (pp->lignes_sel[l].trashed) {
+      unsigned long bgpixel = pp->win_bgpixel[pp->active_tab->site->site_id];
+      if (pp->lignes[l]) { bgpixel = pp->win_bgpixel[id_type_sid(pp->lignes[l]->parent->id)]; }
     
-      pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));
-      XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
+      pp_draw_line(dock, pp->lpix, pp->lignes[l], bgpixel, 
+		   &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));
+      XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, 
+		pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
     }
   }
 }
@@ -3981,73 +3306,12 @@ pp_selection_copy(Dock *dock, char *buff)
   return nc;
 }
 
-void
-pp_check_balloons(Dock *dock, int x, int y)
-{
-  Pinnipede *pp = dock->pinnipede;
-  int i;
-
-  if (pp->use_minibar) {
-    for (i=0; i < NB_MINIB; i++) {
-      char *msg = NULL;
-      switch (pp->mb[i].type) {
-      case HELP: msg = _("Bring some help"); break;
-      case SCROLLBAR: msg = _("Bring/hide the scrollcoin"); break;
-      case TRANSPARENT: msg = _("Activate/deactivate the pseudo-transparency"); break;
-      case UA: msg = _("Change the display mode of the logins/useragents (5 different modes)"); break;
-      case SECOND: msg = _("Bring/hide the seconds (when there are less than two messages in the same minute)"); break;
-      case TSCORE: msg = _("Bring/hide the troll score (the numbers on the left of some messages)"); break;
-      case FORTUNE: msg = _("Bring/hide the fortune (if appropriate)"); break;
-      case FILTER: msg = _("Activate/deactivate the <b>filter</b>. To filter the messages, do a <font color=#0000ff>ctrl+left clic</font> on a word/login/useragent or a clock (to display a thread). To remove the filter, just click here"); break;
-      case PLOPIFY: msg = _("Change the plopification type (beware, you will also see the messages in the boitakon!). <p> To plopify a message, <font color=#0000ff>shift+right click</font> on a word/login/useragent/clock (or the zone on the left of the clock to plopify a thread). To unplopify (or let someone out of the boitakon), just click on the same place.<br> To access to the superplopification, do a <font color=#0000ff>Mod1+shift+right click</font><br> To put a login/ua/etc. in the <b>boitakon</b>(tm), you have to use the mega combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right click</font>."); break;
-      case REFRESH_NEWS: msg = _("Click here to force the refresh of the news, messages, fortune and XP"); break;
-      case REFRESH_TRIBUNE: msg = _("Click here to force the refresh of the board"); break;
-      default: assert(0);
-      }
-      balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos-15, 0, 
-		   pp->mb[i].x, MINIB_Y0, 
-		   pp->mb[i].w, MINIB_H, msg);
-    }
-  }
-}
-
-/* lecture de la scrollbar, avec un refresh legerement differé pour éviter de trop charger... */
-void
-pp_check_scroll_pos(Dock *dock, DLFP_tribune *trib)
-{
-  Pinnipede *pp = dock->pinnipede;
-  
-  static int refresh_requested = 0;
-  static int refresh_nb_delayed = 0;
-  int new_pos;
- 
-  if (pp->sc == NULL) return;
-  if (scrollcoin_read_requested_pos(pp->sc, &new_pos)) {
-    int id;
-    /* petit bricolage pas beau pour que ça affiche completement le premier post: 
-       update_content rescrollera juste ce qu'il faut */
-    if (new_pos == scrollcoin_get_vmin(pp->sc)) new_pos--;
-
-    id = get_nth_id(trib, &pp->filter, new_pos);
-    //    myprintf("scroll pos = %<MAG %d>, --> id_base = %d\n", new_pos, id);
-    
-
-    pp_update_content(dock, trib, id, 0,0,0);
-    refresh_requested = 2;
-  }
-  if (refresh_requested == 1 || refresh_nb_delayed >= 0) {
-    pp_refresh(dock, trib, pp->win, NULL);
-    refresh_nb_delayed = 0; 
-    refresh_requested = 0;
-  } else if (refresh_requested > 0) {
-    refresh_requested--; refresh_nb_delayed++;
-  }
-}
 
 void
-pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
+pp_dispatch_event(Dock *dock, XEvent *event)
 {
   Pinnipede *pp = dock->pinnipede;
+
   static int old_mouse_x = -1, old_mouse_y = -1;
   static int mouse_button_press_x = -1, mouse_button_press_y = -1;
   
@@ -4055,7 +3319,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
   static Time time_drag = 0;
 
   /* le pinnipede ne fait RIEN quand la tribune est en cours de mise à jour ... */
-  if (flag_updating_tribune) return;
+  if (flag_updating_board) return;
 
   switch (event->type) {
   case DestroyNotify: 
@@ -4065,8 +3329,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
   case ButtonPress:
     {     
       pp_selection_unselect(pp);
-      if (pp->sc && scrollcoin_handle_button_press(pp->sc, &event->xbutton, pp->win)) {
-      } else if (pp->use_minibar && pp_minib_handle_button_press(dock, &event->xbutton)) {
+      if (pp_widgets_handle_button_press(dock, &event->xbutton)) {
       } else {
 	mouse_button_press_x = old_mouse_x = event->xbutton.x;
 	mouse_button_press_y = old_mouse_y = event->xbutton.y;
@@ -4091,12 +3354,10 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	  pp->time_sel = time(NULL);
 	}
       } else {
-	if (pp->sc && scrollcoin_handle_button_release(pp->sc, &event->xbutton, pp->win)) {
-	  pp_check_scroll_pos(dock,trib);
-	} else if (pp->use_minibar && pp_minib_handle_button_release(dock, trib, &event->xbutton)) {
+	if (pp_widgets_handle_button_release(dock, &event->xbutton)) {
 	  //printf("plop\n");
 	} else if (dragging == 0) {
-	  pp_handle_button_release(dock, trib, &event->xbutton);
+	  pp_handle_button_release(dock, &event->xbutton);
 	}
       }
       dragging = 0;
@@ -4106,10 +3367,8 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
     {
       event = flush_consecutive_mouse_motions(dock, pp->win, event);
 
-      if (pp->sc && scrollcoin_handle_motion(pp->sc, &event->xmotion, pp->win)) {
-	pp_check_scroll_pos(dock,trib);
-      } else if (pp_minib_pressed_button(dock)) {
-	
+      if (pp_widgets_handle_motion(dock, &event->xmotion)) {
+	/* plop */
       } else if (event->xmotion.state & Button1Mask && 
 	  SQR(mouse_button_press_x - event->xbutton.x)+
 	  SQR(mouse_button_press_y - event->xbutton.y) >= 6) {
@@ -4117,7 +3376,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	pp->time_sel = time(NULL);
 	if (pp->lignes_sel == NULL) {
 	  pp->sel_anchor_x = old_mouse_x; pp->sel_anchor_y = old_mouse_y;
-	  pp_refresh(dock, trib, pp->win, NULL);
+	  pp_refresh(dock, pp->win, NULL);
 	}
 	pp->sel_head_x = event->xmotion.x; pp->sel_head_y = event->xmotion.y;
 	pp_selection_refresh(dock);
@@ -4128,14 +3387,14 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	if (decal_y && (event->xmotion.time-time_drag)>25) {
 	  dragging = 1;
 	  //	  printf("move (%ld) %ld!\n", event->xmotion.time, time_drag);
-	  pp_update_content(dock, trib, pp->id_base, pp->decal_base-decal_y,0,0);
-	  pp_refresh(dock, trib, pp->win, NULL);
+	  pp_update_content(dock, pp->id_base, pp->decal_base-decal_y,0,0);
+	  pp_refresh(dock, pp->win, NULL);
 	  old_mouse_x = event->xmotion.x;
 	  old_mouse_y = event->xmotion.y;
 	  time_drag = event->xmotion.time;
 	}
       } else {
-	pp_check_survol(dock, trib, event->xmotion.x, event->xmotion.y);
+	pp_check_survol(dock, event->xmotion.x, event->xmotion.y);
 	old_mouse_x = event->xmotion.x;
 	old_mouse_y = event->xmotion.y;
       }
@@ -4172,9 +3431,9 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	if (Prefs.use_fake_real_transparency == 0)
 	  pp_update_bg_pixmap(dock);
 	
-	pp_minib_initialize(pp);
+	//	pp_minib_initialize(pp);
 	pp_pv_destroy(pp);
-	pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0,1);
+	pp_update_content(dock, pp->id_base, pp->decal_base, 0,1);
       }
     } break;
   case EnterNotify:
@@ -4202,7 +3461,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	zx0, zx1, zy0, zy1);
       */
       if (event->xexpose.count == 0) {
-	pp_refresh(dock, trib, pp->win, NULL);
+	pp_refresh(dock, pp->win, NULL);
 	flush_expose(dock, pp->win);
       }
     } break;
@@ -4229,9 +3488,9 @@ Window pp_get_win(Dock *dock) {
 }
 
 void
-pp_set_tribune_updated(Dock *dock)
+pp_set_board_updated(Dock *dock)
 {
-  dock->pinnipede->flag_tribune_updated = 1;
+  dock->pinnipede->flag_board_updated = 1;
 }
 
 /* sauvegarde de la position et des dimensions du pinni 
@@ -4266,13 +3525,9 @@ pp_restore_state(Dock *dock, FILE *f) {
 	pp->win_width = MAX(MIN(win_width,3000),50);
 	pp->win_height = MAX(MIN(win_height,3000),50);
       }
-      if (pp->use_minibar)
-	pp_minib_initialize(pp);
-      /*
-      if (mapped) {
-	pp_show(dock, &dock->dlfp.tribune);
-      } 
-      */
+      pp_widgets_set_pos(dock);
+      //      if (pp->use_minibar)
+      //	pp_minib_initialize(pp);
     }
   }  
 }

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.26 2002/06/23 14:01:36 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.1 2002/08/17 18:33:38 pouaite Exp $
   ChangeLog:
-  $Log: tribune_util.c,v $
+  $Log: board_util.c,v $
+  Revision 1.1  2002/08/17 18:33:38  pouaite
+  grosse commition
+
   Revision 1.26  2002/06/23 14:01:36  pouaite
   ouups, j'avais flingué les modifs depuis la v2.3.8b
 
@@ -101,44 +104,57 @@
 
 */
 
-#include "coincoin.h"
+#include "board_util.h"
 
 #include <libintl.h>
 #define _(String) gettext (String)
 
-tribune_msg_info *
-tribune_find_id(const DLFP_tribune *trib, int id)
+
+board_msg_info *
+board_find_id(const Board *board, int id)
 {
-  tribune_msg_info *it;
-  /*
-  it = trib->msg; 
-  while (it) {
-    if (it->id == id) return it;
-    it = it->next;
-  }
-  return NULL;
+  board_msg_info *it;
 
-  */
+  it = board->mi_tree_root;
 
-  it = trib->mi_tree_root;
-
-  while (it && it->id != id) {
-    if (id < it->id) it = it->left;
+  while (it && it->id.lid != id) {
+    if (id < it->id.lid)  it = it->left;
     else it = it->right;
   }
   return it;
 }
 
-tribune_msg_info*
-tribune_find_previous_from_id(const DLFP_tribune *trib, int id)
+board_msg_info *
+boards_find_id(const Boards *boards, id_type id)
 {
-  tribune_msg_info *mi;
-  tribune_msg_info *prev = NULL;
+  if (id_type_is_invalid(id)) {
+    return NULL;
+  } else {
+    Board *b;
 
-  mi = trib->mi_tree_root;
+    assert(id.sid < MAX_SITES && id.sid >= 0);
+    b = boards->btab[id.sid];
+    assert(b);
+    return board_find_id(b, id.lid);
+  }
+}
+
+id_type
+boards_last_id(const Boards *b) {
+  if (b->last) return b->last->id;
+  return id_type_invalid_id();
+}
+
+board_msg_info*
+board_find_previous_from_id(const Board *board, int id)
+{
+  board_msg_info *mi;
+  board_msg_info *prev = NULL;
+
+  mi = board->mi_tree_root;
 
   while (mi) {
-    if (mi->id < id) {
+    if (mi->id.lid < id) {
       prev = mi;
       mi = mi->right;
     } else {
@@ -149,15 +165,15 @@ tribune_find_previous_from_id(const DLFP_tribune *trib, int id)
 }
 
 
-tribune_msg_info *
-tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
+board_msg_info *
+board_find_previous(const Board *board, board_msg_info *mi)
 {
-  tribune_msg_info *it;
+  board_msg_info *it;
 
-  it = tribune_find_previous_from_id(trib, mi->id);
+  it = board_find_previous_from_id(board, mi->id.lid);
   return it;
     /*
-      trib->msg; 
+      board->msg; 
       while (it) {
       if (it->next == mi) return it;
       it = it->next;
@@ -165,6 +181,139 @@ tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
       return NULL;
     */
 }
+
+
+/*----------------------- fonctions key_list ---------------- */
+
+
+/* supprime les keylist faisant ref à des messages detruits */
+KeyList *
+board_key_list_cleanup(Boards *boards, KeyList *first)
+{
+  KeyList *hk;
+  hk = first;
+  while (hk) {
+    if (hk->type == HK_ID || hk->type == HK_THREAD) {
+      id_type id = int_to_id_type(atoi(hk->key));
+      if (boards_find_id(boards, id) == NULL) {
+	first = key_list_remove(first, hk->key, hk->type);
+	hk = first;
+      }
+    }
+    if (hk) hk = hk->next;
+  }
+  return first;
+}
+
+
+/* fonction interne, appelée par board_key_list_test_mi_hk */
+static int
+board_key_list_test_thread(Boards *boards, board_msg_info *mi, id_type thread_id, int *antibug)
+{
+  int i;
+  (*antibug)++;
+  if (*antibug > 10000) { printf(_("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n")); return 0; }
+
+  if (mi == NULL) return 0;
+
+  mi->bidouille_qui_pue = 1;
+
+  /*  printf("test: mi->id=%d, %d\n", mi->id, thread_id); */
+
+  if (id_type_eq(mi->id,thread_id)) return 1;
+
+  for (i = 0; i < mi->nb_refs; i++) {
+    int j;
+    board_msg_info *tmi;
+
+    tmi = mi->refs[i].mi; j = 0;
+    while (j < mi->refs[i].nbmi && tmi) {
+      if (tmi->bidouille_qui_pue == 0 && board_key_list_test_thread(boards, tmi, thread_id, antibug)) return 1;
+      tmi = tmi->next; j++;
+    }
+  }
+  return 0;
+}
+
+static int
+board_key_list_test_mi_hk(Boards *boards, board_msg_info *mi, KeyList *hk)
+{
+  if (hk->type == HK_UA) {
+    if (strcmp(hk->key, mi->useragent) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_UA_NOLOGIN) {
+    if (mi->login[0]==0 && strcmp(hk->key, mi->useragent) == 0) {
+      return 1;
+    }
+  }  else if (hk->type == HK_LOGIN) {
+    if (strcmp(hk->key, mi->login) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_WORD) {
+    if (str_noaccent_casestr(mi->msg, hk->key)) {
+      /* printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id); */
+      return 1;
+    } 
+  } else if (hk->type == HK_ID) {
+    char sid[10];
+    snprintf(sid,10, "%d", mi->id.sid);
+    if (strcmp(sid, hk->key) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_THREAD) {
+    board_msg_info *tmi;
+    id_type id;
+    int antibug = 0;
+ 
+    
+   
+    tmi = boards->first; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->g_next; }	
+    id = int_to_id_type(atoi(hk->key));
+    
+    if (board_key_list_test_thread(boards, mi, id, &antibug)) { return 1; }
+  }
+  return 0;
+}
+
+KeyList *
+board_key_list_test_mi(Boards *boards, board_msg_info *mi, KeyList *klist)
+{
+  KeyList *hk;
+  char sid[10];
+
+  if (mi == NULL) return NULL;
+  snprintf(sid,10, "%d", id_type_to_int(mi->id));
+  
+  hk = klist;
+  while (hk) {
+    if (board_key_list_test_mi_hk(boards,mi,hk)) return hk;
+    hk = hk->next;
+  }
+  return NULL;
+}
+
+
+KeyList *
+board_key_list_test_mi_num(Boards *boards, board_msg_info *mi, KeyList *klist, int num)
+{
+  KeyList *hk;
+
+  if (mi == NULL) return NULL;
+  
+  hk = klist;
+  while (hk) {
+    if (hk->num == num)
+      if (board_key_list_test_mi_hk(boards,mi,hk)) return hk;
+    hk = hk->next;
+  }
+  return NULL;
+}
+
+
+
+
+
 
 /* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
    son msg_info, et on rempli 'commentaire' 
@@ -284,8 +433,9 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
 
 /* dans la famille des fonction pourries, je demande ... */
 char *
-tribune_get_tok(const unsigned char **p, const unsigned char **np, 
+board_get_tok(const unsigned char **p, const unsigned char **np, 
 	unsigned char *tok, int max_toklen, int *has_initial_space)
+     /* ... ouééé celle-là est vraiment bien */
 {
   const unsigned char *start, *end;
 
@@ -342,8 +492,13 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 	if (*end == '\t' && *(end+1)=='>') end+=2;
 	/* printf("\n"); */
 /* 	if (*end) end++; */
+      } else if (strncasecmp(start+2, "tt\t>", 4) == 0) {
+	end = start+6;
+      } else if (strncasecmp(start+2, "/tt\t>", 5) == 0) {
+	end = start+7;
       } else {
 	const char *p;
+
 	/* sinon on ignore */
 	start++;
 	end=start+1;
@@ -362,6 +517,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
     }
     */
   } else if (*start == '\t') { /* ça pue .. le backend ou le coincoin est sans slip */
+    /* arf ça c'est de la traduction ! vive les slips et jjb */
     printf(_("Hmmm, looks like there's an underpants problem here: %s\n"), start);
     start++;
     if (*start) end = start+1;
@@ -394,78 +550,75 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 
 /* oh le joli nom en anglais 
 
-  cette fonction n'est pas utilisée ici mais dans coincoin_tribune
+  cette fonction n'est pas utilisée ici mais dans board.c
 
   c'est le bordel , ça évoluera surement
 
   TODO: pb à l'initialisation, il faut l'appeler dans l'ordre des ID, sinon y'a pb
 
   TODO: CETTE FONCTION EST NAZE MAIS JE SUIS TROP CREVE JE FAIS RIEN QUE DES CONNERIES CE SOIR
+
+  update: tiens, c'est quoi ce todo ? bon, je viens de refaire completement cette fonction
+  en utilisant les refs stockées dans les messages, c nettement moins tordu.
+
+  re-update: après un coup d'oeil rapide, je crois que le todo a déjà été résolu
 */
 int
-tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
-  tribune_msg_info *mi;
+board_msg_is_ref_to_me(Boards *boards, const board_msg_info *ref_mi) {
+  board_msg_info *mi;
 
-  mi = trib->msg;
-  
-  /*printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);*/
-  while (mi) {
-    const unsigned char *p, *np;
+  mi = boards->first;
+
+  //  printf("board_msg_is_ref_to_me: test de %02d:%02d:%2d(%d)..[nb_refs=%d]\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3], ref_mi->nb_refs);
+  while (mi && mi != ref_mi) {
+    //    const unsigned char *p, *np;
 
     if (mi->is_my_message) {
-      /* c'est du filtre qui va ramer si y'a 10000 messages en mémoire... */
-      p = ref_mi->msg;
-      while (p) {
-	int has_initial_space = 0; /* inutilisé */
-	unsigned char tok[512];
-	
-	if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
-	if (tok[0] >= '0' && tok[0] <= '9') {
-	  int h,m,s,num;
-	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
-	    /*	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);*/
-	    if ((h == mi->hmsf[0] || (Prefs.pp_use_AM_PM && (h==mi->hmsf[0]%12) && mi->hmsf[0] > 12))
-		&& m == mi->hmsf[1] && 
-		(mi->hmsf[3] == 0 || (mi->hmsf[2] == s && 
-				      (num == -1 || (num == 0 && mi->sub_timestamp == -1) || num == mi->sub_timestamp)))) {
-	      /*	      printf("ref au message trouvée !\n");*/
-	      return 1;
-	    }
-	  }
+      int i;
+      for (i = 0; i < ref_mi->nb_refs; i++) {
+	int j;
+	board_msg_info *mi2;
+	mi2 = ref_mi->refs[i].mi;
+	for (j=0; mi2 && j < ref_mi->refs[i].nbmi; j++) {
+	  if (mi2 == mi) return 1;
+	  mi2 = mi2->next; /* et ___PAS___ g_next puisque les multi-refs ne peuvent etre consécutives
+			      que sur une même tribune, ça peut pas être cross-tribune
+			      (fo pas pousser grand mere) */
 	}
-	p=np;
       }
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
   return 0;
 }
 
 
-
-static tribune_msg_info *
-tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id, 
+/* recherche un message par hh:mm:ss^num */
+static board_msg_info *
+board_find_horloge_ref(Board *board, int caller_id, 
 			 int h, int m, int s, int num, unsigned char *commentaire, int comment_sz)
 {
-  tribune_msg_info *mi, *best_mi;
+  board_msg_info *mi, *best_mi;
   int best_mi_num;
   int previous_mi_was_a_match = 0, match;
 
-  mi = trib->msg;
+  mi = board->msg;
   best_mi = NULL;
   best_mi_num = 0;
 
 
   while (mi) {
     match = 0;
-    if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
+    if (mi->id.lid > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
-      if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
+      if ((mi->hmsf[0] == h || (board->site->prefs->use_AM_PM && 
+				(mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
 	   && mi->hmsf[1] == m && !previous_mi_was_a_match) {
 	match = 1;
       }
     } else {
-      if ((mi->hmsf[0] == h  || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
+      if ((mi->hmsf[0] == h  || (board->site->prefs->use_AM_PM && 
+				 (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
 	  && mi->hmsf[1] == m && mi->hmsf[2] == s) {
 	if ((num == -1 || num == best_mi_num) && !previous_mi_was_a_match) {
 	  match = 1; //break;
@@ -492,10 +645,10 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
   
   if (commentaire) {
     char s_ts[12];
-    tribune_msg_info *caller_mi;
+    board_msg_info *caller_mi;
 
     commentaire[0] = 0;
-    caller_mi = tribune_find_id(trib, caller_id);
+    caller_mi = board_find_id(board, caller_id);
     if (caller_mi) {
       commentaire[0] = 0;
       if (s == -1) {    
@@ -518,20 +671,21 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 	} else {
 	  snprintf(commentaire, comment_sz, _("but where is '%s' ?"), s_ts);
 	}
-      } else if (best_mi->id > caller_mi->id) {
+      } else if (best_mi->id.lid > caller_mi->id.lid && 
+		 best_mi->id.sid == caller_mi->id.sid) {
 	snprintf(commentaire, comment_sz, _("[IPOT(tm)]"));
-      } else if (best_mi->id == caller_mi->id) {
+      } else if (id_type_eq(best_mi->id,caller_mi->id)) {
 	snprintf(commentaire, comment_sz, _("Awww, we turn around and around and around and around..."));
       } else if (best_mi->in_boitakon) {
 	KeyList *hk;
 	char *nom;
 
 	nom = (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent;
-	hk = tribune_key_list_test_mi(trib, best_mi, Prefs.plopify_key_list);
+	hk = board_key_list_test_mi(board->boards, best_mi, Prefs.plopify_key_list);
 	if (hk) {
 	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon ! "
 		   "(because %s=%.20s)"), nom,
-		   tribune_key_list_type_name(hk->type), hk->key);
+		   key_list_type_name(hk->type), hk->key);
 	} else {
 	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon, "
 		   "BUT YOU HAVE JUST FOUND A BUG IN THE BOITAKON :-("), nom);
@@ -543,26 +697,37 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 }
 
 
-tribune_msg_info *
-check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
-		      const unsigned char *ww, unsigned char *commentaire, int comment_sz, int *is_a_ref, int *ref_num)
+board_msg_info *
+check_for_horloge_ref(Boards *boards, id_type caller_id, 
+		      const unsigned char *ww, unsigned char *commentaire, 
+		      int comment_sz, int *is_a_ref, int *ref_num)
 {
+  Board *board;
   int h, m, s, num; /* num est utilise pour les posts multiples (qui on un même timestamp) */
 
+  assert(!id_type_is_invalid(caller_id));
+  board = boards->btab[caller_id.sid];
+  
   *is_a_ref = 0;
   if (check_for_horloge_ref_basic(ww, &h, &m, &s, &num) == 0) return NULL;
   *is_a_ref = 1;
 
   if (ref_num) *ref_num = num;
   
-  return tribune_find_horloge_ref(trib, caller_id, 
+
+  return board_find_horloge_ref(board, caller_id.lid, 
 				  h, m, s, num, commentaire, comment_sz);
 }
 
+/* appelé discretement par board_check_my_messages dans board.c
+   (oui c pas logique) 
 
+   TODO: refs inter-sites
+*/
 void
-tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
+board_msg_find_refs(Board *board, board_msg_info *mi)
 {
+  //  Boards *boards = board->boards;
   const unsigned char *p, *np;
   int max_nb_refs;
 
@@ -574,15 +739,15 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
      int has_initial_space = 0; /* inutilisé */
      unsigned char tok[512];
      
-     if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
+     if (board_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
      if (tok[0] >= '0' && tok[0] <= '9') {
        int h,m,s,num;
        if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
-	 tribune_msg_info *ref_mi;
+	 board_msg_info *ref_mi;
 
 	 if (mi->nb_refs+1 > max_nb_refs) {
 	   max_nb_refs += 10;
-	   mi->refs = realloc(mi->refs, max_nb_refs*sizeof(tribune_msg_ref));
+	   mi->refs = realloc(mi->refs, max_nb_refs*sizeof(board_msg_ref));
 	 }
 
 	 mi->refs[mi->nb_refs].h = h;
@@ -592,14 +757,14 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
 	 mi->refs[mi->nb_refs].nbmi = 0;
 	 mi->refs[mi->nb_refs].mi = NULL;
 
-	 ref_mi = tribune_find_horloge_ref(trib, mi->id, 
+	 ref_mi = board_find_horloge_ref(board, mi->id.lid, 
 					   h, m, s, num, NULL, 0);
-	 if (ref_mi && ref_mi->id <= mi->id) {
+	 if (ref_mi && ref_mi->id.lid <= mi->id.lid) {
 	   mi->refs[mi->nb_refs].mi = ref_mi;
 	   mi->refs[mi->nb_refs].nbmi=1;
 	   if (num == -1) {
 	     /* gestion des post multiples */
-	     tribune_msg_info *ref_mi2;
+	     board_msg_info *ref_mi2;
 	     ref_mi2 = ref_mi->next;
 	     while (ref_mi2 && ref_mi2->timestamp == ref_mi->timestamp) {
 	       mi->refs[mi->nb_refs].nbmi++;
@@ -612,274 +777,18 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
      }
      p=np;
   }
-  if (mi->refs) mi->refs = realloc(mi->refs, mi->nb_refs*sizeof(tribune_msg_ref));
+  if (mi->refs) mi->refs = realloc(mi->refs, mi->nb_refs*sizeof(board_msg_ref));
 
   if (Prefs.verbosity > 3) { 
     int i;
     myprintf("msg[%<YEL %04d>]: REFS=", mi->id);
     for (i=0; i < mi->nb_refs; i++) {
       myprintf("{%<CYA %02d>:%<CYA %02d>:%<CYA %02d>(%<cya %d>), %<YEL %04d>/%<GRN %d>} ", 
-	mi->refs[i].h, mi->refs[i].m, mi->refs[i].s, mi->refs[i].num, mi->refs[i].nbmi ? mi->refs[i].mi->id : -1, mi->refs[i].nbmi);
+	mi->refs[i].h, mi->refs[i].m, mi->refs[i].s, mi->refs[i].num, mi->refs[i].nbmi ? mi->refs[i].mi->id.lid : -1, mi->refs[i].nbmi);
     }
     myprintf("\n");
   }
 }
 
-KeyList *
-tribune_key_list_clear_from_prefs(KeyList *first)
-{
-  KeyList *hk;
-  hk = first;
-  while (hk) {
-    if (hk->from_prefs) {
-      first = tribune_key_list_remove(first, hk->key, hk->type);
-      hk = first;
-    }
-    if (hk) hk = hk->next;
-  }
-  return first;
-}
-
-/* supprime les keylist faisant ref à des messages detruits */
-KeyList *
-tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first)
-{
-  KeyList *hk;
-  hk = first;
-  while (hk) {
-    if (hk->type == HK_ID || hk->type == HK_THREAD) {
-      int id = atoi(hk->key);
-      if (tribune_find_id(trib, id) == NULL) {
-	first = tribune_key_list_remove(first, hk->key, hk->type);
-	hk = first;
-      }
-    }
-    if (hk) hk = hk->next;
-  }
-  return first;
-}
-
-void
-tribune_key_list_destroy(KeyList *first)
-{
-  KeyList *hk, *n;
-  hk = first;
-  while (hk) {
-    n = hk->next;
-    free(hk->key); free(hk); hk = n;
-  }
-}
- 
-KeyList *
-tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num, int from_prefs)
-{
-  KeyList *hk, *last;
-
-  ALLOC_OBJ(hk, KeyList);
-  hk->key = strdup(key);
-  hk->type = type;
-  hk->num = num;
-  hk->from_prefs = from_prefs;
-  hk->next = NULL;
-  
-  BLAHBLAH(1, myprintf(_("Adding keyword: '%<CYA %s>'\n"), key));
-  last = first;
-  if (last == NULL) {
-    first = hk;
-  } else {
-    while (last->next != NULL && last->next->num > hk->num) last = last->next;
-    hk->next = last->next;
-    last->next = hk;
-  }
-  return first;
-}
-
-KeyList *
-tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type)
-{
-  KeyList *hk, *prev;
-
-  prev = NULL;
-  hk = first;
-  while (hk) {
-    if (strcasecmp(key, hk->key)==0 && (hk->type == type || type == HK_ALL)) {
-      BLAHBLAH(1, myprintf(_("Deleting key: '%<CYA %s>'\n"), key));
-      if (prev) {
-	/* supprime les refs des postvisuals vers cette clef.. */
-	prev->next = hk->next;
-      } else {
-	first = hk->next;
-      }
-      free(hk->key);
-      free(hk);
-      break;
-    }
-    prev = hk;
-    hk = hk->next;
-  }
-  return first;
-}
-
-static int
-tribune_key_list_test_thread(DLFP_tribune *trib, tribune_msg_info *mi, int thread_id, int *antibug)
-{
-  int i;
-  (*antibug)++;
-  if (*antibug > 10000) { printf(_("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n")); return 0; }
-
-  if (mi == NULL) return 0;
-
-  mi->bidouille_qui_pue = 1;
-
-  /*  printf("test: mi->id=%d, %d\n", mi->id, thread_id); */
-
-  if (mi->id == thread_id) return 1;
-
-  for (i = 0; i < mi->nb_refs; i++) {
-    int j;
-    tribune_msg_info *tmi;
-
-    tmi = mi->refs[i].mi; j = 0;
-    while (j < mi->refs[i].nbmi && tmi) {
-      if (tmi->bidouille_qui_pue == 0 && tribune_key_list_test_thread(trib, tmi, thread_id, antibug)) return 1;
-      tmi = tmi->next; j++;
-    }
-  }
-  return 0;
-}
-
-static int
-tribune_key_list_test_mi_hk(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *hk)
-{
-  if (hk->type == HK_UA) {
-    if (strcmp(hk->key, mi->useragent) == 0) {
-      return 1;
-    }
-  } else if (hk->type == HK_UA_NOLOGIN) {
-    if (mi->login[0]==0 && strcmp(hk->key, mi->useragent) == 0) {
-      return 1;
-    }
-  }  else if (hk->type == HK_LOGIN) {
-    if (strcmp(hk->key, mi->login) == 0) {
-      return 1;
-    }
-  } else if (hk->type == HK_WORD) {
-    if (str_noaccent_casestr(mi->msg, hk->key)) {
-      /* printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id); */
-      return 1;
-    } 
-  } else if (hk->type == HK_ID) {
-    char sid[10];
-    snprintf(sid,10, "%d", mi->id);
-    if (strcmp(sid, hk->key) == 0) {
-      return 1;
-    }
-  } else if (hk->type == HK_THREAD) {
-    tribune_msg_info *tmi;
-    int id;
-    int antibug = 0;
-    
-    tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
-    id = atoi(hk->key);
-    
-    if (tribune_key_list_test_thread(trib, mi, id, &antibug)) { return 1; }
-  }
-  return 0;
-}
-
-KeyList *
-tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist)
-{
-  KeyList *hk;
-  char sid[10];
-
-  if (mi == NULL) return NULL;
-  snprintf(sid,10, "%d", mi->id);
-  
-  hk = klist;
-  while (hk) {
-    if (tribune_key_list_test_mi_hk(trib,mi,hk)) return hk;
-    hk = hk->next;
-  }
-  return NULL;
-}
 
 
-KeyList *
-tribune_key_list_test_mi_num(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist, int num)
-{
-  KeyList *hk;
-
-  if (mi == NULL) return NULL;
-  
-  hk = klist;
-  while (hk) {
-    if (hk->num == num)
-      if (tribune_key_list_test_mi_hk(trib,mi,hk)) return hk;
-    hk = hk->next;
-  }
-  return NULL;
-}
-
-
-
-KeyList *
-tribune_key_list_find(KeyList *hk, const char *s, KeyListType t)
-{
-  while (hk) {
-    if ((hk->type != HK_WORD && strcmp(hk->key, s)==0) ||
-	(hk->type == HK_WORD && strcasecmp(hk->key, s)==0)) {
-      if (t == HK_ALL || t == hk->type) {
-	return hk;
-      }
-    }
-    hk = hk->next;
-  }
-  return NULL;
-}
-
-KeyList *
-tribune_key_list_swap(KeyList *first, const char *s, KeyListType t, int num)
-{
-  /* verifie si le mot est déjà dans la liste */
-  if (tribune_key_list_find(first, s, t) == NULL) {
-    return tribune_key_list_add(first, s, t, num, 0);
-  } else {
-    return tribune_key_list_remove(first, s, t);
-  }
-}
-
-const char*
-tribune_key_list_type_name(KeyListType t)
-{
-  switch (t) {
-  case HK_UA: return "useragent"; 
-  case HK_UA_NOLOGIN: return "useragent w/o login";
-  case HK_LOGIN: return "login";
-  case HK_WORD: return "mot";
-  case HK_ID: return "message_id";
-  case HK_THREAD: return "thread depuis l'id";
-  case HK_ALL: break;
-  }
-  return NULL;
-}
-
-/* renvoie un hash_code identifiant l'état de la boitakon (pour savoir si elle a été modifiée ou pas */
-unsigned
-tribune_key_list_get_state(KeyList *first, int num) {
-  unsigned hash = 0x98651030;
-  static unsigned bloup[4] = {0xf0e84bb1,0x8124e841,0xd1ccc871,0x31415976};
-  KeyList *hk;
-  int cnt = 0;
-
-  hk = first;
-  while (hk) {
-    if (hk->num == num) {
-      hash ^= (((int)hk->type) ^ bloup[cnt % 4]);
-      hash ^= str_hache(hk->key, 100);
-      cnt++;
-    }
-    hk = hk->next;
-  }
-  return hash;
-}

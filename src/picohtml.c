@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.10 2002/06/23 14:01:36 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.11 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.11  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.10  2002/06/23 14:01:36  pouaite
   ouups, j'avais flingué les modifs depuis la v2.3.8b
 
@@ -209,7 +212,6 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 	int indexListe = 0;
 	int isBlockquote = 0;
 
-  BLAHBLAH(2,printf("picohtml_parse\n"));
   if (buff == NULL) {
     fprintf(stderr, _("Bug! calling picohtml(NULL)!"));
     buff = _("Bug ! appel de picohtml(NULL) !");

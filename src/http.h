@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.10 2002/06/23 14:01:36 pouaite Exp $
+  rcsid=$Id: http.h,v 1.11 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.11  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.10  2002/06/23 14:01:36  pouaite
   ouups, j'avais flingué les modifs depuis la v2.3.8b
 
@@ -61,6 +64,7 @@ typedef struct {
   int         proxy_port;
 
   int         pragma_nocache;
+  int use_if_modified_since;
 
   char *user_agent;
   char *referer;
@@ -81,6 +85,8 @@ typedef struct {
   char * post;
 } HttpRequest;
 
+
+
 void http_init();
 char *http_error();
 char *http_complete_error_info(); /* renvoie une chaine alloué, ATTENTION */
@@ -92,15 +98,5 @@ void http_request_close(HttpRequest *r);
 int  http_read(HttpRequest *r, char *buff, int max_len);
 int http_get_line(HttpRequest *r, char *s, int sz);
 char *http_url_encode(char *string);
-
-//int http_iread(SOCKET fd, char *buf, int len);
-//int http_iwrite(SOCKET fd, char *buf, int len);
-
-//void http_get(HttpRequest *r);
-//SOCKET http_post_with_cookie(const char *host_name, int host_port, const char *host_path, 
-//			     const char *proxy, const char *userpass, int proxy_port, 
-//			     const char *user_agent, const unsigned char *referer, 
-//			     const char *cookie, const unsigned char *post);
-//int http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding);
-
+unsigned char *http_read_all(HttpRequest *r, char *what);
 #endif

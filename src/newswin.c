@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.13 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.14 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.14  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.13  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -48,6 +51,9 @@
 #include "scrollcoin.h"
 #include "coin_xutil.h"
 
+#include "newswin.h"
+#include "site.h"
+
 /*
   ----------------------------------------------------------------------
   gestion de la fenetre d'affichage du texte des news
@@ -79,7 +85,10 @@ struct _Newswin {
   int win_width, win_height; /* dim de la fenetre, en pixels */
   int win_xpos, win_ypos; 
 
-  int news_id;
+  id_type id; /* news actuellrment affichee */
+  char site_name[20];   /* nom du site de la news actuelle */
+
+
   GC gc;
 
   PHView phv_titles;
@@ -88,10 +97,12 @@ struct _Newswin {
   PicoHtml *ph_survol;
 
   unsigned long win_bgpixel, win_fgpixel;
-  unsigned long titles_bgpixel, titles_fgpixel, emph_pixel;
+  unsigned long titles_bgpixel, titles_fgpixel[MAX_SITES], emph_pixel;
 
   struct struc_ztitles {
-    int y, h, nid;
+    int y, h;
+    id_type nid;
+    Site *site;
   } *ztitle;
   int nb_ztitle;
 
@@ -102,7 +113,7 @@ struct _Newswin {
 
 /* construction du texte avec ses quelques attributs */
 static void
-newswin_parsetxt(Dock *dock, DLFP_news *n)
+newswin_parsetxt(Dock *dock, News *n)
 {
   Newswin *nw = dock->newswin;
   unsigned char *buff;
@@ -112,10 +123,14 @@ newswin_parsetxt(Dock *dock, DLFP_news *n)
     buff = strdup(_("The <b>text of the news</b> hasn't been updated yet..."));
   } else {
     char p1[512];
-    
+    Site *site;
+    SitePrefs *sp;
+
+    site = n->site;
+    sp = (site ? site->prefs : NULL);
     snprintf(p1, 512, _("<B><a href=\"http://%s:%d%s%s\"><font color=#000080>%s</font></a></B><br>posted by "
 	     "<b><font color=#800000>%s</font></b> on the %s, section <b>%s</b><p>"),
-	     Prefs.site_root, Prefs.site_port, Prefs.site_path, 
+	     sp ? sp->site_root : "??", sp ? sp->site_port : 0, sp ? sp->site_path : "??", 
 	     n->url,
 	     n->titre, n->auteur, n->date, n->topic);
     ALLOC_VEC(buff, strlen(p1) + strlen(n->txt) + 1, unsigned char);
@@ -197,37 +212,51 @@ newswin_draw(Dock *dock)
 
 
 /* renvoie les news dans un ordre descendant (bien sur c'est pas fait pour trier un milliard de news ..) */
-DLFP_news *
-get_news_sorted(DLFP *dlfp, DLFP_news *previous)
+static News *
+get_news_sorted(Site *sl, News *previous, Site **psite)
 {
-  DLFP_news *n, *best;
+  Site *site, *best_site = NULL;
+  News *n, *best;
   
-  
-  n = dlfp->news; best = NULL;
-  while (n) {
-    int ok, cmp;
+  site = sl;
+  best = NULL;
 
-    /* on accepte de tester la news si c'est le premier appel (previous = NULL)
-       ou bien si la news est plus ancienne que previous */
-    ok = 0;
-    if (previous == NULL) ok = 1;
-    else if (n != previous) {
-      cmp = strcmp(previous->date, n->date);
-      if (cmp > 0 || (cmp == 0 && (previous->heure > n->heure || 
-				   (previous->heure == n->heure && previous->id > n->id)))) ok = 1;
-    }
-
-    /* si on la teste, on la compare au meilleur candidat .. */
-    if (ok) {
-      if (best == NULL) best = n;
-      else {
-	cmp = strcmp(best->date, n->date);
-	if (cmp < 0 || (cmp == 0 && (best->heure < n->heure ||
-				     (best->heure == n->heure && best->id < n->id)))) best = n;
+  while (site) {
+    n = site->news; 
+    while (n) {
+      int ok, cmp;
+      
+      /* on accepte de tester la news si c'est le premier appel (previous = NULL)
+	 ou bien si la news est plus ancienne que previous */
+      ok = 0;
+      if (previous == NULL) ok = 1;
+      else if (n != previous) {
+	cmp = strcmp(previous->date, n->date);
+	if (cmp > 0 || 
+	    (cmp == 0 && (previous->heure > n->heure || 
+			  (previous->heure == n->heure && 
+			   id_type_lid(previous->id) > id_type_lid(n->id))))) ok = 1;
       }
+      
+      /* si on la teste, on la compare au meilleur candidat .. */
+      if (ok) {
+	if (best == NULL) { best = n; best_site = site; }
+	else {
+	  cmp = strcmp(best->date, n->date);
+	  if (cmp < 0 || 
+	      (cmp == 0 && (best->heure < n->heure ||
+			    (best->heure == n->heure && 
+			     id_type_lid(best->id) < id_type_lid(n->id))))) {
+	    best = n;
+	    best_site = site;
+	  }
+	}
+      }
+      n = n->next;
     }
-    n = n->next;
+    site = site->next;
   }
+  if (psite) *psite = best_site;
   return best;
 }
 
@@ -247,11 +276,13 @@ newswin_adjust_scrollcoin(Dock *dock UNUSED, PHView *phv)
 
   /* met à jour les données du contenu (nouvelles news, ou bien changement de la news affichée) */
 void
-newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
+newswin_update_content(Dock *dock, int reset_decal)
 {
   Newswin *nw = dock->newswin;
+  SiteList *slist = dock->sites;
 
-  DLFP_news *n;
+  Site *site;
+  News *n;
   int bidon;
 
 #define BUFFSZ 8192
@@ -269,12 +300,12 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
   nw->phv_titles.ph_h = 0;
   n = NULL;
   buff[0] = 0;
-  while ((n=get_news_sorted(dlfp,n)) != NULL) {
+  while ((n=get_news_sorted(slist->list,n, &site)) != NULL) {
     int l;
     l = strlen(buff); assert(l <= BUFFSZ-1); if (l == BUFFSZ-1) break;
-    snprintf(buff+l, BUFFSZ-l, "<!special=%d>%s%s%s<br>", n->id, 
+    snprintf(buff+l, BUFFSZ-l, "<!special=%d>%s[%s] %s%s<br>", id_type_to_int(n->id), 
 	     n->flag_unreaded <= 0 ? "" : "<b>",
-	     n->titre, 
+	     site->prefs->site_name, n->titre, 
 	     n->flag_unreaded <= 0 ? "" : "</b>");
   }
   picohtml_parse(dock, nw->phv_titles.ph, buff, nw->phv_titles.w);
@@ -295,16 +326,21 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
 	nw->ztitle = realloc(nw->ztitle, sizeof(struct struc_ztitles)*(nw->nb_ztitle+1)); assert(nw->ztitle); /* laid ! */
 	nw->ztitle[nw->nb_ztitle].y = it->y - it->fn->ascent;
 	nw->ztitle[nw->nb_ztitle].h = it->y + it->fn->descent;
-	nw->ztitle[nw->nb_ztitle].nid = it->special_attr;
-	while (it && it->special_attr == nw->ztitle[nw->nb_ztitle].nid) {
+	nw->ztitle[nw->nb_ztitle].nid = int_to_id_type(it->special_attr);
+	while (it && it->special_attr == id_type_to_int(nw->ztitle[nw->nb_ztitle].nid)) {
 	  nw->ztitle[nw->nb_ztitle].h = it->fn->descent + it->y - nw->ztitle[nw->nb_ztitle].y;
 	  it = it->next;
 	}
 	//	printf("ztitle[%d]: y=%d, h=%d, nid=%d\n", nw->nb_ztitle, nw->ztitle[nw->nb_ztitle].y, nw->ztitle[nw->nb_ztitle].h, nw->ztitle[nw->nb_ztitle].nid);
 	
-	if (nw->ztitle[nw->nb_ztitle].nid == nw->news_id) nw->active_znum = nw->nb_ztitle;
+	if (!id_type_is_invalid(nw->id) &&
+	    id_type_eq(nw->ztitle[nw->nb_ztitle].nid,nw->id)) {
+	  nw->active_znum = nw->nb_ztitle;
+	}
 	nw->nb_ztitle++;
-      } else it = it->next;
+      } else {
+	it = it->next;
+      }
     }
   }
 
@@ -322,12 +358,13 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
   }
 
   nw->phv_news.ph_h = 0;
-  if (nw->news_id <= 0) {
+  if (id_type_is_invalid(nw->id)) {
     printf(_("No news...\n"));
   } else {
-    n = dlfp_find_news_id(dlfp, nw->news_id);
+    n = sl_find_news(slist, nw->id);
     if (n == NULL) {
-      printf(_("This news was destroyed (id=%d)!?...\n"),nw->news_id);
+      printf(_("This news was destroyed (site=%d,id=%d)!?...\n"),
+	     id_type_sid(nw->id), id_type_lid(nw->id));
     } else {
       newswin_parsetxt(dock, n);
       picohtml_gettxtextent(nw->phv_news.ph, &bidon, &nw->phv_news.ph_h);
@@ -399,7 +436,7 @@ newswin_createXWindow(Dock *dock)
 	       ButtonPressMask | ExposureMask | ButtonReleaseMask | PointerMotionMask | 
 	       EnterWindowMask | LeaveWindowMask | StructureNotifyMask);
 
-  snprintf(s, 512, _("news from %s"), Prefs.site_root);
+  snprintf(s, 512, _("news from %s"), nw->site_name);
   window_title = s;
 
   /* nom de la fenetre (et de la fenetre iconifiée) */
@@ -430,7 +467,7 @@ newswin_createXWindow(Dock *dock)
 
   class_hint = XAllocClassHint();
   class_hint->res_name = "news";
-  sprintf(s, "wmcoincoin_%s", Prefs.site_root);
+  sprintf(s, "wmcoincoin_news");
   class_hint->res_class = s;
   XSetClassHint(dock->display, nw->window, class_hint);
   XFree(class_hint);
@@ -456,12 +493,14 @@ newswin_createXWindow(Dock *dock)
 }
 
 void
-newswin_show(Dock *dock, DLFP *dlfp, int id)
+newswin_show(Dock *dock, id_type id)
 {
   Newswin *nw = dock->newswin;
   int create = 0;
 
-  if (id != -2) nw->news_id = id; /* pas beau, c'est pour l'appel par clic droit (wmcoincoin.c ligne 1327)*/
+  if (!id_type_is_invalid(id)) {
+    nw->id = id; /* pas beau, c'est pour l'appel par clic droit (wmcoincoin.c ligne 1327)*/
+  }
 
   if (nw->window == None) {
     newswin_createXWindow(dock);
@@ -470,7 +509,7 @@ newswin_show(Dock *dock, DLFP *dlfp, int id)
   newswin_adjust_size(dock);
   nw->active_znum = -1;
   assert(nw->window != None);
-  newswin_update_content(dock, dlfp, 1);
+  newswin_update_content(dock, 1);
   if (create == 0) newswin_draw(dock);
 }
 
@@ -505,7 +544,7 @@ newswin_unmap(Dock *dock)
 }
 
 /* renvoie le numero du titre de news survolle en (mx,my) */
-int
+static int
 newswin_get_znum(Dock *dock, int mx, int my)
 { 
   Newswin *nw = dock->newswin;
@@ -524,7 +563,7 @@ newswin_get_znum(Dock *dock, int mx, int my)
   return -1;
 }
 
-PicoHtmlItem *
+static PicoHtmlItem *
 get_phi_survol(Dock *dock, int mx, int my)
 {
   Newswin *nw = dock->newswin;
@@ -550,9 +589,10 @@ get_phi_survol(Dock *dock, int mx, int my)
 
 /* infos affichées selon la position de la souris */
 void
-newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
+newswin_update_info(Dock *dock, int mx, int my) {
   Newswin *nw = dock->newswin;
   PicoHtmlItem *pi;
+  SiteList *slist = dock->sites;
   char survol[1024];
   static int old_hash = 0;
   int hash;
@@ -573,17 +613,19 @@ newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
   }
   if (survol[0] == 0) {
     int znum;
-    DLFP_news *n;
+    News *n;
     znum = newswin_get_znum(dock, mx, my);
     if (znum != -1) {
-      n = dlfp_find_news_id(dlfp, nw->ztitle[znum].nid);
+      id_type id = nw->ztitle[znum].nid;
+      n = sl_find_news(slist, id);
       if (n) {
-	snprintf(survol, 1024, _("id=<b>%d</b>, date: %s, approved on %02d:%02d, %s"), n->id, n->date, n->heure / 60, n->heure % 60,
+	snprintf(survol, 1024, _("id=<b>%d</b>, date: %s, approved on %02d:%02d, %s"), 
+		 id_type_lid(n->id), n->date, n->heure / 60, n->heure % 60,
 		 (n->flag_unreaded <= 0) ? 
 		 _("(already read)"):
 		 _("<b><font color=#8f0000>(new!)</font></b>"));
       } else {
-	snprintf(survol, 1024, _("id=<b>%d</b>, contents of the news unavailable (too old ? download in progress ?)"), nw->ztitle[znum].nid);
+	snprintf(survol, 1024, _("[%s] id=<b>%d</b>, contents of the news unavailable (too old ? download in progress ?)"), Prefs.site[id_type_sid(id)]->site_name, id_type_lid(id));
       }
     }
   }
@@ -617,7 +659,7 @@ newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
   }
 }
 
-void
+static void
 newswin_handle_button_press(Dock *dock, XButtonEvent *event)
 {
   Newswin *nw = dock->newswin;
@@ -628,7 +670,7 @@ newswin_handle_button_press(Dock *dock, XButtonEvent *event)
   }
 }
 
-void
+static void
 newswin_testscroll(Dock *dock)
 {
   Newswin *nw = dock->newswin;
@@ -665,9 +707,8 @@ newswin_scrolldown(Dock *dock, PHView *phv, int q)
 }
 
 
-
-void
-newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
+static void
+newswin_handle_button_release(Dock *dock, XButtonEvent *event) {
   Newswin *nw = dock->newswin;
   int mx,my;
   int in_titles, in_news;
@@ -698,7 +739,7 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
 
     znum = newswin_get_znum(dock, mx, my);
     if (znum != -1) {
-      newswin_show(dock, dlfp, nw->ztitle[znum].nid);      
+      newswin_show(dock, nw->ztitle[znum].nid);
     }
   } else if (in_news) {
     PicoHtmlItem *pi;
@@ -744,11 +785,13 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
 }
 
 void
-newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
+newswin_dispatch_event(Dock *dock, XEvent *event)
 {
   Newswin *nw = dock->newswin;
 
-  if (flag_news_updated) { newswin_update_content(dock, dlfp, 1); flag_news_updated = 0; }
+  if (flag_news_updated) { newswin_update_content(dock, 1); flag_news_updated = 0; }
+
+  
 
   if (nw->window != None) {
     switch (event->type) {
@@ -761,11 +804,11 @@ newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
       } break;
     case ButtonRelease:
       {
-	newswin_handle_button_release(dock, dlfp, &event->xbutton);
+	newswin_handle_button_release(dock, &event->xbutton);
       } break;
     case MotionNotify:
       {
-	newswin_update_info(dock, dlfp, event->xmotion.x, event->xmotion.y);
+	newswin_update_info(dock, event->xmotion.x, event->xmotion.y);
 	if (nw->phv_titles.sc &&
 	    scrollcoin_handle_motion(nw->phv_titles.sc, &event->xmotion, nw->pix)) {
 	} else if (nw->phv_news.sc && 
@@ -776,7 +819,7 @@ newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
     case EnterNotify:
     case LeaveNotify:
       {
-	newswin_update_info(dock, dlfp, event->xcrossing.x, event->xcrossing.y);
+	newswin_update_info(dock, event->xcrossing.x, event->xcrossing.y);
       } break;
     case Expose:
       {
@@ -793,7 +836,7 @@ newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
 	    nw->win_width = MAX(wa.width,80);
 	    nw->win_height = MAX(wa.height,80);
 	    newswin_adjust_size(dock);
-	    newswin_update_content(dock, dlfp, 1);
+	    newswin_update_content(dock, 1);
 	  }
 	//	XMoveWindow(dock->display, nw->window, nw->win_xpos, nw->win_ypos);
 	  newswin_draw(dock);
@@ -824,11 +867,19 @@ void
 newswin_build(Dock *dock)
 {
   Newswin *nw;
+
   ALLOC_OBJ(nw,Newswin);
   nw->win_bgpixel = IRGB2PIXEL(Prefs.news_bgcolor);
   nw->win_fgpixel = IRGB2PIXEL(Prefs.news_fgcolor);
   nw->titles_bgpixel = IRGB2PIXEL(Prefs.news_titles_bgcolor);
-  nw->titles_fgpixel = IRGB2PIXEL(Prefs.news_titles_fgcolor);
+
+  {
+    int i;
+    for (i=0; i < MAX_SITES; i++) {
+      if (Prefs.site[i]) 
+	nw->titles_fgpixel[i] = IRGB2PIXEL(Prefs.news_titles_fgcolor);
+    }
+  }
   nw->emph_pixel = IRGB2PIXEL(Prefs.news_emph_color);
   nw->phv_news.ph = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 1);
   picohtml_set_default_pixel_color(nw->phv_news.ph, nw->win_fgpixel);
@@ -836,7 +887,7 @@ newswin_build(Dock *dock)
   nw->phv_news.sc = NULL;
 
   nw->phv_titles.ph = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 1);
-  picohtml_set_default_pixel_color(nw->phv_titles.ph, nw->titles_fgpixel);
+  picohtml_set_default_pixel_color(nw->phv_titles.ph, IRGB2PIXEL(0));
 
   nw->phv_titles.sc = NULL;
 
@@ -854,8 +905,8 @@ newswin_build(Dock *dock)
   nw->nb_ztitle = 0; nw->ztitle = NULL;
   nw->active_znum = -1;
   nw->pix = None;
-  nw->news_id = -1;
-
+  nw->id = id_type_invalid_id();
+  nw->site_name[0] = 0;
   dock->newswin = nw;
 }
 
@@ -925,7 +976,7 @@ newswin_restore_state(Dock *dock, FILE *f) {
       }
       /*
 	if (mapped) {
-	  newswin_show(dock, &dock->dlfp, -2);
+	  newswin_show(dock, &dock->slist, -2);
 	}
       */
     }

@@ -2,9 +2,12 @@
 #define __PREFS_H
 #include <string.h>
 #include "options_list.h" /* liste des noms des options */
+#include "keylist.h"
 
-#define MESSAGE_MAX_LEN 255
-#define USERAGENT_MAX_LEN 60
+/* valeur absolument maximale de la longueur d'un message envoyé
+   (selon les prefs par sites, des valeurs inférieure sont fixées */
+#define MESSAGE_MAXMAX_LEN 1024
+#define USERAGENT_MAXMAX_LEN 200
 
 /* deux type de transparence: 
  - shading : le fond est obscurci (0=>transparence totale, 100=>opacité(noir) complète)
@@ -31,61 +34,91 @@ typedef struct {
 
 #define NB_PP_KEYWORD_CATEG 5
 
-/* petite structure pour stocker la liste des mots-clefs qui déclenche la mise en
-   valeur du post dans le pinnipede
-   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) 
 
-   attention à ne pas abuser des appels à tribune_key_list_test_mi avec des HK_THREAD par milliers ! ça *pourrait*
-   commencer à faire mouliner coincoin (a voir..)
-*/
-typedef struct _KeyList KeyList;
-typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_UA_NOLOGIN,HK_ALL} KeyListType;
-struct _KeyList {
-  unsigned char *key;
-  short num;          /* indicateur de niveau (optionnel), pour les mots plops, indique le
-			 niveau de plopification (0 -> normal, 1->forte, 2->kickette) */
-  unsigned char from_prefs; /* non nul si le mot provient d'une liste definie dans le
-			       fichier d'options */
-  KeyListType type;
-  KeyList *next;
-};
+/* les preferences sont stockees dans ces structures */
 
-/* les preferences sont stockees dans cette structure */
-
-typedef struct _structPrefs{
+typedef struct _SitePrefs {
   /* delai (en sec) et assez approximatif entre deux verif de la tribune */
-  int dlfp_tribune_check_delay;
-  int dlfp_news_check_delay;
-  /* en cas d'inactivité les delais vont être progressivement augmentés
-     max_refresh_delay est leur valeur maximale (en minutes) (0 => ralentissement désactivé) */
-  int dlfp_max_refresh_delay;
-  /* de plus au bout d'un certain nombre de minutes, le coincoin cessera toute activité
-     et passera en mode horloge */
-  int dlfp_switch_off_coincoin_delay;
-
-  char *font_encoding; /* 'iso8859-1' ou mieux, 'iso8859-15' */
-
-  /* nb max de messages conserves en memoire */
-  int tribune_max_msg;
-
-  int tribune_backend_type; /* pour gerer les variations saisonnières du format de backend..
+  int board_check_delay;
+  int news_check_delay;
+  int board_backend_type; /* pour gerer les variations saisonnières du format de backend..
 			   peut prendre 3 valeurs: 
 			   1: les tags apparaissent sous la forme '<b>'
 			   2: les tags sont du type '&lt;b;&gt'
 			   3: le backend est en vrac, on a les deux types de tags :-/ 
 			*/
+  /* nb max de messages conserves en memoire */
+  int board_max_msg;
+  char *board_wiki_emulation; /* non nul => émulation des wiki-urls */
+  /* on ne conserve que les news aui ont ete postees il y a 
+     moins de 'news_max_nb_days' jours */
+  int news_max_nb_days;
+  /* user_agent (defaut: wmCoinCoin) */
+  char *user_agent;
+  char *proxy_auth; /* default: NULL */
+  char *proxy_name; /* default: NULL */
+  int   proxy_port; /* default: 1080 */
 
-  char *tribune_wiki_emulation; /* non nul => émulation des wiki-urls */
+  /* pour forcer le download de myposts.php3 même si on n'a pas fourni le cookie */
+  int force_fortune_retrieval; 
+
+  /* indique si on veut utiliser un nom d'utilisateur (genre 'mmu>' ) */
+  char *user_name;
+
+  /* lg max des messages / useragents */
+  int palmi_msg_max_len;
+  int palmi_ua_max_len;
+
+  char *site_root; /* par defaut: 'linuxfr.org' */
+  char *site_path; /* par defaut: "" */
+  int site_port; /* le port http (defaut 80) */
+  char *path_board_backend; /* par defaut: "board/remote.xml" */
+  char *path_news_backend; /* "short.php3" */
+  char *path_end_news_url; /* ",0,-1,6.html" */
+  char *path_board_add;  /* "board/add.php3" */
+  char *path_myposts; /* users/myposts.php3?order=id" */
+  char *path_messages; /* messages */
+  char *user_cookie;
+  char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
+
+  /* quelques couleurs qui dépendent du site visité */
+  BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
+    pp_login_color, pp_url_color, pp_strike_color, pp_trollscore_color;
+  unsigned pp_bgcolor;
+  int proxy_nocache; /* desactive le cache du proxy lors des requetes */
+  int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
+  enum { locFR, locEN } locale; /* "localisation" du site (pour quelques mots-clefs + problèmes d'horloges AM/PM) */
+  int use_AM_PM;
+  char *site_name; /* le nom court du site (argument de l'option 'site:') */
+  long time_difference; /* decalage horaire du site */
+  int check_news;
+  int check_board;
+  int check_comments;
+  int check_messages;
+} SitePrefs;
+
+#define MAX_SITES 20 /* au-dela, faut vraiment songer à consulter */
+
+typedef struct _GeneralPrefs{
+  /* en cas d'inactivité les delais vont être progressivement augmentés
+     max_refresh_delay est leur valeur maximale (en minutes) (0 => ralentissement désactivé) */
+  int max_refresh_delay;
+  /* de plus au bout d'un certain nombre de minutes, le coincoin cessera toute activité
+     et passera en mode horloge */
+  int switch_off_coincoin_delay;
+
+  char *font_encoding; /* 'iso8859-1' ou mieux, 'iso8859-15' */
+
+  /* message poste sur la tribune */
+  char *coin_coin_message;
 
   /* fonte utilisee pour l'affichages des news */
   char *news_fn_family;
   int news_fn_size;
 
-  /* on ne conserve que les news aui ont ete postees il y a 
-     moins de 'news_max_nb_days' jours */
-  int news_max_nb_days;
+  int news_titles_fgcolor, news_emph_color;
   int news_bgcolor, news_fgcolor; /* couleur d'affichage de la fenetre des news */
-  int news_titles_bgcolor, news_titles_fgcolor, news_emph_color;
+  int news_titles_bgcolor;
   int news_xpos, news_ypos, news_width, news_height; /* dimensions,positions de cette fenetre */
 
   /* pour mise au point ... */
@@ -93,22 +126,9 @@ typedef struct _structPrefs{
   int verbosity; /* 1, 2 ou 3 voire plus */
 
   int http_timeout; /* en secondes */
-  int proxy_nocache; /* desactive le cache du proxy lors des requetes */
-  int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
-  /* user_agent (defaut: wmCoinCoin) */
-  char *user_agent;
-
-  char *proxy_auth; /* default: NULL */
-  char *proxy_name; /* default: NULL */
-  int   proxy_port; /* default: 1080 */
 
   char *gogole_search_url;
 
-  /* message poste sur la tribune */
-  char *coin_coin_message;
-
-  /* indique si on veut utiliser un nom d'utilisateur (genre 'mmu>' ) */
-  char *user_name;
 
   /* pour savoir si on utilise l'icone (style windowmaker) ou bien la fenetre (style swallow kde) */
   int use_iconwin; 
@@ -125,26 +145,14 @@ typedef struct _structPrefs{
   char *dock_bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
   char *dock_skin_pixmap;
 
-  char *site_root; /* par defaut: 'linuxfr.org' */
-  char *site_path; /* par defaut: "" */
-  int site_port; /* le port http (defaut 80) */
 
-  char *path_tribune_backend; /* par defaut: "board/remote.xml" */
-  char *path_news_backend; /* "short.php3" */
-  char *path_end_news_url; /* ",0,-1,6.html" */
-  char *path_tribune_add;  /* "board/add.php3" */
-  char *path_myposts; /* users/myposts.php3?order=id" */
-  char *path_messages; /* messages */
 
   int default_trollo_speed; /* vitesse du trolloscope par defaut */
-  char *user_cookie;
-  char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
 
   char *browser_cmd; /* commande pour afficher une url dans un browser (le %s sera remplace par l'url) */
   char *browser2_cmd; /* le browser alternative (lancé par un clic milieu au lieu d'un clic gauche) */
   char *pp_fn_family; /* defaut : 'helvetica' */
   int pp_fn_size;
-  unsigned pp_bgcolor;
   int pp_start_in_transparency_mode;
   TransparencyInfo pp_transparency;
 
@@ -154,23 +162,20 @@ typedef struct _structPrefs{
     sc_arrow_normal_color, sc_arrow_emphasized_color,
     sc_bar_color, sc_bar_light_color, sc_bar_dark_color;
 
-  BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
-    pp_login_color, pp_url_color, pp_emph_color, 
+  BiColor  pp_emph_color, 
     pp_sel_bgcolor, pp_popup_fgcolor, pp_popup_bgcolor,
-    pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, 
+    pp_my_msg_color, pp_answer_my_msg_color, 
     pp_keyword_color[NB_PP_KEYWORD_CATEG], pp_plopify_color,
     pp_buttonbar_bgcolor, pp_buttonbar_fgcolor,
     pp_buttonbar_msgcnt_color, pp_buttonbar_updlcnt_color,
-    pp_buttonbar_progressbar_color, pp_strike_color;
+    pp_buttonbar_progressbar_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;
   char *pp_fortune_fn_family;
   int pp_fortune_fn_size;
   int enable_troll_detector;
-  int force_fortune_retrieval; /* pour forcer le download de myposts.php3 même si on n'a pas fourni le cookie */
 
-  int pp_use_AM_PM; /* pour les horloges à l'anglaise */
 
   /* preferences pour le spelchecker */
   int ew_do_spell;
@@ -178,7 +183,7 @@ typedef struct _structPrefs{
   char* ew_spell_dict;
   char *post_cmd; /* commande exécutée après chaque nouveau post lu ($m=message, $l=login, $t=timestamp, $u=ua, $i=id, $s=troll_score) */
   /* Nom du fichier de scrinechote */
-  char* tribune_scrinechote;
+  char* board_scrinechote;
 
   KeyList *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
 				attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
@@ -186,8 +191,12 @@ typedef struct _structPrefs{
   KeyList *plopify_key_list; /* version plopesque du kill-file, même remarque qu'au dessus */
   char **plop_words;
   unsigned nb_plop_words;
-	int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */
-} structPrefs;
+  int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */
+
+
+  int nb_sites;
+  SitePrefs *site[MAX_SITES];
+} GeneralPrefs;
 
 
 
@@ -196,20 +205,16 @@ typedef struct _structPrefs{
 
 
 /* remplit la structure avec les valeurs par défaut des preferences */
-void wmcc_prefs_set_default(structPrefs *p);
+void wmcc_prefs_set_default(GeneralPrefs *p);
 /* libere la mémoire allouée par les champs de la structure, *mais* pas la structure elle-même */
-void wmcc_prefs_destroy(structPrefs *p);
+void wmcc_prefs_destroy(GeneralPrefs *p);
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
-char *wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned char *arg);
+char *
+wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, 
+			   wmcc_options_id opt_num, unsigned char *arg);
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
-char *wmcc_prefs_read_options(structPrefs *p, const char *filename);
-
-/* ça c'est mal, ces fonctions sont définies dans tribune_util.c ... à déplacer */
-KeyList* tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num, int from_prefs);
-KeyList* tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type);
-KeyList* tribune_key_list_find(KeyList *hk, const char *s, KeyListType t);
-const char* tribune_key_list_type_name(KeyListType t);
-KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t, int num);
-void tribune_key_list_destroy(KeyList *first);
-KeyList *tribune_key_list_clear_from_prefs(KeyList *first);
+char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename);
+SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
+void wmcc_site_prefs_destroy(SitePrefs *p);
+void wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src);
 #endif

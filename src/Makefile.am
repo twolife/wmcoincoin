@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.10 2002/06/23 10:44:05 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.11 2002/08/17 18:33:38 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.11  2002/08/17 18:33:38  pouaite
+##   grosse commition
+##
 ##   Revision 1.10  2002/06/23 10:44:05  pouaite
 ##   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 ##
@@ -41,18 +44,32 @@ EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
 wmcoincoin_SOURCES = \
-	myprintf.c myprintf.h \
-	raster.c raster.h troll_detector.c troll_data.h \
-	dock.c useragents_file.c tribune_util.c \
-	scrollcoin.h scrollcoin.c \
-	pinnipede.c editwin.c newswin.c \
-	picohtml.c picohtml.h msgbox.c balloon.c \
-	wmcoincoin.c coincoin.h global.h http.c http.h \
-	coin_util.c coin_util.h coin_xutil.c coin_xutil.h \
-	prefs.c prefs.h options_list.h prefs_gestion.c\
-	coincoin_news.c coincoin_tribune.c \
+        board_util.c board_util.h \
 	regexp.h regexp.c general.h \
+	myprintf.c myprintf.h \
+	raster.c raster.h \
+        troll_detector.c troll_data.h \
+	pinnipede.c pinnipede_widgets.c pinnipede.h \
+        palmipede.c \
+	dock.c dock.h \
+        board.c \
+	news.c \
+	comments.c \
+	messages.c \
+	site.c \
+        keylist.c keylist.h \
+	scrollcoin.h scrollcoin.c \
+	newswin.c newswin.h \
+	picohtml.c picohtml.h \
+        msgbox.c balloon.c \
+	wmcoincoin.c coincoin.h global.h \
+        http.c http.h \
+	coin_util.c coin_util.h \
+        coin_xutil.c coin_xutil.h \
+	prefs.c prefs.h options_list.h prefs_gestion.c\
 	spell_coin.c spell_coin.h
+
+#useragents_file.c
 
 #defaultuseragents.h: ../useragents
 #	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h

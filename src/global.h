@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.21 2002/06/02 13:31:37 pouaite Exp $
+  rcsid=$Id: global.h,v 1.22 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.22  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.21  2002/06/02 13:31:37  pouaite
   bon, _maintenant_ c'est parti pour la 2.3.8b
 
@@ -70,9 +73,7 @@
 
 #include "config.h"
 #include "prefs.h"
-#ifdef TEST_MEMLEAK
-#include "mpatrol.h"
-#endif
+#include <assert.h>
 
 #define USERNAME_MAX_LEN 60 // lg max du username affiché dans la tribune, pour les personnes loggées
 
@@ -137,7 +138,7 @@ DECL_GLOB_INIT(volatile int flag_cygwin_x_loop_in_thread,0);
 #endif
 
 
-DECL_GLOB(structPrefs Prefs);
+DECL_GLOB(GeneralPrefs Prefs);
 DECL_GLOB_INIT(volatile int X_loop_request, 0);
 
 /* +1 = demande au coincoin de fermer ses fenetres,
@@ -153,12 +154,11 @@ DECL_GLOB_INIT(volatile int flag_updating_news, 0);
 DECL_GLOB_INIT(volatile int flag_updating_messagerie, 0);
 DECL_GLOB_INIT(volatile int flag_news_updated, 0);
 DECL_GLOB_INIT(volatile int flag_updating_comments, 0); /* utilisé aussi pour la maj de la fortune et du CPU */
-DECL_GLOB_INIT(volatile int flag_updating_tribune, 0);
-DECL_GLOB_INIT(volatile int flag_tribune_answer_to_me, 0); /* clignotement bleu du flamometre quand une reponse à un de nos posts sur la tribune vient d'arriver */
+DECL_GLOB_INIT(volatile int flag_updating_board, 0);
 DECL_GLOB_INIT(volatile int flag_sending_coin_coin, 0); /* utilisé pour savoir si on est en train de poster un message */
 DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led si on est dans 'troll_detector' */
 DECL_GLOB_INIT(volatile int flag_gethostbyname,0); /* pour savoir si le coincoin est en plein gethostbyname */
-DECL_GLOB_INIT(volatile int flag_tribune_updated, 0);
+DECL_GLOB_INIT(volatile int flag_board_updated, 0);
 DECL_GLOB_INIT(volatile int flag_http_transfert, 0);
 DECL_GLOB_INIT(volatile int flag_http_error, 0);
 DECL_GLOB_INIT(volatile int flag_spell_request, 0); /* pour le palmipede (ça commence à puer le vilain hack... mais bon, je veux pas de threads alors j'assume) */
@@ -169,11 +169,73 @@ DECL_GLOB_INIT(unsigned global_http_upload_cnt,0);
 DECL_GLOB_INIT(unsigned global_http_download_cnt,0);
 DECL_GLOB_INIT(char *options_file_name, NULL); /* le nom du fichier d'options (par defaut: 'options') */
 
-DECL_GLOB_INIT(int flag_changed_http_params, 0); /* positionné à 1 quand les prefs viennent
-						    d'être relues, et que l'adresse du site
-						    a été changée (ou le proxy) -> pour
-						    forcer le gethostbyname */
 DECL_GLOB_INIT(char *app_useragent, NULL);
+
+
+typedef struct id_type {
+  int lid BITFIELD(26); /* attention c pas portable, on ne peut pas présumer que le bitfield sera
+			   effectivement signé :-/ (ex. compiler avec gcc -ftraditionnal) */
+  int sid  BITFIELD(6);
+} id_type;
+
+inline static int
+id_type_is_invalid(id_type id) {
+  if (id.lid == -1) {
+    assert(id.sid==-1); return 1;
+  } else {
+    assert(id.lid>=0);
+    assert(id.sid>=0); return 0;
+  }
+}
+
+inline static id_type
+id_type_invalid_id() {
+  id_type id;
+  id.lid = -1; id.sid = -1;
+  return id;
+}
+
+inline static int
+id_type_to_int(id_type id) {
+  int i;
+  if (id_type_is_invalid(id)) return -1;
+  i = id.sid + id.lid * MAX_SITES;
+  return i;
+}
+
+inline static id_type
+int_to_id_type(int i) {
+  id_type id;
+  if (i == -1) return id_type_invalid_id();
+  id.sid = i % MAX_SITES;
+  id.lid = i / MAX_SITES;
+  return id;
+}
+
+inline static int
+id_type_eq(id_type a, id_type b) {
+  return (a.lid == b.lid && a.sid == b.sid);
+}
+
+inline static int 
+id_type_sid(id_type a) {
+  return a.sid;
+}
+
+inline static int 
+id_type_lid(id_type a) {
+  return a.lid;
+}
+
+inline static void id_type_set_lid(id_type *id, int lid) {
+  id->lid = lid;
+}
+
+inline static void id_type_set_sid(id_type *id, int sid) {
+  id->sid = sid;
+}
+
+
 
 #endif
 

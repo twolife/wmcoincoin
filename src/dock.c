@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.17 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.18 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.18  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.17  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -88,9 +91,13 @@
 #include <X11/extensions/shape.h>
 #include <time.h>
 #include <sys/time.h>
-#include "coincoin.h"
 #include "coin_xutil.h"
 #include "http.h"
+#include "newswin.h"
+#include "site.h"
+#include "dock.h"
+#include "board_util.h"
+#include "newswin.h"
 
 /* image */
 #include "../xpms/leds.h"
@@ -100,28 +107,25 @@
 #define TROLLO_MAX_SPEED 15
 
 void
-dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
+dock_update_pix_trolloscope(Dock *dock)
 {
-  tribune_msg_info *it;
+  Boards *boards = dock->sites->boards;
+  board_msg_info *it;
   int tnow;
   int i,j;
   RGBAImage *img;
   int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb;
-  
-  
 
   /* nombre de secondes regroupees dans une meme colonne du graphique */
   int col_nb_sec = 0;
   int trib_nrow, trib_ncol;
 
-  if (flag_updating_tribune) return;
-
-  dock->tribune_updatable = 0; /* ça c'est des vieux restes de l'époque des threads.. A VIRER UN DE CES QUATRES */
+  if (flag_updating_board) return;
 
   /* couleur de fond du trolloscope */
   trolloscope_bgr = (280*(dock->flamometre.comment_change_decnt % FLAMOMETRE_COMMENT_CLIGN_SPEED))/(FLAMOMETRE_COMMENT_CLIGN_SPEED-1);
   trolloscope_bgg = (280*(dock->flamometre.xp_change_decnt % FLAMOMETRE_XP_CLIGN_SPEED))/(FLAMOMETRE_XP_CLIGN_SPEED-1);
-  trolloscope_bgb = (280*(dock->flamometre.tribune_answer_decnt % FLAMOMETRE_TRIB_CLIGN_SPEED))/(FLAMOMETRE_TRIB_CLIGN_SPEED-1);
+  trolloscope_bgb = (280*(dock->flamometre.board_answer_decnt % FLAMOMETRE_TRIB_CLIGN_SPEED))/(FLAMOMETRE_TRIB_CLIGN_SPEED-1);
   if (trolloscope_bgr>255) { trolloscope_bgr = ((280-trolloscope_bgr)*255)/(280-255); }
   if (trolloscope_bgg>255) { trolloscope_bgg = ((280-trolloscope_bgg)*255)/(280-255); }
   if (trolloscope_bgb>255) { trolloscope_bgb = ((280-trolloscope_bgb)*255)/(280-255); }
@@ -139,37 +143,43 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 
   for (i=0; i < trib_nrow; i++) {
     for (j=0; j < trib_ncol; j++) {
-      dock->trolloscope[i][j].id = -1;
-      dock->trolloscope[i][j].tatouage = NULL;
+      dock->trolloscope[i][j].id      = id_type_invalid_id();
+      dock->trolloscope[i][j].R       = 0; 
+      dock->trolloscope[i][j].G       = 0; 
+      dock->trolloscope[i][j].B       = 0; 
+      dock->trolloscope[i][j].symb    = 0; 
     }
   }
+  
+  for (it = boards->first; it; it = it->next) {
+    Site *site;
+    int age;
 
-  it = trib->msg;
+    site = sl_find_site_id(dock->sites, it->id.sid);
+    assert(site);
+    assert(site->prefs->check_board);
+    assert(site->board);
+    tnow = (board_get_time_now(site->board) + col_nb_sec - 1)/col_nb_sec;
 
-  tnow = (tribune_get_time_now(trib) + col_nb_sec - 1)/col_nb_sec;
 
-  /* construction de trolloscope */
-  while (it) {
-    if (it->tatouage) {
-      int age;
-
-      /* age = tribune_get_msg_age(trib, it) / 60 / col_nb_min; */
-      age = (tnow - (it->timestamp + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
-      BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_sec=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_sec,tnow));
-      assert(age >= 0);
-      if (age < trib_ncol) {
-	/* on empile les message sur la pile d'age 'age' (je suis clair?)*/
-	i = 0;
-	while (dock->trolloscope[i][age].id != -1) {
-	  i++; if (i == trib_nrow) break;
-	}
-	if (i < trib_nrow) {
-	  dock->trolloscope[i][age].id = it->id;
-	  dock->trolloscope[i][age].tatouage = it->tatouage;
-	}
+    /* age = board_get_msg_age(trib, it) / 60 / col_nb_min; */
+    age = (tnow - (it->timestamp + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
+    BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_sec=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_sec,tnow));
+    assert(age >= 0);
+    if (age < trib_ncol) {
+      /* on empile les message sur la pile d'age 'age' (je suis clair?)*/
+      i = 0;
+      while (!id_type_is_invalid(dock->trolloscope[i][age].id)) {
+	i++; if (i == trib_nrow) break;
+      }
+      if (i < trib_nrow) {
+	dock->trolloscope[i][age].id = it->id;
+	dock->trolloscope[i][age].R = it->tatoo.R;
+	dock->trolloscope[i][age].G = it->tatoo.G;
+	dock->trolloscope[i][age].B = it->tatoo.B;
+	dock->trolloscope[i][age].symb = it->tatoo.symb;
       }
     }
-    it = it->next;
   }
 
   img = RGBACreateImage(TROLLOSCOPE_WIDTH, TROLLOSCOPE_HEIGHT); assert(img);
@@ -185,15 +195,13 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
     for (j=0; j < trib_ncol; j++) {
       int r,g,b,symb;
 
-      if (dock->trolloscope[i][j].id >= 0 && dock->trolloscope[i][j].tatouage) {
-	r = dock->trolloscope[i][j].tatouage->R;
-	g = dock->trolloscope[i][j].tatouage->G;
-	b = dock->trolloscope[i][j].tatouage->B;
-	symb = dock->trolloscope[i][j].tatouage->symb;
+      if (!id_type_is_invalid(dock->trolloscope[i][j].id)) {
+	r = dock->trolloscope[i][j].R;
+	g = dock->trolloscope[i][j].G;
+	b = dock->trolloscope[i][j].B;
+	symb = dock->trolloscope[i][j].symb;
       } else { 
 	r = trolloscope_bgr; g = trolloscope_bgg; b = trolloscope_bgb; symb = 0;
-	dock->trolloscope[i][j].id = 0;
-	dock->trolloscope[i][j].tatouage = NULL;
       }
       BLAHBLAH(5, myprintf("[%<YEL %1d>%<RED %02x>] ", symb, (r+g+b)%256));
       if (dock->trolloscope_resolution == 5) {
@@ -244,7 +252,7 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 
   if (dock->tl_item_survol) { 
     /* ce fut un bug idiot */
-    if (dock->tl_item_survol->id <= 0) {
+    if (id_type_is_invalid(dock->tl_item_survol->id)) {
       dock->tl_item_survol = NULL;
       dock->tl_item_clicked = 0;
     }
@@ -255,11 +263,10 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
   dock->pix_trolloscope = RGBAImage2Pixmap(dock->rgba_context, img);
   assert(dock->pix_trolloscope != None);
   RGBADestroyImage(img);
-  dock->tribune_updatable = 1;
 }
 
 static void
-textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
+refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
 {
   int cx, cnt, dec;
   XRectangle xr;
@@ -279,7 +286,7 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
     cx = x + (56-strlen(minimsg)*DOCK_FIXED_FONT_W)/2; /* super centrage..*/
     XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, minimsg, strlen(minimsg));
 
-  } else if (dock->view_id_in_newstitles == 0) {
+  } else if (id_type_is_invalid(dock->view_id_in_newstitles)) {
     dec = dock->newstitles_char_dec;
     cx = x - dec;
     cnt = dock->newstitles_pos;
@@ -295,10 +302,10 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
     unsigned char minimsg[10];
     minimsg[0] = 0;
     if (dock->view_id_timer_cnt % 40 > 15) {
-      snprintf(minimsg, 10, "id=%d", dock->view_id_in_newstitles); 
+      snprintf(minimsg, 10, "id=%d", dock->view_id_in_newstitles.lid); 
     } else if (dock->tl_item_survol) {
-      tribune_msg_info *mi;
-      mi = tribune_find_id(&dock->dlfp->tribune, dock->tl_item_survol->id);
+      board_msg_info *mi;
+      mi = boards_find_id(dock->sites->boards, dock->tl_item_survol->id);
       if (mi) {
 	struct tm *t;
 
@@ -371,23 +378,35 @@ textout_msginfo(Dock *dock, int x, int y)
 
 /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
 void
-dock_checkout_newstitles(Dock *dock, DLFP *dlfp)
+dock_checkout_newstitles(Dock *dock)
 {
+  SiteList *sites = dock->sites;
   if (flag_updating_news == 0) {
-    if (dlfp->updated) {
-      DLFP_news *n;
-      int pos, pos0;
-      dlfp->updated = 0;
+    int news_updated = 0;
+    Site *s;
+    /* recherche les sites qui ont maj leurs news */
+    for (s = sites->list; s; s = s->next) {
+      if (s->prefs->check_news && s->news_updated) {
+	s->news_updated = 0; news_updated = 1;
+      }
+    }
 
-      if (dlfp_count_news(dlfp) == 0) {
+    if (news_updated) {
+      News *n;
+      int pos, pos0;
+
+      if ((n=sl_get_nth_unreaded_news(sites, 1))==NULL) {
+	int i;
 	sprintf(dock->newstitles, _("..NO NEWS"));
-	memset(dock->newstitles_id, 0, sizeof(dock->newstitles_id[0]) * MAX_NEWSTITLES_LEN);
+	for (i=0; i < MAX_NEWSTITLES_LEN; i++) {
+	  dock->newstitles_id[i]= id_type_invalid_id();
+	}
 	dock->newstitles_pos = 0; 
 	dock->newstitles_char_dec = 4;
       } else {
+	int cnt = 2;
 	pos = 0; 
 	dock->newstitles[0] = 0;      
-	n = dlfp->news;
 	while (n) {
 	  int i;
 	  static char *separ = " ... ";
@@ -407,7 +426,7 @@ dock_checkout_newstitles(Dock *dock, DLFP *dlfp)
 	  for (i=pos0; i <= pos; i++) {
 	    dock->newstitles_id[i] = n->id;
 	  }
-	  n = n->next;
+	  n = sl_get_nth_unreaded_news(sites, cnt); cnt++;
 	}
 	dock->newstitles_pos = 0; 
 	dock->newstitles_char_dec = 0;
@@ -511,40 +530,41 @@ dock_leds_draw(Dock *dock, Leds *l, int state_step)
   }
 }
 
-
+/* 
+   ça c'est de la bonne vieille fonction qui date un peu
+   j'avais meme pas pris la peine de lui donner un nom un peu significatif 
+   
+   c'est elle qui init les données pour le message defilant en bas du coincoin,
+   ou bien l'affiche de l'heure du dernier message
+*/
 static void
 refresh_msginfo(Dock *dock)
 {
   if (dock->tl_item_survol) {
     if (dock->tl_item_clicked) {
-      tribune_msg_info *mi;
+      board_msg_info *mi;
 
-      if (flag_updating_tribune == 0) {
-	dock->tribune_updatable = 0;
+      if (flag_updating_board == 0) {
       
-	mi = tribune_find_id(&dock->dlfp->tribune, dock->tl_item_survol->id);
-	if (mi) {
-	  snprintf(dock->msginfo, MAX_MSGINFO_LEN, "    %s",
-		   mi->useragent);
-	  dock->msginfo[MAX_MSGINFO_LEN-1]=0;
-	} else {
-	  strcpy(dock->msginfo, "bug?");
-	}
-	dock->tribune_updatable = 1;
-      } else strcpy(dock->msginfo, "plz wait");
-    } else {
-      if (flag_updating_tribune == 0) {
-	dock->tribune_updatable = 0;
-	strncpy(dock->msginfo, dock->tl_item_survol->tatouage->name, MAX_MSGINFO_LEN);
-	dock->msginfo[MAX_MSGINFO_LEN-1]=0;
-	if (strcmp(dock->msginfo, "?")==0 && flag_updating_tribune == 0) {
-	  tribune_msg_info *mi;
-	  mi = tribune_find_id(&dock->dlfp->tribune, dock->tl_item_survol->id);
+	Site *site = sl_find_site_id(dock->sites, dock->tl_item_survol->id.sid);
+	strcpy(dock->msginfo, "bug?");
+	if (site) {
+	  assert(site->board);
+	  mi = board_find_id(site->board, dock->tl_item_survol->id.lid);
 	  if (mi) {
-	    make_short_name_from_ua(mi->useragent, dock->msginfo, MAX_MSGINFO_LEN);
+	    snprintf(dock->msginfo, MAX_MSGINFO_LEN, "   [%s] %s",
+		     site->prefs->site_name, mi->useragent);
+	    dock->msginfo[MAX_MSGINFO_LEN-1]=0;
 	  }
 	}
-	dock->tribune_updatable = 1;
+      } else strcpy(dock->msginfo, "plz wait");
+    } else {
+      if (flag_updating_board == 0) {
+	board_msg_info *mi = boards_find_id(dock->sites->boards, dock->tl_item_survol->id);
+	if (mi) {
+	  strncpy(dock->msginfo, mi->tatoo.name, MAX_MSGINFO_LEN);
+	  dock->msginfo[MAX_MSGINFO_LEN-1]=0;
+	}
       } else strcpy(dock->msginfo, "plz wait");
     }
   } else {
@@ -552,12 +572,17 @@ refresh_msginfo(Dock *dock)
       sprintf(dock->msginfo, "level:%3d", (int)(dock->trib_trollo_rate*3));
     } else if (dock->flag_survol_led1) {
       sprintf(dock->msginfo, "vit.def:%d",dock->trolloscope_speed);
-    } else if (flag_updating_tribune == 0) {
-      dock->tribune_updatable = 0;
-      sprintf(dock->msginfo, "%s+%02d%s", dock->tribune_time,
-	      dock->dlfp->tribune.nbsec_since_last_msg,
-	      dock->dlfp->tribune.nbsec_since_last_msg < 100 ? "s" : "");
-      dock->tribune_updatable = 1;
+    } else if (flag_updating_board == 0) {
+      Site *s;
+      int nbsec_since_last_msg = 1000000;
+      for (s=dock->sites->list;s; s=s->next) {
+	if (s->board) 
+	  nbsec_since_last_msg = MIN(nbsec_since_last_msg, 
+				     s->board->nbsec_since_last_msg);
+      }
+      sprintf(dock->msginfo, "%s+%02d%s", dock->board_time,
+	      nbsec_since_last_msg,
+	      nbsec_since_last_msg < 100 ? "s" : "");
     }  else {
       /* strcpy(dock->msginfo, "updating"); */
     }
@@ -590,7 +615,7 @@ dock_refresh_normal(Dock *dock)
 
 
       XSetClipMask(dock->display, dock->NormalGC, None);
-      textout_msg(dock, dock->newstitles, 3, 3-dock->door_state_step, 57);
+      refresh_docktxt_bottom(dock, dock->newstitles, 3, 3-dock->door_state_step, 57);
 
 
 
@@ -616,7 +641,7 @@ dock_refresh_normal(Dock *dock)
   case CLOSED:
     {
       XCopyArea(dock->display, dock->pix_porte, dock->coinpix, dock->NormalGC, 0, 0, 64, 64, 0, 0);
-      textout_msg(dock, dock->newstitles, 3, 3, 57);
+      refresh_docktxt_bottom(dock, dock->newstitles, 3, 3, 57);
 
       textout_msginfo(dock, 4, 49+MAX(0,dock->door_state_step - TROLLOSCOPE_HEIGHT + 5));
 
@@ -646,15 +671,16 @@ dock_refresh_horloge_mode(Dock *dock)
 	    0,0, 64, 64, 0,0);
 
   tnow = time(NULL);
+  /*
   if (dock->dlfp->tribune.last_post_id > 0) {
     time_t decal, ttribune;
 
     decal = difftime(tnow, dock->dlfp->tribune.local_time_last_check);
     ttribune = dock->dlfp->tribune.last_post_timestamp + decal + dock->dlfp->tribune.nbsec_since_last_msg;
     tm = localtime(&ttribune);
-  } else {
-    tm = localtime(&tnow);
-  }
+    } else {*/
+  tm = localtime(&tnow);
+    /*}*/
   
   XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_hour / 10), 0, 9, 11, 9, 6); 
   XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_hour % 10), 0, 9, 11, 18, 6); 
@@ -687,7 +713,7 @@ dock_leds_set_state(Dock *dock)
     led_color(&dock->leds.led[0], BLUE, BLUE, BLUE);
   } else if (flag_http_error) {
     led_color(&dock->leds.led[0], OFF, OFF, RED);
-  } else if (flag_updating_news || flag_updating_tribune) {
+  } else if (flag_updating_news || flag_updating_board) {
     led_color(&dock->leds.led[0], CYAN, CYAN, CYAN);
   } else {
     led_color(&dock->leds.led[0], OFF, OFF, OFF);
@@ -703,7 +729,7 @@ dock_leds_set_state(Dock *dock)
     led_color(&dock->leds.led[1], OFF, OFF, OFF);
   }
 
-  if (dlfp_unreaded_news_id(dock->dlfp, 1)>0) {
+  if (sl_get_nth_unreaded_news(dock->sites, 1)) {
     led_color(&dock->leds.led[2], OFF, GREENLIGHT, GREEN);
   } else {
     led_color(&dock->leds.led[2], OFF, OFF, OFF);
@@ -712,7 +738,7 @@ dock_leds_set_state(Dock *dock)
 
   if (flag_updating_messagerie) {
     led_color(&dock->leds.led[3], VIOLET, VIOLET, VIOLET);
-  } else if (dlfp_msg_find_unreaded(dock->dlfp)) {
+  } else if (sl_find_unreaded_msg(dock->sites)) {
     led_color(&dock->leds.led[3], OFF, GREENLIGHT, GREEN);
   } else {
     led_color(&dock->leds.led[3], OFF, OFF, OFF);
@@ -780,11 +806,11 @@ check_cursor_shape(Dock *dock, int x, int y)
 static void
 dock_handle_motion_notify(Dock *dock, int x, int y)
 {
-  int oldid;
+  id_type oldid;
 
   if (dock->tl_item_survol) {
     oldid = dock->tl_item_survol->id;
-  } else oldid = -1;
+  } else oldid = id_type_invalid_id();
   
   dock->tl_item_survol = NULL;
   check_cursor_shape(dock, x,y);
@@ -800,24 +826,24 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
       j = (TROLLOSCOPE_WIDTH + TROLLOSCOPE_X - 1 - x) / dock->trolloscope_resolution;
       i = (TROLLOSCOPE_HEIGHT + TROLLOSCOPE_Y - 1 - y) / dock->trolloscope_resolution;
       
-      if (dock->trolloscope[i][j].id > 0) {
+      if (!id_type_is_invalid(dock->trolloscope[i][j].id)) {
 	dock->tl_item_survol = &dock->trolloscope[i][j];
-	if (dock->trolloscope[i][j].id != oldid) {
+	if (!id_type_eq(dock->trolloscope[i][j].id,oldid)) {
 	  dock->tl_item_clicked = 0;
 	  dock->msginfo_defil = 0;
 	}
 	dock->view_id_in_newstitles = dock->tl_item_survol->id;
 	dock->view_id_timer_cnt = 0;
-	/* myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].tatouage->name); */
+	/* myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].tatoo.name); */
       } else {
 	dock->tl_item_clicked = 0;
 	dock->msginfo_defil = 0;
-	dock->view_id_in_newstitles = 0;
+	dock->view_id_in_newstitles = id_type_invalid_id();
       }
     } else {
       dock->tl_item_clicked = 0;
       dock->msginfo_defil = 0;
-      dock->view_id_in_newstitles = 0;
+      dock->view_id_in_newstitles = id_type_invalid_id();
     }
     if (IS_INSIDE(x,y,50,18,60,22)) {
       /* survol du trollometre */
@@ -843,15 +869,28 @@ dock_red_button_check(Dock *dock) {
     if (dock->red_button_press_state == 5) {
       BLAHBLAH(1,printf(_("Coin !\n")));
 
-      if (flag_sending_coin_coin == 0) { /* petite precaution */
+      if (dock->coin_coin_request == 0) { /* petite precaution */
+	Site *s;
 	/* On utilise real_coin_coin_message pour éviter un bug si on modifier
 	   le message entre l'appuie du bouton rouge et exec_coin_coin */
-	strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
-		MESSAGE_MAX_LEN);
-	strncpy(dock->real_coin_coin_useragent, dock->coin_coin_useragent, 
-		USERAGENT_MAX_LEN);
-      
-	dock->coin_coin_request = 1;
+	dock->real_coin_coin_site_id = dock->coin_coin_site_id;
+
+	if (dock->coin_coin_site_id == -1) {
+	  msgbox_show(dock, "<b>Please</b> fill your options file with a valid site equiped with a board...");
+	} else {
+	  s = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
+	  if (s && s->board) {
+	    strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
+		    MESSAGE_MAXMAX_LEN);
+	    strncpy(dock->real_coin_coin_useragent, s->board->coin_coin_useragent, 
+		    USERAGENT_MAXMAX_LEN);
+	    dock->real_coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
+	    dock->real_coin_coin_useragent[USERAGENT_MAXMAX_LEN] = 0;
+	    dock->coin_coin_request = 1;
+	  } else {
+	    myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
+	  }
+	}
       }
     }
     
@@ -861,15 +900,16 @@ dock_red_button_check(Dock *dock) {
 }
 
 /* statistique à la noix */
+
 static void
 dock_show_tribune_frequentation(Dock *dock)
 {
+  /*
   char s[2048], s_xp[512], sv_xp[10], sv_xp_old[50];
   int ua_cnt1, ua_cnt2, ua_cnt3, ua_cnt4;
   int msg_cnt1, msg_cnt2, msg_cnt3, msg_cnt4;
   int my_msg_cnt1, my_msg_cnt2, my_msg_cnt3, my_msg_cnt4;
-
-
+  
   tribune_frequentation(&dock->dlfp->tribune, 10, &ua_cnt1, &msg_cnt1, &my_msg_cnt1);
   tribune_frequentation(&dock->dlfp->tribune, 30, &ua_cnt2, &msg_cnt2, &my_msg_cnt2);
   tribune_frequentation(&dock->dlfp->tribune, 120, &ua_cnt3, &msg_cnt3, &my_msg_cnt3);
@@ -905,7 +945,8 @@ dock_show_tribune_frequentation(Dock *dock)
 	   ua_cnt3, msg_cnt3, my_msg_cnt3,
 	   ua_cnt4, msg_cnt4, my_msg_cnt4);
 
-  msgbox_show(dock, s);
+  */
+  msgbox_show(dock, "desactive");
 }
 
 
@@ -1058,15 +1099,15 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
     } else if (IS_INSIDE(x,y,2,2,59,13) && 
 	       (dock->door_state == CLOSED)) {
-      int id;
+      id_type id;
       /* clic gauche sur la zone des news défilantes -> on affiche la news et on 'raise' la fenetre */
       BLAHBLAH(4,printf("newswin_show\n"));
       if (strlen(dock->newstitles)) {
 	int pos;
 	pos = (dock->newstitles_pos + ((xbevent->x - 7)+3)/6) % strlen(dock->newstitles);
 	id = dock->newstitles_id[pos];
-      } else { id = -1; }
-      newswin_show(dock, dock->dlfp, id); XRaiseWindow(dock->display, newswin_get_window(dock));
+      } else { id = id_type_invalid_id(); }
+      newswin_show(dock, id); XRaiseWindow(dock->display, newswin_get_window(dock));
     } else if (IS_INSIDE(x,y,dock->leds.led[0].xpos,dock->leds.led[0].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[0].xpos+8, dock->leds.led[0].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1085,28 +1126,29 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       */
       dock->trolloscope_speed /= 2;
       if (dock->trolloscope_speed <= 0) dock->trolloscope_speed = 1;
-      dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+      dock_update_pix_trolloscope(dock);
     } else if (IS_INSIDE(x,y,dock->leds.led[2].xpos,dock->leds.led[2].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[2].xpos+8, dock->leds.led[2].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
 	click bouton 1 sur la 3eme led -> 
 	voir les news non lues
       */
-      int id;
-      id = dlfp_unreaded_news_id(dock->dlfp, 1);
-      if (id > 0) {
-	newswin_show(dock, dock->dlfp, id);
+      News *n;
+      n = sl_get_nth_unreaded_news(dock->sites, 1);
+      if (n) {
+	newswin_show(dock, n->id);
       }
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
 	       && flag_updating_messagerie == 0) {
       /* clic gauche sur la 4eme led -> voir les nouveaux messages (avec le browser 1)*/
-      DLFP_message *m;
-      m = dlfp_msg_find_unreaded(dock->dlfp);
+      Message *m;
+      m = sl_find_unreaded_msg(dock->sites);
       if (m) {
 	char url[2048];
 	snprintf(url, 2048, "http://%s:%d/%s%smessages/view.php3?id=%d", 
-		 Prefs.site_root, Prefs.site_port, Prefs.site_path, strlen(Prefs.site_path) ? "/" : "", 
+		 m->site->prefs->site_root, m->site->prefs->site_port, m->site->prefs->site_path, 
+		 strlen(m->site->prefs->site_path) ? "/" : "",
 		 m->mid);
 	open_url(url, x, y, 1);
 	m->unreaded = 0;
@@ -1127,29 +1169,39 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
 
       /* pour le debuggage, ça peut tj servir .. */
-      BLAHBLAH(1, dlfp_yc_printf_comments(dock->dlfp));
-      BLAHBLAH(1, dlfp_msg_printf_messages(dock->dlfp));
+      Site *s;
+      for (s = dock->sites->list; s; s = s->next) {
+	if (s->prefs->check_comments) {
+	  BLAHBLAH(1, site_yc_printf_comments(s));
+	}
+	if (s->prefs->check_messages) {
+	  BLAHBLAH(1, site_msg_printf_messages(s));
+	}
+      }
 
 
       if (flag_updating_comments == 0) {
-	DLFP_comment *com;
-	if ((com = dlfp_yc_find_modified(dock->dlfp,NULL))) {
+	Comment *com;
+	if ((com = sl_find_modified_comment(dock->sites))) {
 	  char url[1024];
 	  snprintf(url, 1024, "http://%s:%d/%s%scomments/thread.php3?news_id=%d&com_id=%d&res_type=1",
-		   Prefs.site_root, Prefs.site_port, Prefs.site_path, strlen(Prefs.site_path) ? "/" : "", 
+		   com->site->prefs->site_root, 
+		   com->site->prefs->site_port, 
+		   com->site->prefs->site_path, 
+		   strlen(com->site->prefs->site_path) ? "/" : "", 
 		   com->news_id, com->com_id);
 	  open_url(url, -1, -1, 1);
 	  com->modified = 0;
-	  dlfp_yc_clear_modified(dock->dlfp);
-	  if (dlfp_yc_find_modified(dock->dlfp,NULL) == NULL) {
+	  site_yc_clear_modified(com->site);
+	  if (sl_find_modified_comment(dock->sites) == NULL) {
 	    dock->flamometre.comment_change_decnt = 1;
 	  }
 	} else if (dock->flamometre.comment_change_decnt) { /* bizarre mais bon .. */
 	  dock->flamometre.comment_change_decnt = 1; /* ta gueule , en quelque sorte */
 	} else if (dock->flamometre.xp_change_decnt) {
 	  dock->flamometre.xp_change_decnt = 1;
-	} else if (dock->flamometre.tribune_answer_decnt) {
-	  dock->flamometre.tribune_answer_decnt = 1;
+	} else if (dock->flamometre.board_answer_decnt) {
+	  dock->flamometre.board_answer_decnt = 1;
 	}
       }
 
@@ -1160,7 +1212,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
     } else if (IS_INSIDE(x,y,3,49,3+57,49+12) && 
 	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
       if (!editw_ismapped(dock->editw)) {
-	editw_show(dock, dock->editw, 0);
+	editw_show(dock, NULL, 0);
       } else {
 	editw_hide(dock, dock->editw);
       }
@@ -1173,7 +1225,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       /* clic bouton droite sur la zone défilante -> fermeture la fenetre des news */
       if (newswin_is_used(dock)) {
 	newswin_unmap(dock);
-      } else newswin_show(dock, dock->dlfp, -2);
+      } else newswin_show(dock, id_type_invalid_id()); /* avant, on avait id=-2 .. */
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
@@ -1182,8 +1234,9 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       */
 	  
       if (flag_updating_comments == 0) {
-	if (dlfp_yc_find_modified(dock->dlfp,NULL)) {
-	  dlfp_yc_clear_modified(dock->dlfp);
+	Comment *c;
+	if ((c = sl_find_modified_comment(dock->sites))) {
+	  site_yc_clear_modified(c->site);
 	  dock->flamometre.comment_change_decnt = 1;
 	}
       }
@@ -1195,7 +1248,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	  */
       dock->trolloscope_speed *= 2;
       if (dock->trolloscope_speed <= 0 || dock->trolloscope_speed > 128) dock->trolloscope_speed = 128;
-      dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+      dock_update_pix_trolloscope(dock);
 	  
     }  else if (IS_INSIDE(x,y,dock->leds.led[2].xpos,dock->leds.led[2].ypos - MIN(dock->door_state_step,13),
 			  dock->leds.led[2].xpos+8, dock->leds.led[2].ypos +3 - MIN(dock->door_state_step,13))) {
@@ -1204,15 +1257,17 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	     eteindre la diode
 	  */
       if (flag_updating_news == 0) {
-	dlfp_unset_unreaded_news(dock->dlfp);
-	if (newswin_is_used(dock)) { newswin_update_content(dock, dock->dlfp, 0); newswin_draw(dock); }
+	Site *s;
+	for (s = dock->sites->list; s; s=s->next) 
+	  site_news_unset_unreaded(s);
+	if (newswin_is_used(dock)) { newswin_update_content(dock, 0); newswin_draw(dock); }
       }
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
 	       && flag_updating_messagerie == 0) {
       /* clic droite sur la 4eme led -> annuler les nouveaux messages */
-      DLFP_message *m;
-      while ((m = dlfp_msg_find_unreaded(dock->dlfp))) m->unreaded = 0;
+      Message *m;
+      while ((m = sl_find_unreaded_msg(dock->sites))) m->unreaded = 0;
     } else  if (IS_INSIDE(x,y,50,18,60,22) && 
 		(dock->door_state == CLOSED)) {
       /* bouton 3 sur le trollometre:
@@ -1222,8 +1277,8 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
       /* montre le pinnipede teletype */
       if (!pp_ismapped(dock)) {
-	if (flag_updating_tribune == 0) {
-	  pp_show(dock, &dock->dlfp->tribune);
+	if (flag_updating_board == 0) {
+	  pp_show(dock);
 	}
       } else {
 	pp_unmap(dock);
@@ -1238,12 +1293,39 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	*/
     if (IS_INSIDE(x,y,2,2,59,13) && 
 	(dock->door_state == CLOSED)) {
-      dock->news_update_request = 1;
+
+      //      dock->news_update_request = 1;
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ****************DESACTIVEEEEEEEE************>\n");
+
+
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
       /* rafraichissement des news */
-      dock->tribune_update_request = 1;
+      //    dock->board_update_request = 1;
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ********************************************>\n");
+      myprintf("%<YEL ****************DESACTIVEEEEEEEE************>\n");
+
+
     } else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
       /* clic milieu sur la deuxieme led -> changement de la resolution du trolloscope */
@@ -1255,17 +1337,18 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       }	  
       dock->tl_item_clicked = 0;
       dock->msginfo_defil = 0;
-      dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+      dock_update_pix_trolloscope(dock);
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
 	       && flag_updating_messagerie == 0) {
       /* clic milieu sur la 4eme led -> voir les nouveaux messages (avec le browser 2)*/
-      DLFP_message *m;
-      m = dlfp_msg_find_unreaded(dock->dlfp);
+      Message *m;
+      m = sl_find_unreaded_msg(dock->sites);
       if (m) {
 	char url[2048];
 	snprintf(url, 2048, "http://%s:%d/%s%smessages/view.php3?id=%d", 
-		 Prefs.site_root, Prefs.site_port, Prefs.site_path, strlen(Prefs.site_path) ? "/" : "", 
+		 m->site->prefs->site_root, m->site->prefs->site_port, m->site->prefs->site_path, 
+		 strlen(m->site->prefs->site_path) ? "/" : "",
 		 m->mid);
 	open_url(url, x, y, 2);
 	m->unreaded = 0;
@@ -1284,10 +1367,12 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	/* shift+bouton milieu sur le trollometre:
 	   relire le .wmcoincoin/useragents
 	*/
-	int err;
+	// int err;
 
-	err = useragents_file_reread(dock, dock->dlfp);
-	BLAHBLAH(2, printf(_("Re-reading of RC file return an error code %d\n"), err));
+	msgbox_show(dock, "désactivé...");
+		
+	//	err = useragents_file_reread(dock, dock->dlfp);
+	//	BLAHBLAH(2, printf(_("Re-reading of RC file return an error code %d\n"), err));
       }
     }
   }
@@ -1342,7 +1427,7 @@ dock_dispatch_event(Dock *dock, XEvent *event)
       check_cursor_shape(dock, -1,-1);
       dock->tl_item_survol = NULL;
       dock->tl_item_clicked = 0;
-      dock->view_id_in_newstitles = 0;
+      dock->view_id_in_newstitles = id_type_invalid_id();
       dock->flag_survol_trollo = 0;
       dock->flag_survol_led1 = 0;
 

@@ -19,7 +19,7 @@
 #  include <sys/socket.h>
 #  include <sys/time.h>
 #  include <sys/stat.h>
-/*#  include <sys/poll.h>*/ /* TODO: se souvenir des raisons de la présence de ce #include (genant pour darwin, inutile sous linux..) */
+
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
@@ -75,6 +75,18 @@ static char http_last_url[HTTP_LAST_ERR_URL_SZ] = "";
 static char http_used_ip[100] = "xxx.xxx.xxx.xxx";
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+
+typedef struct _HostEntry {
+  char *host_name;
+  unsigned char host_addr[65]; /* premier char = nombre d'octets utilisés pour 
+				  reprensenter l'adresse 
+				 (ça sera 4 en ipv4, et 16 en ipv6 ..) */
+  struct _HostEntry *next;
+} HostEntry;
+
+
+HostEntry *dns_cache;
 
 int http_close(SOCKET fd);
 
@@ -421,7 +433,7 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
   }
 }
 
-
+/* inclusion du code specifique */
 #ifdef __CYGWIN__
 #include "http_win.c"
 #else
@@ -430,8 +442,64 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
 
 
 
+static HostEntry *
+http_resolv_name(const char *host_name, int force_dns_query)
+{
+  HostEntry *h;
+  
+  int do_dns_query = force_dns_query;
 
+  /* recherche de l'host_name dans la liste des noms déjà connus */
+  h = dns_cache;
+  while (h) {
+    if (strcasecmp(host_name, h->host_name) == 0) {
+      break;
+    }
+    h = h->next;
+  }
+  if (h == NULL) {
+    h = (HostEntry*) calloc(1, sizeof(HostEntry)); assert(h);
+    h->host_name = strdup(host_name);
+    h->next = dns_cache;
+    do_dns_query = 1;
+  }
 
+  flag_gethostbyname = 1;
+#ifndef DONOTFORK_GETHOSTBYNAME	  
+  gethostbyname_nonbloq(host_name, h->host_addr);
+#else
+  gethostbyname_bloq(host_name, h->host_addr);
+#endif
+  flag_gethostbyname = 0;
+  if (h->host_addr[0]) {
+#ifndef USE_IPV6
+    snprintf(http_used_ip, 100, "%u.%u.%u.%u", 
+	     (unsigned char)h->host_addr[1],
+	     (unsigned char)h->host_addr[2],
+	     (unsigned char)h->host_addr[3],
+	     (unsigned char)h->host_addr[4]);
+#else
+    snprintf(http_used_ip, 100, "%x:%x:%x:%x:%x:%x:%x:%x", 
+	     *((unsigned short *)(h->host_addr+1)),
+	     *((unsigned short *)(h->host_addr+3)),
+	     *((unsigned short *)(h->host_addr+5)),
+	     *((unsigned short *)(h->host_addr+7)),
+	     *((unsigned short *)(h->host_addr+9)),
+	     *((unsigned short *)(h->host_addr+11)),
+	     *((unsigned short *)(h->host_addr+13)),
+	     *((unsigned short *)(h->host_addr+15)));
+#endif
+    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
+    return h;
+  } else {
+#ifndef USE_IPV6
+    snprintf(http_used_ip, 20, "???.???.???.???");
+#else
+    snprintf(http_used_ip, 20, "?:?:?:?:?:?:?:?");
+#endif
+    return NULL;
+  } 
+}
 
 /* -1 => erreur */
 static SOCKET
@@ -442,8 +510,7 @@ http_connect(const char *host_name, int port)
   SOCKADDR_IN dest_addr;   /* Contiendra l'adresse de destination */
   int num_try;
 
-  static unsigned char addr[65]; /* premier char = nombre d'octets utilisés pour reprensenter l'adresse 
-			     (ça sera 4 ..) */
+  HostEntry *h;
 
    /* 
      un peu tordu : 
@@ -454,54 +521,13 @@ http_connect(const char *host_name, int port)
      BIEN SUR CA NE MARCHE QUE SI L'ON S'ADDRESSE TOUJOURS AU MEME SITE !
   */
 
-  
-  //flag_changed_http_params = 1;
-
   for (num_try = 0; num_try < 2; num_try++) 
     {
 
-      /* faut-il retenter le gethostbyname ? */
-      if (num_try == 1 || addr[0] == 0 || flag_changed_http_params)
-	{
-	  flag_changed_http_params = 0;
-	  
-	  flag_gethostbyname = 1;
-#ifndef DONOTFORK_GETHOSTBYNAME	  
-	  gethostbyname_nonbloq(host_name, addr);
-#else
-	  gethostbyname_bloq(host_name, addr);
-#endif
-	  flag_gethostbyname = 0;
-	  if (addr[0]) {
-#ifndef USE_IPV6
-	    snprintf(http_used_ip, 100, "%u.%u.%u.%u", 
-		     (unsigned char)addr[1],
-		     (unsigned char)addr[2],
-		     (unsigned char)addr[3],
-		     (unsigned char)addr[4]);
-#else
-	    snprintf(http_used_ip, 100, "%x:%x:%x:%x:%x:%x:%x:%x", 
-		     *((unsigned short *)(addr+1)),
-		     *((unsigned short *)(addr+3)),
-		     *((unsigned short *)(addr+5)),
-		     *((unsigned short *)(addr+7)),
-		     *((unsigned short *)(addr+9)),
-		     *((unsigned short *)(addr+11)),
-		     *((unsigned short *)(addr+13)),
-		     *((unsigned short *)(addr+15)));
-#endif
-	    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
-	  } else {
-#ifndef USE_IPV6
-	    snprintf(http_used_ip, 20, "???.???.???.???");
-#else
-	    snprintf(http_used_ip, 20, "?:?:?:?:?:?:?:?");
-#endif
-	  }
-	}
+      /* fait un gethostbyname */
+      h = http_resolv_name(host_name, (num_try == 1));
 
-      
-      if (addr[0] == 0) {
+      if (h == NULL) {
 	if (num_try == 0) continue; /* on a droit a un deuxième essai */
 	else {
 	  set_http_err();
@@ -510,7 +536,7 @@ http_connect(const char *host_name, int port)
 	}
       }
 
-      assert(addr[0]); /* ben oui */
+      assert(h->host_addr[0]); /* ben oui */
 
       sockfd = socket(AF_INET, SOCK_STREAM, 0); /* Vérification d'erreurs! */
       ALLOW_X_LOOP; ALLOW_ISPELL;
@@ -524,13 +550,13 @@ http_connect(const char *host_name, int port)
       dest_addr.sin_family = AF_INET;
       dest_addr.sin_port = htons(port);
       /* pris dans wget, donc ca doit etre du robuste */
-      memcpy(&dest_addr.sin_addr, addr+1, addr[0]);
+      memcpy(&dest_addr.sin_addr, h->host_addr+1, h->host_addr[0]);
       memset(&(dest_addr.sin_zero), 0, 8);
 #else
       //      dest_addr.sin6_len = sizeof(dest_addr);
       dest_addr.sin6_family = AF_INET6;
       dest_addr.sin6_port = htons(port);
-      memcpy(&dest_addr.sin6_addr, addr+1, addr[0]);
+      memcpy(&dest_addr.sin6_addr, h->addr+1, h->addr[0]);
 #endif
 
   
@@ -553,14 +579,16 @@ http_connect(const char *host_name, int port)
 	  http_close(sockfd);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
 	  BLAHBLAH(VERBOSE_LVL, printf(_("connection failed: %s..\n"), http_last_err_msg));
-	  addr[0] = 0;
-	  if (num_try == 1) {
+	  h->host_addr[0] = 0; /* pour relancer un gethostbyname au prochain coup */
+	  //	  if (num_try == 1) {
 	    return INVALID_SOCKET;
+	    //	  }
+	} 
+      else 
+	{
+	  BLAHBLAH(VERBOSE_LVL, printf(_("connected..\n")));
+	  break;
 	}
-      } else {
-	BLAHBLAH(VERBOSE_LVL, printf(_("connected..\n")));
-	break;
-      }
     }
   return sockfd;
 }
@@ -898,7 +926,7 @@ http_request_send(HttpRequest *r)
     free(auth);
   }
 
-  if (r->p_last_modified && *(r->p_last_modified) && Prefs.use_if_modified_since) {
+  if (r->p_last_modified && *(r->p_last_modified) && r->use_if_modified_since) {
     unsigned char *s = *r->p_last_modified;
     int l;
     l = strlen(s); l--;
@@ -987,4 +1015,46 @@ void http_request_close (HttpRequest *r) {
     http_close(r->fd);
     r->fd = INVALID_SOCKET;
   }
+}
+
+/* fonction a-la-con: lecture de toutes les données en mémoire.. */
+unsigned char *
+http_read_all(HttpRequest *r, char *what)
+{
+  unsigned char *s;
+  int bchunk = 1024;
+  int bsize;
+
+  /* on lit tout en un coup */
+  bsize = bchunk;
+  s = malloc(bsize+1); strcpy(s,_("Quack ! Missed"));
+  if (s) {
+    int got;
+    int bi;
+    bi = 0;
+    
+    /* attention : les ames sensible pourraient etre choques
+       par la brutalite de ce qui va suivre ... */
+    while ((got=http_read(r, s+bi, bchunk)) > 0 && r->error == 0) {
+      bi += got;
+      s[bi] = 0;
+      bsize += bchunk;
+      if (bsize > 300000) {
+	  BLAHBLAH(0, myprintf(_("%s: too big (bsize=%d!), let's cut\n"),
+			       what, bsize));
+	  break;
+      }
+      s = realloc(s, bsize+1);
+      if (!s) break;
+    }
+    if (got == -1) {
+      fprintf(stderr, _("problem while reading %s: %s\n"), what, http_error());
+      if (s) free(s);
+      s = NULL;
+    } else {
+      s[bi] = 0;
+    }
+    BLAHBLAH(4, myprintf(_("%s, read: %<mag %s>\n"), what, s));
+  }
+  return s;
 }

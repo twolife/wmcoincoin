@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.14 2002/06/23 14:01:36 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.15 2002/08/17 18:33:37 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.15  2002/08/17 18:33:37  pouaite
+##   grosse commition
+##
 ##   Revision 1.14  2002/06/23 14:01:36  pouaite
 ##   ouups, j'avais flingué les modifs depuis la v2.3.8b
 ##
@@ -44,8 +47,8 @@
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
 
-SUBDIRS = intl po src doc
-EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
+SUBDIRS = m4  po src doc intl
+EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
@@ -64,3 +67,5 @@ bin-dist: all
 	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options useragents wmcoincoin
 
 pkgdata_DATA = options useragents README wmcoincoin.spec
+
+ACLOCAL_AMFLAGS = -I m4

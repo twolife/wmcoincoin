@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.5 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.6 2002/08/17 18:33:39 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.6  2002/08/17 18:33:39  pouaite
+  grosse commition
+
   Revision 1.5  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -44,6 +47,7 @@
 #include <X11/Xlib.h>
 #include "coincoin.h"
 #include "coin_xutil.h"
+#include "dock.h"
 
 struct _MsgBox {
   Window win;

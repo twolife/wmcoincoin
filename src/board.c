@@ -20,9 +20,15 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.39 2002/06/26 22:19:49 pouaite Exp $
+  rcsid=$Id: board.c,v 1.1 2002/08/17 18:33:38 pouaite Exp $
   ChangeLog:
-  $Log: coincoin_tribune.c,v $
+  $Log: board.c,v $
+  Revision 1.1  2002/08/17 18:33:38  pouaite
+  grosse commition
+
+
+  ---------------- renommage en board.c --------------------
+
   Revision 1.39  2002/06/26 22:19:49  pouaite
   ptit fix pour la tribune de f-cpu + patch de lordoric
 
@@ -139,32 +145,118 @@
 #include <libintl.h>
 #define _(String) gettext (String)
 
-#include "coincoin.h"
-#include "http.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <limits.h>
+#include "coincoin.h"
+#include "http.h"
+#include "board_util.h"
 
-/* utilise tres localement, c'est la longueur DANS remote.rdf, la longueur réelle sera moindre
+/* utilise tres localement, c'est la longueur DANS remote.xml, la longueur réelle sera moindre
    (remplacement de &eacute par 'é' etc... ) */
-#define TRIBUNE_UA_MAX_LEN 1000
-#define TRIBUNE_MSG_MAX_LEN 15000 /* on peut y arriver avec un bon gros message plein de [][][][]... */
-#define TRIBUNE_LOGIN_MAX_LEN 60
+#define BOARD_UA_MAX_LEN 1000
+#define BOARD_MSG_MAX_LEN 15000 /* on peut y arriver avec un bon gros message plein de [][][][]... */
+#define BOARD_LOGIN_MAX_LEN 60
 
+
+
+Board *
+board_create(Site *site, Boards *boards)
+{
+  Board *board;
+  assert(boards);
+  SitePrefs *sp = site->prefs;
+  ALLOC_OBJ(board, Board);
+  strncpy(board->last_post_time, "xx:xx", 5);
+  board->msg = NULL;
+  board->last_post_id = -1;
+  board->last_post_timestamp = 0;
+  board->nbsec_since_last_msg = 0;
+  board->local_time_last_check = time(NULL);
+  //board->rules = NULL;
+  board->last_modified = NULL;
+  board->flag_answer_to_me = 0;
+  board->board_refresh_delay = sp->board_check_delay*(1000/WMCC_TIMER_DELAY_MS);
+  /* juste pour que le premier check se fasse avant celui des news */
+  board->board_refresh_cnt = board->board_refresh_delay-10; 
+  board->update_request = 0;
+  strncpy(board->coin_coin_useragent, sp->user_agent, USERAGENT_MAXMAX_LEN);
+  board->coin_coin_useragent[USERAGENT_MAXMAX_LEN] = 0;
+
+  board->site = site;
+  board->boards = boards;
+
+  board->time_shift_min = LONG_MIN;
+  board->time_shift_max = LONG_MAX;
+  board->time_shift = 0;
+  
+  return board;
+}
+
+/* delie un message de la liste globale (avec sa suppression effective) */
+static void
+board_global_unlink_msg(Boards *boards, board_msg_info *mi)
+{
+  assert(mi);
+
+  if (mi->g_prev) {
+    mi->g_prev->g_next = mi->g_next;
+  } else {
+    assert(boards->first == mi);
+    boards->first = mi->g_next;
+    if (boards->first) boards->first->g_prev = NULL;
+  }
+  if (mi->g_next) {
+    mi->g_next->g_prev = mi->g_prev;
+  } else {
+    assert(boards->last == mi);
+    boards->last = mi->g_prev;
+    if (boards->last) boards->last->g_next = NULL;
+  }
+  boards->nb_msg--;
+  assert(boards->nb_msg >= 0);
+  if (boards->first == NULL || boards->nb_msg || boards->last == NULL) {
+    assert(boards->last == NULL);
+    assert(boards->first == NULL);
+    assert(boards->nb_msg == 0);
+  }
+}
+
+
+void
+board_destroy(Board *board)
+{
+  board_msg_info *mi, *nmi;
+
+  mi = board->msg;
+  while (mi) {
+    board_global_unlink_msg(board->boards, mi);
+    nmi = mi->next;
+    if (mi->refs) free(mi->refs); mi->refs = NULL;
+    mi->next = NULL;
+    free(mi);
+    mi = nmi;
+  }
+
+  board->msg = NULL;
+  if (board->last_modified) free(board->last_modified);
+  free(board);
+}
 
 /*
   statistique à la noix sur le nombre de personnes sur la tribune
 */
 #define TF_HASH_SZ 2048
 void
-tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt) {
+board_frequentation(const Board *board, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt) {
   unsigned short hash_cnt[TF_HASH_SZ];
   unsigned hash_val;
   const unsigned c2 = 31117, c1 = 11279; 
 
   time_t t_last;
 
-  tribune_msg_info *it;
+  board_msg_info *it;
   int i;
   
 
@@ -174,13 +266,13 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
   *msg_cnt = 0;
   *my_msg_cnt = 0;
 
-  it = tribune_find_id(trib, trib->last_post_id);
+  it = board_find_id(board, board->last_post_id);
   if (it == NULL) return;
   t_last = it->timestamp;
-  t_last += trib->nbsec_since_last_msg;
+  t_last += board->nbsec_since_last_msg;
 
   memset(hash_cnt, 0, sizeof(hash_cnt));
-  it = trib->msg; 
+  it = board->msg; 
   while (it) {
     if (difftime(t_last, it->timestamp) < nb_minutes*60) {
       const char *s;
@@ -209,38 +301,41 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
 
 /* 
    essaye d'identifier le user agent selon
-   les regle (regular expression) definies dans trib->rules 
+   les regle (regular expression) definies dans board->rules 
 
    ce système est tout vieux (depuis la v1.0beta!) et tout moche
 */
 void
-tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
+board_tatouage(Board *board UNUSED, board_msg_info *it)
 {
-  DLFP_trib_load_rule *r;
-  int rcnt;
+/*   board_load_rule *r; */
+/*   int rcnt; */
 
-  it->tatouage = NULL; /* ceux qui sont tatoues a NULL sont purement et simplement ignores */
-  r = trib->rules;
-  if (r == NULL) {
-    BLAHBLAH(1, printf(_("Unable to tattoo: no rules\n")));
-    return;
-  }
-  rcnt = 0;
-  while (r) {
-    int ca_colle;
-    ALLOW_X_LOOP; /* car les regex, ça prend du temps ! */
-    ca_colle = regexec(&r->rule, it->useragent, (size_t)0, (regmatch_t*)NULL, 0);
-    if (ca_colle == 0) {
-      it->tatouage = r; 
-      BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA recognized> in the %d regexp.\n"),it->useragent, rcnt));
-      break;
-    }
-    rcnt++;	       
-    r = r->next;
-  }
-  if (it->tatouage == NULL) {
-    BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA not recognized> in the regexps\n"), it->useragent));
-  }
+  it->tatoo.R = 255; it->tatoo.G = 255; it->tatoo.B = 0;
+  it->tatoo.symb = 0;
+  strcpy(it->tatoo.name, "plop");
+  
+/*   r = board->rules; */
+/*   if (r == NULL) { */
+/*     BLAHBLAH(1, printf(_("Unable to tattoo: no rules\n"))); */
+/*     return; */
+/*   } */
+/*   rcnt = 0; */
+/*   while (r) { */
+/*     int ca_colle; */
+/*     ALLOW_X_LOOP; // car les regex, ça prend du temps !  */
+/*     ca_colle = regexec(&r->rule, it->useragent, (size_t)0, (regmatch_t*)NULL, 0); */
+/*     if (ca_colle == 0) { */
+/*       it->tatouage = r;  */
+/*       BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA recognized> in the %d regexp.\n"),it->useragent, rcnt)); */
+/*       break; */
+/*     } */
+/*     rcnt++;	        */
+/*     r = r->next; */
+/*   } */
+/*   if (it->tatouage == NULL) { */
+/*     BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA not recognized> in the regexps\n"), it->useragent)); */
+/*   } */
 
 }
 
@@ -248,19 +343,19 @@ tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
    renvoie l'age du message, en secondes 
 */
 time_t
-tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it)
+board_get_msg_age(const Board *board, const board_msg_info *it)
 {
   time_t linuxfr_time_now;
-  linuxfr_time_now = trib->last_post_timestamp + trib->nbsec_since_last_msg;
+  linuxfr_time_now = board->last_post_timestamp + board->nbsec_since_last_msg;
   return (linuxfr_time_now - it->timestamp);
 }
 
 /* renvoie l'estimation de l'heure actuelle sur la tribune --
  en secondes */
 time_t
-tribune_get_time_now(const DLFP_tribune *trib)
+board_get_time_now(const Board *board)
 {
-  return (trib->last_post_timestamp + trib->nbsec_since_last_msg);
+  return (board->last_post_timestamp + board->nbsec_since_last_msg);
 }
 
 /*
@@ -268,11 +363,11 @@ tribune_get_time_now(const DLFP_tribune *trib)
   messages en fonction de l'id
 */
 
-static tribune_msg_info *
-tribune_build_tree_recurs(tribune_msg_info **v, int cnt)
+static board_msg_info *
+board_build_tree_recurs(board_msg_info **v, int cnt)
 {
   int i_root;
-  tribune_msg_info *root;
+  board_msg_info *root;
 
   assert(cnt>0);
   i_root = cnt/2;
@@ -280,38 +375,38 @@ tribune_build_tree_recurs(tribune_msg_info **v, int cnt)
   root = v[i_root]; assert(root); v[i_root] = NULL;
 
   if (i_root > 0) {
-    root->left = tribune_build_tree_recurs(v, i_root);
+    root->left = board_build_tree_recurs(v, i_root);
   } else root->left = NULL;
   if (i_root+1 < cnt) {
-    root->right = tribune_build_tree_recurs(v+i_root+1, cnt - i_root - 1);
+    root->right = board_build_tree_recurs(v+i_root+1, cnt - i_root - 1);
   } else root->right = NULL;
   return root;
 }
 
 static void
-tribune_build_tree(DLFP_tribune *trib)
+board_build_tree(Board *board)
 {
   int count = 0, i;
-  tribune_msg_info *it;
-  tribune_msg_info **vec;
+  board_msg_info *it;
+  board_msg_info **vec;
 
   /* remise à zero de l'arbre */
-  trib->mi_tree_root = NULL;
+  board->mi_tree_root = NULL;
 
   /* on compte le nb de messages */
-  it = trib->msg; 
+  it = board->msg; 
   while (it) { count++; it = it->next; }
   
   if (count == 0) return;
 
   /* on s'offre temporairement un accès séquentiel */
-  vec = (tribune_msg_info**) calloc(count, sizeof(tribune_msg_info*)); assert(vec);
-  it = trib->msg; i = 0;
+  vec = (board_msg_info**) calloc(count, sizeof(board_msg_info*)); assert(vec);
+  it = board->msg; i = 0;
   while (it) { 
     vec[i] = it;  it = it->next; i++;
   }
   
-  trib->mi_tree_root = tribune_build_tree_recurs(vec, count);
+  board->mi_tree_root = board_build_tree_recurs(vec, count);
 
   for (i=0; i < count; i++) {
     assert(vec[i] == NULL); /* sinon j'ai encore laissé trainer une pouille */
@@ -320,46 +415,55 @@ tribune_build_tree(DLFP_tribune *trib)
   free(vec);
 }
 
-
 /*
   c'est triste, mais il faut bien que quelqu'un se charge d'éliminer les messages trop vieux
 */
 static void
-tribune_remove_old_msg(DLFP_tribune *trib)
+board_remove_old_msg(Board *board)
 {
-  tribune_msg_info *it, *pit;
+  board_msg_info *it, *pit;
   int cnt;
   int removed = 0;
 
   cnt = 0;
-  it = trib->msg; pit = NULL;
+  it = board->msg; pit = NULL;
   while (it) {
     cnt++;
     it = it->next;
   }
-  while (cnt > Prefs.tribune_max_msg && trib->msg) {
-    BLAHBLAH(4, printf(_("tribune_remove_old_msg: destroying id=%d (date=%s)\n"), trib->msg->id, ctime(&trib->msg->timestamp)));
-    it = trib->msg->next;
+  while (cnt > board->site->prefs->board_max_msg && board->msg) {
+    BLAHBLAH(4, printf(_("[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"), 
+		       board->site->prefs->site_name, id_type_lid(board->msg->id), 
+		       ctime(&board->msg->timestamp)));
 
-    /* nettoyage des references à trib->msg */
+    /* on le supprime d'abord de la liste globable */
+    board_global_unlink_msg(board->boards, board->msg);
+
+    /* on sauve le prochain premier message */
+    it = board->msg->next;
+
+    /* nettoyage des references à board->msg */
     {
-      tribune_msg_info *mi;
+      board_msg_info *mi;
       int i;
-      mi = trib->msg->next;
+      mi = board->msg->next;
       while (mi) {
 	for (i=0; i < mi->nb_refs; i++) {
 	  /* si on trouve un ref à ce message ... */
-	  if (mi->refs[i].mi == trib->msg) {
+	  if (mi->refs[i].mi == board->msg) {
 	    assert(mi->refs[i].nbmi>=1);
 	    
 	    /* alors on l'efface si la ref pointe uniquement sur lui,
 	       et si c'est un ref sur plusieurs messages consécutifs, alors
-	       un decremente le compteur et on la fait pointer sur le suivant. */
+	       un decremente le compteur et on la fait pointer sur le suivant. 
+	       c'est finaud en fait : comme ça il n'y a pas de bug lors de la
+	       suppression de 11:11:11² car on a supprimé *auparavant* 11:11:11¹
+	    */
 	    mi->refs[i].nbmi--;
 	    if (mi->refs[i].nbmi == 0) {
 	      mi->refs[i].mi = NULL;
 	    } else {
-	      mi->refs[i].mi = trib->msg->next;
+	      mi->refs[i].mi = board->msg->next;
 	    }
 	  }
 	}
@@ -367,14 +471,14 @@ tribune_remove_old_msg(DLFP_tribune *trib)
       }
     }
 
-    free(trib->msg);
+    free(board->msg);
     cnt--;
-    trib->msg = it;
+    board->msg = it;
     removed++;
   }
   
   if (removed) {
-    tribune_build_tree(trib);
+    board_build_tree(board);
   }
 }
 
@@ -401,11 +505,11 @@ timestamp_str_to_time_t(char *sts)
    nouveau (v2.3.2) -> gère aussi les sub_timestamp 
 */
 static void 
-update_secondes_flag(DLFP_tribune *trib)
+update_secondes_flag(Board *board)
 {
-  tribune_msg_info *it,*pit;
+  board_msg_info *it,*pit;
 
-  pit = trib->msg;
+  pit = board->msg;
   if (pit == NULL) return;
   it = pit->next;
   while (it) {
@@ -419,7 +523,6 @@ update_secondes_flag(DLFP_tribune *trib)
       }
       it->sub_timestamp = MIN(pit->sub_timestamp+1,9); /* MIN(10,.) sinon y'aura des pb dans le pinnipede */
     }
-
     pit = it;
     it = it->next;
   }
@@ -453,12 +556,16 @@ nettoie_message_tags(const char *inmsg)
   return outmsg;
 }
 
-char *
-wiki_url_encode(const unsigned char *w)
+/*
+  rajoute du pseudo-html à la noix autour du mot 
+  et renvoie le resultat
+*/
+static char *
+wiki_url_encode(Board *board,const unsigned char *w)
 {
   unsigned char *w2, *ret;
   w2 = str_preencode_for_http(w);
-  ret = str_printf("\t<a href=\"%s%s\"\t>[%s]\t</a\t>", Prefs.tribune_wiki_emulation, w2, w);
+  ret = str_printf("\t<a href=\"%s%s\"\t>[%s]\t</a\t>", board->site->prefs->board_wiki_emulation, w2, w);
   free(w2); 
   return ret;
 }
@@ -469,8 +576,8 @@ wiki_url_encode(const unsigned char *w)
    si cette fonction est appelée avec 'dest == NULL' , alors elle se contente de renvoyer 
    la longueur finale obtenue
 */
-int
-do_wiki_emulation(const char *inmsg, char *dest) 
+static int
+do_wiki_emulation(Board *board, const char *inmsg, char *dest) 
 {
   int j;
   const char *s;
@@ -506,7 +613,7 @@ do_wiki_emulation(const char *inmsg, char *dest)
 	  strncpy(wiki_word, s+1, pfin-s-1); wiki_word[pfin-s-1] = 0;
 
 	  /* on le modifie un peu (' ' --> '+' par ex. ) */
-	  wiki_url = wiki_url_encode(wiki_word); free(wiki_word); wiki_word = NULL;
+	  wiki_url = wiki_url_encode(board, wiki_word); free(wiki_word); wiki_word = NULL;
 	  p = wiki_url;
 	  while (*p) { 
 	    if (dest) dest[j] = *p; 
@@ -526,78 +633,114 @@ do_wiki_emulation(const char *inmsg, char *dest)
   return j;
 }
 
-
+/*
+  comme son nom l'indique ..
+*/
 void
-tribune_update_boitakon(DLFP_tribune *trib)
+boards_update_boitakon(Boards *boards)
 {
-  tribune_msg_info *mi = trib->msg;
+  board_msg_info *mi = boards->first;
   while (mi) {
-    KeyList *hk = tribune_key_list_test_mi_num(trib, mi, Prefs.plopify_key_list, 2);
+    KeyList *hk = board_key_list_test_mi_num(boards, mi, Prefs.plopify_key_list, 2);
     if (hk) { /* bienvenu dans la boitakon */
       mi->in_boitakon = 1;
     } else mi->in_boitakon = 0;
     mi = mi->next;
   }
-  flag_tribune_updated = 1;
+  flag_board_updated = 1;
 }
 
 /*
   enregistre un nouveau message
 */
-static tribune_msg_info *
-tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
+static board_msg_info *
+board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
 {
-  tribune_msg_info *nit, *pit, *it;
+  board_msg_info *nit, *pit, *it;
   char *message = NULL;
+  Boards *boards = board->boards;
 
   message = nettoie_message_tags(_message);
 
   /* emulation du wiki (en insérant les bons tags dans le message) */
-  if (Prefs.tribune_wiki_emulation) {
+  if (board->site->prefs->board_wiki_emulation) {
     char *tmp = message;
     int sz;
-    sz = do_wiki_emulation(tmp, NULL); message = malloc(sz); do_wiki_emulation(tmp, message);
+    sz = do_wiki_emulation(board, tmp, NULL); 
+    message = malloc(sz); 
+    do_wiki_emulation(board, tmp, message);
     free(tmp);
   }
 
   BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
-  nit = trib->msg;
+  nit = board->msg;
   pit = NULL;
+
   while (nit) {
-    if (nit->id > id) {
+    if (nit->id.lid > id) {
       break;
     }
     pit = nit;
     nit = nit->next;
   }
 
-  it = (tribune_msg_info*) malloc(sizeof(tribune_msg_info)+strlen(ua)+1+strlen(message)+1+strlen(login)+1);
+  it = (board_msg_info*) malloc(sizeof(board_msg_info)+strlen(ua)+1+strlen(message)+1+strlen(login)+1);
   it->timestamp = timestamp_str_to_time_t(stimestamp);
   it->sub_timestamp = -1;
-  it->useragent = ((char*)it) + sizeof(tribune_msg_info);
-  it->msg = ((char*)it) + sizeof(tribune_msg_info) + strlen(ua) + 1;
+  it->useragent = ((char*)it) + sizeof(board_msg_info);
+  it->msg = ((char*)it) + sizeof(board_msg_info) + strlen(ua) + 1;
   it->login = it->msg + strlen(message) + 1;
   it->in_boitakon = 0; /* voir plus bas */
   it->left = NULL; it->right = NULL;
 
+  /* insere le message dans la liste de la tribune locale */
   it->next = nit;
   if (pit) {
     pit->next = it;
   } else {
-    trib->msg = it;
+    board->msg = it;
+  }
+  id_type_set_lid(&it->id, id);
+  id_type_set_sid(&it->id, board->site->site_id);
+  
+
+  /* insertion dans la grande chaine de messages globale (inter-sites)*/
+  {
+    board_msg_info *g_it, *pg_it;
+    g_it = boards->first;
+    pg_it = NULL;
+    while (g_it &&
+	   (it->timestamp +  board->boards->btab[it->id.sid]->time_shift > 
+	    g_it->timestamp +board->boards->btab[g_it->id.sid]->time_shift ||
+	    (it->timestamp + board->boards->btab[it->id.sid]->time_shift ==
+	     g_it->timestamp+board->boards->btab[g_it->id.sid]->time_shift && 
+	     it->id.sid == g_it->id.sid && it->id.lid > g_it->id.lid))) {
+      pg_it = g_it;
+      g_it = g_it->g_next;
+    }
+    if (pg_it) {
+      pg_it->g_next = it;
+    } else {
+      boards->first = it;
+    }
+    it->g_prev = pg_it;
+    if (g_it) {
+      g_it->g_prev = it;
+    } else {
+      boards->last = it;
+    }
+    it->g_next = g_it;
   }
 
-  it->id = id;
 
-
-  if (trib->last_post_id < it->id) {
-    trib->last_post_timestamp = it->timestamp;
-    trib->last_post_id = it->id;
-    trib->last_post_time[0] = stimestamp[8];
-    trib->last_post_time[1] = stimestamp[9];
-    trib->last_post_time[2] = ':';
-    trib->last_post_time[3] = stimestamp[10];
-    trib->last_post_time[4] = stimestamp[11];
+  if (board->last_post_id < it->id.lid) {
+    board->last_post_timestamp = it->timestamp;
+    board->last_post_id = it->id.lid;
+    board->last_post_time[0] = stimestamp[8];
+    board->last_post_time[1] = stimestamp[9];
+    board->last_post_time[2] = ':';
+    board->last_post_time[3] = stimestamp[10];
+    board->last_post_time[4] = stimestamp[11];
   }
 
   it->hmsf[0] = (stimestamp[8]-'0')*10 + (stimestamp[9]-'0');
@@ -615,33 +758,33 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   BLAHBLAH(3, myprintf("log msg id=%d, login=%s timestamp=%u msg='%<YEL %s>'\n", id, it->login, (unsigned)it->timestamp, it->msg));
 
   /* et on n'oublie pas..*/
-  trib->nbsec_since_last_msg = 0;
+  board->nbsec_since_last_msg = 0;
 
   /* remise a jour du flag d'affichage des secondes */
-  update_secondes_flag(trib);
+  update_secondes_flag(board);
 
   /* essaye de detecter si vous étez l'auteur du message */
-  if (Prefs.user_login && Prefs.user_login[0] && trib->just_posted_anonymous == 0) {
-    it->is_my_message = !strcmp(Prefs.user_login, it->login);
+  if (board->site->prefs->user_login && board->site->prefs->user_login[0] && board->just_posted_anonymous == 0) {
+    it->is_my_message = !strcmp(board->site->prefs->user_login, it->login);
   } else {
     it->is_my_message = !strcmp(it->useragent, my_useragent);
 /*    if (it->is_my_message) {
       myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
     }*/
   }
-  trib->just_posted_anonymous = 0;
+  board->just_posted_anonymous = 0;
 
 
   it->is_answer_to_me = 0;
 
   /* essaye d'identifier le user agent */
-  tribune_tatouage(trib, it);
+  board_tatouage(board, it);
 
   /* evalue le potentiel trollesque */
   troll_detector(it);
 
   {
-    KeyList *hk = tribune_key_list_test_mi_num(trib, it, Prefs.plopify_key_list, 2);
+    KeyList *hk = board_key_list_test_mi_num(board->boards, it, Prefs.plopify_key_list, 2);
     if (hk) { /* bienvenu dans la boitakon */
       it->in_boitakon = 1;
       BLAHBLAH(2, myprintf(_("Welcome to the message from '%.20s' in the boitakon\n"), it->login ? it->login : it->useragent));
@@ -657,7 +800,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
      ça évite toute inconsistence entre la structure de liste des messages, et
      celle d'arbre */
      
-  tribune_build_tree(trib);
+  board_build_tree(board);
 
   free(message);
   return it;
@@ -668,12 +811,12 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
    cours des derniere 'trollo_log_extent' secondes
 */
 void
-dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float *trollo_score)
+board_get_trollo_rate(const Board *board, float *trollo_rate, float *trollo_score)
 {
-  tribune_msg_info *it;
+  board_msg_info *it;
   int cnt;
   
-  it = trib->msg;
+  it = board->msg;
 
   *trollo_score = 0.;
   cnt = 0;
@@ -681,9 +824,9 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
     int age;
     float coef;
     
-    age = tribune_get_msg_age(trib, it);
-    //    printf("id=%d, %d , age=%d\n", it->id, cnt, tribune_get_msg_age(trib, it));
-    if (tribune_get_msg_age(trib, it) <= trollo_log_extent*60) {
+    age = board_get_msg_age(board, it);
+    //    printf("id=%d, %d , age=%d\n", it->id.lid, cnt, board_get_msg_age(board, it));
+    if (board_get_msg_age(board, it) <= trollo_log_extent*60) {
       cnt++;
       coef = 0.1 * (trollo_log_extent*60 - age)/((float)(trollo_log_extent*60));
       *trollo_score += (it->troll_score)*coef;
@@ -702,20 +845,20 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
   appelle le programme externe (dans l'ordre des id) pour chaque nouveau message reçu
 */
 static void
-dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
+board_call_external(Board *board, int last_id)
 {
-  tribune_msg_info *it;
+  board_msg_info *it;
   
   if (Prefs.post_cmd == NULL) {
     return;
   } else {
-    BLAHBLAH(1, myprintf("dlfp_tribune_call_external, id=%d - %d\n", last_id, trib->last_post_id));
+    BLAHBLAH(1, myprintf("board_call_external, id=%d - %d\n", last_id, board->last_post_id));
   }
   if (last_id != -1) { /* si ce n'est pas le premier appel.. */
-    it = tribune_find_id(trib, last_id);
+    it = board_find_id(board, last_id);
     if (it) it = it->next;
   } else {
-    //    it = trib->msg;
+    //    it = board->msg;
     return; /* à l'initialisation, on évite de passer tous les messages dans le coincoin */
   }
   while (it) {
@@ -736,8 +879,8 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     qlogin = shell_quote(it->login);
     qmessage = shell_quote(it->msg);
     qua = shell_quote(it->useragent);
-    qhost = shell_quote(Prefs.site_root);
-    snprintf(sid, 20, "%d", it->id);
+    qhost = shell_quote(board->site->prefs->site_name);
+    snprintf(sid, 20, "%d", it->id.lid);
     snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
     
@@ -746,15 +889,15 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     stypemessage = "0";
     if (it->is_my_message) stypemessage = "1";
     else if (it->is_answer_to_me) stypemessage = "2";
-    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) stypemessage = "3";
-    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) stypemessage = "4";
+    else if (board_key_list_test_mi(board->boards, it, Prefs.hilight_key_list)) stypemessage = "3";
+    else if (board_key_list_test_mi(board->boards, it, Prefs.plopify_key_list)) stypemessage = "4";
 
     /* pour $R */
     typemessage = 0;
     if (it->is_my_message) typemessage |= 1;
     else if (it->is_answer_to_me) typemessage |= 2;
-    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) typemessage |= 4;
-    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) typemessage |= 8;
+    else if (board_key_list_test_mi(board->boards, it, Prefs.hilight_key_list)) typemessage |= 4;
+    else if (board_key_list_test_mi(board->boards, it, Prefs.plopify_key_list)) typemessage |= 8;
     snprintf(stypemessage2, 4, "%d", typemessage);
 
     subs[0] = qlogin;
@@ -765,6 +908,7 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     subs[5] = strollscore;
     subs[6] = stypemessage;
     subs[7] = stypemessage2;
+    subs[9] = qhost;
     shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 10);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
@@ -789,47 +933,132 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
   (mais ne tente rien pour ipot)
 */
 void
-tribune_check_my_messages(DLFP_tribune *trib, int old_last_post_id) { 
-  if (trib->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
-    tribune_msg_info *it;
+board_check_my_messages(Board *board, int old_last_post_id) { 
+  if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+    board_msg_info *it;
 
     /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
      */
     if (old_last_post_id != -1) { /* si ce n'est pas le premier appel.. */
-      it = tribune_find_id(trib, old_last_post_id);
+      it = board_find_id(board, old_last_post_id);
       if (it) it = it->next;
     } else {
-      it = trib->msg;
+      it = board->msg;
     }
     while (it) {
-      if (tribune_msg_is_ref_to_me(trib, it)) {
-	flag_updating_tribune++;
+      flag_updating_board++;
+      board_msg_find_refs(board, it); // rhoo il etait bien caché cet appel sournois
+      flag_updating_board--;
+
+      if (board_msg_is_ref_to_me(board->boards, it)) {
+	flag_updating_board++;
 	it->is_answer_to_me = 1;
-	flag_updating_tribune--;
-	if (old_last_post_id != -1) flag_tribune_answer_to_me = 1;
+	flag_updating_board--;
+	if (old_last_post_id != -1) board->flag_answer_to_me = 1;
       }
-      flag_updating_tribune++;
-      tribune_msg_find_refs(trib, it);
-      flag_updating_tribune--;
+
       it = it->next;
     }
   }
 }
 
 
+void
+cctime(const time_t* t, char *s)
+{
+  sprintf(s, "%02ld:%02ld:%02ld", (*t/3600)%24, (*t/60)%60, *t%60);
+}
+/*
+  determination approximative du décalage horaire 
+*/
+static void
+board_update_time_shift(Board *board, int old_last_post_id) { 
+  if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+    char s1[15],s2[15];
+    board_msg_info *it;
+    time_t t_min = 0, t_max = 0;
+    int nbmsg = 1;
+    /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
+     */
+    if (old_last_post_id == -1) { /* si ce n'est pas le premier appel.. */
+      return;
+    }
+    it = board_find_id(board, old_last_post_id);
+    if (it && it->next) {
+      it = it->next;      
+      t_min = it->timestamp;
+      t_max = it->timestamp;
+      it = it->next;
+    } else 
+      return;
+
+    while (it) {
+      t_min = MIN(t_min, it->timestamp);
+      t_max = MAX(t_max, it->timestamp);
+      nbmsg ++;
+      it = it->next;
+    }
+
+
+    if (t_max - t_min > board->local_time_last_check_end-board->local_time_last_check_old) {
+      myprintf("%<YEL ------------------------------\nle backend LAGGUE !!\n----------------->\n");
+    }
+    board->time_shift_min = MAX(board->time_shift_min, 
+				board->local_time_last_check_old - t_min);
+    board->time_shift_max = MIN(board->time_shift_max, 
+				board->local_time_last_check_end - t_max);
+
+    if (board->time_shift_min == board->time_shift_max) {
+      board->time_shift_min--;
+      board->time_shift_max--;
+    }
+
+    if (board->time_shift_min >  board->time_shift_max) {
+      int marge;
+      if (board->time_shift_min - board->time_shift_max > 1) {
+	myprintf("%<YEL ------------------------------\nRAAAAAAAAAAAAH SWAP!!\n----------------->\n");
+	marge = 10;
+      } else {
+	myprintf("%<YEL petit ajustement>\n");
+	marge = 1;
+      }
+      time_t tmp = board->time_shift_min;
+      board->time_shift_min = board->time_shift_max-marge;
+      board->time_shift_max = tmp+marge;
+    }
+
+
+    board->time_shift = (board->time_shift_min+board->time_shift_max)/2;
+
+    myprintf("%<YEL %s>\n", board->site->prefs->site_name);
+    cctime(&t_min,s1); cctime(&t_max,s2);
+    printf("t_min : %s, t_max : %s, d=%ld nbmsg=%d\n", s1, s2, 
+	   t_max-t_min, nbmsg);
+    
+    cctime(&board->local_time_last_check_old,s1); cctime(&board->local_time_last_check_end,s2); 
+    printf("loct1 : %s, loct2 : %s, d=%ld\n", s1, s2,
+	   board->local_time_last_check_end-board->local_time_last_check_old);
+    printf("time_shift_min : %ld, time_shift_max : %ld, ts=%ld\n", 
+	   board->time_shift_min, board->time_shift_max,board->time_shift);
+  }
+}
+
 /* decodage du message, quel que soit l'état du backend .. */
 void
-tribune_decode_message(char *dest, const char *src) {
-  strncpy(dest, src, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0;
-  if (Prefs.tribune_backend_type == 1) {
-    mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);
+board_decode_message(Board *board, char *dest, const char *src) {
+  strncpy(dest, src, BOARD_MSG_MAX_LEN); dest[BOARD_MSG_MAX_LEN-1] = 0;
+  if (board->site->prefs->board_backend_type == 1) {
+    mark_html_tags(dest, BOARD_MSG_MAX_LEN);
   }
-  convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
-  if (Prefs.tribune_backend_type == 2) {
-    mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);    
-    convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
+  convert_to_ascii(dest, dest, BOARD_MSG_MAX_LEN);
+  if (board->site->prefs->board_backend_type == 2) {
+    mark_html_tags(dest, BOARD_MSG_MAX_LEN);    
+    convert_to_ascii(dest, dest, BOARD_MSG_MAX_LEN);
   }
-  if (Prefs.tribune_backend_type == 3) {
+
+  /* cette partie est destinée a etre modifiée à chaque fois que le backend 
+     sera dans un état "non-coherent" */
+  if (board->site->prefs->board_backend_type == 3) {
     char *s, *s2;
     
     s = strdup(dest); assert(s);
@@ -847,8 +1076,8 @@ tribune_decode_message(char *dest, const char *src) {
     s2 = str_substitute(s, "</a>", "\t</a\t>"); free(s); s = s2;
     s2 = str_substitute(s, "<!--", "\t<!--"); free(s); s = s2;
     s2 = str_substitute(s, "-->", "--\t>"); free(s); s = s2;
-    strncpy(dest, s, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0; free(s);
-    convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN); /* deuxième passe, à tout hasard */
+    strncpy(dest, s, BOARD_MSG_MAX_LEN); dest[BOARD_MSG_MAX_LEN-1] = 0; free(s);
+    convert_to_ascii(dest, dest, BOARD_MSG_MAX_LEN); /* deuxième passe, à tout hasard */
   }
   BLAHBLAH(4,myprintf(_("Original message: '%<CYA %s>'\n"), src));
   BLAHBLAH(4,myprintf(_("Decoded message: '%<MAG %s>'\n"), dest));
@@ -861,62 +1090,60 @@ tribune_decode_message(char *dest, const char *src) {
   l'auteur d'un post, ou non
 */
 void
-dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
+board_update(Board *board)
 {
   HttpRequest r;
-  time_t now;
-  char s[16384];
+  char s[16384]; /* must be large enough to handle very long lines
+		    (especially with broken backends, yes it happens sometimes) */
   char path[2048];
 
   char *errmsg;
   int old_last_post_id;
-  static char *tribune_last_modified = NULL;
 
-  const char *tribune_sign_posttime = "<post time=";
-  const char *tribune_sign_info = "<info>";
-  const char *tribune_sign_msg = "<message>";
-  const char *tribune_sign_login = "<login>";
-
+  const char *board_sign_posttime = "<post time=";
+  const char *board_sign_info = "<info>";
+  const char *board_sign_msg = "<message>";
+  const char *board_sign_login = "<login>";
+  const char * my_useragent = board->coin_coin_useragent;
   errmsg = NULL;
   /* maj du nombre de secondes ecoulees depuis le dernier message recu
      (pour pouvoir calculer l'age des message -> on part du principe
      que l'horloge locale et l'horloge de linuxfr ne sont pas synchrones)
   */
-  now = time(NULL);
 
-  flag_updating_tribune++;
-  old_last_post_id = dlfp->tribune.last_post_id;
+  old_last_post_id = board->last_post_id;
 
-  dlfp->tribune.nbsec_since_last_msg += difftime(now, dlfp->tribune.local_time_last_check);
+  board->local_time_last_check_old = board->local_time_last_check;
+  board->local_time_last_check = time(NULL);
+
+  board->nbsec_since_last_msg += difftime(board->local_time_last_check, board->local_time_last_check_old);
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
-  dlfp->tribune.nbsec_since_last_msg = MAX(dlfp->tribune.nbsec_since_last_msg,0);
-  dlfp->tribune.local_time_last_check = time(NULL);
-
-  flag_updating_tribune--;
+  board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
 
   if ((Prefs.debug & 2) == 0) {
-    snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
+    snprintf(path, 2048, "%s%s/%s", (strlen(board->site->prefs->site_path) ? "/" : ""), 
+	     board->site->prefs->site_path, board->site->prefs->path_board_backend);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
 
-  wmcc_init_http_request(&r, path);
-  if (Prefs.use_if_modified_since) { r.p_last_modified = &tribune_last_modified; }
+  wmcc_init_http_request(&r, board->site->prefs, path);
+  if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
 
   if (r.error == 0) {
     int roll_back_cnt = 0;
     while (http_get_line(&r, s, 16384) > 0 && r.error == 0) {
-      if (strncasecmp(s,tribune_sign_posttime, strlen(tribune_sign_info)) == 0) {
+      if (strncasecmp(s,board_sign_posttime, strlen(board_sign_info)) == 0) {
 	char stimestamp[15];
-	char ua[TRIBUNE_UA_MAX_LEN];
-	char msg[TRIBUNE_MSG_MAX_LEN];
-	char login[TRIBUNE_LOGIN_MAX_LEN];
+	char ua[BOARD_UA_MAX_LEN];
+	char msg[BOARD_MSG_MAX_LEN];
+	char login[BOARD_LOGIN_MAX_LEN];
 	int id;
 	char *p;
 
-	p = s + strlen(tribune_sign_posttime) + 1;
+	p = s + strlen(board_sign_posttime) + 1;
 	strncpy(stimestamp, p, 14); stimestamp[14] = 0;
 	p += 14;
 	p = strstr(p, "id=");
@@ -924,8 +1151,8 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	id = atoi(p+4);
 	if (id < 0) { errmsg="id sgn"; goto err; }
 
-	//	printf("id=%d , last=%d\n",id,dlfp->tribune.last_post_id);
-	if (tribune_find_id(&dlfp->tribune,id) && roll_back_cnt == 0) {
+	//	printf("id=%d , last=%d\n",id,board->last_post_id);
+	if (board_find_id(board,id) && roll_back_cnt == 0) {
 	  /*	  break;
             Rollback bugfix
 
@@ -940,12 +1167,12 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	  int need_roll_back = 0;
 
 	  /* on regarde (comme un boeuf) si les message id-1, id-2 et id-3 ont bien été reçus */
-	  if (id > 1 && dlfp->tribune.msg) {
-	    if (tribune_find_id(&dlfp->tribune, id-1) == NULL) need_roll_back = 2;
-	    if (id > 2 && dlfp->tribune.msg->next) {
-	      if (tribune_find_id(&dlfp->tribune, id-2) == NULL) need_roll_back = 3;
-	      if (id > 3 && dlfp->tribune.msg->next->next) {
-		if (tribune_find_id(&dlfp->tribune, id-3) == NULL) need_roll_back = 4;
+	  if (id > 1 && board->msg) {
+	    if (board_find_id(board, id-1) == NULL) need_roll_back = 2;
+	    if (id > 2 && board->msg->next) {
+	      if (board_find_id(board, id-2) == NULL) need_roll_back = 3;
+	      if (id > 3 && board->msg->next->next) {
+		if (board_find_id(board, id-3) == NULL) need_roll_back = 4;
 	      }
 	    }
 	  }
@@ -961,15 +1188,15 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
 	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(info)"; goto err; }
 
-	if (strncasecmp(s, tribune_sign_info,strlen(tribune_sign_info))) { errmsg="infosign"; goto err; }
+	if (strncasecmp(s, board_sign_info,strlen(board_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
 	s[strlen(s)-7] = 0; /* vire le /info */
-	p = s + strlen(tribune_sign_info);
+	p = s + strlen(board_sign_info);
 
-        convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN);
+        convert_to_ascii(ua, p, BOARD_UA_MAX_LEN);
 
 	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(message)"; goto err; }
-	if (strncasecmp(s, tribune_sign_msg,strlen(tribune_sign_msg))) { errmsg="messagesign"; goto err; }
+	if (strncasecmp(s, board_sign_msg,strlen(board_sign_msg))) { errmsg="messagesign"; goto err; }
 	
 	//	myprintf("message: '%<YEL %s>'\n\n", s); 
 
@@ -988,70 +1215,78 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	
 
 	s[strlen(s)-10] = 0; /* vire le </message> */
-	p = s + strlen(tribune_sign_msg);
+	p = s + strlen(board_sign_msg);
 
 	/* nettoyage des codes < 32 dans le message */
 	{
 	  int i = 0;
 
-	  while (i < TRIBUNE_MSG_MAX_LEN && p[i]) {
+	  while (i < BOARD_MSG_MAX_LEN && p[i]) {
 	    if ((unsigned char)p[i] < ' ') p[i] = ' ';
 	    i++;
 	  }
 	}
 
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
-	tribune_decode_message(msg, p);
+	board_decode_message(board, msg, p);
 
 	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(login)"; goto err; }
-	if (strncasecmp(s, tribune_sign_login,strlen(tribune_sign_login))) { errmsg="messagesign_login"; goto err; }
+	if (strncasecmp(s, board_sign_login,strlen(board_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 
 	s[strlen(s)-8] = 0; 
-	p = s + strlen(tribune_sign_login);
+	p = s + strlen(board_sign_login);
 	if (strcasecmp(p, "Anonyme") != 0) {
-	  convert_to_ascii(login, p, TRIBUNE_LOGIN_MAX_LEN);
+	  convert_to_ascii(login, p, BOARD_LOGIN_MAX_LEN);
 	} else {
 	  login[0] = 0;
 	}
 
-	if (roll_back_cnt == 0 || tribune_find_id(&dlfp->tribune,id) == NULL) {
+	if (roll_back_cnt == 0 || board_find_id(board,id) == NULL) {
 	  if (roll_back_cnt) {
 	    myprintf(_("%<YEL \\o/ Maybe there just has been a race condition in the board backend !> (id=%d).\n"
 		     "DON'T PANIC, the coincoin handles this well, it only proves I didn't write\n"
 		     "this bugfix for coconuts.\n"), id);
 	  }
-	  flag_updating_tribune++;
-	  tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
-	  flag_updating_tribune--;
+	  flag_updating_board++;
+	  board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent);
+	  flag_updating_board--;
 	}
 
-	BLAHBLAH(1, printf("dlfp_updatetribune: last_post_time=%5s - last_post_id=%d\n",
-			   dlfp->tribune.last_post_time, id));
+	BLAHBLAH(1, myprintf("[%<YEL %s>] board_update: last_post_time=%5s - last_post_id=%d\n",
+			   board->site->prefs->site_name, board->last_post_time, id));
 	if (roll_back_cnt > 1) roll_back_cnt--;
 	else if (roll_back_cnt == 1) break;
       }
     }
   err:
     if (errmsg) {
-      myfprintf(stderr, _("There is a problem in '%s',  I can't parse it... error:%<YEL %s>\n"), Prefs.path_tribune_backend, errmsg);
+      myfprintf(stderr, _("[%<YEL %s>] There is a problem in '%s',  I can't parse it... "
+			  "error:%<YEL %s>\n"),
+		board->site->prefs->site_name,
+		board->site->prefs->path_board_backend, errmsg);
     }
     http_request_close(&r);
   } else {
-    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
+    myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
+	      board->site->prefs->site_name, path, http_error());
   }
+
+  board->local_time_last_check_end = time(NULL);
 
   assert(r.host == NULL); /* juste pour vérif qu'on a bien fait le close */
 
   /* cleanup .. */
-  flag_updating_tribune++;
-  tribune_remove_old_msg(&dlfp->tribune);
-  flag_updating_tribune--;
+  flag_updating_board++;
+  board_remove_old_msg(board);
+  flag_updating_board--;
 
-  tribune_check_my_messages(&dlfp->tribune, old_last_post_id);
 
-  flag_tribune_updated = 1;  
-  if (dlfp->tribune.last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
-    dlfp_tribune_call_external(&dlfp->tribune, old_last_post_id);    
+  board_check_my_messages(board, old_last_post_id);
+  board_update_time_shift(board, old_last_post_id);
+
+  flag_board_updated = 1;  
+  if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+    board_call_external(board, old_last_post_id);    
   }
 }

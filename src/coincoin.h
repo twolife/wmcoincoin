@@ -39,9 +39,15 @@ typedef long long int64;
 typedef unsigned long long uint64;
 
 typedef struct _Newswin Newswin;
+typedef struct _Comment Comment;
+typedef struct _News News;
+typedef struct _Message Message;
+typedef struct _Board Board;
+typedef struct _Boards Boards;
+typedef struct _Site Site;
+typedef struct _SiteList SiteList;
 
-typedef struct _DLFP_news {
-
+struct _News {
   unsigned char *titre;
   unsigned char *txt;
   unsigned char *auteur;
@@ -51,9 +57,9 @@ typedef struct _DLFP_news {
 
   char date[11];
   int heure; /* en nombre de minutes depuis minuit */
-  int id;
+  id_type id;
   int nb_comment; /* pas très utile... */
-  struct _DLFP_news *next;
+  struct _News *next;
 
   /* =1 si la news n'a pas encore ete lue */
   /* =0 si elle a ete lue, et que le fichier de
@@ -61,7 +67,8 @@ typedef struct _DLFP_news {
   /* -1 si elle vient d'etre lue, mais qu'il
      faut mettre a jour le fichier */
   int flag_unreaded;
-} DLFP_news;
+  Site *site;
+};
 
 #define trollo_log_extent 5 /* minutes */
 
@@ -81,86 +88,107 @@ typedef struct _DLFP_news {
 #define TROLLOSCOPE_Y 25
 
 
-typedef struct _DLFP_trib_load_rule {
-  unsigned R,G,B;
-  int symb; /* numero du symbole */
-  regex_t rule; /* compile avec REG_NOSUB (important, cf man page)*/
-  struct _DLFP_trib_load_rule *next;
+struct _Comment {
+  int news_id;
+  int com_id;
+  int nb_answers;
+  int old;
+  int modified;
+  struct _Comment *next;
+  Site *site;
+};
 
-  char *name; /* nom de la regle  */
-} DLFP_trib_load_rule;
+struct _Message {
+  int mid;
+  int unreaded, tooold;
+  struct _Message *next;
+  Site *site;
+};
 
-typedef struct _tribune_msg_info tribune_msg_info;
 
-typedef struct _tribune_msg_ref {
+typedef struct _board_msg_info_tatoo {
+  unsigned char R,G,B;
+  unsigned char symb; /* numero du symbole */
+  char name[20];
+} board_msg_info_tatoo;
+
+typedef struct _board_msg_info board_msg_info;
+
+typedef struct _board_msg_ref {
   unsigned int h:5;
   unsigned int m:8;
   int s:9;    /* si positif, les secondes sont indiquées dans la ref */
   int num:5;  /* si positif, le sous-numéro (pour les post multiples dans une même seconde) est indiqué dans la ref */
   unsigned int nbmi:6; /* nb de messages consecutifs pointés (généralement 1 sauf si la ref désigne plusieurs messages, forcement consecutifs)
-			  0 => ref non determinee (ipot, mauvaise reference, le message n'existe plus..) 
+			  0 => ref non determinee (ipot, mauvaise reference, le message n'existe plus..)
+			  
+			  _ATTENTION_: quand on boucle sur cette serie de message, il faut
+			  utiliser le pointeur 'intra-site' mi->next et pas 
+			  le pointeur 'cross-sites' mi->g_next
 		       */
-  tribune_msg_info *mi; /* non mallocé, forcément, et mis à jour lors de la destruction des messages trop vieux 
+  board_msg_info *mi; /* non mallocé, forcément, et mis à jour lors de la destruction des messages trop vieux 
 			  peut être NULL (ipot, message effacé..)
 
 			  remarque: les refs DOIVENT être vers des messages du passe (ipot interdit)
 			  c'est necessaire au bon fonctionnement de la construction des threads du pinnipede
 			*/
-} tribune_msg_ref;
+} board_msg_ref;
+
+
 
 /* ne pas déplacer ce genre de structure après son allocation
    --> pas de realloc la dessus !
-   (à cause des tribune_msg_ref qui les relient entre elles)
+   (à cause des board_msg_ref qui les relient entre elles)
 */
-struct _tribune_msg_info {
-  int id;
+struct _board_msg_info {
+  id_type id;
   time_t timestamp;
   signed char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
 			 (-1 -> pas (encore) d'autre post avec le meme tstamp)
 		       */
   /* (year-2000)|month|day|h|m|s */
   signed char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
-  char *useragent; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(useragent) !!! */
-  char *msg; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(msg) !!! */
-  char *login; /* nouveau !! (non mallocé, comme useragent, msg etc..)*/
-  struct _tribune_msg_info *next;
+  char *useragent; /* pointe dans la zone mémoire allouée pour board_msg_info -> ne pas faire de free(useragent) !!! */
+  char *msg; /* pointe dans la zone mémoire allouée pour board_msg_info -> ne pas faire de free(msg) !!! */
+  char *login; /* non mallocé, comme useragent, msg etc..*/
+  struct _board_msg_info *next;
 
   /* on a aussi une structure d'arbre qui se colle là dessus
      (la structure de liste triée reste pour des raisons historiques ..) */
-  struct _tribune_msg_info *left;
-  struct _tribune_msg_info *right;
+  struct _board_msg_info *left;
+  struct _board_msg_info *right;
 
-  /* tatouage pointe sur la regle que satisfie 'useragent' 
-     c'est update_pix_trib_load qui s'en occupe
-
-     peut valoir etre NULL (non identifie, ne sera pas affiche dans trolloscope 
-     mais attention, l'allocation ne se fait pas ici, le pointeur designe
-     juste un element de 'tribune.rules'
+  /*
+    describes how the message will appear in the trolloscope 
+     also contains a hopefully useful short name describing the useragent
   */
-  DLFP_trib_load_rule *tatouage;
+  board_msg_info_tatoo tatoo;
 
   /* le niveau de trollitude du post (cf troll_detector.c) */
   int troll_score BITFIELD(13); 
   int is_my_message BITFIELD(1);
   int is_answer_to_me BITFIELD(1);
 
-  /* utilisé par tribune_key_list_test_thread pour éviter de récurser comme un ouf */
+  /* utilisé par board_key_list_test_thread pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
   int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
   short nb_refs;
-  tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
+  board_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
+
+  /* pointeurs inter-sites: le point de depart est dans la structure boards,
+     et ils permettent de parcourir les messages de tous les sites, dans l'ordre */
+  struct _board_msg_info *g_next, *g_prev;
 };
 
-
-typedef struct _DLFP_tribune {
+struct _Board {
   unsigned char last_post_time[5];
 
   int last_post_timestamp; /* en secondes */
   int last_post_id;
 
-  /* log des 'last_post_id' au cours des 'nb_trollo_log' derniers check de la tribune,
+  /* log des 'last_post_id' au cours des 'nb_trollo_log' derniers check de la board,
      utilise pour calculer le nb moyen de messages postes / seconde */
-  tribune_msg_info *msg;
+  board_msg_info *msg;
 
   /* nombre de secondes ecoulees depuis que le dernier message a ete recu */
   int nbsec_since_last_msg;
@@ -168,41 +196,68 @@ typedef struct _DLFP_tribune {
   /* date a laquelle le dernier check a ete fait
      (c'est pas redondant, je part du principe que l'horloge locale
      et celle de linuxfr ne sont pas synchronisees */
-  time_t local_time_last_check;
+  time_t local_time_last_check, local_time_last_check_old, local_time_last_check_end;
+
+  /* fourchette d'écart de temps */
+  time_t time_shift_min, time_shift_max;
+
+  time_t time_shift; /* time@localhost - time@remotehost */
 
   /* regles de reconnaissance des useragent (par regex)
      ce qui permet de leur assigner des couleurs/formes differentes */
-  DLFP_trib_load_rule *rules;
+  //  board_load_rule *rules;
 
   int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
 				(pour aider la reconnaissance de nos messages) */
   
-  tribune_msg_info *mi_tree_root; /* rooh un arbre binaire ..
-				     c'est utilisé par tribune_find_id */
-} DLFP_tribune;
+  board_msg_info *mi_tree_root; /* rooh un arbre binaire ..
+				     c'est utilisé par board_find_id */
+  char *last_modified; /* pour les requetes http */
+  struct _Site *site;
+  Boards *boards; /* pointeur vers la structure multi-site 
+		     il est juste là par commodité
+		   */
+  int flag_answer_to_me;
 
-typedef struct _DLFP_comment {
-  int news_id;
-  int com_id;
-  int nb_answers;
-  int old;
-  int modified;
-  struct _DLFP_comment *next;
-} DLFP_comment;
+  /* stocke le useragent (potentiellement modifié) */
+  unsigned char coin_coin_useragent[USERAGENT_MAXMAX_LEN+1];
 
-typedef struct _DLFP_message {
-  int mid;
-  int unreaded, tooold;
-  struct _DLFP_message *next;
-} DLFP_message;
+  /* compteurs mis à jour dans Net_loop (25 fois/sec) */
+  int board_refresh_cnt, board_refresh_delay;
+  /* nul => update non demandée
+     1 => update immediate
+     2 => update dans 40millesecondes
+     3 =>  "       "  80 "
+     etc...     
+  */
+  volatile int update_request;
+};
 
-typedef struct _DLFP {
-  int updated;
-  DLFP_news *news;
-  DLFP_tribune tribune;
-  DLFP_comment *com;
-  DLFP_message *msg;
 
+struct _Boards {
+  board_msg_info *first;
+  board_msg_info *last;
+  int nb_msg;
+  Board *btab[MAX_SITES];
+};
+
+struct _Site {
+  int news_updated;
+
+  News *news;
+  Board *board;
+  Comment *com;
+  Message *msg;
+
+  char *news_backend_last_modified; /* a init en NULL */
+  int news_backend_dl_cnt; 
+  char *messages_last_modified; /* a init en NULL */
+  int messages_dl_cnt;
+  char *comments_last_modified;
+  int comments_dl_cnt;
+
+
+  /* les xp & fortunes & votes ne sont valides que si monitor_com != 0 */
   int xp, xp_old;
   /* xp_change_flag est active quand on detecte un changement dans les xp pendant la 
      lecture de myposts.php3
@@ -217,7 +272,34 @@ typedef struct _DLFP {
   float CPU;     /* la charge cpu recuperee sur myposts.php3 */
   int votes_max, votes_cur;
 
-} DLFP;
+  /* compteurs mis à jour dans Net_loop (25 fois/sec) */
+  int news_refresh_cnt, news_refresh_delay;
+
+  SitePrefs *prefs;
+  struct _Site *next;
+  /* nul => update non demandée
+     1 => update immediate
+     2 => update dans 40millesecondes
+     3 =>  "       "  80 "
+     etc...     
+  */
+  volatile int news_update_request;
+
+  int site_id; /*
+		 un numéro unique au site,
+		  susceptible de changer a chaque rechargement des prefs
+		  (ajout ou suppression de sites)
+		  (ce numero est compris entre 0 et MAX_SITES-1, et represente l'indice
+		  du pointeur 'prefs' dans la structure globale Prefs.site[] )
+	       */
+};
+
+struct _SiteList {
+  Site *list;
+  Boards *boards;
+};
+
+
 
 typedef enum {OFF=0, BLUE=1, GREENLIGHT=2, YELLOW=3, VIOLET=4, CYAN=5, RED=6, GREEN=7,BIGREDLIGHT=7, BIGRED=8} LedColor;
 
@@ -343,8 +425,8 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 
 
 typedef struct _TL_item {
-  int id;
-  DLFP_trib_load_rule *tatouage; /* un peu redondant, on pourrait se contenter de id */
+  id_type id;
+  unsigned char R,G,B,symb;
 } TL_item;
 
 typedef struct _Balloon Balloon;
@@ -371,14 +453,14 @@ typedef struct _Pinnipede Pinnipede;
 typedef struct _Dock {
   Pixmap pix_porte, mask_porte_haut, mask_porte_bas;
   Leds leds;
-  /* le pixmap du load de la tribune (il n'est regenere que
+  /* le pixmap du load de la board (il n'est regenere que
      quand la tribune a ete modifie, c'est quand meme plus cool
      que le faire a chaque refresh_dock */
   Pixmap pix_trolloscope;
 
   XFontStruct *fixed_font;
   
-  DLFP *dlfp; /* toutes les données !! */
+  SiteList *sites; /* toutes les données !! */
 
   /*
     le message defilant en haut 
@@ -386,7 +468,7 @@ typedef struct _Dock {
   int nb_newstitles;
   unsigned char *newstitles;
   /* permet de lier un caractere du message a l'ID d'une news */
-  int *newstitles_id;
+  id_type *newstitles_id;
   int newstitles_pos, newstitles_char_dec;
 
   /* ouverture,fermeture,enfoncage de bouton..*/
@@ -419,7 +501,7 @@ typedef struct _Dock {
   struct {
     int xp_change_decnt;
     int comment_change_decnt;
-    int tribune_answer_decnt;
+    int board_answer_decnt;
   } flamometre;
 
   /* si non nul, c'est le compteur de defilement*/
@@ -442,20 +524,11 @@ typedef struct _Dock {
   /* si non nul, on voit l'id du msg designe par tl_item_clicked, 
      --> active par un click sur un symbole dans trolloscope 
     (contient l'id, ce n'est pas un flag 0/1) */
-  int view_id_in_newstitles;
+  id_type view_id_in_newstitles;
   int view_id_timer_cnt;
 
-  char tribune_time[6];
+  char board_time[6];
 
-  /* nul => update non demandée
-     1 => update immediate
-     2 => update dans 40millesecondes
-     3 =>  "       "  80 "
-     etc...     
-  */
-  volatile int tribune_update_request;
-  volatile int tribune_updatable;
-  volatile int news_update_request;
   volatile int coin_coin_request;
 
   Cursor trib_load_cursor;
@@ -493,10 +566,11 @@ typedef struct _Dock {
 
   MsgBox *msgbox;
 
-  unsigned char coin_coin_message[MESSAGE_MAX_LEN+1];
-  unsigned char real_coin_coin_message[MESSAGE_MAX_LEN+1];
-  unsigned char coin_coin_useragent[USERAGENT_MAX_LEN+1];
-  unsigned char real_coin_coin_useragent[USERAGENT_MAX_LEN+1];
+  unsigned char real_coin_coin_useragent[USERAGENT_MAXMAX_LEN+1];
+  unsigned char coin_coin_message[MESSAGE_MAXMAX_LEN+1];
+  unsigned char real_coin_coin_message[MESSAGE_MAXMAX_LEN+1];
+  int coin_coin_site_id;
+  int real_coin_coin_site_id;
 
   int trolloscope_speed; /* vitesse de defilement du trolloscope (1,2,4 ou 8), defaut:2 */
 
@@ -512,10 +586,6 @@ typedef struct _Dock {
 
   float trib_trollo_rate, trib_trollo_score;
 
-  /* compteurs mis à jour dans Net_loop (25 fois/sec) */
-  int news_refresh_cnt, news_refresh_delay;
-  int tribune_refresh_cnt, tribune_refresh_delay;
-
   /* ça ne fait pas doublon avec les 'flag_totooto' de global.h (qui sont la pour eviter les possible race conditions,
      quoiqu'elles doivent être bien rare puisque wmcc n'est pas multithreadé mais bon)
      
@@ -530,8 +600,8 @@ typedef struct _Dock {
 
 /* wmcoincoin.c */
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
-void wmcc_init_http_request(HttpRequest *r, char *url_path);
-void wmcc_init_http_request_with_cookie(HttpRequest *r, char *url_path);
+void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
+void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
 void block_sigalrm(int bloque);
 
 /* picohtml.c */
@@ -550,102 +620,42 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
 void picohtml_destroy(Display *display, PicoHtml *ph);
 void picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix);
 
-/* dock.c */
-void dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib);
-int dock_red_button_check(Dock *dock); /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
-void dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
-void dock_dispatch_event(Dock *dock, XEvent *event);
-void dock_refresh_normal(Dock *dock); /* redessine l'applet (en mode normal, cad pas en mode horloge) */
-void dock_refresh_horloge_mode(Dock *dock); /* redessine l'applet en mode horloge */
-void dock_leds_set_state(Dock *dock); /* active/desactive le clignotement (et la couleur) des leds */
-void dock_leds_update(Leds *l); /* decremente les compteurs de clignotement */
-void dock_leds_create(Dock *dock, Leds *leds);
-void dock_checkout_newstitles(Dock *dock, DLFP *dlfp); /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
-void dock_set_horloge_mode(Dock *dock);
-char *dock_build_pixmap_porte(Dock *dock);
+
 
 /* useragents_file.c */
-int useragents_file_reread(Dock *dock, DLFP *dlfp);
-int useragents_file_read_initial(Dock *dock, DLFP *dlfp);
+int useragents_file_reread(Dock *dock, Site*dlfp);
+int useragents_file_read_initial(Dock *dock, Site*dlfp);
 
-/* tribune_util.c */
-tribune_msg_info *tribune_find_id(const DLFP_tribune *trib, int id);
-tribune_msg_info *tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi);
-tribune_msg_info *tribune_find_previous_from_id(const DLFP_tribune *trib, int id);
-char *tribune_get_tok(const unsigned char **p, const unsigned char **np, 
-		      unsigned char *tok, int max_toklen, int *has_initial_space);
-int tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *mi);
-tribune_msg_info *check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
-					const unsigned char *ww, 
-					unsigned char *commentaire, int comment_sz, 
-					int *is_a_ref, int *ref_num);
-int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, 
-				int *ref_m, int *ref_s, int *ref_num);
-void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
-KeyList* tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first);
-KeyList* tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist);
-KeyList *tribune_key_list_test_mi_num(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist, int num);
-unsigned tribune_key_list_get_state(KeyList *first, int num);
 
-/* coincoin_tribune.c */
-void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
-/* renvoie l'age du message, en secondes */
-time_t tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it);
-/* renvoie l'estimation de l'heure actuelle sur la tribune -- en MINUTES */
-time_t tribune_get_time_now(const DLFP_tribune *trib);
-void tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt);
-void dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trate, float *tscore);
-void tribune_update_boitakon(DLFP_tribune *trib);
-void dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent);
+/* news.c */
+void site_news_dl_and_update(Site* dlfp);
+Site* site_news_create();
+void site_news_destroy(Site *dlfp);
+News *site_news_find_id(Site *dlfp, id_type id);
+News *site_news_find_prev(Site *dlfp, id_type id);
+News *site_news_find_next(Site *dlfp, id_type id);
+void site_news_unset_unreaded(Site *site);
+int site_news_count(Site *dlfp);
+FILE * open_site_file(Site *site, char *base_name);
+/* comments.c */
+void site_yc_printf_comments(Site *dlfp);
+Comment *site_yc_find_modified(Site *dlfp);
+void site_yc_clear_modified(Site *dlfp);
+void site_yc_dl_and_update(Site *dlfp);
+void site_com_destroy(Site *site);
+/* messages.c */
+void site_msg_printf_messages(Site *dlfp);
+Message *site_msg_find_unreaded(Site *dlfp);
+void site_msg_dl_and_update(Site *dlfp);
+void site_msg_destroy(Site *site);
 
-/* coincoin_news.c */
-void dlfp_updatenews(DLFP *dlfp);
-DLFP *dlfp_create();
-void dlfp_destroy(DLFP *dlfp);
-int dlfp_delete_news(DLFP *dlfp, int id);
-DLFP_news *dlfp_insert_news(DLFP *dlfp);
-DLFP_news *dlfp_find_news_id(DLFP *dlfp, int id);
-DLFP_news *dlfp_find_prev_news(DLFP *dlfp, int id);
-DLFP_news *dlfp_find_next_news(DLFP *dlfp, int id);
-int dlfp_count_news(DLFP *dlfp);
-void dlfp_yc_printf_comments(DLFP *dlfp);
-DLFP_comment *dlfp_yc_find_modified(DLFP *dlfp, DLFP_comment *prev);
-void dlfp_yc_clear_modified(DLFP *dlfp);
-void dlfp_yc_update_comments(DLFP *dlfp);
-void dlfp_msg_printf_messages(DLFP *dlfp);
-DLFP_message *dlfp_msg_find_unreaded(DLFP *dlfp);
-void dlfp_msg_update_messages(DLFP *dlfp);
-
-/* newswin.c */
-void newswin_build(Dock *dock);
-void newswin_destroy(Dock *dock);
-void newswin_show(Dock *dock, DLFP *dlfp, int id);
-void newswin_unmap(Dock *dock);
-void newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event);
-int newswin_is_used(const Dock *dock);
-Window newswin_get_window(const Dock *dock);
-int newswin_get_xpos(const Dock *dock);
-int newswin_get_ypos(const Dock *dock);
-void newswin_draw(Dock *dock);
-void newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal);
-void newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my);
-void newswin_save_state(Dock *dock, FILE *f);
-void newswin_restore_state(Dock *dock, FILE *f);
-
-/* 
-   renvoie l'id de la ieme news non encore lue
-   (-1 si elle n'existe pas)
-*/
-int dlfp_unreaded_news_id(DLFP *dlfp, int i);
-void dlfp_unset_unreaded_news(DLFP *dlfp);
-
-/* editwin.c (le palmipede) */
-void editw_show(Dock *dock, EditW *ew, int useragent_mode);
+/* palmipede.c  */
+void editw_show(Dock *dock, SitePrefs *sp, int useragent_mode);
 void editw_hide(Dock *dock, EditW *ew); /* rentrer le palmipede */
 void editw_unmap(Dock *dock, EditW *ew); /* cacher immediatement le palmipede */
 void editw_reload_colors(Dock *dock, EditW *ew);
-EditW *editw_build(Dock *dock);
-void editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode);
+void editw_build(Dock *dock);
+void editw_rebuild(Dock *dock);
 void editw_set_kbfocus(Dock *dock, EditW *ew, int get_it);
 void editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event);
 Window editw_get_win(EditW *ew);
@@ -687,27 +697,41 @@ void msgbox_build(Dock *dock);
 /* pinnipede.c */
 void pp_build(Dock *dock);
 void pp_destroy(Dock *dock);
-void pp_show(Dock *dock, DLFP_tribune *trib);
+void pp_show(Dock *dock);
 void pp_unmap(Dock *dock);
 int pp_ismapped(Dock *dock);
-void pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
-void pp_minib_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
+void pp_dispatch_event(Dock *dock, XEvent *event);
+void pp_minib_dispatch_event(Dock *dock, Board *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
-void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
+void pp_check_board_updated(Dock *dock);
 void pp_animate(Dock *dock);
-void pp_set_tribune_updated(Dock *dock);
+void pp_set_board_updated(Dock *dock);
 void pp_set_prefs_colors(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);
-void pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua);
-void pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word);
+void pp_set_ua_filter(Dock *dock, char *ua);
+void pp_set_word_filter(Dock *dock, char *word);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
 
-/* troll_detector.c */
-void troll_detector(tribune_msg_info *mi);
-
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
-void wmcc_prefs_initialize(int argc, char **argv, structPrefs *p);
+void wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p);
 void wmcc_prefs_relecture(Dock *dock);
+
+/* troll_detector.c */
+void troll_detector(board_msg_info *mi);
+
+
+/* board.c */
+Board *board_create(Site *site, Boards *boards);
+void board_tatouage(Board *trib, board_msg_info *it);
+/* renvoie l'age du message, en secondes */
+time_t board_get_msg_age(const Board *trib, const board_msg_info *it);
+/* renvoie l'estimation de l'heure actuelle sur la board -- en MINUTES */
+time_t board_get_time_now(const Board *trib);
+void board_frequentation(const Board *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt);
+void board_get_trollo_rate(const Board *trib, float *trate, float *tscore);
+void boards_update_boitakon(Boards *boards);
+void board_update(Board* board);
+void board_destroy(Board *board);
 #endif

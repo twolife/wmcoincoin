@@ -4,6 +4,9 @@
 #include <sys/stat.h>
 #include "coincoin.h"
 #include "spell_coin.h"
+#include "site.h"
+#include "newswin.h"
+#include "dock.h"
 
 #include <libintl.h>
 #define _(String) gettext (String)
@@ -14,7 +17,7 @@
   exit(1); } }
 
 static void
-wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
+wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
 {
   int optc;
 
@@ -35,19 +38,19 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	myprintf(_("OPTIONS (la plupart de ces options peuvent être activées dans le\n"
 		 " fichier '%<YEL ~/.wmcoincoin/options>'):\n"));
 	myprintf(_(" %<GRN -h>\t\t: mouaif...\n"));
-	myprintf(_(" %<GRN -d> %<CYA n>\t\t: fixe le delai entre deux checks de la tribune a %<CYA n> secondes (defaut %<grn %d>)\n"), The_Prefs->dlfp_tribune_check_delay);
-	myprintf(_(" %<GRN -D> %<CYA n>\t\t: fixe le delai entre deux checks des news a %<CYA n> secondes (default %<grn %d>)\n"), The_Prefs->dlfp_news_check_delay);
+	//	myprintf(_(" %<GRN -d> %<CYA n>\t\t: fixe le delai entre deux checks de la tribune a %<CYA n> secondes (defaut %<grn %d>)\n"), The_Prefs->tribune_check_delay);
+	//	myprintf(_(" %<GRN -D> %<CYA n>\t\t: fixe le delai entre deux checks des news a %<CYA n> secondes (default %<grn %d>)\n"), The_Prefs->news_check_delay);
 	myprintf(_(" %<GRN -f> %<CYA fn>\t\t: utiliser la fonte de famille %<CYA fn> pour l'affiche des news\n"
 		 "\t\t  (ex: fn = %<grn %s> (defaut), ou fn = clean)\n"), The_Prefs->news_fn_family);
 	myprintf(_(" %<GRN -F> %<CYA n>\t\t: utiliser une taille de fonte de %<CYA n> pixels pour l'affiche des news\n\t\t"
 		 " (defaut = %<grn %d>)\n"), The_Prefs->news_fn_size);
-	myprintf(_(" %<GRN -u> %<CYA ua>\t\t: change le user-agent (defaut: %<grn %s>)\n"), The_Prefs->user_agent);
-	myprintf(_(" %<GRN -P> %<CYA proxy:port>\t: utilise un proxy\n"));
-	myprintf(_(" %<GRN -A> %<CYA username:password>: authentification pour le proxy, si necessaire\n"));
+	//	myprintf(_(" %<GRN -u> %<CYA ua>\t\t: change le user-agent\n"));
+	//	myprintf(_(" %<GRN -P> %<CYA proxy:port>\t: utilise un proxy\n"));
+	//	myprintf(_(" %<GRN -A> %<CYA username:password>: authentification pour le proxy, si necessaire\n"));
 	myprintf(_(" %<GRN -m> %<CYA msg>\t\t: change le message posté sur la tribune (defaut: '%<grn %s>')\n"), The_Prefs->coin_coin_message);
 	myprintf(_(" %<GRN -v> %<CYA n>\t\t: verbosité (defaut %<grn %d>) ,%<CYA n>=0,1,2,3\n"), The_Prefs->verbosity);
-	myprintf(_(" %<GRN -p> %<CYA n>\t\t: ne s'interesse qu'aux news postees il y a moins de %<CYA n> jours\n"
-		 "\t\t (defaut: %<grn %d> jours)\n"), The_Prefs->news_max_nb_days);
+	//	myprintf(_(" %<GRN -p> %<CYA n>\t\t: ne s'interesse qu'aux news postees il y a moins de %<CYA n> jours\n"
+	//		 "\t\t (defaut: %<grn %d> jours)\n"), The_Prefs->news_max_nb_days);
 	myprintf(_(" %<GRN -b> %<CYA hexcoul>\t: couleur de fond, en RGB hexa (par defaut: %<grn %06x>, un magnifique(!) jaune)\n"), The_Prefs->dock_bgcolor);
 	myprintf(_(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n"), The_Prefs->dock_fgcolor);
 	myprintf(_(" %<GRN -X> %<CYA file.xpm>\t: Fichier pixmap à mettre en fond du dock (fichier.xpm de 64x64)\n"));
@@ -64,12 +67,12 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 #ifndef DISABLE_BALLOONS
 	myprintf(_(" %<GRN -H> \t\t: desactive les ballons d'aide\n"));	
 #endif
-	myprintf(_(" %<GRN -r> %<CYA url>\t\t: se connecte sur un autre site dacode que linuxfr (defaut %<grn http://linuxfr.org:80>)\n"));
+	//	myprintf(_(" %<GRN -r> %<CYA url>\t\t: se connecte sur un autre site dacode que linuxfr (defaut %<grn http://linuxfr.org:80>)\n"));
 	myprintf(_(" %<GRN -s> %<CYA v>\t\t: vitesse de défilement du trolloscope (1 = rapide, 100 = 1 tres lent)\n(defaut %<grn %d>)\n"), The_Prefs->default_trollo_speed);
-	myprintf(_(" %<GRN -C> %<CYA cookie>\t: indique la valeur de votre cookie 'session_id' (il faut\n"
+	/*	myprintf(_(" %<GRN -C> %<CYA cookie>\t: indique la valeur de votre cookie 'session_id' (il faut\n"
 		 "\t\têtre authentifié). Cela permet à wmCoinCoin de détecter quand il y a une\n"
 		 "\t\tnouvelle réponse à un de vos commentaires -- cette option est\n"
-		 "\t\t tout à fait facultative\n"));
+		 "\t\t tout à fait facultative\n"));*/
 	myprintf(_(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
 		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n"), options_file_name);
 	myprintf(_(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)\n"));
@@ -77,16 +80,19 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	myprintf(_(" %<GRN -L> %<CYA locale_dir>\t: change the default directory of stored translations (default: %<grn %s>)\n"), LOCALEDIR);
 	exit(0);
       } break;
+      /*
     case 'd': TEST_CMDLINE_OPT(OPT_tribune_delay); break;
     case 'D': TEST_CMDLINE_OPT(OPT_news_delay); break;
     case 'f': TEST_CMDLINE_OPT(OPT_news_font_family); break;
     case 'F': TEST_CMDLINE_OPT(OPT_news_font_size); break; 
     case 'u': TEST_CMDLINE_OPT(OPT_palmipede_useragent); break;
     case 'm': TEST_CMDLINE_OPT(OPT_palmipede_default_message); break;
+      */
     case 'v':
       {
 	The_Prefs->verbosity = atoi(optarg); assert(The_Prefs->verbosity >= 0 && The_Prefs->verbosity <= 5);
       } break;
+      /*
     case 'p':
       {
 	The_Prefs->news_max_nb_days = atoi(optarg);
@@ -95,6 +101,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     case 'b': TEST_CMDLINE_OPT(OPT_dock_bg_color); break;
     case 'c': TEST_CMDLINE_OPT(OPT_dock_fg_color); break;
     case 'X': TEST_CMDLINE_OPT(OPT_dock_bg_pixmap); break;
+      */
     case 'g':
       {
 	if (optarg == NULL) {
@@ -103,6 +110,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	
 	myprintf(_("Activation du mode %<YEL debug> secret (dbg=%d)!\n"), The_Prefs->debug);
       } break;
+      /*
     case 'P': TEST_CMDLINE_OPT(OPT_http_proxy); break;
     case 'A': TEST_CMDLINE_OPT(OPT_http_proxy_auth); break;
     case 'w': TEST_CMDLINE_OPT(OPT_dock_iconwin); break;
@@ -120,13 +128,15 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	}
       } break;
     case 'C' : TEST_CMDLINE_OPT(OPT_http_cookie); break;
-		case 'W' : The_Prefs->pinnipede_open_on_start = 1; break; /* auto ouvre le pinnipede au lancement */
+      */
+    case 'W' : The_Prefs->pinnipede_open_on_start = 1; break; /* auto ouvre le pinnipede au lancement */
     case 'o': break; /* cette option est traitée dans init_default_prefs (cad AVANT la lecture du fichier d'options) */
     case 'l': break; /* cette option est traitée au tout début de la fontion main() */
     case 'L': break; /* cette option est traitée au tout début de la fontion main() */
     case ':':
     case '?':
     default:
+      printf("obsolete option : '-%c'\n", optc);
       exit(0); break;   
     }
   }
@@ -229,7 +239,7 @@ check_install_data_file(char *data_file_name, char *dot_wmcc_file_name)
 }
 
 void
-wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
+wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p)
 {
   int i;
   char *errmsg;
@@ -259,6 +269,7 @@ wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
   }
   free(options_full_file_name);
   wmcc_prefs_from_cmdline(argc, argv, p);
+
 }
 
 /* man fonction_a_la_con */
@@ -325,14 +336,14 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
   /* ajoute les nouvelle */
   while (hk) {
     KeyList *hka;
-    if ((hka=tribune_key_list_find(*a, hk->key, hk->type)) == NULL) {
+    if ((hka=key_list_find(*a, hk->key, hk->type)) == NULL) {
       changed = 1;
-      *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
+      *a = key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
     } else if (hka->num != hk->num) {
       changed = 1;
       /* on l'enleve puis la rajoute pour assurer un tri dans le bon ordre */
-      *a = tribune_key_list_remove(*a, hk->key, hk->type);
-      *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
+      *a = key_list_remove(*a, hk->key, hk->type);
+      *a = key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
     }
     hk = hk->next;
   }
@@ -341,9 +352,9 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
   while (hk) {
     KeyList *hkb;
     if (hk->from_prefs) {
-      if ((hkb = tribune_key_list_find(b, hk->key, hk->type)) == NULL) {
+      if ((hkb = key_list_find(b, hk->key, hk->type)) == NULL) {
 	changed = 1;
-	*a = tribune_key_list_remove(*a, hk->key, hk->type);
+	*a = key_list_remove(*a, hk->key, hk->type);
 	hk = *a; continue;
       }
     }
@@ -375,38 +386,62 @@ string_list_copy_if_changed(char ***a, int *na, char * const *b, const int nb)
   return changed;
 }
 
-#define INT_OPT_CHANGED(_x) (Prefs._x != (int)newPrefs._x)
-#define STR_OPT_CHANGED(_x) ((Prefs._x == NULL && newPrefs._x) || \
-                             (Prefs._x && newPrefs._x == NULL) || \
-                             ((Prefs._x != NULL && newPrefs._x != NULL) \
-                              && strcmp(Prefs._x, newPrefs._x)))
-#define INT_OPT_COPY(_x) {Prefs._x = (int)newPrefs._x; }
-#define STR_OPT_COPY(_x) {FREE_STRING(Prefs._x); if (newPrefs._x) Prefs._x = strdup(newPrefs._x); }
-#define STR_OPT_COPY_IF_CHANGED(_x) (str_copy_if_changed(&Prefs._x, newPrefs._x))
-#define INT_OPT_COPY_IF_CHANGED(_x) (int_copy_if_changed(&Prefs._x, newPrefs._x))
+#define INT_OPT_CHANGED(_a, _b, _x) (_a._x != (int)_b._x)
+#define G_INT_OPT_CHANGED(_x) INT_OPT_CHANGED(Prefs,newPrefs,_x)
+#define SP_INT_OPT_CHANGED(_x) INT_OPT_CHANGED((*p),(*np),_x)
 
-#define BIC_OPT_CHANGED(_x) ((Prefs._x.opaque != (int)newPrefs._x.opaque) || \
-                             (Prefs._x.transp != (int)newPrefs._x.transp))
-#define BIC_OPT_COPY_IF_CHANGED(_x) (bic_copy_if_changed(&Prefs._x, newPrefs._x))
+#define STR_OPT_CHANGED(_a,_b,_x) ((_a._x == NULL && _b._x) || \
+                             (_a._x && _b._x == NULL) || \
+                             ((_a._x != NULL && _b._x != NULL) \
+                              && strcmp(_a._x, _b._x)))
+#define G_STR_OPT_CHANGED(_x) STR_OPT_CHANGED(Prefs,newPrefs,_x)
+#define SP_STR_OPT_CHANGED(_x) STR_OPT_CHANGED((*p),(*np),_x)
 
-#define TRANSP_OPT_COPY_IF_CHANGED(_x) (transp_copy_if_changed(&Prefs._x, newPrefs._x))
+#define INT_OPT_COPY(_a,_b,_x) {_a._x = (int)_b._x; }
+#define G_INT_OPT_COPY(_x) INT_OPT_COPY(Prefs,newPrefs,_x)
+#define SP_INT_OPT_COPY(_x) INT_OPT_COPY((*p),(*np),_x)
 
-#define KEY_LIST_COPY_IF_CHANGED(_x) (key_list_copy_if_changed(&Prefs._x, newPrefs._x))
+#define STR_OPT_COPY(_a,_b,_x) {FREE_STRING(_a._x); if (_b._x) _a._x = strdup(_b._x); }
+#define G_STR_OPT_COPY(_x) STR_OPT_COPY(Prefs,newPrefs,_x)
+#define SP_STR_OPT_COPY(_x) STR_OPT_COPY((*p),(*np),_x)
 
-#define STRING_LIST_COPY_IF_CHANGED(_x,_nb) (string_list_copy_if_changed(&Prefs._x, &Prefs._nb, \
-   newPrefs._x, newPrefs._nb))
+#define STR_OPT_COPY_IF_CHANGED(_a,_b,_x) (str_copy_if_changed(&_a._x, _b._x))
+#define G_STR_OPT_COPY_IF_CHANGED(_x) STR_OPT_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+#define SP_STR_OPT_COPY_IF_CHANGED(_x) STR_OPT_COPY_IF_CHANGED((*p),(*np),_x)
+
+#define INT_OPT_COPY_IF_CHANGED(_a,_b,_x) (int_copy_if_changed(&_a._x, _b._x))
+#define G_INT_OPT_COPY_IF_CHANGED(_x) INT_OPT_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+#define SP_INT_OPT_COPY_IF_CHANGED(_x) INT_OPT_COPY_IF_CHANGED((*p),(*np),_x)
+
+#define BIC_OPT_CHANGED(_a,_b,_x) ((_a._x.opaque != (int)_b._x.opaque) || \
+                             (_a._x.transp != (int)_b._x.transp))
+#define G_BIC_OPT_CHANGED(_x) BIC_OPT_CHANGED(Prefs,newPrefs,_x)
+#define SP_BIC_OPT_CHANGED(_x) BIC_OPT_CHANGED((*p),(*np),_x)
+
+#define BIC_OPT_COPY_IF_CHANGED(_a,_b,_x) (bic_copy_if_changed(&_a._x, _b._x))
+#define G_BIC_OPT_COPY_IF_CHANGED(_x) BIC_OPT_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+#define SP_BIC_OPT_COPY_IF_CHANGED(_x) BIC_OPT_COPY_IF_CHANGED((*p),(*np),_x)
+
+#define TRANSP_OPT_COPY_IF_CHANGED(_a,_b,_x) (transp_copy_if_changed(&_a._x, _b._x))
+#define G_TRANSP_OPT_COPY_IF_CHANGED(_x) TRANSP_OPT_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+
+#define KEY_LIST_COPY_IF_CHANGED(_a,_b,_x) (key_list_copy_if_changed(&_a._x, _b._x))
+#define G_KEY_LIST_COPY_IF_CHANGED(_x) KEY_LIST_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+
+#define STRING_LIST_COPY_IF_CHANGED(_a,_b,_x,_nb) (string_list_copy_if_changed(&_a._x, &_a._nb, \
+   _b._x, _b._nb))
+#define G_STRING_LIST_COPY_IF_CHANGED(_x,_nb) STRING_LIST_COPY_IF_CHANGED(Prefs,newPrefs,_x,_nb)
 
 
 /* c'est un peu bourrin comme approche mais ça devrait marcher..*/
 void
 wmcc_prefs_relecture(Dock *dock)
 {
-  structPrefs newPrefs;
+  GeneralPrefs newPrefs;
   char *errmsg;
   char *options_full_file_name;
-  int scrollcoin_changed = 0;
 
-  memset(&newPrefs, 0, sizeof(structPrefs));
+  memset(&newPrefs, 0, sizeof(GeneralPrefs));
   wmcc_prefs_set_default(&newPrefs);
   options_full_file_name = check_install_data_file("options", options_file_name);
 
@@ -416,168 +451,300 @@ wmcc_prefs_relecture(Dock *dock)
 			 options_full_file_name, errmsg); free(errmsg);
     msgbox_show(dock, s); free(s);
   } else {
-    int pp_need_refresh = 0;
+    int redraw_pinni = 0;
+    int rebuild_pinni = 0;
+    int rebuild_newswin = 0;
+    int rebuild_palmi = 0;
+    int close_palmi = 0;
+    int reset_dock_pix = 0;
+    int i;
 
-    //    char *msg_cancelled_changes = strdup(""), *tmp;
-    myprintf(_("relecture des options '%<YEL %s>' réussie\n"), options_full_file_name);
+    myprintf(_("rereading of options '%<YEL %s>' successful\n"), options_full_file_name);
 
-    /* on dresse la liste des options non modifiable à chaud */
-    /*    if (STR_OPT_CHANGED(font_encoding)) {
-      tmp = str_printf("%sfont.encoding<br>", msg_cancelled_changes); 
-      free(msg_cancelled_changes);msg_cancelled_changes = tmp; 
-      }*/
+    if (editw_ismapped(dock->editw)) editw_unmap(dock, dock->editw);
+
+    /* recopie bête de certaines options modifiables sans difficultes */
     
     /* parametres de refresh */
-    INT_OPT_COPY(dlfp_tribune_check_delay);
-    INT_OPT_COPY(dlfp_news_check_delay);
-    INT_OPT_COPY(dlfp_max_refresh_delay);
-    INT_OPT_COPY(dlfp_switch_off_coincoin_delay);
-    INT_OPT_COPY(tribune_max_msg);
-    INT_OPT_COPY(tribune_backend_type);
-    INT_OPT_COPY(news_max_nb_days);
-    INT_OPT_COPY(use_balloons);
+    G_INT_OPT_COPY(max_refresh_delay);
+    G_INT_OPT_COPY(switch_off_coincoin_delay);
+    G_INT_OPT_COPY(use_balloons);
 
     /* l'ensemble des options http */
-    INT_OPT_COPY(http_timeout);
-    INT_OPT_COPY(proxy_nocache);
-    INT_OPT_COPY(use_if_modified_since);
-    STR_OPT_COPY(user_agent);
-    STR_OPT_COPY(proxy_auth);
-    if (STR_OPT_COPY_IF_CHANGED(proxy_name) ||
-	STR_OPT_COPY_IF_CHANGED(site_root)) {
-      flag_changed_http_params = 1; /* force le gethostbyname */
-      myprintf(_("vous avez changé l'adresse du site/proxy, gethostbyname bientot en cours (le coincoin\n"
-	       "va peut être se bloquer quelques secondes, voire plus\n"));
-    }
-    INT_OPT_COPY(proxy_port);
-    STR_OPT_COPY(user_name);
-    STR_OPT_COPY(site_path);
-    INT_OPT_COPY(site_port);
-    STR_OPT_COPY(path_tribune_backend);
-    STR_OPT_COPY(path_news_backend);
-    STR_OPT_COPY(path_end_news_url);
-    STR_OPT_COPY(path_tribune_add);
-    STR_OPT_COPY(path_myposts);
-    STR_OPT_COPY(path_messages);
-    STR_OPT_COPY(user_cookie);
-    STR_OPT_COPY(user_login);
-    STR_OPT_COPY(browser_cmd);
-    STR_OPT_COPY(browser2_cmd);
-    INT_OPT_COPY(enable_troll_detector);
-    INT_OPT_COPY(force_fortune_retrieval);
+    G_INT_OPT_COPY(http_timeout);
+    G_STR_OPT_COPY(browser_cmd);
+    G_STR_OPT_COPY(browser2_cmd);
+    G_INT_OPT_COPY(enable_troll_detector);
 
     /* spell */
-    if (INT_OPT_COPY_IF_CHANGED(ew_do_spell) ||
-	STR_OPT_COPY_IF_CHANGED(ew_spell_cmd) ||
-	STR_OPT_COPY_IF_CHANGED(ew_spell_dict)) {
+    if (G_INT_OPT_COPY_IF_CHANGED(ew_do_spell) ||
+	G_STR_OPT_COPY_IF_CHANGED(ew_spell_cmd) ||
+	G_STR_OPT_COPY_IF_CHANGED(ew_spell_dict)) {
       check_if_should_kill_ispell(1);
     }
 
-    STR_OPT_COPY(post_cmd);
-    STR_OPT_COPY(tribune_scrinechote);
+    G_STR_OPT_COPY(post_cmd);
+    G_STR_OPT_COPY(board_scrinechote);
 
     /* à faire: plop_words */
 
-    if (BIC_OPT_COPY_IF_CHANGED(sc_bg_color) ||
-        BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) ||
-	BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) || 
-	BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) ||
-	BIC_OPT_COPY_IF_CHANGED(sc_arrow_emphasized_color) ||
-	BIC_OPT_COPY_IF_CHANGED(sc_bar_color) ||
-	BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) ||
-	BIC_OPT_COPY_IF_CHANGED(sc_bar_dark_color)) {
-      scrollcoin_changed = 1;
+    /* maintenant les options generales qui demande un peu de boulot */
+
+    if (G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) ||
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) || 
+	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) ||
+	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_emphasized_color) ||
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_color) ||
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) ||
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_dark_color)) {
+      rebuild_newswin = 1;
+      rebuild_pinni = 1;
     }
 
-
     /* modifs sur l'apparence de la fenêtre des news */
-    if (STR_OPT_COPY_IF_CHANGED(news_fn_family) || INT_OPT_COPY_IF_CHANGED(news_fn_size) ||
-	INT_OPT_COPY_IF_CHANGED(news_bgcolor) || INT_OPT_COPY_IF_CHANGED(news_fgcolor) ||
-	INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) ||
-	INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) ||
-	INT_OPT_COPY_IF_CHANGED(news_emph_color) ||
-	scrollcoin_changed) {
-      int showed = newswin_is_used(dock);
-      newswin_destroy(dock); newswin_build(dock);
-      if (showed) newswin_show(dock, dock->dlfp, -2);
+    if (G_STR_OPT_COPY_IF_CHANGED(news_fn_family) || G_INT_OPT_COPY_IF_CHANGED(news_fn_size) ||
+	G_INT_OPT_COPY_IF_CHANGED(news_bgcolor) || G_INT_OPT_COPY_IF_CHANGED(news_fgcolor) ||
+	G_INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) ||
+	G_INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) ||
+	G_INT_OPT_COPY_IF_CHANGED(news_emph_color)) {
+      rebuild_newswin = 1;
     }
 
     /* déplacement du dock dans le cas ou la fenetre est en override redirect */
-    if ((INT_OPT_COPY_IF_CHANGED(dock_xpos) || INT_OPT_COPY_IF_CHANGED(dock_ypos)) && 
+    if ((G_INT_OPT_COPY_IF_CHANGED(dock_xpos) || G_INT_OPT_COPY_IF_CHANGED(dock_ypos)) && 
 	Prefs.draw_border && Prefs.use_iconwin==0) {
       XMoveWindow(dock->display, DOCK_WIN(dock), newPrefs.dock_xpos, newPrefs.dock_ypos);
     }
-    if (STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) || INT_OPT_COPY_IF_CHANGED(dock_bgcolor)) {
-      int showed;
+
+    if (G_STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) || G_INT_OPT_COPY_IF_CHANGED(dock_bgcolor)
+	|| G_INT_OPT_COPY_IF_CHANGED(dock_fgcolor)) {
+      reset_dock_pix = 1;
+    }
+
+    /* test sur les grosses options du pinnipede */
+    if (G_STR_OPT_COPY_IF_CHANGED(pp_fn_family) || 
+	G_INT_OPT_COPY_IF_CHANGED(pp_fn_size) ||
+	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) || 
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) ||
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) ||
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor)) {
+      rebuild_pinni = 1;
+    }
+
+    if (G_KEY_LIST_COPY_IF_CHANGED(plopify_key_list)) {
+      boards_update_boitakon(dock->sites->boards);
+      redraw_pinni = 1;
+    }
+
+    /* les options plus light se négocient avec un bon gros refresh */
+    if (G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_msgcnt_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_updlcnt_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_progressbar_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_emph_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_bgcolor) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[0]) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[1]) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[2]) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[3]) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[4]) ||
+        G_BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
+	G_TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
+        G_INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) ||
+	G_KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
+	G_STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words)) {
+      redraw_pinni = 1;
+    }
+
+    /* --------- test des options par site --------- */
+
+    /* modification d'un site ? */
+    
+    for (i=0; i < MAX_SITES; i++) {
+      SitePrefs *p, *np;
+
+      if (Prefs.site[i] == NULL) continue;
+      p = Prefs.site[i];
+      np = wmcc_prefs_find_site(&newPrefs, p->site_name); 
+      if (np == NULL) continue;
+      
+      SP_INT_OPT_COPY(board_check_delay);
+      SP_INT_OPT_COPY(board_max_msg);
+      SP_INT_OPT_COPY(news_check_delay);
+      SP_INT_OPT_COPY(board_backend_type);
+      SP_INT_OPT_COPY(news_max_nb_days);
+      SP_INT_OPT_COPY(proxy_nocache);
+      SP_INT_OPT_COPY(use_if_modified_since);
+      SP_STR_OPT_COPY(user_agent);
+      SP_STR_OPT_COPY(proxy_auth);
+      
+      if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) ||
+	  SP_STR_OPT_COPY_IF_CHANGED(site_root)) {
+	myprintf(_("vous avez changé l'adresse du site/proxy, gethostbyname bientot en cours (le coincoin\n"
+		   "va peut être se bloquer quelques secondes, voire plus\n"));
+      }
+      
+      SP_INT_OPT_COPY(proxy_port);
+      SP_STR_OPT_COPY(user_name);
+      SP_STR_OPT_COPY(site_path);
+      SP_INT_OPT_COPY(site_port);
+      SP_STR_OPT_COPY(path_board_backend);
+      SP_STR_OPT_COPY(path_news_backend);
+      SP_STR_OPT_COPY(path_end_news_url);
+      SP_STR_OPT_COPY(path_board_add);
+      SP_STR_OPT_COPY(path_myposts);
+      SP_STR_OPT_COPY(path_messages);
+      SP_STR_OPT_COPY(user_cookie);
+      SP_STR_OPT_COPY(user_login);
+      SP_INT_OPT_COPY(force_fortune_retrieval);
+
+      if (SP_INT_OPT_COPY_IF_CHANGED(palmi_msg_max_len) ||
+	  SP_INT_OPT_COPY_IF_CHANGED(palmi_ua_max_len)) {
+	rebuild_palmi = 1;
+      }
+
+      if (SP_BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
+	  SP_INT_OPT_COPY_IF_CHANGED(pp_bgcolor) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_login_color) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_url_color) ||
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_strike_color)) {
+	redraw_pinni = 1;
+      }
+      if (SP_INT_OPT_COPY_IF_CHANGED(use_AM_PM)) {
+	rebuild_pinni = 1;
+      }
+
+      if (SP_INT_OPT_COPY_IF_CHANGED(check_news) ||
+	  SP_INT_OPT_COPY_IF_CHANGED(check_board) ||
+	  SP_INT_OPT_COPY_IF_CHANGED(check_comments) ||
+	  SP_INT_OPT_COPY_IF_CHANGED(check_messages)) {
+	Site *site;
+	rebuild_pinni = 1;
+	rebuild_newswin = 1;
+
+	site = sl_find_site_by_name(dock->sites, p->site_name);
+	assert(site);
+
+	if (site->prefs->check_news == 0 && site->news) {
+	  site_news_destroy(site);
+	}
+	if (site->prefs->check_messages == 0 && site->msg) {
+	  site_msg_destroy(site);
+	}
+	if (site->prefs->check_comments == 0 && site->com) {
+	  site_com_destroy(site);
+	}
+	if (site->prefs->check_board == 0 && site->board) {
+	  board_destroy(site->board); site->board = NULL;
+	} else if (site->prefs->check_board && site->board == NULL) {
+	  site->board = board_create(site, dock->sites->boards);
+	}
+      }
+    }
+
+    /* suppression de sites ? */
+    for (i=0; i < MAX_SITES; i++) {
+      if (Prefs.site[i] && 
+	  wmcc_prefs_find_site(&newPrefs, Prefs.site[i]->site_name) == NULL) {
+	Site *site;
+	
+	site = sl_find_site_by_name(dock->sites, Prefs.site[i]->site_name); assert(site);
+
+	printf(_("site removed: '%s'\n"), site->prefs->site_name);
+
+	sl_delete_site(dock->sites, site);
+	wmcc_site_prefs_destroy(Prefs.site[i]);
+	Prefs.site[i] = NULL;
+	Prefs.nb_sites--;
+
+	rebuild_pinni = 1;
+	rebuild_newswin = 1;
+	rebuild_palmi = 1;
+      }
+    }
+
+
+    /* création de nouveaux sites ? */
+    for (i=0; i < MAX_SITES; i++) {
+      if (newPrefs.site[i] &&
+	  wmcc_prefs_find_site(&Prefs, newPrefs.site[i]->site_name) == NULL) {
+	SitePrefs *sp;
+	int j;
+
+	for (j=0; j < MAX_SITES; j++) {
+	  if (Prefs.site[j] == NULL) break;
+	}
+	assert(j < MAX_SITES);
+	assert(Prefs.nb_sites< MAX_SITES-1);
+
+	ALLOC_OBJ(sp, SitePrefs);
+	Prefs.site[j] = sp; Prefs.nb_sites++;
+	wmcc_site_prefs_copy(sp, newPrefs.site[i]);
+
+	printf(_("new site added: '%s'\n"), sp->site_name);
+
+	assert(sl_find_site_by_name(dock->sites, sp->site_name) == NULL);
+	sl_insert_new_site(dock->sites, sp);
+
+	rebuild_pinni = 1;
+	rebuild_newswin = 1;
+      }
+    }
+
+
+    /* dans tous les cas, on reevalue la liste triée
+       des messages , y'a des fois ou c'est pas necessaire --> a ameliorer */
+    boards_init_sites(dock->sites);
+
+    /* MISE A JOUR DU COINCOIN */
+    if (rebuild_newswin) {
+      int showed = newswin_is_used(dock);
+      newswin_destroy(dock); newswin_build(dock);
+      if (showed) newswin_show(dock, id_type_invalid_id());
+    }
+  
+    if (reset_dock_pix) { 
       if ((errmsg=dock_build_pixmap_porte(dock))) {
 	fprintf(stderr, errmsg);
       }
-
+      close_palmi = 1;
+    }
+    
+    if (close_palmi) {
+      int showed;
       if ((showed = editw_ismapped(dock->editw))) editw_unmap(dock, dock->editw);
       editw_reload_colors(dock, dock->editw);
-      if (showed) editw_show(dock, dock->editw,0);
+      if (showed) editw_show(dock, NULL, 0);
     }
-    INT_OPT_COPY(dock_fgcolor);
-  
 
-    /* test sur les grosses options du pinnipede */
-    if (STR_OPT_COPY_IF_CHANGED(pp_fn_family) || 
-	INT_OPT_COPY_IF_CHANGED(pp_fn_size) ||
-	STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) || 
-        INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) ||
-        INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) ||
-        INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor)) {
+    if (rebuild_pinni) {
       int showed = pp_ismapped(dock);
       pp_destroy(dock);
       pp_build(dock);
-      if (showed) pp_show(dock, &dock->dlfp->tribune);
-    }
-
-    if (KEY_LIST_COPY_IF_CHANGED(plopify_key_list)) {
-      tribune_update_boitakon(&dock->dlfp->tribune);
-      pp_need_refresh = 1;
-    }
-
-
-    /* les options plus light se négocient avec un bon gros refresh */
-    if (BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
-        INT_OPT_COPY_IF_CHANGED(pp_bgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_login_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_url_color) ||
-	BIC_OPT_COPY_IF_CHANGED(pp_strike_color) ||
-	BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_msgcnt_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_updlcnt_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_progressbar_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_emph_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_popup_bgcolor) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[0]) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[1]) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[2]) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[3]) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[4]) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
-	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
-        INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) ||
-	KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
-	STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words) ||
-	pp_need_refresh)
-      {
-	pp_set_prefs_colors(dock);
-	if (pp_ismapped(dock)) {
-	  pp_unmap(dock);
-	  pp_show(dock, &dock->dlfp->tribune);
-	}
+      if (showed) pp_show(dock);
+    } if (redraw_pinni) {
+      pp_set_prefs_colors(dock);
+      if (pp_ismapped(dock)) {
+	pp_unmap(dock);
+	pp_show(dock);
       }
+    }
+
+    if (rebuild_palmi) {
+      editw_rebuild(dock);
+    }
   }
+  
+
   wmcc_prefs_destroy(&newPrefs);
   free(options_full_file_name);
   myprintf("use_balloons: %d\n", Prefs.use_balloons);
