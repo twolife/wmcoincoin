@@ -1,7 +1,18 @@
+/*
+  rcsid=$Id: coin_util.c,v 1.2 2001/12/02 18:29:46 pouaite Exp $
+  ChangeLog:
+  $Log: coin_util.c,v $
+  Revision 1.2  2001/12/02 18:29:46  pouaite
+  à la demande des décideurs de tous poils, gestion (toute naze...) de l'EURO !
+
+*/
+
 #include <string.h>
 #include <ctype.h>
 #include "coin_util.h"
 #include "raster.h"
+
+
 
 RGBAImage *
 rimage_create_from_raw(int w, int h, int bpp, const unsigned char *data)
@@ -232,121 +243,141 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
   with_bug_amp : le remote.rdf a été deux fois interprete par une moulinette,
    resultat , les 'é' soit devenus des '&eacute;' puis des '&amp;eacute;'
 
-   remarque: on peut avoir dest == src, etant donnée que ça ne peut que 
-   réduire l'encombrement mémoire de la chaine traitée
+   remarque: on peut avoir dest == src, on utilise alors une chaine temporaire
 
    renvoie la longueur de la chaine apres conversion
 
    cette fonction est utilisee par picohtml.c et coincoin_tribune.c
 */
 int
-convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp)
+convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
 {
   int id, is;
+
+  const char *src;
   static const struct {
     char *sign;
-    unsigned char c;
-  } tab[] = {{"amp;", '&'},
-	     {"quot;", '"',},
-	     {"gt;",'>',},
-	     {"lt;",'<',},
-	     {"acute;", '\''},
-	     {"deg;", '°'},
-	     {"not;", '¬'},
-	     {"sup1;", '¹'},
-	     {"sup2;", '²'},
-	     {"sup3;", '³'},
-	     {"frac14;", '¼'},
-	     {"frac12;", '½'},
-	     {"frac34;", '¾'},
-	     {"middot;", '·'},
-	     {"micro;", 'µ'},
-	     {"cent;", '¢'},
-	     {"raquo;", '»'},
-	     {"laquo;", '«'},
-	     {"para;", '¶'},
-             {"pound;", '£'},
-             {"curren;", '¤'},
-             {"uml;", '¨'},
-             {"cedil;", '¸'},
-             {"nbsp; ", ' '},
-	     {"iexcl;", '¡'},
-	     {"ordf;", 'ª'},
-	     {"iquest;",'¿'},
-	     {"yen;", '¥'},
-	     {"copy;", '©'},
-	     {"reg;", '®'},
-	     {"sect;", '§'},
-	     {"macr;",'¯'},
-	     {"plusnm;", '±'},
-	     {"times;", '×'},
-	     {"Aacute;",193},
-	     {"aacute;",225},
-	     {"Agrave;",192},
-	     {"agrave;",224},
-	     {"Acirc;",194},
-	     {"acirc;",226},
-	     {"AElig;",198},
-	     {"aelig;",230},
-	     {"Aring;",197},
-	     {"aring;",229},
-	     {"Atilde;",195},
-	     {"atilde;",227},
-	     {"Auml;",196},
-	     {"auml;",228},
-	     {"Ccedil;",199},
-	     {"ccedil;",231},
-	     {"Eacute;",201},
-	     {"eacute;",233},
-	     {"Egrave;",200},
-	     {"egrave;",232},
-	     {"Ecirc;",202},
-	     {"ecirc;",234},
-	     {"Euml;",203},
-	     {"euml;",235},
-	     {"Iacute;",205},
-	     {"iacute;",237},
-	     {"Igrave;",204},
-	     {"igrave;",236},
-	     {"Icirc;",206},
-	     {"icirc;",238},
-	     {"Iuml;",207},
-	     {"iuml;",239},
-	     {"Ntilde;",209},
-	     {"ntilde;",241},
-	     {"Oacute;",211},
-	     {"oacute;",243},
-	     {"Ograve;",210},
-	     {"ograve;",242},
-	     {"Ocirc;",212},
-	     {"ocirc;",244},
-	     {"Oslash;",216},
-	     {"oslash;",248},
-	     {"Otilde;",213},
-	     {"otilde;",245},
-	     {"Ouml;",214},
-	     {"ouml;",246},
-	     //	     {"OElig;",338},
-	     //	     {"oelig;",339},
-	     //	     {"Scaron;",352},
-	     //	     {"scaron;",353},
-	     {"szlig;",223},
-	     {"ETH;",208},
-	     {"eth;",240},
-	     {"THORN;",222},
-	     {"thorn;",254},
-	     {"Uacute;",218},
-	     {"uacute;",250},
-	     {"Ugrave;",217},
-	     {"ugrave;",249},
-	     {"Ucirc;",219},
-	     {"ucirc;",251},
-	     {"Uuml;",220},
-	     {"uuml;",252},
-	     {"Yacute;",221},
-	     {"yacute;",253},
-	     {"yuml;",255},
-	     {NULL, '*'}};
+    char *c;
+  } tab[] = {{"amp;", "&"},
+	     {"quot;", "\"",},
+	     {"gt;",">",},
+	     {"lt;","<",},
+	     {"acute;", "\'"},
+
+	     {"nbsp;"  , " "},  // 0xa0 /* ouais bon, du coup il va etre breakable l'espace.. */
+	     {"iexcl;" , "¡"},
+	     {"cent;"  , "¢"},
+             {"pound;" , "£"},
+             {"curren;", "¤"},  // 0xa4
+	     {"yen;"   , "¥"},
+	     {"brvbar;", "¦"},
+	     {"sect;"  , "§"},
+             {"uml;"   , "¨"},
+	     {"copy;"  , "©"},
+	     {"ordf;"  , "ª"},
+	     {"laquo;" , "«"},
+	     {"not;"   , "¬"},
+	     //	     {"shy;"   , "????"}, // 0xad soft hyphen ... non visible ?
+
+	     {"reg;"   , "®"},
+	     {"macr;"  , "¯"},
+	     {"deg;"   , "°"}, // 0xb0
+	     {"plusnm;", "±"},
+	     {"sup2;"  , "²"},
+	     {"sup3;"  , "³"},
+	     {"acute;" , "´"},
+	     {"micro;" , "µ"},
+	     {"para;"  , "¶"},
+	     {"middot;", "·"},
+             {"cedil;" , "¸"},
+	     {"sup1;"  , "¹"},
+	     {"ordm;"  , "º"},
+	     {"raquo;", "»"},
+
+	     {"frac14;", "¼"},
+	     {"frac12;", "½"},
+	     {"frac34;", "¾"},
+	     {"iquest;", "¿"},
+
+	     {"Agrave;", "À"}, // 0xc0
+	     {"Aacute;", "Á"},
+	     {"Acirc;" , "Â"},
+	     {"Atilde;", "Ã"},
+	     {"Auml;"  , "Ä"},
+	     {"Aring;" , "Å"},
+	     {"AElig;" , "Æ"},
+	     {"Ccedil;", "Ç"},
+	     {"Egrave;", "È"},
+	     {"Eacute;", "É"},
+	     {"Ecirc;" , "Ê"},
+	     {"Euml;"  , "Ë"}, 
+	     {"Igrave;", "Ì"},
+	     {"Iacute;", "Í"},
+	     {"Icirc;" , "Î"},
+	     {"Iuml;"  , "Ï"},
+	     {"ETH;"   , "Ð"}, // 0xd0
+	     {"Ntilde;", "Ñ"},
+	     {"Ograve;", "Ò"},
+	     {"Oacute;", "Ó"},
+	     {"Ocirc;" , "Ô"},
+	     {"Otilde;", "Õ"},
+	     {"Ouml;"  , "Ö"},
+	     {"times;" , "×"},
+	     {"Oslash;", "Ø"},
+	     {"Ugrave;", "Ù"},
+	     {"Uacute;", "Ú"},
+	     {"Ucirc;" , "Û"},
+	     {"Uuml;"  , "Ü"},
+	     {"Yacute;", "Ý"},
+	     {"THORN;" , "Þ"},
+	     {"szlig;" , "ß"},
+	     {"agrave;", "à"}, // 0xe0
+	     {"aacute;", "á"},
+	     {"acirc;" , "â"},
+	     {"atilde;", "ã"},
+	     {"auml;"  , "ä"},
+	     {"aring;" , "å"},
+	     {"aelig;" , "æ"},
+	     {"ccedil;", "ç"},
+	     {"egrave;", "è"},
+	     {"eacute;", "é"},
+	     {"ecirc;" , "ê"},
+	     {"euml;"  , "ë"},
+	     {"igrave;", "ì"},
+	     {"iacute;", "í"},
+	     {"icirc;" , "î"},
+	     {"iuml;"  , "ï"},
+	     {"eth;"   , "ð"}, // 0xf0
+	     {"ntilde;", "ñ"},
+	     {"ograve;", "ò"},
+	     {"oacute;", "ó"},
+	     {"ocirc;" , "ô"},
+	     {"otilde;", "õ"},
+	     {"ouml;"  , "ö"},
+
+	     {"oslash;", "ø"},
+	     {"uacute;", "ú"},
+	     {"ugrave;", "ù"},
+	     {"ucirc;" , "û"},
+	     {"uuml;"  , "ü"}, 
+	     {"yacute;", "ý"}, // 0xfd
+	     {"thorn;" , "þ"}, // 0xfe
+	     {"yuml;"  , "ÿ"}, // 0xff
+	     //   {"Scaron;",{352,0}},
+	     //	     {"scaron;",{353,0}},
+	     {"trade;", "(tm)"}, // non iso8859-1
+	     {"euro;", "EUR"},   // non iso8859-1
+	     {"OElig;" , "OE"},
+	     {"oelig;" , "oe"},
+	     {NULL, "*"}};
+
+
+  /* detection du cas ou les chaines se supperposent */
+  if (_src == dest ) {
+    src = strdup(_src); assert(src);
+  } else {
+    src = _src;
+  }
 
   id = 0; is = 0;
   while (id < dest_sz-1 && src[is]) {
@@ -375,15 +406,27 @@ convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp)
       if (found == -1) {
 	dest[id++] = '&'; is++;
       } else {
-	dest[id++] = tab[i].c;
+	int j;
+	j = 0;
+	while (id < dest_sz-1 && tab[i].c[j]) {
+	  dest[id++] = tab[i].c[j++];
+	}
       }
+    } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-4) { /* cas particulier pour l'odieux EURO (encodage windows) */
+      dest[id++] = 'E';
+      dest[id++] = 'U';
+      dest[id++] = 'R';
+      is++;
     } else {
       dest[id] = src[is];
       id++; is++;
     }
-    assert(id <= is); /* ça semble logique et ça permet de faire la conversion avec dest == src */
   }
   dest[id] = 0;
+
+  if (_src == dest) {
+    free((char*)src);
+  }
   return id;
 }
 
