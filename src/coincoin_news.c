@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.23 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.24 2002/05/15 09:55:13 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.24  2002/05/15 09:55:13  pouaite
+  fix http.c
+
   Revision 1.23  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -109,7 +112,7 @@ gros_read(HttpRequest *r, char *what)
 
   /* on lit tout en un coup */
   bsize = bchunk;
-  s = malloc(bsize+1); 
+  s = malloc(bsize+1); strcpy(s,"plop! c'est raté");
   if (s) {
     int got;
     int bi;
@@ -134,6 +137,7 @@ gros_read(HttpRequest *r, char *what)
       if (s) free(s);
       s = NULL;
     }
+    s[bi] = 0;
     BLAHBLAH(0, myprintf("%s, lu: %<mag %s>\n", what, s));
   }
   return s;

@@ -843,6 +843,8 @@ http_request_send(HttpRequest *r)
 void
 http_request_init(HttpRequest *r) {
   memset(r, 0, sizeof(HttpRequest));
+  r->content_length = -1;
+  r->is_chunk_encoded = 0;
 }
 
 void http_request_close (HttpRequest *r) {
