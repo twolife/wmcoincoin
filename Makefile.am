@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.15 2002/08/17 18:33:37 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.16 2002/08/22 18:50:38 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.16  2002/08/22 18:50:38  pouaite
+##   et là ça compile ?
+##
 ##   Revision 1.15  2002/08/17 18:33:37  pouaite
 ##   grosse commition
 ##
@@ -43,6 +46,9 @@
 ## Process this file with automake to produce Makefile.in
 
 #AUTOMAKE_OPTIONS = 1.5 dist-bzip2
+ACLOCAL_AMFLAGS = -I m4
+
+MAINT_CHARSET = latin1
 
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
@@ -52,8 +58,8 @@ EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_mini
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
-             ./wmcoincoin.spec ./wmpanpan ./config.sub ./config.guess \
-             ./useragents ./options
+             ./wmcoincoin.spec ./wmpanpan \
+             ./options
 
 rpm-dist: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz $(HOME)/rpm/SOURCES
@@ -64,8 +70,7 @@ rpm-dist: dist
 bin-dist: all
 	cp src/wmcoincoin .
 	strip wmcoincoin
-	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options useragents wmcoincoin
+	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options wmcoincoin
 
-pkgdata_DATA = options useragents README wmcoincoin.spec
+pkgdata_DATA = options README wmcoincoin.spec
 
-ACLOCAL_AMFLAGS = -I m4

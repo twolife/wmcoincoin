@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.36 2002/08/21 21:34:15 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.37 2002/08/22 18:50:38 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.37  2002/08/22 18:50:38  pouaite
+#%  et là ça compile ?
+#%
 #%  Revision 1.36  2002/08/21 21:34:15  pouaite
 #%  coin
 #%
@@ -434,13 +437,41 @@
 #pinnipede.plop_words: "plop","grouik","prout"
 
 ### listes des remplacements de <b>[url]</b> pour les sites connus
-#pinnipede.url_replace: "yahoo" => "[yahoo]"
-#pinnipede.url_replace: "forum.hardware" => "[hfr]"
-#pinnipede.url_replace: "linuxfr.org/" => "[dlfp]"
-#pinnipede.url_replace: "goatse" => "[goatsecx]"
-#pinnipede.url_replace: "wiki" => "[wiki]"
-#pinnipede.url_replace: "wickedweasel" => "[WW]"
-#pinnipede.url_replace: "slashdot.org" => "[/.]"
+pinnipede.url_replace: "google." => "[google]"
+pinnipede.url_replace: "yahoo" => "[yahoo]"
+pinnipede.url_replace: "lemonde.fr" => "[lemonde]"
+pinnipede.url_replace: "forum.hardware" => "[hfr]"
+pinnipede.url_replace: "linuxfr.org/" => "[dlfp]"
+pinnipede.url_replace: "goatse" => "[pas cliquer!]"
+pinnipede.url_replace: "wiki" => "[wiki]"
+pinnipede.url_replace: "wickedweasel" => "[WW]"
+pinnipede.url_replace: "slashdot.org" => "[/.]"
+pinnipede.url_replace: "kde" => "[kde]"
+pinnipede.url_replace: "gnome" => "[gnome]"
+pinnipede.url_replace: "osnews" => "[osnews]"
+pinnipede.url_replace: "kuro5hin" => "[K5]"
+pinnipede.url_replace: "freshmeat" => "[FM]"
+pinnipede.url_replace: "debian" => "[debian]"
+pinnipede.url_replace: "mandrake" => "[mdk]"
+pinnipede.url_replace: "redhat" => "[rh]"
+pinnipede.url_replace: "gentoo" => "[gentoo]"
+pinnipede.url_replace: "microsoft" => "[MS]"
+pinnipede.url_replace: "wmcoincoin" => "[wmc²]"
+pinnipede.url_replace: "pycoincoin" => "[pyc²]"
+pinnipede.url_replace: ".jpg" => "[img]"
+pinnipede.url_replace: ".jpeg" => "[img]"
+pinnipede.url_replace: ".png" => "[img]"
+pinnipede.url_replace: ".gif" => "[img]"
+pinnipede.url_replace: ".swf" => "[flash]"
+pinnipede.url_replace: ".tar.gz" => "[tgz]"
+pinnipede.url_replace: ".tgz" => "[tgz]"
+pinnipede.url_replace: ".rpm" => "[rpm]"
+pinnipede.url_replace: ".deb" => "[deb]"
+pinnipede.url_replace: ".mp3" => "[mp3]"
+pinnipede.url_replace: ".ogg" => "[ogg]"
+pinnipede.url_replace: ".pdf" => "[pdf]"
+pinnipede.url_replace: "ftp://" => "[ftp]"
+pinnipede.url_replace: "dtc" => "[dtc]"
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #[.]pinnipede.use_AM_PM: off

@@ -31,10 +31,11 @@ if test "$DIE" -eq 1; then
         exit 1
 fi
 
-echo "  aclocal -I . $ACLOCAL_FLAGS"
-aclocal -I m4 $ACLOCAL_FLAGS
 echo "  gettextize --copy --force --intl"
 gettextize --copy --force --intl
+#cp po/Makefile.in.in intl/Makefile.in.in
+echo "  aclocal -I m4 $ACLOCAL_FLAGS"
+aclocal -I m4 $ACLOCAL_FLAGS
 echo "  autoheader"
 autoheader
 echo "  automake --add-missing --gnu --include-deps"

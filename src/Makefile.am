@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.12 2002/08/21 01:11:48 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.13 2002/08/22 18:50:38 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.13  2002/08/22 18:50:38  pouaite
+##   et là ça compile ?
+##
 ##   Revision 1.12  2002/08/21 01:11:48  pouaite
 ##   commit du soir, espoir
 ##
@@ -37,7 +40,7 @@
 ## Process this file with automake to produce Makefile.in
 
 localedir = $(datadir)/locale
-LIBS = @INTLLIBS@ @LIBS@
+LIBS = @LIBINTL@ @LIBS@
 
 bin_PROGRAMS = wmcoincoin
 
