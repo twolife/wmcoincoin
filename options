@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.44 2002/10/05 18:08:13 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.45 2002/10/13 23:30:49 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.45  2002/10/13 23:30:49  pouaite
+#%  plop
+#%
 #%  Revision 1.44  2002/10/05 18:08:13  pouaite
 #%  ajout menu contextuel + fix de la coloration des boutons du wmccc
 #%
@@ -552,6 +555,8 @@ board.miniua_rule:  ua:"Mozilla/5.0.*; Windows ([^;]+).*; rv:([0-9.]+)" => ua:="
 ### Mozilla/5.0 Galeon/1.2.5 (X11; Linux ppc; U;) Gecko/0
 ### Mozilla/5.0 Galeon/1.2.5 (X11; Linux i686; U;) Gecko/20020610 Debian/1.2.5-1 [ IPv4 ]
 board.miniua_rule:  ua:"Mozilla/5.0 Galeon/([0-9.]+).*Linux ([^;]+)" => ua:="Galeon\1/\2"
+### Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-US; rv:1.0.1) Ge
+board.miniua_rule: ua:"Mozilla/5.0.*; .*OS X.*rv:([0-9.]+)" => ua:="Moz\1/OSX"
 
 ###Mozilla/4.0 (compatible; MSIE 5.0; Windows XP) Opera 6.02  
 board.miniua_rule:  ua:"Mozilla/4.0.*Windows ([[:alnum:]]*).*Opera ([0-9.]+)" => ua:="Opera\2/Win\1"

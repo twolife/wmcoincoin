@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.12 2002/09/25 22:02:15 pouaite Exp $
+  rcsid=$Id: board.c,v 1.13 2002/10/13 23:30:49 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.13  2002/10/13 23:30:49  pouaite
+  plop
+
   Revision 1.12  2002/09/25 22:02:15  pouaite
   hungry boitakon
 
@@ -209,6 +212,7 @@ board_create(Site *site, Boards *boards)
   board->wmcc_tic_cnt_last_check = 0;
   board->last_post_timestamp = 0;
   board->nbsec_since_last_msg = 0;
+  board->nb_msg_at_last_check = 0;
   board->local_time_last_check = time(NULL);
   //board->rules = NULL;
   board->last_modified = NULL;
@@ -1332,7 +1336,7 @@ board_update(Board *board)
   board->nbsec_since_last_msg += difftime(board->local_time_last_check, board->local_time_last_check_old);
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
   board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
-
+  board->nb_msg_at_last_check = 0;
   pp_set_download_info(board->site->prefs->site_name, "updating board");
 
   if ((Prefs.debug & 2) == 0) {
@@ -1465,6 +1469,7 @@ board_update(Board *board)
 	  }
 	  flag_updating_board++;
 	  board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent);
+	  board->nb_msg_at_last_check++;
 	  flag_updating_board--;
 	}
 

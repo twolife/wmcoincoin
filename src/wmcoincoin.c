@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.66 2002/10/05 18:08:15 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.67 2002/10/13 23:30:49 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.67  2002/10/13 23:30:49  pouaite
+  plop
+
   Revision 1.66  2002/10/05 18:08:15  pouaite
   ajout menu contextuel + fix de la coloration des boutons du wmccc
 
@@ -1083,6 +1086,7 @@ void X_loop()
 
       if ((site=sl_find_board_answer_to_me(dock->sites))) {
 	site->board->flag_answer_to_me = 0;
+	pp_tabs_set_flag_answer_to_me(dock, site);
 	dock->flamometre.board_answer_decnt += (((FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 						   FLAMOMETRE_TRIB_CLIGN_SPEED)*FLAMOMETRE_TRIB_CLIGN_SPEED);
       }

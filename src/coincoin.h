@@ -193,6 +193,8 @@ struct _Board {
   /* nombre de secondes ecoulees depuis que le dernier message a ete recu */
   int nbsec_since_last_msg;
 
+  int nb_msg_at_last_check;
+
   /* date a laquelle le dernier check a ete fait
      (c'est pas redondant, je part du principe que l'horloge locale
      et celle de linuxfr ne sont pas synchronisees */
@@ -648,6 +650,7 @@ void pp_set_word_filter(Dock *dock, char *word);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
 Site *pp_tabs_get_main_site(Dock *dock);
+void pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s);
 void pp_set_download_info(char *site, char *what);
 
 /* prefs_gestion.c */

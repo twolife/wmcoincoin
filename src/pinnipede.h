@@ -105,6 +105,7 @@ typedef struct _PinnipedeTab {
   int selected;
   int x,y,w,h;
   int clicked;
+  int clign_decnt;
 } PinnipedeTab;
 
 

@@ -621,7 +621,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       break;
     case DLFP2:
       sp->site_root = strdup("http://new.linuxfr.org");
-      sp->path_board_add = strdup("board.html");
+      sp->path_board_add = strdup("board/add.html");
       sp->board_post = strdup("message=%s&section=1");
       sp->all_names[0] = strdup("dlfp2");
       sp->all_names[1] = strdup("linuxfr2");

@@ -106,6 +106,7 @@ pp_tabs_build(Dock *dock) {
       pt->site = s;
       pt->selected = 1;
       pt->clicked = 0;
+      pt->clign_decnt = 0;
       pt++;
     }
   }
@@ -113,6 +114,18 @@ pp_tabs_build(Dock *dock) {
 
   pp_tabs_set_pos(pp);
   pp_tabs_set_visible_sites(pp);
+}
+
+void
+pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s)
+{
+  Pinnipede *pp = dock->pinnipede;
+  int i;
+  for (i=0; i < pp->nb_tabs; i++) {
+    if (pp->tabs[i].site == s) {
+      pp->tabs[i].clign_decnt = wmcc_tic_cnt;
+    }
+  }
 }
 
 void
@@ -145,10 +158,10 @@ pp_tabs_refresh(Dock *dock)
     }
 
 
-    
     XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
     XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
 		   0, 0, pp->win_width, pp->fn_h);
+
     
 
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
@@ -158,6 +171,31 @@ pp_tabs_refresh(Dock *dock)
       int x = pt->x, w = pt->w, h=pt->h;
       unsigned long bar_pixel = pp->progress_bar_pixel;
       Board *board = pt->site->board;
+
+      if (pt->clign_decnt) {
+	int decnt = wmcc_tic_cnt - pt->clign_decnt;
+	int zero_bg = (pp->transparency_mode ? 
+		       Prefs.pp_buttonbar_bgcolor.transp : Prefs.pp_buttonbar_bgcolor.opaque);
+	float c = (decnt % 50)/(70.0);
+	int b = 255*c + (zero_bg & 0x0000ff)*(1-c);
+	int r = ((zero_bg & 0xff0000)>>16)*(1-c); 
+	int g = ((zero_bg & 0x00ff00)>>8)*(1-c);
+	
+	if (decnt > FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS)) pt->clign_decnt = 0;
+	r = MIN(r,255);
+	g = MIN(g,255);
+	b = MIN(b,255);
+	XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(r,g,b));
+	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
+		   x+1, 1, w-3, h-1);
+      } else if (pt == pp->active_tab) {
+	XSetForeground(dock->display, dock->NormalGC, 
+		       lighten_color(pp->transparency_mode ?
+				     Prefs.pp_buttonbar_bgcolor.transp : Prefs.pp_buttonbar_bgcolor.opaque, 1.2));
+	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
+		       x+1, 1, w-3, h-1);
+      }
+    
 
       XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
       XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 
@@ -181,9 +219,12 @@ pp_tabs_refresh(Dock *dock)
 
       {
 	char *t; 
-	int tw, tx, ty;
+	int tw, tx, ty, tlen, clen;
 	unsigned long fgpixel = 0x303030;
 	int main_site = 0;
+	int cnt_new_msg = 0;
+	char scnt[10];
+	int cw, cx;
 	if (ccqueue_find(Q_BOARD_UPDATE, pp->tabs[i].site->site_id)) {
 	  int l = ABS((wmcc_tic_cnt % 30) - 15)*10;
 	  t = ((wmcc_tic_cnt % 180) < 30) ? pp->tabs[i].site->prefs->site_name : "-queued-";
@@ -192,21 +233,35 @@ pp_tabs_refresh(Dock *dock)
 	  t = pp->tabs[i].site->prefs->site_name;
 	  if (pt == pp->active_tab) main_site = 1;
 	  if (!pt->selected) fgpixel = 0x909090;
+	  cnt_new_msg =  board->nb_msg_at_last_check;
 	}
-	tw = strlen(t) * MINIB_FN_W;
-	tx = pt->x + (pt->w - tw)/2;
+	tlen = MIN((int)strlen(t), pt->w / MINIB_FN_W);
+	tw = tlen * MINIB_FN_W;
+	if (cnt_new_msg) {
+	  snprintf(scnt, 10, "+%d", cnt_new_msg);
+	  clen = MIN((int)strlen(scnt), (pt->w - tw-2)/MINIB_FN_W);
+	  cw = clen * MINIB_FN_W;
+	} else { cw = 0; clen = 0; }
+	
+	tx = pt->x + MAX((pt->w - tw - cw - 2)/2,0);
+	cx = tx + tw + 2;
 	ty = pp->fn_minib->ascent+1 + pp->tabs[i].clicked*2;
+
 	
 	if (!pt->selected) {
 	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(fgpixel));
 	} else {
-	  if (main_site) {
+	  if (main_site && tlen) {
 	    XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x80ff80));
-	    XDrawString(dock->display, pp->lpix, dock->NormalGC, tx+1, ty+1, t, strlen(t));
+	    XDrawString(dock->display, pp->lpix, dock->NormalGC, tx+1, ty+1, t, tlen);
 	  }
 	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(fgpixel));
 	}
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, tx, ty, t, strlen(t));
+	if (cw && clen) {
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(pt->selected ? 0x000080 : 0x8080a0));
+	  XDrawString(dock->display, pp->lpix, dock->NormalGC, cx, ty, scnt, clen);
+	}
       }
     }
   }
