@@ -54,12 +54,17 @@ ccfont_release(CCFontId *pid) {
 }
 
 CCFontId
-ccfont_get(char *fontdesc) {
+ccfont_get(char *fontdesc_) {
   int i, ifn = -1;
+  char *fontdesc;
+  if (Prefs.disable_xft_antialiasing) /* xft roxor ! */
+    fontdesc = str_printf("%s:antialias=no",fontdesc_);
+  else fontdesc = fontdesc_;
   for (i = 0; i < NB_MAX_CC_FONTS; ++i) {
     if (ccfonts[i] == NULL && ifn == -1) ifn = i;
     else if (ccfonts[i] && strcmp(fontdesc, ccfonts[i]->fontname) == 0) {
       ccfonts[i]->refcnt++;
+      if (fontdesc_ != fontdesc) free(fontdesc);
       return i;
     }
   }
@@ -76,6 +81,7 @@ ccfont_get(char *fontdesc) {
     fprintf(stderr, "max fonts exhausted... leak ?\n");
     assert(0);
   }
+  if (fontdesc_ != fontdesc) free(fontdesc);
   return ifn;
 }
 

@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.59 2004/02/29 19:01:26 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.60 2004/03/03 23:00:37 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.60  2004/03/03 23:00:37  pouaite
+#%  commit du soir
+#%
 #%  Revision 1.59  2004/02/29 19:01:26  pouaite
 #%  et hop
 #%
@@ -296,6 +299,13 @@
 ### (en ligne de commande, ce sont les options '-B' et -w')
 #dock.draw_border: False
 #dock.iconwin: True
+### une alternative est d'activer l'autoswallow, dans le cas l'applet est 
+### directement embarquée dans le pinnipede
+#dock.auto_swallow: False
+
+### il est possible de desactiver l'antialiasing pour toutes les fontes utilisées par wmcc
+### a utiliser si l'aa rame trop..
+#dock.disable_xft_antialiasing: True
 
 ### les versions < 2.4.6 avaient cette option à true -- dans ce cas, le palmipede
 ### gere le focus lui-meme (pas toujours bien)

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.39 2004/02/29 19:01:27 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.40 2004/03/03 23:00:39 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.40  2004/03/03 23:00:39  pouaite
+  commit du soir
+
   Revision 1.39  2004/02/29 19:01:27  pouaite
   et hop
 
@@ -1155,6 +1158,13 @@ dock_build_pixmap_porte(Dock *dock)
   /* chargement de pix_porte suivant si pixmap de fond */
 
   dock->pix_porte = None;
+  
+  /* pour eviter d'avoir un look trop bizarre */
+  if (Prefs.auto_swallow) { 
+    Prefs.dock_bgcolor = Prefs.pp_buttonbar_bgcolor.opaque;
+    if (Prefs.dock_bgpixmap) { free(Prefs.dock_bgpixmap); Prefs.dock_bgpixmap = NULL; }
+  }
+
   if (Prefs.dock_bgpixmap) {
     int w, h;
     bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.dock_bgpixmap, &w, &h);

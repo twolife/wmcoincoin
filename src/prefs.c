@@ -820,7 +820,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   ASSIGN_STRING_VAL(p->balloon_fn_family, "helvetica");
   p->balloon_fn_size = 10;
   p->use_iconwin = 1; /* style windowmaker par defaut */
-  p->auto_swallow = 1;
+  p->auto_swallow = 0;
   p->draw_border = 0; /* idem */
   p->palmipede_override_redirect = 1;
   p->dock_xpos = p->dock_ypos = 0;
@@ -834,6 +834,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->board_auto_dl_pictures = 0;
   p->board_enable_hfr_pictures = 0;
 
+  p->disable_xft_antialiasing = 0;
   ASSIGN_STRING_VAL(p->pp_fn_family, "helvetica");
   p->pp_fn_size = 12;
   p->pp_start_in_transparency_mode = 0;
@@ -1156,6 +1157,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPT_dock_iconwin: {
     CHECK_BOOL_ARG(p->use_iconwin);
   } break; 
+  case OPT_dock_auto_swallow: {
+    CHECK_BOOL_ARG(p->auto_swallow);
+  } break; 
   case OPT_palmipede_override_wmanager: { 
     CHECK_BOOL_ARG(p->palmipede_override_redirect);
   } break;
@@ -1259,6 +1263,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break;
   case OPT_http_inet_ip_version: {
     CHECK_INTEGER_ARG(0,10, p->http_inet_ip_version);
+  } break;
+  case OPT_dock_disable_xft_antialiasing: {
+    CHECK_BOOL_ARG(p->disable_xft_antialiasing);
   } break;
   case OPT_pinnipede_font_family: {
     ASSIGN_STRING_VAL(p->pp_fn_family, arg); 
@@ -1594,7 +1601,7 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
   wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error, verbatim);
 
   if (p->nb_sites == 0) {
-    myfprintf(stderr, _("oooooooh !!! you didn't define at least *ONE* site, you bad boy.\ni do it for you, but this is the last time\n plz %<YEL use wmccc to add new sites>\n"));
+    myfprintf(stderr, _("\n\n%<YEL oooooooh !!! you didn't define at least *ONE* site>, you bad boy.\ni do it for you, but this is the last time\n plz %<MAG use wmccc to add new sites>\n\n"));
     wmcc_prefs_add_site(p, &global_sp, "\"plop\"", 0);
   }
 

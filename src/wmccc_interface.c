@@ -1051,9 +1051,9 @@ create_bronson_wizard (void)
   GtkWidget *hbox16;
   GtkWidget *label41;
   GtkWidget *vbox11;
-  GtkWidget *button3;
-  GtkWidget *button4;
-  GtkWidget *button5;
+  GtkWidget *wizard_new_board_bt;
+  GtkWidget *wizard_new_feed_bt;
+  GtkWidget *wizard_edit_options_bt;
   GtkWidget *dialog_action_area5;
   GtkWidget *button2;
 
@@ -1096,17 +1096,17 @@ create_bronson_wizard (void)
   gtk_widget_show (vbox11);
   gtk_box_pack_start (GTK_BOX (hbox16), vbox11, FALSE, FALSE, 23);
 
-  button3 = gtk_button_new_with_mnemonic (_("I want to add a new board"));
-  gtk_widget_show (button3);
-  gtk_box_pack_start (GTK_BOX (vbox11), button3, FALSE, FALSE, 0);
+  wizard_new_board_bt = gtk_button_new_with_mnemonic (_("I want to add a new board"));
+  gtk_widget_show (wizard_new_board_bt);
+  gtk_box_pack_start (GTK_BOX (vbox11), wizard_new_board_bt, FALSE, FALSE, 0);
 
-  button4 = gtk_button_new_with_mnemonic (_("I want to add a new RSS feed"));
-  gtk_widget_show (button4);
-  gtk_box_pack_start (GTK_BOX (vbox11), button4, FALSE, FALSE, 0);
+  wizard_new_feed_bt = gtk_button_new_with_mnemonic (_("I want to add a new RSS feed"));
+  gtk_widget_show (wizard_new_feed_bt);
+  gtk_box_pack_start (GTK_BOX (vbox11), wizard_new_feed_bt, FALSE, FALSE, 0);
 
-  button5 = gtk_button_new_with_mnemonic (_("I want to edit the options"));
-  gtk_widget_show (button5);
-  gtk_box_pack_start (GTK_BOX (vbox11), button5, FALSE, FALSE, 0);
+  wizard_edit_options_bt = gtk_button_new_with_mnemonic (_("I want to edit the options"));
+  gtk_widget_show (wizard_edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (vbox11), wizard_edit_options_bt, FALSE, FALSE, 0);
 
   dialog_action_area5 = GTK_DIALOG (bronson_wizard)->action_area;
   gtk_widget_show (dialog_action_area5);
@@ -1132,12 +1132,132 @@ create_bronson_wizard (void)
   GLADE_HOOKUP_OBJECT (bronson_wizard, hbox16, "hbox16");
   GLADE_HOOKUP_OBJECT (bronson_wizard, label41, "label41");
   GLADE_HOOKUP_OBJECT (bronson_wizard, vbox11, "vbox11");
-  GLADE_HOOKUP_OBJECT (bronson_wizard, button3, "button3");
-  GLADE_HOOKUP_OBJECT (bronson_wizard, button4, "button4");
-  GLADE_HOOKUP_OBJECT (bronson_wizard, button5, "button5");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_new_board_bt, "wizard_new_board_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_new_feed_bt, "wizard_new_feed_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_edit_options_bt, "wizard_edit_options_bt");
   GLADE_HOOKUP_OBJECT_NO_REF (bronson_wizard, dialog_action_area5, "dialog_action_area5");
   GLADE_HOOKUP_OBJECT (bronson_wizard, button2, "button2");
 
   return bronson_wizard;
+}
+
+GtkWidget*
+create_window1 (void)
+{
+  GtkWidget *window1;
+
+  window1 = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title (GTK_WINDOW (window1), _("window1"));
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (window1, window1, "window1");
+
+  return window1;
+}
+
+GtkWidget*
+create_sitelist_dialog (void)
+{
+  GtkWidget *sitelist_dialog;
+  GtkWidget *dialog_vbox7;
+  GtkWidget *vbox12;
+  GtkWidget *hseparator2;
+  GtkWidget *hbox17;
+  GtkWidget *vseparator2;
+  GtkWidget *scrolledwindow4;
+  GtkWidget *treeview;
+  GtkWidget *vseparator1;
+  GtkWidget *vbox13;
+  GtkWidget *edit_bt;
+  GtkWidget *remove_bt;
+  GtkWidget *button8;
+  GtkWidget *hseparator3;
+  GtkWidget *dialog_action_area7;
+  GtkWidget *closebutton1;
+
+  sitelist_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (sitelist_dialog), _("dialog2"));
+  gtk_window_set_default_size (GTK_WINDOW (sitelist_dialog), 640, 460);
+
+  dialog_vbox7 = GTK_DIALOG (sitelist_dialog)->vbox;
+  gtk_widget_show (dialog_vbox7);
+
+  vbox12 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox12);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox7), vbox12, TRUE, TRUE, 0);
+
+  hseparator2 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator2);
+  gtk_box_pack_start (GTK_BOX (vbox12), hseparator2, FALSE, FALSE, 0);
+
+  hbox17 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox17);
+  gtk_box_pack_start (GTK_BOX (vbox12), hbox17, TRUE, TRUE, 0);
+
+  vseparator2 = gtk_vseparator_new ();
+  gtk_widget_show (vseparator2);
+  gtk_box_pack_start (GTK_BOX (hbox17), vseparator2, FALSE, FALSE, 0);
+
+  scrolledwindow4 = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_show (scrolledwindow4);
+  gtk_box_pack_start (GTK_BOX (hbox17), scrolledwindow4, TRUE, TRUE, 0);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow4), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+
+  treeview = gtk_tree_view_new ();
+  gtk_widget_show (treeview);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow4), treeview);
+
+  vseparator1 = gtk_vseparator_new ();
+  gtk_widget_show (vseparator1);
+  gtk_box_pack_start (GTK_BOX (hbox17), vseparator1, FALSE, FALSE, 0);
+
+  vbox13 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox13);
+  gtk_box_pack_start (GTK_BOX (hbox17), vbox13, FALSE, FALSE, 0);
+
+  edit_bt = gtk_button_new_with_mnemonic (_("edit the selected sites"));
+  gtk_widget_show (edit_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), edit_bt, FALSE, FALSE, 0);
+
+  remove_bt = gtk_button_new_with_mnemonic (_("remove the selected sites"));
+  gtk_widget_show (remove_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), remove_bt, FALSE, FALSE, 0);
+
+  button8 = gtk_button_new_with_mnemonic (_("New site"));
+  gtk_widget_show (button8);
+  gtk_box_pack_start (GTK_BOX (vbox13), button8, FALSE, FALSE, 0);
+
+  hseparator3 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator3);
+  gtk_box_pack_start (GTK_BOX (vbox12), hseparator3, FALSE, FALSE, 0);
+
+  dialog_action_area7 = GTK_DIALOG (sitelist_dialog)->action_area;
+  gtk_widget_show (dialog_action_area7);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area7), GTK_BUTTONBOX_END);
+
+  closebutton1 = gtk_button_new_from_stock ("gtk-close");
+  gtk_widget_show (closebutton1);
+  gtk_dialog_add_action_widget (GTK_DIALOG (sitelist_dialog), closebutton1, GTK_RESPONSE_CLOSE);
+  GTK_WIDGET_SET_FLAGS (closebutton1, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, sitelist_dialog, "sitelist_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, dialog_vbox7, "dialog_vbox7");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, vbox12, "vbox12");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, hseparator2, "hseparator2");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, hbox17, "hbox17");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, vseparator2, "vseparator2");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, scrolledwindow4, "scrolledwindow4");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, treeview, "treeview");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, vseparator1, "vseparator1");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, vbox13, "vbox13");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, edit_bt, "edit_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, remove_bt, "remove_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, button8, "button8");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, hseparator3, "hseparator3");
+  GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, dialog_action_area7, "dialog_action_area7");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, closebutton1, "closebutton1");
+
+  return sitelist_dialog;
 }
 

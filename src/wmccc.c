@@ -94,6 +94,17 @@ GtkWidget *bronson_wizard(char *widget) {
   }
 }
 
+GtkWidget *sitelist_dialog(char *widget) {
+  static GtkWidget *d = NULL;
+  if (!d) { d = create_sitelist_dialog(); g_assert(d); }
+  if (widget == NULL) 
+    return d;
+  else {
+    GtkWidget *w = lookup_widget(d, widget); g_assert(w);
+    return w;
+  }
+}
+
 /* lit out relit les prefs */
 int read_prefs() {
   char *err;
@@ -401,7 +412,7 @@ int validate_new_board_dialog()
   return 0;
 }
 
-void run_new_board_dialog()
+int run_new_board_dialog()
 {
   if (prepare_new_board_dialog() == 0) {
     do {
@@ -454,7 +465,21 @@ int validate_pinnipede_dialog()
     multi_get_color_button(pinnipede_dialog("pp_url_color_bt"), &sp->pp_url_color.opaque);
     multi_get_color_button(pinnipede_dialog("pp_visited_url_color_bt"), &sp->pp_visited_url_color.opaque);
   }
+  printf("kldfskjfds\n");
   prefs_write_to_file(Prefs,stderr);
+  printf("kldfskjfds\n");
+  return 0;
+}
+
+int run_pinnipede_dialog() {
+  if (prepare_pinnipede_dialog() == 0) {
+    do {
+      int rep = gtk_dialog_run(GTK_DIALOG(pinnipede_dialog(NULL)));
+      if (rep != GTK_RESPONSE_OK) break;        
+      printf("pinni finished\n");
+    } while (validate_pinnipede_dialog());
+  }
+  gtk_widget_hide(GTK_WIDGET(pinnipede_dialog(NULL)));
   return 0;
 }
 
@@ -607,15 +632,158 @@ int run_edit_dialog() {
 }
 
 int run_bronson_wizard() {
+  g_signal_connect ((gpointer) bronson_wizard("wizard_new_board_bt"), "clicked",
+                    G_CALLBACK (run_new_board_dialog), NULL);
+  g_signal_connect ((gpointer) bronson_wizard("wizard_new_feed_bt"), "clicked",
+                    G_CALLBACK (run_new_board_dialog), NULL);
+  g_signal_connect ((gpointer) bronson_wizard("wizard_edit_options_bt"), "clicked",
+                    G_CALLBACK (run_edit_dialog), NULL);
+
   int rep = gtk_dialog_run(GTK_DIALOG(bronson_wizard(NULL)));
-  printf("rep = %d\n");
+  printf("rep = %d\n",rep);
+  return 0;
+}
+
+enum { SITE_ENABLED_COLUMN, SITE_NAME_COLUMN, BACKEND_COLUMN, N_COLUMN };
+
+/*static void
+tree_selection_changed_cb (GtkTreeSelection *selection, gpointer data)
+{
+        GtkTreeIter iter;
+        GtkTreeModel *model;
+        gchar *author;
+
+        if (gtk_tree_selection_get_selected (selection, &model, &iter))
+        {
+                gtk_tree_model_get (model, &iter, AUTHOR_COLUMN, &author, -1);
+
+                g_print ("You selected a book by %s\n", author);
+
+                g_free (author);
+        }
+}
+*/
+
+struct SiteListModel {
+  GtkListStore *store;
+  GtkTreeSelection *select;
+};
+
+
+void sitelist_remove_cb(GtkWidget *button, struct SiteListModel *mdl) {
+  GtkTreeIter iter;
+  unsigned count = 0, j;
+  if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
+    do {
+      gboolean enabled;
+      gchar *site_name;
+      gtk_tree_model_get(GTK_TREE_MODEL(mdl->store), &iter, 
+                         SITE_NAME_COLUMN, &site_name,
+                         SITE_ENABLED_COLUMN, &enabled,
+                         -1);
+      if (gtk_tree_selection_iter_is_selected(mdl->select,&iter)) {
+        printf("%s [%d] is selected!\n", site_name, enabled);
+        wmcc_site_prefs_destroy(Prefs->site[count]);
+        Prefs->site[count] = NULL;
+      }
+      g_free(site_name);
+      ++count;
+    } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(mdl->store), &iter));
+  }
+  for (count = 0, j=0; count < Prefs->nb_sites; ++count) {
+    if (Prefs->site[count]) {
+      Prefs->site[j++] = Prefs->site[count];
+    }
+  }
+  Prefs->nb_sites = j;
+  gtk_dialog_response(GTK_DIALOG(sitelist_dialog(NULL)),1); 
+}
+
+void sitelist_edit_cb(GtkWidget *button, struct SiteListModel *mdl) {
+  GtkTreeIter iter;
+  unsigned count = 0, count2 = 0;
+  glob.nb_selected_sites = 0;
+  if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
+    do {
+      if (gtk_tree_selection_iter_is_selected(mdl->select,&iter)) {
+        glob.selected_sites[glob.nb_selected_sites++] = Prefs->site[count];
+        count2++;
+      }
+      count++;
+    } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(mdl->store), &iter));
+  }
+  if (count2) {
+    run_pinnipede_dialog();
+    gtk_dialog_response(GTK_DIALOG(sitelist_dialog(NULL)),1);
+  }
+}
+
+int prepare_sitelist_dialog() {
+  static struct SiteListModel mdl = {0,};
+  static isinit = 0;
+  GtkTreeIter   iter;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
+  int i;
+  if (isinit) gtk_list_store_clear(mdl.store);
+  else mdl.store = gtk_list_store_new (N_COLUMN, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING);
+  for (i = 0; i < Prefs->nb_sites; ++i) {
+    gtk_list_store_append (mdl.store, &iter);
+    gtk_list_store_set(mdl.store, &iter, 
+                       SITE_ENABLED_COLUMN, Prefs->site[i]->check_board,
+                       SITE_NAME_COLUMN, Prefs->site[i]->all_names[0],
+                       BACKEND_COLUMN, Prefs->site[i]->site_root, -1);
+  }
+  if (!isinit) {
+    gtk_tree_view_set_model(GTK_TREE_VIEW(sitelist_dialog("treeview")), GTK_TREE_MODEL(mdl.store));
+    renderer = gtk_cell_renderer_toggle_new();  
+    column = gtk_tree_view_column_new_with_attributes ("Enabled",
+                                                       renderer,
+                                                       "active", SITE_ENABLED_COLUMN,
+                                                       NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (sitelist_dialog("treeview")), column);
+    
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes ("Site Name",
+                                                       renderer,
+                                                       "text", SITE_NAME_COLUMN,
+                                                       NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (sitelist_dialog("treeview")), column);
+    
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes ("Backend",
+                                                       renderer,
+                                                       "text", BACKEND_COLUMN,
+                                                       NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (sitelist_dialog("treeview")), column);
+    mdl.select = gtk_tree_view_get_selection (GTK_TREE_VIEW(sitelist_dialog("treeview")));
+    gtk_tree_selection_set_mode(mdl.select, GTK_SELECTION_MULTIPLE);
+    g_signal_connect(G_OBJECT(sitelist_dialog("remove_bt")), "clicked",
+                     G_CALLBACK(sitelist_remove_cb),
+                     (gpointer)&mdl);
+    g_signal_connect(G_OBJECT(sitelist_dialog("edit_bt")), "clicked",
+                     G_CALLBACK(sitelist_edit_cb),
+                     (gpointer)&mdl);
+  }
+  isinit = 1;
+  return 0;
+}
+
+int run_sitelist_dialog() {
+  int rep;
+  do {
+    prepare_sitelist_dialog();
+    rep = gtk_dialog_run(GTK_DIALOG(sitelist_dialog(NULL)));
+    printf("run_sitelist_dialog: response: %d\n", rep);
+    
+  } while (rep == 1);
   return 0;
 }
 
 int
 main (int argc, char *argv[])
 {
-  enum { ADD_NEW_BOARD, ADD_NEW_RSS, CONFIG_PINNI, ABORT_WMCCC, EDIT_CONFIG, BRONSON_WIZARD } action;
+  enum { ADD_NEW_BOARD, ADD_NEW_RSS, CONFIG_PINNI, ABORT_WMCCC, EDIT_CONFIG, BRONSON_WIZARD, SITELIST } action;
 #ifdef ENABLE_NLS_POUR_WMCCC
   bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
@@ -638,6 +806,10 @@ main (int argc, char *argv[])
   glob.modif_widget_color.blue = 000;
   gdk_colormap_alloc_color(gdk_colormap_get_system(), &glob.modif_widget_color, FALSE, TRUE);
 
+  if (argc <= 1) {
+    printf("syntaxe: \n wmccc -o optionfile -wizard\n");
+    exit(1);
+  }
 
   if (strcmp(argv[1], "-wmccpid")==0) {
     g_print("wmc³ launched from wmc²\n"); g_assert(argc == 5);
@@ -659,19 +831,21 @@ main (int argc, char *argv[])
   Prefs = NULL;
   read_prefs();
 
-  action = ABORT_WMCCC;
-  if (strcasecmp(argv[1], "-new-board")==0) {
-    action = ADD_NEW_BOARD; argc--; argv++;
-  } else if (strcasecmp(argv[1], "-new-rss")==0) {
-    action = ADD_NEW_RSS; argc--; argv++;
-  } else if (strcasecmp(argv[1], "-config-pinni")==0) {
-    action = CONFIG_PINNI; argc--; argv++;
-  } else if (strcasecmp(argv[1], "-edit")==0) {
-    action = EDIT_CONFIG; argc--; argv++;
-  } else if (strcasecmp(argv[1], "-wizard")==0 || strcasecmp(argv[1], "-charles-bronson")==0) {
-    action = BRONSON_WIZARD; argc--; argv++;
+  //action = ABORT_WMCCC;
+  action = SITELIST;
+  if (argc > 1) {
+    if (strcasecmp(argv[1], "-new-board")==0) {
+      action = ADD_NEW_BOARD; argc--; argv++;
+    } else if (strcasecmp(argv[1], "-new-rss")==0) {
+      action = ADD_NEW_RSS; argc--; argv++;
+    } else if (strcasecmp(argv[1], "-config-pinni")==0) {
+      action = CONFIG_PINNI; argc--; argv++;
+    } else if (strcasecmp(argv[1], "-edit")==0) {
+      action = EDIT_CONFIG; argc--; argv++;
+    } else if (strcasecmp(argv[1], "-wizard")==0 || strcasecmp(argv[1], "-charles-bronson")==0) {
+      action = BRONSON_WIZARD; argc--; argv++;
+    } 
   }
-
 
   while (argc > 1 && strcasecmp(argv[1], "-site")==0) {
     assert(argc > 2);
@@ -705,15 +879,12 @@ main (int argc, char *argv[])
       run_new_board_dialog();
     } break;
     case CONFIG_PINNI: {
-      if (prepare_pinnipede_dialog() == 0) {
-        do {
-          int rep = gtk_dialog_run(GTK_DIALOG(pinnipede_dialog(NULL)));
-          if (rep != GTK_RESPONSE_OK) break;        
-        } while (validate_pinnipede_dialog());
-      }
+      run_pinnipede_dialog();
     } break;
     case EDIT_CONFIG: run_edit_dialog(); break;
   case BRONSON_WIZARD: run_bronson_wizard(); break;
+  case SITELIST: 
+    run_sitelist_dialog(); break;
     default: g_assert(0);
   }
   //gtk_main();

@@ -9,3 +9,5 @@ GtkWidget* create_colorselection_dialog (void);
 GtkWidget* create_pinnipede_dialog (void);
 GtkWidget* create_edit_dialog (void);
 GtkWidget* create_bronson_wizard (void);
+GtkWidget* create_window1 (void);
+GtkWidget* create_sitelist_dialog (void);

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.24 2004/02/29 19:01:26 pouaite Exp $
+  rcsid=$Id: board.c,v 1.25 2004/03/03 23:00:39 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.25  2004/03/03 23:00:39  pouaite
+  commit du soir
+
   Revision 1.24  2004/02/29 19:01:26  pouaite
   et hop
 
@@ -391,6 +394,7 @@ board_create(Site *site, Boards *boards)
   board->auto_refresh = 1; //sp->board_auto_refresh;
   board->oldmd5 = NULL;
   board->rss_title = NULL;
+  board->encoding = NULL;
   return board;
 }
 
@@ -465,6 +469,7 @@ board_destroy(Board *board)
   board->msg = NULL;
   if (board->last_modified) free(board->last_modified);
   if (board->rss_title) free(board->rss_title);
+  if (board->encoding) free(board->encoding);
   release_md5_array(board);
   free(board);
 }
@@ -1572,7 +1577,6 @@ regular_board_update(Board *board, char *path) {
   const char *board_sign_msg = "<message>";
   const char *board_sign_login = "<login>";
   const char *my_useragent = board->coin_coin_useragent;
-  char *encoding = NULL;
   wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
@@ -1590,8 +1594,9 @@ regular_board_update(Board *board, char *path) {
       XMLAttr *a;
       for (a = xmlb.attr; a; a = a->next) {
         if (str_case_startswith(a->name, "encoding")) {
-          encoding = str_ndup(a->value,a->value_len);
-          printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, encoding);
+          if (board->encoding) free(board->encoding);
+          board->encoding = str_ndup(a->value,a->value_len);
+          printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding);
           break;
         }
       }
@@ -1602,7 +1607,7 @@ regular_board_update(Board *board, char *path) {
 
   if (r.error == 0) {
     int roll_back_cnt = 0;
-    while (http_get_line_and_convert(&r, s, 16384,encoding) > 0 && r.error == 0) {
+    while (http_get_line_and_convert(&r, s, 16384,board->encoding) > 0 && r.error == 0) {
       if (strncasecmp(s,board_sign_posttime, strlen(board_sign_info)) == 0) {
         md5_byte_t md5[16]; md5_state_t md5_state;
 	char stimestamp[15];
@@ -1662,7 +1667,7 @@ regular_board_update(Board *board, char *path) {
 	  }
 	}
 
-	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(info)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, board->encoding) <= 0) { errmsg="httpgetline(info)"; goto err; }
 
 	if (strncasecmp(s, board_sign_info,strlen(board_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
@@ -1674,7 +1679,7 @@ regular_board_update(Board *board, char *path) {
 
         convert_to_ascii(ua, p, BOARD_UA_MAX_LEN);
 
-	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(message)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, board->encoding) <= 0) { errmsg="httpgetline(message)"; goto err; }
 
 	if (strncasecmp(s, board_sign_msg,strlen(board_sign_msg))) { errmsg="messagesign"; goto err; }
 	
@@ -1685,7 +1690,7 @@ regular_board_update(Board *board, char *path) {
 	  int l;
 	  l = strlen(s);
 	  while (strncasecmp("</message>", s+l-10,10)) {
-	    if (http_get_line_and_convert(&r, s+l, 16384 - l, encoding) <= 0) {
+	    if (http_get_line_and_convert(&r, s+l, 16384 - l, board->encoding) <= 0) {
 	      errmsg="</message>"; goto err; 
 	    }
 	    l = strlen(s);
@@ -1712,7 +1717,7 @@ regular_board_update(Board *board, char *path) {
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
 	board_decode_message(board, msg, p);
 
-	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(login)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, board->encoding) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, board_sign_login,strlen(board_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 
@@ -1765,7 +1770,6 @@ regular_board_update(Board *board, char *path) {
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      board->site->prefs->site_name, path, http_error());
   }
-  if (encoding) free(encoding);
   return http_err_flag;
 }
 
@@ -1902,9 +1906,10 @@ rss_board_update(Board *board, char *path) {
     XMLAttr *a;
     for (a = xmlb.attr; a; a = a->next) {
       if (str_case_startswith(a->name, "encoding")) {
-        char *encoding = str_ndup(a->value,a->value_len);
-        printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, encoding);
-        convert_to_iso8859(encoding, &rsstxt); 
+        if (board->encoding) { free(board->encoding); board->encoding = NULL; }
+        board->encoding = str_ndup(a->value,a->value_len);
+        printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding);
+        convert_to_iso8859(board->encoding, &rsstxt);
         break;
       }
     }
@@ -2013,9 +2018,8 @@ rss_board_update(Board *board, char *path) {
 
       /* c'est trop la merde avec les decalages horaires.. */
       if (pubdate) {
-        time_t tt; 
-        if (str_to_time_t(pubdate, &tt)) {
-          time_t_to_tstamp(tt, stimestamp);
+          if (str_to_time_t(pubdate, &timestamp)) {
+          time_t_to_tstamp(timestamp, stimestamp);
           myprintf("converted %<YEL %s> to %<YEL %s> !\n", pubdate, stimestamp);
         } else BLAHBLAH(0, printf("could not convert '%s' to a valid date..\n", pubdate));
       }

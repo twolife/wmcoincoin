@@ -86,4 +86,5 @@ int is_url(const char *s);
 void url_au_coiffeur(unsigned char *url, int coupe);
 void dump_backtrace();
 void convert_to_iso8859(const char *src_encoding, char **psrc);
+void convert_from_iso8859(const char *dest_encoding, char **psrc);
 #endif

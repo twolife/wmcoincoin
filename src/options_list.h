@@ -25,6 +25,8 @@ OPT_dock_skin_pixmap,
 OPT_dock_fg_color,
 OPT_dock_draw_border,
 OPT_dock_iconwin,
+OPT_dock_auto_swallow,
+OPT_dock_disable_xft_antialiasing,
 OPT_palmipede_override_wmanager,
 OPT_dock_use_balloons,
 OPT_dock_balloons_font_family,
@@ -150,6 +152,8 @@ char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "dock.fg_color",
 "dock.draw_border",
 "dock.iconwin",
+"dock.auto_swallow",
+"dock.disable_xft_antialiasing",
 "palmipede.override_wmanager",
 "dock.use_balloons",
 "dock.balloons.font_family",
@@ -251,6 +255,6 @@ char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "!pinnipede.use_AM_PM",
 NULL};
 #else
-extern char **wmcc_options_strings;
+extern char *wmcc_options_strings[];
 #endif
 #endif

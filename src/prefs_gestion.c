@@ -548,7 +548,12 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	+ G_INT_OPT_COPY_IF_CHANGED(dock_fgcolor)) {
       reset_dock_pix = 1;
     }
-
+    
+    if (G_INT_OPT_COPY_IF_CHANGED(disable_xft_antialiasing)) {
+      rebuild_pinni = 1;
+      rebuild_palmi = 1;
+    }
+    
     /* test sur les grosses options du pinnipede */
     if (G_STR_OPT_COPY_IF_CHANGED(pp_fn_family) +
 	G_INT_OPT_COPY_IF_CHANGED(pp_fn_size) +

@@ -35,7 +35,7 @@ pp_tabs_set_pos_vert(Pinnipede *pp) {
   if (pp->nb_tabs == 0 || pp->use_minibar == 0) return;
   
   pp->tabs_x0 = 0; 
-  pp->tabs_w = 70;
+  pp->tabs_w = 80;
   pp->tabs_y0 = pp->win_height  - (pp->use_minibar ? MINIB_H : 0) - tab_h - (rest ? 1 : 0);
   pp->tabs_h = 0;
   for (cnt = 0; cnt < pp->nb_tabs; cnt++) {
@@ -251,9 +251,10 @@ pp_tabs_restore_state(Dock *dock, FILE *f)
   } else {
     printf("pp_tabs_restore_state : failed\n"); 
     for (i=0; i < 10; ++i) printf("%s\n",str_fget_line(f));
-    exit(1);
+    //exit(1);
   }
   pp_tabs_check_active(pp);
+  pp_tabs_set_visible_sites(pp);
 }
 
 /* a appeler apres update fortune */
@@ -586,10 +587,10 @@ pp_tabs_refresh(Dock *dock)
     /* efface toute la ligne */
     XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
     XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
-		   0, 0, pp->tabs[0].w, pp->fn_h);
+		   0, 0, pp->tabs[0].w, pp->tabs[0].h);
     for (i=0; i < pp->nb_tabs; i++) {
       PinnipedeTab *pt = &pp->tabs[i];
-      PinnipedeTab *npt = (i<pp->nb_tabs) ? &pp->tabs[i+1] : NULL;
+      PinnipedeTab *npt = (i<pp->nb_tabs-1) ? &pp->tabs[i+1] : NULL;
 
       /* le contenu */
       pp_tabs_draw_one_tab(dock, &pp->tabs[i], pp->lpix, 0, 0);
@@ -720,9 +721,9 @@ void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt, ppt_survol_actions sur
   int i, nb_selected = pp_tabs_nb_selected(pp);
   printf("cliquouille %d, selected = %d, nb_sel=%d, part=%d\n", pt - pp->tabs, pt->selected, nb_selected, survol_part);
   if (survol_part == PPT_MAY_UNSELECT_TAB) {
-    if (pt->selected && nb_selected > 1) { pt->selected = 0; }
+    if (pt->selected && nb_selected > 1) { pt->selected = 0; pp_tabs_save_selected(pp); }
     else if (nb_selected == 1) pp_tabs_swap_selected(pp);
-    else pt->selected = 1;
+    else { pt->selected = 1; pp_tabs_save_selected(pp); }
   } else if (survol_part == PPT_MAY_SET_MAIN_TAB) {
     if (pt == pp->active_tab && nb_selected == 1) { printf("restore\n"); pp_tabs_restore_selected(pp); }
     else { 
@@ -733,7 +734,7 @@ void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt, ppt_survol_actions sur
       pp->active_tab = pt;
     }
   } else {
-    if (!pt->selected) { pt->selected = 1; }
+    if (!pt->selected) { pt->selected = 1; pp_tabs_save_selected(pp); }
     else if (pt != pp->active_tab) { pp->active_tab = pt; pp_tabs_save_selected(pp); }
     else { if (nb_selected == 1) pp_tabs_restore_selected(pp); else pp_tabs_select_only_one(pp,pp->active_tab); }
   }
@@ -1480,20 +1481,21 @@ pp_check_balloons(Dock *dock, int x, int y)
         Board *board = pp->tabs[i].site->board;
         char *msg;
         if (board_is_rss_feed(board)) {
-          msg = str_printf("<p align=center>RSS Feed: <b>%s</b></p><br>",
+          msg = str_printf("<p>RSS Feed: <b>%s</b></p><br>",
                            board->rss_title ? board->rss_title : s->prefs->site_name);
         } else {
-          msg = str_printf("<p align=center>Regular board: <b>%s</b></p>"
+          msg = str_printf("<p>Regular board: <b>%s</b></p>"
                            "time shift: <font color=blue>%+02d:%02d:%02d</font><br>", 
                            s->prefs->site_name,
                            (int)(board->time_shift/3600), 
                            (int)((abs(board->time_shift)/60)%60), 
                            (int)(abs(board->time_shift)%60));
         }
-        msg = str_cat_printf(msg, "backend: <font color=blue>%s/%s</font><br>"
+        msg = str_cat_printf(msg, "backend: <font color=blue>%s%s%s/%s</font><br>"
                              "auto_refresh: %s (use ctrl-clic to switch)<br>"
                              "refresh frequency: <font color=blue>%d</font> sec",
-                             s->prefs->site_root, s->prefs->path_board_backend, 
+                             s->prefs->site_root,(strlen(s->prefs->site_path) ? "/" : ""),
+                             s->prefs->site_path, s->prefs->path_board_backend,
                              board->auto_refresh ? "<font color=blue>yes</font>" : "<font color=red>no</font>",
                              board->board_refresh_delay / (1000/WMCC_TIMER_DELAY_MS));
         balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-10, 0, 

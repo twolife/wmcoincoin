@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.17 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.18 2004/03/03 23:00:39 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.18  2004/03/03 23:00:39  pouaite
+  commit du soir
+
   Revision 1.17  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -473,7 +476,7 @@ check_for_horloge_ref_basic_helper(const unsigned char *ww, const char **site_na
       if (ww[i] == '@') {
 	l = i; /* ben oui faut pas affoler tout le monde */
 
-	if (isalnum(ww[i+1]))
+	if (isalnum(ww[i+1]) || ww[i+1] == '_')
 	  *site_name = ww+i+1;
 	
 /* 	printf("--> site_name = '%s'\n",*site_name);  */
@@ -718,7 +721,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	is_multi = 1;
 	do { 
 	  end++;
-	} while (isalnum(*end));
+	} while (isalnum(*end) || *end == '_');
 /* 		{ char c = *end; *end = 0; printf("TOK : %s\n", start); *end = c; } */
       }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */

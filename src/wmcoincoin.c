@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.88 2004/02/29 19:01:27 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.89 2004/03/03 23:00:40 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.89  2004/03/03 23:00:40  pouaite
+  commit du soir
+
   Revision 1.88  2004/02/29 19:01:27  pouaite
   et hop
 
@@ -633,14 +636,14 @@ char *formate_erreur( char *tribune, char *message_ignoble )
    cette fonction est executée par la boucle principale
  */
 void
-exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
+exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
 {
   HttpRequest r;
-  char *urlencod_msg;
+  char *msg, *urlencod_msg;
   char path[2048];
   Site *site;
 
-  BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), msg));
+  BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), msg_));
   BLAHBLAH(1, myprintf(_("    (useragent: '%<CYA %s>\n"), ua));
 
   site = sl_find_site_id(dock->sites, sid);
@@ -662,8 +665,10 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
 
   pp_set_download_info(site->prefs->site_name, "posting ...");
 
+  msg = strdup(msg_);
+  convert_from_iso8859(site->board->encoding, &msg);
   urlencod_msg = http_url_encode(msg,1); assert(urlencod_msg);
-
+  FREE_STRING(msg);
   snprintf(path, 2048, "%s%s/%s", strlen(site->prefs->site_path) ? "/" : "", site->prefs->site_path, site->prefs->path_board_add);
 
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
@@ -1587,6 +1592,15 @@ void initx(Dock *dock, int argc, char **argv) {
     dock->xiscreen[0].height= HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
   }
 
+  if (Prefs.auto_swallow) {
+    /* create the pinnipede window in advance since the swallower may use it */
+    dock->pp_win = XCreateSimpleWindow (dock->display, dock->rootwin, 
+                                        0, 0, 100, 100, 0, //pp->win_width,pp->win_height, 0,
+                                        BlackPixel(dock->display, dock->screennum),
+                                        WhitePixel(dock->display, dock->screennum));
+  } else dock->pp_win = None;
+
+
   /* set size hints 64 x 64 */
   xsh.flags = USSize | USPosition;
   xsh.width = 64;
@@ -1600,7 +1614,7 @@ void initx(Dock *dock, int argc, char **argv) {
   }
 
   /* create the application window */
-  dock->win = XCreateSimpleWindow(dock->display, dock->rootwin,
+  dock->win = XCreateSimpleWindow(dock->display, Prefs.auto_swallow ? dock->pp_win : dock->rootwin,
 				  xsh.x, xsh.y, xsh.width, xsh.height, 0,
 				  BlackPixel(dock->display, dock->screennum),
 				  WhitePixel(dock->display, dock->screennum));
@@ -1763,13 +1777,6 @@ void initx(Dock *dock, int argc, char **argv) {
 
   wmcc_set_wm_icon(dock);
 
-  if (Prefs.auto_swallow) {
-    /* create the pinnipede window in advance since the swallower may use it */
-    dock->pp_win = XCreateSimpleWindow (dock->display, dock->rootwin, 
-                                        0, 0, 100, 100, 0, //pp->win_width,pp->win_height, 0,
-                                        BlackPixel(dock->display, dock->screennum),
-                                        WhitePixel(dock->display, dock->screennum));
-  } else dock->pp_win = None;
   swallower_init(dock);
 }
 
@@ -2174,7 +2181,7 @@ int main(int argc, char **argv)
   /* essaye de restorer la taille / position du pinnipede / newswin */
   wmcc_save_or_restore_state(dock, 1);
 
-  if (Prefs.pinnipede_open_on_start == 1) {
+  if (Prefs.pinnipede_open_on_start == 1 || Prefs.auto_swallow) {
     pp_show (dock);
   }
 

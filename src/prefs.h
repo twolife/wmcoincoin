@@ -195,12 +195,13 @@ typedef struct _GeneralPrefs{
   char *dock_bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
   char *dock_skin_pixmap;
 
-
+  
 
   int default_trollo_speed; /* vitesse du trolloscope par defaut */
 
   char *browser_cmd; /* commande pour afficher une url dans un browser (le %s sera remplace par l'url) */
   char *browser2_cmd; /* le browser alternative (lancé par un clic milieu au lieu d'un clic gauche) */
+  int disable_xft_antialiasing;
   char *pp_fn_family; /* defaut : 'helvetica' */
   int pp_fn_size;
   int pp_start_in_transparency_mode;

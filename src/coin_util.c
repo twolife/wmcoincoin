@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.38 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.39 2004/03/03 23:00:39 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.39  2004/03/03 23:00:39  pouaite
+  commit du soir
+
   Revision 1.38  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -1027,53 +1030,66 @@ void assertion_failed(const char *fun, const char *ass) {
   abort();
 }
 
-struct cv_bloc {
-  char s[1024];
-  struct cv_bloc *next;
-};
-
-void
-convert_to_iso8859(const char *src_encoding, char **psrc) {
+static char*
+wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
   size_t inbytesleft, outbytesleft, outsz = 16384;
   size_t cnt, len;
   char       *srce;
   char *out, *oute;
   /* pour eviter d'ouvrir/fermer un million d'iconv.. */
   static iconv_t cv;
-  static char *oldencoding;
-  if (!*psrc || strlen(*psrc) == 0 || src_encoding == NULL) return;
+  static char *old_src_encoding = 0, *old_dest_encoding = 0;
+  assert(src_encoding); assert(dest_encoding);
+  if (!src || strlen(src) == 0 || src_encoding == NULL) return NULL;
 
-  if (oldencoding == NULL || strcmp(oldencoding,src_encoding)) {
-    if (oldencoding) { free(oldencoding); iconv_close(cv); }
-    oldencoding = strdup(src_encoding);    
-    cv = iconv_open("ISO8859-15", src_encoding);
-    if (cv == (iconv_t)(-1)) { 
-      fprintf(stderr, "iconv_open(%s,%s) failed : %s\n", "ISO8859-15", src_encoding, strerror(errno)); 
-      return;
+  if (old_src_encoding == NULL || old_dest_encoding == NULL || 
+      strcmp(old_src_encoding,src_encoding) ||
+      strcmp(old_dest_encoding,dest_encoding)) {
+    if (old_src_encoding) { 
+      free(old_src_encoding); free(old_dest_encoding); iconv_close(cv); 
+    }
+    old_src_encoding = strdup(src_encoding);
+    old_dest_encoding = strdup(dest_encoding);
+    cv = iconv_open(old_dest_encoding, old_src_encoding);
+    if (cv == (iconv_t)(-1)) {
+      fprintf(stderr, "iconv_open(%s,%s) failed : %s\n", dest_encoding, src_encoding, strerror(errno));
+      return NULL;
     }
   } else iconv(cv, NULL, NULL, NULL, NULL); /* reinitialisation au cas où */
   out = malloc(outsz); assert(out);
   do {
     errno = 0;
-    inbytesleft = strlen(*psrc);
+    inbytesleft = strlen(src);
     outbytesleft = outsz;
-    srce = *psrc; oute = out;
+    srce = src; oute = out;
     cnt = iconv(cv, &srce, &inbytesleft, &oute, &outbytesleft);
     if (cnt == (size_t)(-1)) {
       if (errno == E2BIG) {
         outsz *= 2; out = realloc(out, outsz); assert(out);
       } else {
-        printf("convert_to_iso8859: invalid %s sequence here: %.30s %02x\n", src_encoding, srce, *srce);
+        int i;
+        myprintf("wmcc_iconv('%<YEL %s>' -> '%<YEL %s>'): invalid %s sequence here: %<RED %.30s> [", 
+                 src_encoding, dest_encoding, srce, *srce);
+        for (i=0; i < 16 && srce[i]; ++i) printf("%02x ", srce[i]); printf("]\n");
         iconv(cv, NULL, NULL, NULL, NULL);
-        //iconv_close(cv);
         free(out); return;
       }
     }
   } while (cnt == (size_t)(-1));
-  free(*psrc); 
   len = oute - out;
   out = realloc(out, len + 1); assert(out);
   out[len] = 0;
-  *psrc = out;
-  //iconv_close(cv);
+  return out;
+}
+
+void
+convert_to_iso8859(const char *src_encoding, char **psrc) {
+  char *out = wmcc_iconv("ISO8859-15",src_encoding, *psrc);
+  if (out) { free(*psrc); *psrc = out; }
+}
+
+void
+convert_from_iso8859(const char *src_encoding, char **psrc) {
+  char *out = wmcc_iconv(src_encoding, "ISO8859-15", *psrc);
+  if (out) { free(*psrc); *psrc = out; }
 }

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.99 2004/02/29 19:01:27 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.100 2004/03/03 23:00:39 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -535,10 +535,16 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
   }
 
   /* affichage timestamp */
+  time_t tnow = time(NULL);
+  char sdate[20]; sdate[0] = 0;
+  if ((tnow / (24*3600)) - (pv->tstamp / (24*3600)) >= 2) { /* on va mettre la date */
+    struct tm *t = localtime(&pv->tstamp);
+    snprintf(sdate,20,"%02d/%02d#", t->tm_mon+1, t->tm_mday);
+  }
   if (with_seconds) {
-    snprintf(s, PVTP_SZ, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
+    snprintf(s, PVTP_SZ, "%s%02d:%02d:%02d",sdate, mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
   } else {
-    snprintf(s, PVTP_SZ, "%02d:%02d",mi->hmsf[0], mi->hmsf[1]);
+    snprintf(s, PVTP_SZ, "%s%02d:%02d",sdate, mi->hmsf[0], mi->hmsf[1]);
   }
   
   tmp = pw_create(s, PWATTR_TSTAMP | (pw == NULL ? 0 : PWATTR_HAS_INITIAL_SPACE), NULL, pv);  
@@ -3091,6 +3097,7 @@ pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
   }
   if (s_ts[0] == 0) {
     char s_subts[3];
+    char *pwstart = strchr(pw->w, '#'); if (!pwstart) pwstart = pw->w; else pwstart++;
     s_subts[0] = s_subts[1] = s_subts[2] = 0;
     switch(pw->parent->sub_tstamp) {
     case -1: break;
@@ -3099,7 +3106,7 @@ pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
     case 2: s_subts[0] = '³'; break;
     default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
     }
-    snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
+    snprintf(s_ts, 30, "%s%s", pw->w, s_subts);
   }
   if (editw_ismapped(dock->editw) == 0) {
     char *username = Prefs.site[id_type_sid(pw->parent->id)]->user_name;
@@ -3506,7 +3513,7 @@ pp_selection_refresh(Dock *dock)
       pp_draw_line(dock, pp->lpix, pp->lignes[l], bgpixel, 
 		   &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));
       XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, 
-		pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, pp->zmsg_x1, LINEY0(l));
+		pp->zmsg_w, pp->fn_h, pp->zmsg_x1, LINEY0(l));
     }
   }
 }

@@ -31,4 +31,4 @@ grep '#\.[a-z]' options | sed -e 's/#%.*//' | grep ':' | sed -e 's/:.*//' | sed 
 grep '#\[\.\][a-z]' options | sed -e 's/#%.*//' | grep ':' | sed -e 's/:.*//' | sed -e 's/#\[\.\]/!/' | uniq | awk '{ print "\""$0"\","}' >> src/options_list.h
 
 
-echo -e 'NULL};\n#else\nextern char **wmcc_options_strings;\n#endif\n#endif' >> src/options_list.h
+echo -e 'NULL};\n#else\nextern char *wmcc_options_strings[];\n#endif\n#endif' >> src/options_list.h

@@ -22,6 +22,7 @@ SwallowedApp * sw_swallow_win_id(Dock *dock, Window wid) {
   get_window_dimensions(dock->display, wid, &sa->winw, &sa->winh);
   sa->name = NULL; //name_of_window(wid);
   XReparentWindow(dock->display, wid, ew, 0, 0);
+  XMapWindow(dock->display,wid);
   sa->next = dock->swallow->apps;
   dock->swallow->apps = sa;
   dock->swallow->nb_swallowed++;

@@ -219,6 +219,8 @@ struct Board_ {
   md5_and_time *oldmd5; /* utilise de maniere transitoire par les feeds rss */
 
   char *rss_title; /* nul sur les boards non rss */
+
+  char *encoding; /* encoding utilisé pour les POST. Déduit de l'encoding du backend */
 };
 
 typedef struct SiteNameHash_ {
@@ -691,7 +693,7 @@ void swallower_init(Dock *dock);
 int swallower_is_autoswallowed(Dock *dock);
 void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1);
 void sw_redraw(Dock *dock);
-
+void swallower_autoswallow(Dock *dock);
 /* totoz_bookmark.c */
 const char *totoz_bookmark_filename();
 const char *totoz_bookmark_filename_html();
