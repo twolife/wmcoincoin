@@ -1,3 +1,10 @@
+2002-01-12  pouaite  <c0in@altern.org>
+
+	* src/editwin.c, src/wmcoincoin.c, src/pinnipede.c, options,
+	src/coincoin_prefs.c: gestion de l'iso8859-15 (l'encoding est
+	maintenant dans les options). Par contre il faut installer les
+	fontes kivonbien.
+
 2001-01-10 jarjarbinks 
 	* options, src/coincoin_prefs.c, src/global.h, src/wmcoincoin.c
 	patch qui ralentit progresivement les refresh de la tribune en cas de

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.3 2001/12/21 12:21:23 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.4 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.4  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.3  2001/12/21 12:21:23  pouaite
   pico bugfix
 
@@ -369,7 +372,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
 	     //   {"Scaron;",{352,0}},
 	     //	     {"scaron;",{353,0}},
 	     {"trade;", "(tm)"}, // non iso8859-1
-	     {"euro;", "EUR"},   // non iso8859-1
+	     {"euro;", "¤"},   // il faut iso8859-15 pour que ça fasse le bon char
 	     {"OElig;" , "OE"},
 	     {"oelig;" , "oe"},
 	     {NULL, "*"}};
@@ -390,7 +393,9 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
       int found;
 
       is_bug = 0;
-      /* y'a un bug dans remopte.php, on trouve des trucs du genre '&amp;quot;' au lieu de '&quot' */
+      /* y'a un bug dans remopte.php, on trouve des trucs du genre '&amp;quot;' au lieu de '&quot' 
+	 en fait c'est pas un bug, mais je gère ça comme un puerco
+       */
       if (with_bug_amp) {
 	if (strncmp(src+is, "&amp;", 5) == 0) {
 	  is_bug = 1; is += 4;
@@ -415,10 +420,13 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
 	  dest[id++] = tab[i].c[j++];
 	}
       }
-    } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-4) { /* cas particulier pour l'odieux EURO (encodage windows) */
+      /*    } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-4) { // cas particulier pour l'odieux EURO (encodage windows) 
       dest[id++] = 'E';
       dest[id++] = 'U';
       dest[id++] = 'R';
+      is++;*/
+    } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-2) { // cas particulier pour l'odieux EURO (encodage windows) 
+      dest[id++] = '¤';
       is++;
     } else {
       dest[id] = src[is];

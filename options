@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.5 2002/01/10 09:18:23 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.6 2002/01/12 17:29:07 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.6  2002/01/12 17:29:07  pouaite
+#%  support de l'iso8859-15 (euro..)
+#%
 #%  Revision 1.5  2002/01/10 09:18:23  pouaite
 #%  patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
 #%
@@ -20,6 +23,9 @@
 #%*/
 
 ###vous pouvez décommenter des options et changer leur valeurs
+
+### mettre iso8859-15 pour avoir le support de l'euro (il faut avoir installé ces fontes !)
+#font.encoding: iso8859-1
 
 ### delai enntre deux verifications de la tribune (en secondes)
 #tribune.delay: 30

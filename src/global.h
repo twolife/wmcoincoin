@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.5 2002/01/10 09:18:23 pouaite Exp $
+  rcsid=$Id: global.h,v 1.6 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.6  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.5  2002/01/10 09:18:23  pouaite
   patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
 
@@ -46,6 +49,8 @@ typedef struct _structPrefs{
   /* Au bout de combien de temps on arrête lesdites verifications (en min)
      Note : la fréquence diminue progressivement.*/
   int dlfp_max_refresh_delay;
+
+  char *font_encoding; /* 'iso8859-1' ou mieux, 'iso8859-15' */
 
   /* nb max de messages conserves en memoire */
   int tribune_max_msg;

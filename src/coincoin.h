@@ -305,7 +305,7 @@ typedef struct _EditW EditW;
 typedef struct _MsgBox MsgBox;
 typedef struct _Pinnipede Pinnipede;
 
-#define DOCK_FIXED_FONT "-*-fixed-*--10-*-iso8859-1"
+#define DOCK_FIXED_FONT "-*-fixed-*--10-*"
 #define DOCK_FIXED_FONT_W 6
 
 typedef struct _Dock {

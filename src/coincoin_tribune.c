@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.7 2002/01/10 09:03:06 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.8  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.7  2002/01/10 09:03:06  pouaite
   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
 
@@ -272,7 +275,7 @@ static char *
 nettoie_message_tags(const char *inmsg) 
 {
   char *outmsg;
-  char *s, *w, *p;
+  const char *s; char *w, *p;
   int in_comment;
 
   outmsg = malloc(strlen(inmsg)+1);

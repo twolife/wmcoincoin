@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.7 2002/01/06 17:06:27 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.8  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.7  2002/01/06 17:06:27  pouaite
   enlevage du patch de glandium (enfin j'essaye..)
 
@@ -55,7 +58,6 @@
 
 #define NB_MINIB 11
 
-#define MINIB_FONT "-*-fixed-*--10-*-iso8859-1"
 #define MINIB_FN_W 6
 
 typedef struct _PostVisual PostVisual;
@@ -130,6 +132,8 @@ struct _Pinnipede {
   int fortune_h, fortune_w;
 
   struct _PinnipedeFilter filter;
+
+  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
 
 
@@ -1559,7 +1563,7 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   char itbd_name[512];
 
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
-  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_base = XLoadQueryFont(display, base_name);
   if (!pp->fn_base) {
     fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
@@ -1568,12 +1572,12 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   }
 
   /* police italique -> on cherche d'abord la police oblique */
-  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_it = XLoadQueryFont(display, ital_name);
   if (!pp->fn_it) {
     /* puis la police italique */
     BLAHBLAH(1, fprintf(stderr, "police oblique '%s' non trouvee -> on cherche la police italique\n", ital_name));
-    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     pp->fn_it = XLoadQueryFont(display, ital_name);
     if (!pp->fn_it) {
       myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", ital_name);
@@ -1585,7 +1589,7 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   }
 
   /* police bold */
-  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_bd = XLoadQueryFont(display, bold_name);
   if (!pp->fn_bd) {
     myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte bold: '%s'\n", bold_name);
@@ -1594,12 +1598,12 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   }
 
   /* police bold oblique */
-  snprintf(itbd_name, 512, "-*-%s-bold-o-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(itbd_name, 512, "-*-%s-bold-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_itbd = XLoadQueryFont(display, itbd_name);
   if (!pp->fn_itbd) {
     /* puis la police bold italique */
     BLAHBLAH(1, fprintf(stderr, "police bold oblique '%s' non trouvee -> on cherche la police bold italique\n", itbd_name));
-    snprintf(itbd_name, 512, "-*-%s-bold-i-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+    snprintf(itbd_name, 512, "-*-%s-bold-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     pp->fn_itbd = XLoadQueryFont(display, itbd_name);
     if (!pp->fn_itbd) {
       myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", itbd_name);

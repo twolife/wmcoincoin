@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.5 2001/12/18 12:43:37 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.6 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.6  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.5  2001/12/18 12:43:37  pouaite
   ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 
@@ -53,13 +56,12 @@
 #include "coincoin.h"
 #include "../xpms/editwin_minib.xpm"
 #include "../xpms/clippy.xpm"
-
 #include "spell_coin.h" 
 
 #define FN_W 6
 #define FN_H 11
 #define FN_BASE_H 9
-#define EW_FONT "-*-fixed-*--10-*-iso8859-1"
+#define EW_FONT "-*-fixed-*--10-*"
 #define EW_NCOL 60
 #define EW_NROW 4
 
@@ -1306,10 +1308,15 @@ editw_build(Dock *dock)
   ew->win_xpos = ew->win_ypos = 0;
   ew->undo.buff = NULL;
   ew->last_command = OTHER;
-  ew->fn = XLoadQueryFont(dock->display, EW_FONT);
-  if (!ew->fn) {
-    myfprintf(stderr, "Impossible de charger la fonte " EW_FONT "\n");
-    exit(-1);
+  
+  {
+    char fn[512];
+    snprintf(fn, 512, "%s-%s", EW_FONT, Prefs.font_encoding);
+    ew->fn = XLoadQueryFont(dock->display, fn);
+    if (!ew->fn) {
+      myfprintf(stderr, "Impossible de charger la fonte %s \n", fn);
+      exit(-1);
+    }
   }
   
   ew->win_bgpixel = RGB2PIXEL(200,200,200);
@@ -1357,7 +1364,6 @@ editw_build(Dock *dock)
 
     sscanf(clippy_xpm[0], "%d %d", &ew->clippy_w, &ew->clippy_h);
   }
-
 
   {
     static int bt_x[NB_MINIBT] = { 0, 12, 27, 41, 55, 69, 83, 97, 111};

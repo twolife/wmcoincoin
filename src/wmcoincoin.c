@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.8 2002/01/10 09:18:23 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.9 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.9  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.8  2002/01/10 09:18:23  pouaite
   patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
 
@@ -2709,10 +2712,14 @@ main(int argc, char **argv)
 
     leds_create(&dock->leds);
 
-    dock->fixed_font = XLoadQueryFont(dock->display, DOCK_FIXED_FONT);
-    if (!dock->fixed_font) {
-      myfprintf(stderr, "Impossible de charger la fonte " DOCK_FIXED_FONT "\n");
-      exit(-1);
+    {
+      char fn[512];
+      snprintf(fn, 512, "%s-%s", DOCK_FIXED_FONT, Prefs.font_encoding);
+      dock->fixed_font = XLoadQueryFont(dock->display, fn);
+      if (!dock->fixed_font) {
+	myfprintf(stderr, "Impossible de charger la fonte %s\n", fn);
+	exit(-1);
+      }
     }
 
     //    assert(XpmCreatePixmapFromData(dock->display, dock->coinpix, letters_xpm, &pixmap_letters, NULL, NULL) == XpmSuccess);

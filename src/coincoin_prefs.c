@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.7 2002/01/10 09:18:23 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.8  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.7  2002/01/10 09:18:23  pouaite
   patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
 
@@ -813,6 +816,10 @@ read_coincoin_options (structPrefs *The_Prefs)
       
       BLAHBLAH(1,printf("traitement de: '%s'\n", s));
       ok = 0;
+      TEST_OPTION("font.encoding:", 1) {
+	if (The_Prefs->font_encoding) free(The_Prefs->font_encoding);
+	The_Prefs->font_encoding = strdup(optarg); ok++;
+      }
       TEST_OPTION("tribune.delay:", 1) {
 	option_set_tribune_check_delay(optarg, optname, The_Prefs); ok++;
       }
@@ -1095,6 +1102,8 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->dlfp_news_check_delay = 300; /* 1 fois toutes les 5 min */
   The_Prefs->debug = 0;
   The_Prefs->verbosity = 0;
+
+  The_Prefs->font_encoding = strdup("iso8859-1");
   The_Prefs->news_max_nb_days = 1;
   The_Prefs->news_fn_family =  strdup("helvetica");
   The_Prefs->news_fn_size = 12;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.3 2002/01/12 17:29:08 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.3  2002/01/12 17:29:08  pouaite
+  support de l'iso8859-15 (euro..)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -462,7 +465,7 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
   char tt_name[512];
 
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
-  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   ph->fn_base = XLoadQueryFont(display, base_name);
   if (!ph->fn_base) {
     fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
@@ -471,12 +474,12 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
   }
 
   /* police italique -> on cherche d'abord la police oblique */
-  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   ph->fn_ital = XLoadQueryFont(display, ital_name);
   if (!ph->fn_ital) {
     /* puis la police italique */
     BLAHBLAH(1, fprintf(stderr, "police oblique '%s' non trouvee -> on cherche la police italique\n", ital_name));
-    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     ph->fn_ital = XLoadQueryFont(display, ital_name);
     if (!ph->fn_ital) {
       myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", ital_name);
@@ -488,7 +491,7 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
   }
 
   /* police bold */
-  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-iso8859-1", fn_family, fn_size);
+  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   ph->fn_bold = XLoadQueryFont(display, bold_name);
   if (!ph->fn_bold) {
     myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte bold: '%s'\n", bold_name);
@@ -497,7 +500,7 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
   }
 
   /* police courier */
-  snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-iso8859-1", fn_size);
+  snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-%s", fn_size, Prefs.font_encoding);
   ph->fn_tt = XLoadQueryFont(display, tt_name);
   if (!ph->fn_tt) {
     myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte courier: '%s'\n", tt_name);
