@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.5 2002/01/18 00:28:42 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.6 2002/01/31 11:15:42 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.6  2002/01/31 11:15:42  pouaite
+##   fix compilation
+##
 ##   Revision 1.5  2002/01/18 00:28:42  pouaite
 ##   le ménage continue + grosses modifs (experimentales pour l'instant)
 ##
@@ -38,7 +41,7 @@ defaultuseragents.h: ../useragents
 defaultoptionsfile.h: ../options
 	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/"/\\"/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
 
-wmcoincoin.o: defaultuseragents.h
+useragents_file.o: defaultuseragents.h
 
 coincoin_prefs.o: defaultoptionsfile.h
 
