@@ -400,7 +400,7 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
   ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
 				  jour la led indiquant 'gethostbyname' */
   ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-  phost = gethostbyname(hostname); /* rahhh comme c'est lent :-( */
+  phost = GETHOSTBYNAME(hostname); /* rahhh comme c'est lent :-( */
   ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
   if (phost) {
     addr[0] = (unsigned char)phost->h_length;
@@ -429,7 +429,8 @@ static SOCKET
 http_connect(const char *host_name, int port)
 {
   SOCKET sockfd = INVALID_SOCKET;
-  struct sockaddr_in dest_addr;   /* Contiendra l'adresse de destination */
+
+  SOCKADDR_IN dest_addr;   /* Contiendra l'adresse de destination */
   int num_try;
 
   static unsigned char addr[65]; /* premier char = nombre d'octets utilisés pour reprensenter l'adresse 
@@ -494,13 +495,19 @@ http_connect(const char *host_name, int port)
 	return INVALID_SOCKET;
       }
   
-      dest_addr.sin_family = AF_INET;       
+#ifndef USE_IPV6
+      dest_addr.sin_family = AF_INET;
       dest_addr.sin_port = htons(port);
-
       /* pris dans wget, donc ca doit etre du robuste */
       memcpy(&dest_addr.sin_addr, addr+1, addr[0]);
-
       memset(&(dest_addr.sin_zero), 0, 8);
+#else
+      //      dest_addr.sin6_len = sizeof(dest_addr);
+      dest_addr.sin6_family = AF_INET6;
+      dest_addr.sin6_port = htons(port);
+      memcpy(&dest_addr.sin6_addr, addr+1, addr[0]);
+#endif
+
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les

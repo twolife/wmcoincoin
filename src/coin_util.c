@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.24 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.25 2002/06/18 21:00:22 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.25  2002/06/18 21:00:22  pouaite
+  support ipv6 (non testé)
+
   Revision 1.24  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -402,7 +405,7 @@ str_substitute(const char *src, const char *key, const char *substitution) {
 char *
 shell_quote(const char *src)
 {
-  char *quote = "&;`'\\\"|*?~<>^()[]{}$ ";
+  char *quote = "&;`'\\\"|*?~<>^()[]{}$ \t";
   int i,dest_sz;
   const char *p;
   char *dest;

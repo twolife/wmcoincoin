@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.12 2002/06/02 12:37:36 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.13 2002/06/18 21:00:24 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.13  2002/06/18 21:00:24  pouaite
+  support ipv6 (non testé)
+
   Revision 1.12  2002/06/02 12:37:36  pouaite
   fix gethostbyname --> version 2.3.8b
 
@@ -39,12 +42,11 @@
 
 
 
-
 /* 
    connection sans gestion de timeout ... pour les OS à moelle ? 
 */
 int
-net_tcp_connect(int fd, struct sockaddr_in *sock)
+net_tcp_connect(int fd, SOCKADDR_IN *sock)
 {
   int ret;
   assert(fd >= 0);
@@ -53,7 +55,7 @@ net_tcp_connect(int fd, struct sockaddr_in *sock)
   do {
     ALLOW_X_LOOP; ALLOW_ISPELL;
   block_sigalrm(1);
-    ret = connect (fd, (struct sockaddr *) sock, sizeof (struct sockaddr_in));
+    ret = connect (fd, (struct sockaddr *) sock, sizeof (SOCKADDR_IN));
   block_sigalrm(0);
   ALLOW_X_LOOP; ALLOW_ISPELL;
 //    printf("connect: ret=%d, errno=%d (%s)\n", ret, errno, strerror(errno));
@@ -63,7 +65,7 @@ net_tcp_connect(int fd, struct sockaddr_in *sock)
 
 /* vole dans une mailing liste (je sais plus laquelle) , ça n'a pas l'air ultra-portable */
 static int
-net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs)
+net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
 {
   struct timeval timeout;
   fd_set write_fds;
@@ -90,7 +92,7 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
      * Try to connect.
      */
     if (connect (fd, (struct sockaddr *) sock,
-		 sizeof (struct sockaddr_in)) < 0) {
+		 sizeof (SOCKADDR_IN)) < 0) {
       ALLOW_X_LOOP; ALLOW_ISPELL;
       /* le test sur EISCONN special BSD -> bsd connecte plus vite que l'éclair? */
       if (errno == EISCONN) goto cassos;
@@ -173,7 +175,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     }
 
     BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname en cours..\n"));
-    phost=gethostbyname(hostname);
+    phost=GETHOSTBYNAME(hostname);
     BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname terminé..\n"));
     if( phost != NULL ) {
       unsigned char l;
