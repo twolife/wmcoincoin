@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.24 2002/05/15 09:55:13 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.25 2002/05/18 21:29:41 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.25  2002/05/18 21:29:41  pouaite
+  PAN PAN le vilain bug
+
   Revision 1.24  2002/05/15 09:55:13  pouaite
   fix http.c
 
@@ -136,8 +139,9 @@ gros_read(HttpRequest *r, char *what)
       fprintf(stderr, "probleme pendant la lecture de %s: %s\n", what, http_error());
       if (s) free(s);
       s = NULL;
+    } else {
+      s[bi] = 0;
     }
-    s[bi] = 0;
     BLAHBLAH(0, myprintf("%s, lu: %<mag %s>\n", what, s));
   }
   return s;
