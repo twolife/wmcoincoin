@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.8 2002/06/09 11:42:46 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.8  2002/06/09 11:42:46  pouaite
+  patch lordOric
+
   Revision 1.7  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -191,11 +194,14 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
   int htext, space_width, parag_skip, line_skip, parag_align, next_parag_align;
   int flag_debut_ligne, flag_item_to_add;
   int x,y,w;
-  XFontStruct *cur_fn;
+  XFontStruct *cur_fn=NULL;
 
   unsigned long cur_pixel_color;
 
-
+	int isListe = 0;
+	int isOrderedListe = 0;
+	int indexListe = 0;
+	int isBlockquote = 0;
 
   BLAHBLAH(2,printf("picohtml_parse\n"));
   if (buff == NULL) {
@@ -238,14 +244,33 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
      /* il est pas beau le parser d'html ? */
     if (strncasecmp(tok, "<br", 3) == 0) {
       new_parag = 1;
-    } else if (strcasecmp(tok, "<p>") == 0) {
+ /* Patch lordOric */			
+    } else if (strcasecmp(tok, "<ol>") == 0) {
+			y+=4; isOrderedListe = 1; indexListe = 0;
+    } else if (strcasecmp(tok, "</ol>") == 0) {
+      new_parag = 1; y+=4; isOrderedListe = 0;
+    } else if (strcasecmp(tok, "<ul>") == 0) {
+			y+=4; 
+    } else if (strcasecmp(tok, "</ul>") == 0) {
+      new_parag = 1; y+=4;
+		} else if (strcasecmp(tok, "<li>") == 0 ) {
+			new_parag = 1; isListe = 1;	indexListe++;
+		} else if (strcasecmp(tok, "</li>") == 0 ) {
+			isListe = 0;  
+    } else if (strcasecmp(tok, "<blockquote>") == 0) {
+      new_parag = 1; next_parag_align = NORMAL; isBlockquote = 1;
+    } else if (strcasecmp(tok, "</blockquote>") == 0) {
+      new_parag = 1; next_parag_align = NORMAL; y += 10; isBlockquote = 0;
+/* Patch lordOric */
+   } else if (strcasecmp(tok, "<p>") == 0) {
       new_parag = 1; next_parag_align = NORMAL; y += 10; 
     } else if (strcasecmp(tok, "</p>") == 0) {
       new_parag = 1; next_parag_align = NORMAL; y += 4;
     } else if (strcasecmp(tok, "<p align=center>") == 0) {
       new_parag = 1; next_parag_align = CENTER; 
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
-    } else if (strcasecmp(tok, "<p align=right>") == 0) {
+
+		} else if (strcasecmp(tok, "<p align=right>") == 0) {
       new_parag = 1; next_parag_align = RIGHT;
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
     } else if (strcasecmp(tok, "<tab>") == 0) { /* extension proprietaire ;-) */
@@ -280,13 +305,13 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
     } else if (strncasecmp(tok, "</a", 3) == 0) {
       attrib &= ~CATTR_LNK;
       cur_link = NULL;
-    } else if (strcasecmp(tok, "<b>") == 0) {
+    } else if (strcasecmp(tok, "<b>") == 0 || strcasecmp(tok,"<strong>") == 0) {
       attrib |= CATTR_BOLD;
-    } else if (strcasecmp(tok, "</b>") == 0) {
+    } else if (strcasecmp(tok, "</b>") == 0 || strcasecmp(tok,"</strong>") == 0 ) {
       attrib &= ~CATTR_BOLD;
-    } else if (strcasecmp(tok, "<i>") == 0) {
+    } else if (strcasecmp(tok, "<i>") == 0 || strcasecmp(tok,"<em>") == 0) {
       attrib |= CATTR_ITAL;
-    } else if (strcasecmp(tok, "</i>") == 0) {
+    } else if (strcasecmp(tok, "</i>") == 0 || strcasecmp(tok,"</em>") == 0 ) {
       attrib &= ~CATTR_ITAL;
     } else if (strcasecmp(tok, "<tt>") == 0) {
       attrib |= CATTR_TT;
@@ -332,6 +357,20 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       parag_align = next_parag_align;
       new_parag = 0;
       flag_debut_ligne = 1;
+			if ( isListe )
+			{
+				char str[5];
+
+				if ( isOrderedListe )
+					/* je défie quiconque de poster une news avec une liste de plus de 99 éléments */
+					snprintf(str,5,"%2d.", indexListe); 
+				else
+					strcpy(str,"-");
+				
+				it_debut_ligne = picohtml_additem(ph,str, strlen( str ), attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
+				flag_debut_ligne = 0;
+				x+=ph->parag_indent;
+			}
     }
 
     if (flag_item_to_add) {
@@ -356,7 +395,10 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       if (x + w + (space_width)*(1-new_parag) >= width) {
 	//justif_ligne(ph, it_debut_ligne, xpos_debut_ligne, width, parag_align);
 	justif_ligne(it_debut_ligne, width, parag_align);
-	x = 0;
+	if ( isBlockquote )
+		x = ph->parag_indent;
+	else
+		x = 0;
 	y += line_skip; 
 	xpos_debut_ligne = x;
 	it_debut_ligne = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);

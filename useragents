@@ -1,4 +1,4 @@
-#useragents rcsid=$Id: useragents,v 1.7 2002/05/12 22:06:27 pouaite Exp $ 
+#useragents rcsid=$Id: useragents,v 1.8 2002/06/09 11:42:46 pouaite Exp $ 
 #syntaxe: forme[tab]couleur_hexa[tab]regexp[tab]nom[fin_de_ligne]
 #Utilisez bien des TABULATIONS pour separer les champs
 #les formes disponibles:
@@ -21,6 +21,10 @@ carre		ffff00		.*[Tt]ribune[Cc]lient.*	TClient
 croix		00ff00		.*[Dd]ae.*		Dae
 croix		4040ff		.*[Kk]ad.*		Kadreg
 croix		00ffff		jr-lamoule		JR
+#le ua stealth, spécialement fait pour les goths
+carre		000000		[sS]tealth		.
+carre		97a053		.*Crazy Bro		CrazyBrowser
+carre		66843f		.*Net[Cc]aptor.*	Netcaptor
 carre		ff00ff		.*OmniWeb.*		MACOS X
 carre		ff00ff		.*StarOffice/.*		StarOffice
 trianglegauche	ffff00		.*Nautilus.*		Nautilus
@@ -29,12 +33,12 @@ carre		ff0000		.*MSIE 6.0; Windows NT 5.1.*	IE6/WinXP
 triangle	40c0c0		.*Konqueror/3.*		Konq3
 triangle	40ff40		.*Konqueror.*		Konqueror
 losange		f07010		Mozilla/5.0.*Linux.*	Moz-Linux
+losange		808080		Mozilla/5.0.*NT 5.0.*	Moz/W2K
+losange		a08080		Mozilla/5.0.*NT 5.1.*	Moz/WinXP
 carre		ff0000		.*Linux.*smp		LinuxSMP
-trou		ffd0f0		.*Linux.*2.2.17-21mdk.*	Mdk7.2
 trou		fff080		.*Linux 2\.4\.8\-26mdk.*	Mdk8.1
 trou		fff080		.*Linux.*2.4.*mdk.*	Mdk8.x
 carre		ffd0f0		.*Linux.*mdk.*		Mandrake
-carre		ffb040		.*Linux 2.2.16-22.*	RedHat7 ?
 carre		ff6000		.*Linux.2.0.*		Linux 2.0
 carre		ffd000		.*Linux.2.2.*		Linux 2.2
 carre		ffa000		.*Linux.2.4.*		Linux 2.4
@@ -58,6 +62,7 @@ triangle	4000ff		.*MSIE 5.*NT.*		IE5/NT
 triangle	50b06f		.*MSIE 5.*dows 95.*	IE5/w95
 triangle	70c08f		.*MSIE 5.*dows 98.*	IE5/w98
 coin12		2000ff		.*MSIE 5.5.*		MSIE 5.5
+triangle	0ca8ff		.*MSIE 6.*NT 5.0.*	IE6/W2K
 coin22		0000ff		.*MSIE 6.0.*		MSIE 6
 triangle	0000ff		.*MSIE.*		MSIE
 trou		f080f0		.*HP-UX.*		HP-UX
