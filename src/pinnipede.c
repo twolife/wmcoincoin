@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.80 2002/09/25 22:02:15 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.81 2002/10/05 18:08:14 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2036,6 +2036,24 @@ pp_show(Dock *dock)
   pp->survol_hash = 0;
 }
 
+
+static board_msg_info*
+pp_find_message_at_xy(Dock *dock, int x, int y) {
+  Pinnipede *pp = dock->pinnipede;
+  board_msg_info *mi = NULL;
+  if (y >= pp->zmsg_y1 && y <= pp->zmsg_y2 && 
+      x >= 0 && x < (pp->win_width - (pp->sc ? SC_W : 0))) {
+    int l;
+    for (l=0; l < pp->nb_lignes; l++) {
+      if (y >= LINEY0(l) && y <= LINEY1(l) && pp->lignes[l]) {
+	mi = boards_find_id(dock->sites->boards, pp->lignes[l]->parent->id);
+	return mi;
+      }
+    }
+  }
+  return NULL;
+}
+
 static PostWord *
 pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
 {
@@ -2481,193 +2499,276 @@ pp_set_word_filter(Dock *dock, char *word)
   pp_refresh(dock, pp->win, NULL);	  
 }
 
-/* gestion des ctrl+left click sur un mot du pinnipede
-   --> permet l'activation du filtre sur le mot */
-static void
-pp_handle_control_left_clic(Dock *dock, int mx, int my)
-{
-  Pinnipede *pp = dock->pinnipede;
-  Boards *boards = dock->sites->boards;
-
-  if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
-    pp_set_word_filter(dock, pp->last_selected_text);
-  } else {
-    PostWord *pw;
-    pw = pp_get_pw_at_xy(pp, mx, my);
-    if (pw) {
-      if (pw->attr & PWATTR_TSTAMP) {
-	/* control+clic sur l'horloge -> activation du filtre */
-	pp_set_thread_filter(dock, pw->parent->id); 
-      } else if (pw->attr & PWATTR_LOGIN) {
-	/* control+clic sur un <login> -> filtre ! */
-	pp_set_login_filter(dock, pw->w);
-      } else if (pw->attr & PWATTR_NICK) {
-	/* control+clic sur un useragent raccourci -> filtre ! */
-	
-	board_msg_info *mi;
-	
-	mi = boards_find_id(boards, pw->parent->id);
-	if (mi) {
-	  pp_set_ua_filter(dock, mi->useragent);
-	}
-      } else if (strlen(pw->w) > 0) {
-	/* control+clic sur un mot normal -> filtre ! */
-	char *s, *p;
-	s = strdup(pw->w);
-	p = s + strlen(s) -1;
-	while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
-	p = s;
-	while (*p && !isalnum((unsigned char)*p)) p++;
-	if (strlen(p)) {
-	  pp_set_word_filter(dock, p);
-	} else {
-	  pp_set_word_filter(dock, pw->w);
-	}
-	free(s);
-      }
-    }
-  }
-}
 
 static void
-pp_handle_alt_clic(Dock *dock, XButtonEvent *ev)
+gogole_search(Dock *dock, int mx, int my, char *w)
 {
   Pinnipede *pp = dock->pinnipede;
-  int mx,my;
-  char *w = NULL;
 
   if (Prefs.gogole_search_url == NULL) return;
-  mx = ev->x; my = ev->y;
-  if (pp->last_selected_text) {
-    w = pp->last_selected_text;
-  } else {
-    PostWord *pw;
-    pw = pp_get_pw_at_xy(pp, mx, my);
-    if (pw) w = pw->w;
-  }
   if (w) {
     char *s;
     char *ww;
     ww = str_preencode_for_http(w);
     if (strlen(ww)>512) ww[512] = 0; /* faut pas pousser grand mère */
     s = str_substitute(Prefs.gogole_search_url, "%s", ww);
-    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, ev->button == Button1 ? 1 : 2);
+    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 1);
     free(s); free(ww); 
   }
 }
 
-/* gestion des shift+left click sur un mot du pinnipede
-   --> permet l'ajout/enlevement de mots clefs de mise en valeur de post
-   
-ET aussi
-
-  gestion des shift+right click sur un mot du pinnipede
-   --> permet la plopification/deploppification des messages selon
-   un useragent/login/mot clef
-*/
-static void
-pp_handle_shift_clic(Dock *dock, KeyList **pkl, int mx, int my, int plopify_level)
+static char *str_simplif(char *s)
 {
+  char *p, *p2;
+  
+  /* simplification du mot */
+  p = s + strlen(s) -1;
+  while (p > s && !isalnum((unsigned char)*p)) p--;
+  //  if (p > s) *(p+1) = 0;
+  p2 = s;
+  while (p2 < p && !isalnum((unsigned char)*p2)) p2++;
+  if (p2 != p) {
+    *(p+1)=0;
+    return p2;
+  }
+  else return s;
+}
+
+void
+pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   Pinnipede *pp = dock->pinnipede;
   Boards *boards = dock->sites->boards;
-  int num;
-  unsigned boitakon_state=0;
-
-  num = 0;
-  if (plopify_level == 2) num = 1;
-  if (plopify_level == 3) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
-  if (plopify_level == 4) num = 3; /* j'ai la puissance de feu d'un croiseur */
-
-  if (plopify_level) {
-    boitakon_state = key_list_get_state(*pkl, 2);
-  }
-
-  /* shift clic alors que du texte est selectionné: on applique le truc sur le texte selectionné */  
-
+  char *descr = NULL;
+  char *txt = NULL;
+  PostWord *pw = NULL;
+  int mx, my, choice, cnt, redraw;
+  board_msg_info *mi = NULL;
+  KeyList *hk_plop = NULL, *hk_emph = NULL, *hk;
+  enum { WORD, UA_WITH_LOGIN, UA_NO_LOGIN, LOGIN, TSTAMP, THREAD, NOTHING } what_clicked;
+  int hk_what_clicked = -1, plop_lvl, emph_lvl;
+  enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
+	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
+	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, 
+	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
+	 };
+  char s_thread[20]; /* 'txt' peut pointer dessus */
+  char s_word[512];
+  char s_id[30];
+  plopup_unmap(dock);
+  mx = event->x; my = event->y;
+  what_clicked = NOTHING;
+  hk_what_clicked = -1;
   if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
-    *pkl = key_list_swap(*pkl, pp->last_selected_text, HK_WORD, 0);
+    snprintf(s_word, 512, "%s", pp->last_selected_text);
+    txt = s_word;
+    if (strlen(txt)) {
+      descr = str_printf("The selected <font color=blue>text</font> is '<font color=#800000>%s</font>'",
+			 txt);
+      what_clicked = WORD;
+      hk_what_clicked = HK_WORD;
+    }
   } else {
-    PostWord *pw;
-    int thread_clic;
-
-    thread_clic = 0;
-    pw = pp_get_pw_at_xy(pp, mx, my);
-
-    if (pw) {
-      if (pw->attr & PWATTR_TROLLSCORE) thread_clic = 1;
-    } else {
-      if (mx < 20) { /* si on clique à gauche de l'horloge, on considère une action sur tout le
-			thread (le pb est qu'il n'y a pas forcement de mot à cet endroit) */
-	pw = pp_get_pw_at_xy(pp, 20, my); /* le 20 est une ruse de chacal puant */
-	thread_clic = 1;    
+    pw = pp_get_pw_at_xy(pp, event->x, event->y);
+    if (pw && (pw->attr & PWATTR_TROLLSCORE)) {
+      what_clicked = THREAD;
+    } else if (mx < 20) { /* si on clique à gauche de l'horloge, on considère une action sur tout le
+			     thread (le pb est qu'il n'y a pas forcement de mot à cet endroit) */
+      pw = pp_get_pw_at_xy(pp, 30, my); /* le 20 est une ruse de chacal puant */
+      if (pw) what_clicked = THREAD;
+    }
+    if (what_clicked == THREAD) {
+      if (mi) {
+	descr = str_printf(_("The selected element is the <font color=blue>thread</font> '<font color=#800000>id=%d</font>'"), id_type_lid(mi->id));
+	snprintf(s_thread, 20, "%d", id_type_to_int(mi->id));
+	txt = s_thread;
+	hk_what_clicked = HK_THREAD;
+      } else {
+	what_clicked = NOTHING;
       }
     }
-
-
-
     if (pw) {
-      board_msg_info *mi;
-
       mi = boards_find_id(boards, pw->parent->id);
-
-      if (mi && thread_clic) {
-	char sid[15];
-	snprintf(sid, 15, "%d", id_type_to_int(mi->id));
-	*pkl = key_list_swap(*pkl, sid, HK_THREAD, num);
-      } else if (mi && pw->attr & PWATTR_NICK) {
-	if (plopify_level == 0) {
-	  *pkl = key_list_swap(*pkl, mi->useragent, HK_UA, num);
+    } else mi = NULL;
+    if (pw && descr == NULL) {
+      if (pw->attr & PWATTR_NICK) {
+	descr = str_printf(_("The selected element is the <font color=blue>useragent</font> '<font color=#800000>%s</font>'"), pw->w);
+	txt = mi->useragent;
+	if (mi->login[0]) {
+	  what_clicked = UA_WITH_LOGIN;
+	  hk_what_clicked = HK_UA;
 	} else {
-	  if (mi->login[0]) *pkl = key_list_swap(*pkl, mi->login, HK_LOGIN, num);
-	  else *pkl = key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
+	  what_clicked = UA_NO_LOGIN;
+	  hk_what_clicked = HK_UA_NOLOGIN;
 	}
       } else if (pw->attr & PWATTR_LOGIN) {
-	*pkl = key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+	descr = str_printf(_("The selected element is the <font color=blue>login</font> '<font color=#800000>%s</font>'"), pw->w);
+	txt = pw->w;
+	what_clicked = LOGIN;
+	hk_what_clicked = HK_LOGIN;
       } else if (pw->attr & PWATTR_TSTAMP) {
-	char sid[10];
-	snprintf(sid,10,"%d", id_type_to_int(pw->parent->id));
-	*pkl = key_list_swap(*pkl, sid, HK_ID, num);
-      } else {
-	char *s, *p;
-	KeyList *hk;
-
-	/* pour deplopifier un post plopifié à cause d'un mot clef, on ne peut pas esperer que l'utilisateur
-	   puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
-	   en 'plop' ou 'pikaa' ...
-	*/
-	if (plopify_level && mi && (hk = board_key_list_test_mi(boards, mi, *pkl))) {
-	  *pkl = key_list_remove(*pkl, hk->key, hk->type);
-	} else if (mi->in_boitakon==0) {
-	
-	  /* simplification du mot */
-	  s = strdup(pw->w);
-	  p = s + strlen(s) -1;
-	  while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
-	  p = s;
-	  while (*p && !isalnum((unsigned char)*p)) p++;
-	
-	  if (strlen(p) == 0) p = pw->w;
-	
-	  *pkl = key_list_swap(*pkl, p, HK_WORD, num);
-	  free(s);
+	snprintf(s_id, 30, "%d", id_type_to_int(pw->parent->id));
+	descr = str_printf(_("The selected element is the <font color=blue>message</font> #id=<font color=#800000>%d</font>"), id_type_lid(pw->parent->id));
+	txt = s_id;
+	what_clicked = TSTAMP;
+	hk_what_clicked = HK_ID;
+      } else if (pw && strlen(pw->w)) {
+	snprintf(s_word, 512, "%s", pw->w);
+	txt = str_simplif(s_word);
+	if (strlen(txt)) {
+	  descr = str_printf(_("The selected element is the <font color=blue>word</font> '<font color=#800000>%s</font>'"), txt);
+	  what_clicked = WORD;
+	  hk_what_clicked = HK_WORD;
 	}
       }
-    } else {
-      return; /* pour eviter un refresh inutile */
     }
   }
-  *pkl = board_key_list_cleanup(boards, *pkl); /* supprime les key faisant ref à des messages detruits */
   
-  /* vérifie si la boitakon a été modifiée */
-  if (plopify_level) {
-    if (boitakon_state != key_list_get_state(*pkl, 2)) {
-      boards_update_boitakon(boards);
-    }
+  if (what_clicked != NOTHING) {
+    plopup_set_description(dock, descr);
+    plopup_pushentry(dock, _("<b>plop</b>ify it"), PUP_PLOPIF);
+    plopup_pushentry(dock, _("<b>superplop</b>ify it"), PUP_SUPERPLOPIF);
+    plopup_pushentry(dock, _("put in <b>boitakon</b>"), PUP_BOITAKON);
+    plopup_pushentry(dock, _("put in <i>hungry</i> <b>boitakon</b>"), PUP_HUNGRY_BOITAKON);
   }
 
-  pp_pv_destroy(pp); /* force le rafraichissement complet */
-  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
-  pp_refresh(dock, pp->win, NULL);
+  if (what_clicked != NOTHING) {
+    plopup_pushentry(dock, _("mark it (categ 0)"), PUP_EMPH0);
+    plopup_pushentry(dock, _("mark it (categ 1)"), PUP_EMPH1);
+    plopup_pushentry(dock, _("mark it (categ 2)"), PUP_EMPH2);
+    plopup_pushentry(dock, _("mark it (categ 3)"), PUP_EMPH3);
+    plopup_pushentry(dock, _("mark it (categ 4)"), PUP_EMPH4);
+    plopup_pushentry(dock, _("filter it"), PUP_FILTER);
+  }
+
+  if (what_clicked != NOTHING && strlen(txt) && Prefs.gogole_search_url) {
+    plopup_pushentry(dock, _("gogole search"), PUP_GOGOLE);
+  }
+
+  if (pw && (pw->attr & PWATTR_LNK)) {
+    if (pw->attr_s && strlen(pw->attr_s)) {
+      plopup_pushentry(dock, _("copy link in X clipboard"), PUP_COPY_URL);
+    }
+  }
+  if (pw && (pw->attr & (PWATTR_TSTAMP | PWATTR_NICK | PWATTR_LOGIN)) && mi) {
+    plopup_pushentry(dock, _("copy useragent in X clipboard"), PUP_COPY_UA);
+  }
+
+  plopup_pushsepar(dock);
+
+  if (mi == NULL) { /* on cherche qd même le message */
+    mi = pp_find_message_at_xy(dock, event->x, event->y);
+  }
+  
+  if (mi) {
+    hk_plop = board_key_list_get_mi_positive_list(boards, mi, Prefs.plopify_key_list, 1);
+    hk_emph = board_key_list_get_mi_positive_list(boards, mi, Prefs.hilight_key_list, 0);
+  }
+  
+  for (hk = hk_plop, cnt = 0; hk && cnt < 10; hk = hk->next, cnt++) {
+    char *splop[4] = {"plopify list", "superplopify list", "boitakon", "hungry boitakon"};    
+    char s[512];
+    snprintf(s, 512, _("remove %s:'<font color=blue>%.15s</font>' from %s"), key_list_type_name(hk->type), hk->key, splop[hk->num]);
+    plopup_pushentry(dock, s, PUP_UNPLOP + cnt);
+  }
+  plopup_pushsepar(dock);
+  for (hk = hk_emph, cnt = 0; hk && cnt < 10; hk = hk->next, cnt++) {
+    char s[512];
+    snprintf(s, 512, _("remove %s:'<font color=blue>%.15s</font> from hilight categ %d"), key_list_type_name(hk->type), hk->key, hk->num);
+    plopup_pushentry(dock, s, PUP_UNEMPH + cnt);
+  }
+
+  plopup_pushsepar(dock);
+  plopup_pushentry(dock, pp->use_minibar ? 
+		   _("hide the button bar / tabs bar") : 
+		   _("show the button bar / tabs bar"), PUP_TOGGLE_MINIB);
+
+  plop_lvl = 3;
+  emph_lvl = 4;
+  redraw = 1;
+  switch ((choice = plopup_show_modal(dock, event->x_root, event->y_root))) {
+  case -1: redraw = 0; break;
+  case PUP_PLOPIF: plop_lvl--; 
+  case PUP_SUPERPLOPIF: plop_lvl--;
+  case PUP_BOITAKON: plop_lvl--;
+  case PUP_HUNGRY_BOITAKON: {
+    assert(hk_what_clicked>=0);
+    Prefs.plopify_key_list = key_list_swap(Prefs.plopify_key_list, txt, hk_what_clicked, plop_lvl);
+    if (plop_lvl >= 2) boards_update_boitakon(boards);
+  } break;
+  case PUP_EMPH0: emph_lvl--;
+  case PUP_EMPH1: emph_lvl--;
+  case PUP_EMPH2: emph_lvl--;
+  case PUP_EMPH3: emph_lvl--;
+  case PUP_EMPH4: {
+    assert(hk_what_clicked>=0);
+    Prefs.hilight_key_list = key_list_swap(Prefs.hilight_key_list, txt, hk_what_clicked, emph_lvl);
+  } break;
+  case PUP_FILTER: {
+    if (mi) {
+      switch (what_clicked) {
+      case WORD: pp_set_word_filter(dock, txt); break;
+      case UA_WITH_LOGIN:
+      case UA_NO_LOGIN: pp_set_ua_filter(dock, mi->useragent); break;
+      case LOGIN: pp_set_login_filter(dock, mi->login); break;
+      case THREAD: pp_set_thread_filter(dock, mi->id); break;
+      case TSTAMP: pp_set_thread_filter(dock, mi->id); break;
+      default: break;
+      }
+    }
+  } break;
+  case PUP_GOGOLE: {
+    gogole_search(dock, mx, my, txt);
+  } break;
+  case PUP_COPY_URL: {
+    assert(pw);
+    editw_cb_copy(dock, pp->win, pw->attr_s, strlen(pw->attr_s));
+  } break;
+  case PUP_COPY_UA: {
+    assert(mi); assert(pw);
+    if (mi->useragent && strlen(mi->useragent)) {
+      editw_cb_copy(dock, pp->win, mi->useragent, strlen(mi->useragent));	  
+    }
+  } break;
+  case PUP_TOGGLE_MINIB: {
+    //    pp->use_minibar = pp->use_minibar ? 0 : 1;
+    printf("toggle mini %d\n", pp->use_minibar);
+    if (pp->use_minibar == 0) {
+      pp_minib_show(dock);
+    } else {
+      pp_minib_hide(dock);
+    }
+  } break;
+  default: {
+    if (choice >= PUP_UNPLOP && choice <= PUP_UNPLOP+10) {
+      int updtbak = 0;
+      cnt = choice - PUP_UNPLOP;
+      for (hk = hk_plop; hk && cnt > 0; hk = hk->next, cnt--) {
+	/*plop*/
+      }
+      assert(hk);
+      //printf("plop remove '%s' %d\n", hk->key, hk->type);
+      if (hk->num >= 2) updtbak = 1;
+      Prefs.plopify_key_list = key_list_remove(Prefs.plopify_key_list, hk->key, hk->type);
+      if (updtbak) boards_update_boitakon(boards);
+    } else if (choice >= PUP_UNEMPH && choice <= PUP_UNEMPH+10) {
+      cnt = choice - PUP_UNEMPH;
+      for (hk = hk_emph; hk && cnt > 0; hk = hk->next, cnt--) {
+	/*plop*/
+      }
+      assert(hk);
+      //printf("hili remove '%s' %d\n", hk->key, hk->type);
+      Prefs.hilight_key_list = key_list_remove(Prefs.hilight_key_list,hk->key, hk->type);
+    }
+  } break;
+  }
+
+  if (descr) free(descr);
+  key_list_destroy(hk_plop); key_list_destroy(hk_emph);
+  if (redraw) {
+    pp_pv_destroy(pp); /* force le rafraichissement complet */
+    pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+    pp_refresh(dock, pp->win, NULL);
+  }
 }
 
 static void
@@ -2868,11 +2969,11 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
     //printf("scroll down: id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button1) {
     if (event->state & ShiftMask) {
-      pp_handle_shift_clic(dock, &Prefs.hilight_key_list, mx, my, 0);
+      // pp_handle_shift_clic(dock, &Prefs.hilight_key_list, mx, my, 0);
     } else if (event->state & ControlMask) {
-      pp_handle_control_left_clic(dock, mx, my);
+      //      pp_handle_control_left_clic(dock, mx, my);
     } else if (event->state & (Mod1Mask | Mod4Mask) ) { /* on est gentil, les deux marchent */
-      pp_handle_alt_clic(dock, event);
+      //      pp_handle_alt_clic(dock, event);
     } else {
       pp_handle_left_clic(dock, mx, my);
     }
@@ -2899,78 +3000,15 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
 	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);
       }
     } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
-      pp_handle_alt_clic(dock, event);
+      // pp_handle_alt_clic(dock, event);
     } else if (event->state & ControlMask) {
-      int save_all = (event->state & ShiftMask) ? 1 : 0;
+      //int save_all = (event->state & ShiftMask) ? 1 : 0;
+      int use_js = (event->state & ShiftMask) ? 1 : 0;
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
-      pp_boardshot_kikoooo(dock, save_all, 1);
+      pp_boardshot_kikoooo(dock, 0, 1, use_js);
 
     }
-  } else if (event->button == Button3) {
-    if (event->state & ShiftMask) {
-      int plop_level = 1;
-      if (event->state & ControlMask) {
-	plop_level = 2;
-	if ((event->state & Mod1Mask) || 
-	    (event->state & Mod4Mask)) {
-	  //	  printf("yo! %04x\n", event->state);
-	  plop_level = 3;
-	  if ((event->state & Mod1Mask) &&
-	      (event->state & Mod4Mask)) {
-	    plop_level = 4; /* prends ça dtc */
-	  }
-	}
-      }
-      pp_handle_shift_clic(dock, &Prefs.plopify_key_list, mx, my, plop_level);
-    } else {
-      PostWord *pw;
-      
-      pw = pp_get_pw_at_xy(pp, mx, my);
-      
-      /* right clic sur une url, on copy l'urk dans le clipboard */
-      if (pw && pw->attr & PWATTR_LNK) {
-	if (pw->attr_s && strlen(pw->attr_s)) {
-	  editw_cb_copy(dock, pp->win, pw->attr_s, strlen(pw->attr_s));
-	}
-      } else if (pw && (pw->attr & PWATTR_TSTAMP)) {
-	/* right clic sur une horloge, on copy l'useragent dans le clipboard */
-	board_msg_info *mi;
-	mi = boards_find_id(boards, pw->parent->id);
-	if (mi) {
-	  if (mi->useragent && strlen(mi->useragent)) {
-	    editw_cb_copy(dock, pp->win, mi->useragent, strlen(mi->useragent));	  
-	  }
-	}
-      } else if (pw && (pw->attr & PWATTR_REF)) {
-	editw_cb_copy(dock, pp->win, pw->w, strlen(pw->w));  
-      } else if (pw && (pw->attr & PWATTR_LOGIN)) {
-	char *s;
-	s = str_printf("/msg %s ", pw->w);
-	if (editw_ismapped(dock->editw) == 0) {
-	  strncpy(dock->coin_coin_message, s, MESSAGE_MAXMAX_LEN);
-	  dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
-	  editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
-	  editw_move_end_of_line(dock->editw, 0);
-	} else {
-	  editw_erase(dock->editw); editw_erase(dock->editw); // deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme)
-	  editw_insert_string(dock->editw, s);
-	}
-	free(s);
-	editw_refresh(dock, dock->editw);
-      } else {
-	/* right clic ailleurs, affiche la mini barre de boutons */
-	if ((pp->use_minibar == 0) || my < pp->win_height - MINIB_H) {
-	  if (pp->use_minibar == 0) {
-	    pp_minib_show(dock);
-	  } else {
-	    pp_minib_hide(dock);
-	  }
-	  pp_update_content(dock, pp->id_base, 0,0,1);
-	  pp_refresh(dock, pp->win, NULL);	    	    
-	}
-      }
-    }
-  } /* if right clic */
+  }
 }
 
 int 
@@ -3244,6 +3282,9 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	mouse_button_press_y = old_mouse_y = event->xbutton.y;
 	dragging = 0;
 	time_drag = event->xbutton.time;
+	if (event->xbutton.button == Button3) {
+	  pp_handle_button3_press(dock, &event->xbutton);
+	}
       }
     } break;
   case ButtonRelease:

@@ -164,7 +164,7 @@ struct _board_msg_info {
   int is_my_message BITFIELD(1);
   int is_answer_to_me BITFIELD(1);
 
-  /* utilisé par board_key_list_test_thread pour éviter de récurser comme un ouf */
+  /* utilisé par board_key_list_test_thread et board_key_list_get_hungry_bak_list pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
   int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
   int contagious_boitakon BITFIELD(1); /* repondre à la boitakon rend kon */
@@ -330,6 +330,8 @@ typedef struct _Balloon Balloon;
 typedef struct _EditW EditW;
 typedef struct _MsgBox MsgBox;
 typedef struct _Pinnipede Pinnipede;
+typedef struct _Plopup Plopup; 
+typedef void(*plopup_callback_t)(int);
 
 #define DOCK_FIXED_FONT "-*-fixed-*--10-*"
 #define DOCK_FIXED_FONT_W 6
@@ -462,6 +464,8 @@ typedef struct _Dock {
   Pinnipede *pinnipede;
 
   MsgBox *msgbox;
+
+  Plopup *plopup;
 
   int trolloscope_speed; /* vitesse de defilement du trolloscope (1,2,4 ou 8), defaut:2 */
 
@@ -612,6 +616,17 @@ void msgbox_hide(Dock *dock);
 void msgbox_show(Dock *dock, char *text);
 void msgbox_show_modal(Dock *dock, char *text);
 void msgbox_build(Dock *dock);
+
+/* plopup.c */
+void plopup_build(Dock *dock);
+void plopup_set_description(Dock *dock, char *txt);
+void plopup_pushentry(Dock *dock, char *txt, int id);
+void plopup_pushsepar(Dock *dock);
+void plopup_show(Dock *dock, int x, int y, plopup_callback_t cback);
+int  plopup_show_modal(Dock *dock, int x, int y);
+int  plopup_ismapped(Dock *dock);
+void plopup_unmap(Dock *dock);
+void plopup_dispatch_event(Dock *dock, XEvent *event);
 
 /* pinnipede.c */
 void pp_build(Dock *dock);

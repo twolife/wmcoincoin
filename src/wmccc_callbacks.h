@@ -405,3 +405,15 @@ on_bt_color_draw                       (GtkWidget       *widget,
 void
 on_bt_color_draw_default               (GtkWidget       *widget,
                                         gpointer         user_data);
+
+void
+on_bt_dock_bgcolor_show                (GtkWidget       *widget,
+                                        gpointer         user_data);
+
+void
+on_bt_dock_bgcolor_realize             (GtkWidget       *widget,
+                                        gpointer         user_data);
+
+void
+on_bt_dock_bgcolor_realize             (GtkWidget       *widget,
+                                        gpointer         user_data);

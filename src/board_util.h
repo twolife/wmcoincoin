@@ -19,7 +19,7 @@ void board_msg_find_refs(Board *board, board_msg_info *mi);
 KeyList *board_key_list_cleanup(Boards *boards, KeyList *first);
 KeyList *board_key_list_test_mi(Boards *boards, board_msg_info *mi, KeyList *klist);
 KeyList *board_key_list_test_mi_num(Boards *boards, board_msg_info *mi, KeyList *klist, int num);
-
-
+KeyList *board_key_list_get_mi_positive_list(Boards *boards, board_msg_info *mi, 
+					     KeyList *klist, int is_plop_list);
 
 #endif

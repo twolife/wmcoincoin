@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.4 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.5 2002/10/05 18:08:14 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.5  2002/10/05 18:08:14  pouaite
+  ajout menu contextuel + fix de la coloration des boutons du wmccc
+
   Revision 1.4  2002/09/07 16:21:15  pouaite
   ça va releaser en douce
 
@@ -2065,6 +2068,18 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
       /* middle clic */  
     } else if (event->button == Button2) {
       editw_cb_paste(dock, ew, 1);
+    } else if (event->button == Button3) {
+      int i;
+      plopup_unmap(dock);
+      for (i = 0; i < MAX_SITES; i++) {
+	if (Prefs.site[i] && Prefs.site[i]->check_board) {
+	  plopup_pushentry(dock, Prefs.site[i]->site_name, i);
+	}
+      }
+      i = plopup_show_modal(dock, event->x_root, event->y_root);
+      if (i>=0) editw_select_site(dock, i);
+      editw_select_buff(dock, ew, ew->buff_num);
+      editw_refresh(dock, ew);
     }
   }
 }

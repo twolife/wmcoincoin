@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.7 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.8 2002/10/05 18:08:14 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.8  2002/10/05 18:08:14  pouaite
+  ajout menu contextuel + fix de la coloration des boutons du wmccc
+
   Revision 1.7  2002/09/07 16:21:15  pouaite
   ça va releaser en douce
 
@@ -453,3 +456,17 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
   return shade_pix;
 }
 
+int
+lighten_color(int icol, float v)
+{
+  int r = (icol & 0xff0000)>>16;
+  int g = (icol & 0xff00)>>8;
+  int b = (icol & 0xff);
+  r = (int)((r+.5)*v);
+  g = (int)((g+.5)*v);
+  b = (int)((b+.5)*v);
+  r = MIN(r,255);
+  g = MIN(g,255);
+  b = MIN(b,255);
+  return (r<<16) + (g<<8) + b;
+}

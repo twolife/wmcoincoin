@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.17 2002/09/21 22:51:01 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.18 2002/10/05 18:08:14 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.18  2002/10/05 18:08:14  pouaite
+##   ajout menu contextuel + fix de la coloration des boutons du wmccc
+##
 ##   Revision 1.17  2002/09/21 22:51:01  pouaite
 ##   ajout du patch de shift pour le pdfm
 ##
@@ -62,7 +65,7 @@ EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 #salete d'autoconf j'y comprends rien
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
-wmcoincoin_SOURCES = cc_queue.c \
+wmcoincoin_SOURCES = cc_queue.c plopup.c \
         board_util.c board_util.h \
 	regexp.h regexp.c general.h \
 	myprintf.c myprintf.h \

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.9 2002/09/25 22:02:15 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.10 2002/10/05 18:08:14 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.10  2002/10/05 18:08:14  pouaite
+  ajout menu contextuel + fix de la coloration des boutons du wmccc
+
   Revision 1.9  2002/09/25 22:02:15  pouaite
   hungry boitakon
 
@@ -281,7 +284,7 @@ board_key_list_test_mi_hk(Boards *boards, board_msg_info *mi, KeyList *hk)
     } 
   } else if (hk->type == HK_ID) {
     char sid[10];
-    snprintf(sid,10, "%d", mi->id.sid);
+    snprintf(sid,10, "%d", id_type_to_int(mi->id));
     if (strcmp(sid, hk->key) == 0) {
       return 1;
     }
@@ -335,8 +338,67 @@ board_key_list_test_mi_num(Boards *boards, board_msg_info *mi, KeyList *klist, i
 }
 
 
+/* construit recursivement et vilainement la liste des mots plops qui ont provoqué
+   une plopification recursive */
+static void
+board_key_list_get_recurs_plop_list(Boards *boards, board_msg_info *mi, KeyList **pin, KeyList **pout, int lvl)
+{
+  KeyList *hk;
+  int i;
+  if (mi->contagious_boitakon == 0 || mi->bidouille_qui_pue) return;
+  mi->bidouille_qui_pue = 1;
+  if (lvl > 50) return;
+  for (hk = *pin; hk; hk=hk->next) {
+    if (board_key_list_test_mi_hk(boards, mi, hk)) {
+      *pout = key_list_add(*pout, hk->key, hk->type, hk->num, 0);
+      *pin = key_list_remove(*pin, hk->key, hk->type);
+    }
+  }
+  if (*pin == NULL) return;
+  for (i=0; i < mi->nb_refs; i++) {
+    int j;
+    board_msg_info *mi2;
+    mi2 = mi->refs[i].mi;
+    for (j=0; mi2 && j < mi->refs[i].nbmi; j++) {
+      if (mi2->contagious_boitakon && mi2->bidouille_qui_pue == 0)
+	board_key_list_get_recurs_plop_list(boards, mi2, pin, pout, lvl+1);
+    }
+  }
+}
 
 
+/*
+  renvoie la liste des element de la keylist qui sont 'positifs' pour le 
+  message mi
+  le truc un peu lourdeau c'est pour la boitakon recursive (mé sa economise de la mémoire)
+*/
+KeyList *
+board_key_list_get_mi_positive_list(Boards *boards, board_msg_info *mi, KeyList *klist, int is_plop_list)
+{
+  KeyList *pl = NULL;
+  KeyList *hk;
+  /* liste de plopification normale */
+  for (hk = klist; hk; hk = hk->next) {
+    if (board_key_list_test_mi_hk(boards,mi,hk)) {
+      pl = key_list_add(pl, hk->key, hk->type, hk->num, 0);
+    }
+  }
+  /* là c'est plus boulet */
+  if (is_plop_list && mi->contagious_boitakon) {
+    board_msg_info *mi2;
+    KeyList *hbak = NULL;
+
+    for (mi2 = boards->first; mi2; mi2 = mi2->g_next) mi2->bidouille_qui_pue = 0;
+
+    for (hk = klist; hk; hk = hk->next) {
+      if (hk->num == 3 && key_list_find(pl, hk->key, hk->type)==NULL) { /* hungry bak */
+	hbak = key_list_add(hbak, hk->key, hk->type, hk->num, 0);
+      }
+    }
+    board_key_list_get_recurs_plop_list(boards, mi, &hbak, &pl, 0);
+  }
+  return pl;
+}
 
 
 /* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
@@ -772,6 +834,8 @@ board_find_horloge_ref(Board *board, id_type caller_id,
 	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon ! "
 		   "(because %s=%.20s)"), nom,
 		   key_list_type_name(hk->type), hk->key);
+	} else if (best_mi->contagious_boitakon) {
+	  snprintf(commentaire, comment_sz, _("Hello from %.30s who was eaten by the boitakon"), nom);
 	} else {
 	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon, "
 		   "BUT YOU HAVE JUST FOUND A BUG IN THE BOITAKON :-("), nom);

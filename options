@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.43 2002/09/25 22:02:15 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.44 2002/10/05 18:08:13 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.44  2002/10/05 18:08:13  pouaite
+#%  ajout menu contextuel + fix de la coloration des boutons du wmccc
+#%
 #%  Revision 1.43  2002/09/25 22:02:15  pouaite
 #%  hungry boitakon
 #%
@@ -498,7 +501,7 @@ pinnipede.url_replace: "pycoincoin" => "[pyc²]"
 pinnipede.url_replace: ".jpg" => "[img]"
 pinnipede.url_replace: ".jpeg" => "[img]"
 pinnipede.url_replace: ".png" => "[img]"
-pinnipede.url_replace: ".gif" => "[img]"
+pinnipede.url_replace: ".gif" => "[LeGIFsaiMAL]"
 pinnipede.url_replace: ".swf" => "[flash]"
 pinnipede.url_replace: ".tar.gz" => "[tgz]"
 pinnipede.url_replace: ".tgz" => "[tgz]"

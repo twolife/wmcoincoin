@@ -62,77 +62,39 @@ on_bt_color_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
 
 void
-on_bt_color_draw                       (GtkWidget       *widget,
-                                        GdkRectangle    *area,
-                                        gpointer         user_data)
+on_bt_color_draw(GtkWidget *widget, GdkRectangle *area UNUSED, gpointer user_data UNUSED)
 {
   int *col_ptr = gtk_object_get_data(GTK_OBJECT(widget), ColorPtrKey); 
   if (col_ptr) {
-    GdkColor color;
+    GdkColor color, color2;
   
-    color.red   = ((((*col_ptr) & 0xff0000) >> 16)+ 127) * 256;
-    color.green = ((((*col_ptr) & 0x00ff00) >> 8) + 127) * 256;
-    color.blue  = ((((*col_ptr) & 0x0000ff)     ) + 127) * 256;
+    color.red   = (((*col_ptr) & 0xff0000) >> 16) * 256+ 127;
+    color.green = (((*col_ptr) & 0x00ff00) >> 8) * 256 + 127;
+    color.blue  = (((*col_ptr) & 0x0000ff)     ) * 256 + 127;
+    printf("color = %06x %d %d %d\n", *col_ptr, color.red , color.green, color.blue);
     
     if (gdk_colormap_alloc_color( gdk_colormap_get_system(), &color, FALSE, TRUE)) {
       GdkGC *gc = NULL;
-
-      g_print("draw\n");
+      
+      gdk_color_black(gdk_colormap_get_system(), &color2);
       gc = gdk_gc_new( widget->window);
+      gdk_gc_set_foreground(gc, &color2);
+      gdk_draw_rectangle( widget->window, gc, 0, 5, 2, 
+			  widget->allocation.width-12,
+			  widget->allocation.height-6 );
       gdk_gc_set_foreground(gc, &color);
-      gdk_draw_rectangle( widget->window, gc, 1, 5, 5, 20, 20);
+      gdk_draw_rectangle( widget->window, gc, 1, 6, 3, 
+			  widget->allocation.width-13,
+			  widget->allocation.height-7 );
       gdk_gc_unref(gc);
     }
   }  
 }
 
-
-
-void
-on_bt_color_draw_default               (GtkWidget       *widget,
-                                        gpointer         user_data)
-{
-  on_bt_color_draw(widget, NULL, user_data);
-
-  /*
- http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/gtkextra/gtkextra/gtkextra/gtkcolorcombo.c?rev=1.6&content-type=text/vnd.viewcvs-markup
-      color_pixmap=gdk_pixmap_create_from_xpm_d(
-                             widget->window,
-                             NULL,
-                             &(widget->style->bg[GTK_STATE_NORMAL]),
-                             xpm_color);    
-       pixmap=gtk_pixmap_new(color_pixmap, NULL);
-       gtk_container_add(GTK_CONTAINER(color_combo->button[n]), pixmap);
-       gtk_widget_show(pixmap);
-       gdk_pixmap_unref(color_pixmap);
-  */
-
-}
-
-
-
 gboolean
-on_bt_color_expose_event(GtkWidget *widget, GdkEventExpose  *event, gpointer user_data UNUSED)
+on_bt_color_expose_event(GtkWidget *widget, GdkEventExpose  *event UNUSED, gpointer user_data UNUSED)
 {
-  int *col_ptr = gtk_object_get_data(GTK_OBJECT(widget), ColorPtrKey); 
-  g_print("plop:\n");
-  if (col_ptr) {
-    GdkColor color;
-  
-    color.red   = ((((*col_ptr) & 0xff0000) >> 16)+ 127) * 256;
-    color.green = ((((*col_ptr) & 0x00ff00) >> 8) + 127) * 256;
-    color.blue  = ((((*col_ptr) & 0x0000ff)     ) + 127) * 256;
-    
-    if (gdk_colormap_alloc_color( gdk_colormap_get_system(), &color, FALSE, TRUE)) {
-      GdkGC *gc = NULL;
-
-      g_print("plop:\n");
-      gc = gdk_gc_new(event->window);
-      gdk_gc_set_foreground(gc, &color);
-      gdk_draw_rectangle( event->window, gc, 1, 5, 5, 20, 20);
-      gdk_gc_unref(gc);
-    }
-  }
+  on_bt_color_draw(widget, NULL, NULL);
   return FALSE;
 }
 
@@ -160,8 +122,9 @@ on_bt_colorsel_ok_clicked              (GtkButton       *button,
   b = MIN((colord[2]*255 + 0.49),255);
   *color = (r<<16) + (g<<8) + b;
   g_print("color set to : %06x %f %f %f\n", *color, colord[0], colord[1], colord[2]);
-  update_widget_bgcolor(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT (colorseldial), ButtonKey)),
-			*color);
+  /*  update_widget_bgcolor(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT (colorseldial), ButtonKey)),
+   *color);*/
+  on_bt_color_draw(GTK_WIDGET(gtk_object_get_data(GTK_OBJECT (colorseldial), ButtonKey)), NULL, NULL);
   gtk_widget_hide(GTK_WIDGET(colorseldial));
 }
 
@@ -857,3 +820,4 @@ on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
   coincoin_default_useragent(default_ua, 1024);
   gtk_entry_set_text(GTK_ENTRY(wg), default_ua);
 }
+

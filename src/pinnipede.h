@@ -231,7 +231,7 @@ void pp_update_fortune(Dock *dock);
 void pp_refresh_fortune(Dock *dock, Drawable d);
 void pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
 
-int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite);
+int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite, int use_js);
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->zmsg_y2 - (pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2)
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1)

@@ -25,4 +25,5 @@ void get_window_pos_without_decor(Display *display, Window root_win, Window win,
 Pixmap get_rootwin_pixmap(const RGBAContext *rc);
 void shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *tr);
 Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr, int use_fake_real_transparency);
+int lighten_color(int icol, float light);
 #endif

@@ -1,3 +1,8 @@
+2002-10-05  pouaite  <c0in@altern.org>
+
+	* src/plopup.c (plopup_show): (quasimement) toutes les combos du
+	pinni sont remplacées par un menu contextuel (right clic).
+
 2002-09-25  pouaite  <c0in@altern.org>
 
 	* src/board.c (mi_check_boitakon): la boitakon qui rend kon

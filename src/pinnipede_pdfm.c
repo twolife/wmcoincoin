@@ -1,6 +1,6 @@
 /*
   pdfm c'est pas une insulte, ça veut dire plateau de fruits de mer
-  rcsid=$Id: pinnipede_pdfm.c,v 1.1 2002/09/22 23:16:33 pouaite Exp $
+  rcsid=$Id: pinnipede_pdfm.c,v 1.2 2002/10/05 18:08:14 pouaite Exp $
 */
 
 #include "pinnipede.h"
@@ -35,10 +35,17 @@ pp_boardshot_encode( const char *chaine )
   return retour;
 }
 
+static char *make_sid(board_msg_info *mi)
+{
+  static char s[40];
+  snprintf(s, 40, "%s%X", Prefs.site[id_type_sid(mi->id)]->site_name, id_type_lid(mi->id));
+  return s;
+}
+
 /* --------- patch de lordOric, aka "plateau de fruits de mer" ------------*/
 /* Scrinchote d'un message */
 static int 
-pp_boardshot_save_msg(Boards *boards, board_msg_info *mi, FILE *file )
+pp_boardshot_save_msg(Boards *boards, board_msg_info *mi, FILE *file, int use_js)
 {
   char time[10];
   
@@ -50,10 +57,16 @@ pp_boardshot_save_msg(Boards *boards, board_msg_info *mi, FILE *file )
 	
   snprintf(time, 10, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
 	
-  if ( mi->troll_score )
-    fprintf( file, "<tr class=\"%s-msg\"><td class=\"trollscore\">%d</td>\n", site_name, mi->troll_score);
-  else
-    fprintf( file, "<tr class=\"%s-msg\"><td></td>\n", site_name);
+  if (use_js == 0) {
+    fprintf(file, "<tr class=\"%s-msg\">", site_name);
+  } else {
+    fprintf(file, "<tr class=\"%s-msg\" id=\"%s\">", site_name, make_sid(mi));
+  }
+  if (mi->troll_score) {
+    fprintf(file, "<td class=\"trollscore\">%d</td>\n", mi->troll_score);
+  } else {
+    fprintf( file, "<td></td>\n");
+  }
 
   tmp = pp_boardshot_encode( mi->useragent );
   fprintf(file,"<td class=\"hour\" title=\"&lt;%s&gt; %s\">  %s</td>\n", site_name,tmp, time);	 
@@ -83,7 +96,12 @@ pp_boardshot_save_msg(Boards *boards, board_msg_info *mi, FILE *file )
       ref_mi = check_for_horloge_ref(boards, mi->id, s,attr_s, 768, &is_ref, NULL);
       if (has_initial_space) fprintf(file, " ");
       if (is_ref) {
-	fprintf(file, "<font color=blue>%s</font>",s);
+	if (use_js == 0 || ref_mi == NULL) {
+	  fprintf(file, "<span style=\"color:blue;\">%s</span>",s);
+	} else {
+	  fprintf(file, "<a onMouseOver=\"h('%s');\" onMouseOut=\"u('%s','#%06x');\" href=\"\">%s</a>",
+		  make_sid(ref_mi), make_sid(ref_mi), Prefs.site[id_type_sid(ref_mi->id)]->pp_bgcolor, s);
+	}
       } else {
 	tmp = pp_boardshot_encode(s);
 	fprintf(file, "%s", tmp); 
@@ -122,7 +140,10 @@ pp_boardshot_css_file(const char *cssfname)
 
   // Pas de décoration pour les liens
   fprintf( file, "a {\n text-decoration:none;\n }\n\n");
-  
+  fprintf( file, "A:HOVER {\n" /* piqué sur la homep de pycc ! */
+	  "text-decoration: underline overline;\n"
+	  "background-color: #fcfcda;\n"
+	  "color: #1010da;\n}\n");
   // Titres de niveau 2 centrés
   fprintf( file, "h2 {\n text-align : center;\n }\n\n");
 
@@ -144,6 +165,7 @@ pp_boardshot_css_file(const char *cssfname)
     fprintf( file, ".%s-msg {\n", site_name);
     fprintf( file, "	background : #%06x; \n", Prefs.site[j]->pp_bgcolor); 
     fprintf( file, "	color : #%06x; \n", Prefs.site[j]->pp_fgcolor.opaque); 
+    fprintf( file, "    vertical-align: top; \n");
     fprintf( file, "} \n\n");
     
     // Propriété des liens sous la souris
@@ -162,9 +184,9 @@ pp_boardshot_css_file(const char *cssfname)
     fprintf(file, "} \n\n");
     
     // Propriété des textes barrés
-    fprintf( file, ".%s-msg s {\n", site_name);
-    fprintf( file, "	color: #%06x; \n",  Prefs.site[j]->pp_strike_color.opaque); 
-    fprintf(file, "} \n\n");
+    //    fprintf( file, ".%s-msg s {\n", site_name);
+    //    fprintf( file, "	color: #%06x; \n",  Prefs.site[j]->pp_strike_color.opaque); 
+    //    fprintf(file, "} \n\n");
     
     // Propriété de l'ua
     fprintf( file, ".%s-msg .ua {\n", site_name);
@@ -184,7 +206,9 @@ pp_boardshot_css_file(const char *cssfname)
     // Propriété des logins
     fprintf( file, ".%s-msg .login {\n", site_name);
     fprintf( file, "	color : #%06x; \n", Prefs.site[j]->pp_login_color.opaque); 
+    fprintf( file, "	font-weight : bold;\n"); 
     fprintf( file, "	text-align : center;\n"); 
+    fprintf(file, "} \n\n");
 
     // Propriété des miniua
     fprintf( file, ".%s-msg .miniua {\n", site_name);
@@ -200,7 +224,7 @@ pp_boardshot_css_file(const char *cssfname)
 
 /* Tribuneshot : un chouette plateau de fruits de mer ;) */
 int
-pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite) 
+pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite, int use_js) 
 {
   Pinnipede *pp = dock->pinnipede;
   Boards *boards = dock->sites->boards;
@@ -252,13 +276,22 @@ pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite)
   }
 
   if (!file_exist || overwrite) {
-    fprintf( file, 
-	     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
-	     "<html><head><title>Scrinechote tribune</title>"
-		 "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" >"
-	     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-15\">"
-	     "</head>", shortcssfname);
-    fprintf( file, "<body>");
+    fprintf(file, 
+	    "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+	    "<html><head><title>Scrinechote tribune</title>"
+	    "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\" >"
+	    "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-15\">"
+	    "</head>", shortcssfname);
+    fprintf(file, "<body>\n");
+    if (use_js) { /* g honte */
+      fprintf(file,
+	      "<script language=\"JavaScript\" type=\"text/javascript\">\n"
+	      "function h(id) {\n"
+	      "document.getElementById(id).style.background=\"#%06x\";\n}\n"
+	      "function u(id,c)\n{"
+	      "document.getElementById(id).style.background=c;\n}\n"
+	      "</script>\n", Prefs.pp_emph_color.opaque);
+    }
   }
   
   time( &time_shot );
@@ -284,7 +317,7 @@ pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite)
     msg = boards_find_id(boards, id);
   }
   while ( msg ) {
-    pp_boardshot_save_msg(boards, msg, file);
+    pp_boardshot_save_msg(boards, msg, file, use_js);
     if (save_all) { 
       msg = msg->g_next;
     } else {

@@ -240,11 +240,8 @@ typedef struct _GeneralPrefs{
   char **plop_words;
   unsigned nb_plop_words;
   
-  int hungry_boitakon; /* 0 -> boitakon de base
-			  1 -> la boitakon a faim, elle bouffe ceux qui lui repondent (si ils ne
-			       parlent qu'à elle)
-			  2 -> la boitakon a très faim, elle bouffe tous ceux qui lui causent 
-			       (même si ils s'adressent aussi à un autre)
+  int hungry_boitakon; /* la boitakon a très faim, elle bouffe tous ceux qui lui causent 
+			  (même si ils s'adressent aussi à un autre)
 		       */
 
   int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */

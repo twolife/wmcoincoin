@@ -91,12 +91,12 @@ const char*
 key_list_type_name(KeyListType t)
 {
   switch (t) {
-  case HK_UA: return "useragent"; 
-  case HK_UA_NOLOGIN: return "useragent w/o login";
-  case HK_LOGIN: return "login";
-  case HK_WORD: return "mot";
-  case HK_ID: return "message_id";
-  case HK_THREAD: return "thread depuis l'id";
+  case HK_UA: return _("useragent");
+  case HK_UA_NOLOGIN: return _("useragent w/o login");
+  case HK_LOGIN: return _("login");
+  case HK_WORD: return _("word");
+  case HK_ID: return _("message id");
+  case HK_THREAD: return _("thread from id");
   case HK_ALL: break;
   }
   return NULL;

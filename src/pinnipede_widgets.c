@@ -750,11 +750,39 @@ pp_minib_hide(Dock *dock)
 
 static int
 pp_minib_handle_button_press(Dock *dock, XButtonEvent *ev) {
+  Pinnipede *pp = dock->pinnipede;
   PPMinib *mb;
   mb = pp_minib_get_button(dock, ev->x, ev->y);
   if (mb && ev->button == Button1) {
     mb->clicked = 1;
     pp_minib_refresh(dock);
+    return 1;
+  } if (mb && ev->button == Button3) {
+    /* menu popup contenant la liste des mots plop */
+    if (mb->type == PLOPIFY && Prefs.plopify_key_list) {
+      KeyList *hk;
+      int cnt;
+      plopup_unmap(dock);
+      for (hk = Prefs.plopify_key_list, cnt=0; hk && cnt < 30; hk = hk->next, cnt++) {
+	char *splop[4] = {"plopify list", "superplopify list", "boitakon", "hungry boitakon"};    
+	char s[512];
+	//	if (hk->type != HK_
+	snprintf(s, 512, _("remove %s:'<font color=blue>%.15s</font>' from %s"), key_list_type_name(hk->type), hk->key, splop[hk->num]);
+	plopup_pushentry(dock, s, cnt);	
+      }
+      cnt = plopup_show_modal(dock, ev->x_root, ev->y_root);
+      if (cnt >= 0) {
+	for (hk = Prefs.plopify_key_list; hk && cnt > 0; hk = hk->next, cnt--) {
+	  /* plop*/
+	}
+	assert(hk);
+	Prefs.plopify_key_list = key_list_remove(Prefs.plopify_key_list, hk->key, hk->type);
+	boards_update_boitakon(dock->sites->boards);
+	pp_pv_destroy(pp); /* force le rafraichissement complet */
+	pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+	pp_refresh(dock, pp->win, NULL);
+      }
+    }
     return 1;
   } else return 0;
 }

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.65 2002/09/21 22:51:01 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.66 2002/10/05 18:08:15 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.66  2002/10/05 18:08:15  pouaite
+  ajout menu contextuel + fix de la coloration des boutons du wmccc
+
   Revision 1.65  2002/09/21 22:51:01  pouaite
   ajout du patch de shift pour le pdfm
 
@@ -771,21 +774,23 @@ wmcoincoin_dispatch_events(Dock *dock)
     }
 
 
-
-
-    /* attention le champ window n'est pas utilise pour les evenement du clavier 
-       gare au bug */
-    if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
-      dock_dispatch_event(dock, &event);
-    } else if (event.xany.window == editw_get_win(dock->editw) && event.xany.window) {
-      editw_dispatch_event(dock, dock->editw, &event);
-    } else if (msgbox_ismapped(dock) && event.xany.window == msgbox_get_win(dock)) {
-      msgbox_dispatch_event(dock, &event);
-    } else if (event.xany.window == pp_get_win(dock) && event.xany.window) {
-      pp_dispatch_event(dock, &event);
-    } else if (newswin_is_used(dock)) {
-      if (event.xany.window == newswin_get_window(dock)) {
-	newswin_dispatch_event(dock, &event);
+    if (plopup_ismapped(dock)) {
+      plopup_dispatch_event(dock, &event);
+    } else {
+      /* attention le champ window n'est pas utilise pour les evenement du clavier 
+	 gare au bug */
+      if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
+	dock_dispatch_event(dock, &event);
+      } else if (event.xany.window == editw_get_win(dock->editw) && event.xany.window) {
+	editw_dispatch_event(dock, dock->editw, &event);
+      } else if (msgbox_ismapped(dock) && event.xany.window == msgbox_get_win(dock)) {
+	msgbox_dispatch_event(dock, &event);
+      } else if (event.xany.window == pp_get_win(dock) && event.xany.window) {
+	pp_dispatch_event(dock, &event);
+      } else if (newswin_is_used(dock)) {
+	if (event.xany.window == newswin_get_window(dock)) {
+	  newswin_dispatch_event(dock, &event);
+	}
       }
     }
   }
@@ -1844,6 +1849,7 @@ main(int argc, char **argv)
   balloon_build(dock);
   msgbox_build(dock);
   editw_build(dock);
+  plopup_build(dock);
   pp_build(dock);
   
   /* a faire APRES msgbox_build */
