@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.26 2002/09/05 23:11:57 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.27 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.27  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.26  2002/09/05 23:11:57  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -186,7 +189,9 @@ dock_update_pix_trolloscope(Dock *dock)
     tnow = (time(NULL) + col_nb_sec - 1)/col_nb_sec;
 
     /* age = board_get_msg_age(trib, it) / 60 / col_nb_min; */
-    age = (tnow - (it->timestamp + site->board->time_shift + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
+    age = MAX(tnow - (it->timestamp + site->board->time_shift + col_nb_sec - 1)/col_nb_sec,0);
+    
+    // + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
     BLAHBLAH(4, myprintf("sid=%d/id=%<YEL %5d>, age=%<RED %5d> ts=%02d:%02d:%02d, col_nb_sec=%4d, tnow=%8d\n", id_type_sid(it->id), id_type_lid(it->id), age,(it->timestamp/3600)%24, (it->timestamp/60)%60, it->timestamp%60,col_nb_sec,tnow));
     if (age < 0) age = 0; /* avec les fluctuations du time_shift .. */
     if (age < trib_ncol) {
@@ -730,6 +735,26 @@ dock_refresh_horloge_mode(Dock *dock)
     XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm->tm_mday % 10), 0, 9, 13, 31, 33);
   } else {
     XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * tm->tm_mday, 0, 9, 13, 26, 33);
+  }
+}
+
+void
+dock_refresh_other_win(Dock *dock)
+{
+  Window win;
+  win =  (DOCK_WIN(dock) == dock->iconwin) ? dock->win : dock->iconwin;
+  if (win == None) return;
+  if (((unsigned)wmcc_tic_cnt % 30)<15) {
+    XSetForeground(dock->display, dock->NormalGC, WhitePixel(dock->display, dock->screennum));
+    XFillRectangle(dock->display, win, dock->NormalGC, 0, 0, 64, 64);
+  } else {
+    char *s = (win == dock->iconwin) ? "disable" : "enable";
+    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
+    XDrawString(dock->display, win, dock->NormalGC, 5, 10, s, strlen(s));
+    s = "iconwin";
+    XDrawString(dock->display, win, dock->NormalGC, 5, 25, s, strlen(s));
+    s = "option";
+    XDrawString(dock->display, win, dock->NormalGC, 9, 40, s, strlen(s));
   }
 }
 

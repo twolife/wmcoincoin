@@ -119,7 +119,7 @@ struct _Pinnipede {
     minib_pixel, minib_dark_pixel, minib_msgcnt_pixel, 
     minib_updlcnt_pixel, progress_bar_pixel;
   int mapped;
-  int win_width, win_height, win_xpos, win_ypos;
+  int win_width, win_height, win_decor_xpos, win_decor_ypos, win_real_xpos, win_real_ypos;
 
   int zmsg_y1, zmsg_y2, zmsg_h; /* zone d'affichage des messages */
   XFontStruct *fn_base, *fn_it, *fn_bd, *fn_itbd, *fn_minib;

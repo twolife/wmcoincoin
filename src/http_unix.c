@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.16 2002/09/05 23:11:57 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.17 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.17  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.16  2002/09/05 23:11:57  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -127,6 +130,7 @@ net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
 	perror ("net_tcp_connect_with_timeout: select");
 	return -1;
       }
+      if (flag_cancel_task) return -1;
     }
     if (timeout.tv_sec == 0 && timeout.tv_usec == 0) {
       printf(_("Connection timed out (timeout=%d sec)!\n"), timeout_secs);

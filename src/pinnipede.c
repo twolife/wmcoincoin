@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.77 2002/09/03 22:42:17 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.78 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.78  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.77  2002/09/03 22:42:17  pouaite
   coin
 
@@ -785,7 +788,7 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
   attr = 0;
 
   if (pv->is_plopified == 3) p = "plop"; /* bienvenue dans le monde de la hard plopification */
-
+  assert(pv->is_plopified <= 3);
 
   has_initial_space = 1;
   while (p) {
@@ -1807,7 +1810,40 @@ pp_animate(Dock *dock)
       pp_minib_refresh(dock);
       pp_tabs_refresh(dock);
     }
-  }}
+  }
+}
+
+void
+pp_update_bg_pixmap(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  assert(pp->win != None);
+
+  if (pp->lpix != None) {
+    XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
+  }
+  pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
+  
+
+  if (pp->bg_pixmap != None) {
+    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
+  }
+  if (pp->transparency_mode) {
+    int xpos, ypos;
+    xpos = pp->win_real_xpos; ypos = pp->win_real_ypos;
+    //    get_window_pos_with_decor(dock->display, pp->win, &xpos, &ypos);
+    //printf("window pos without: %d, %d (pp_xpos=%d, pp_ypos=%d)\n", xpos, ypos, pp->win_real_xpos, pp->win_real_ypos);
+    pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
+						  xpos, ypos, 
+						  pp->win_width, pp->win_height,
+						  &Prefs.pp_transparency, 
+						  Prefs.use_fake_real_transparency);
+    if (pp->bg_pixmap == None) {
+      myprintf(_("%<yel impossible to use the pseudo-transparency> (probable solution: relaunch wmsetbg or its equivalent)\n"));
+      pp_change_transparency_mode(dock, 0);
+    }
+  }
+}
 
 static int
 pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
@@ -1872,6 +1908,25 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   return 0;
 }
 
+
+static void
+pp_free_fonts(Pinnipede *pp, Display *display)
+{
+  if (pp->fn_base)
+    XFreeFont(display, pp->fn_base); 
+  pp->fn_base = NULL;
+  if (pp->fn_it)
+    XFreeFont(display, pp->fn_it); 
+  pp->fn_it = NULL;
+  if (pp->fn_bd) 
+    XFreeFont(display, pp->fn_bd); 
+  pp->fn_bd = NULL;
+  if (pp->fn_itbd)
+    XFreeFont(display, pp->fn_itbd);
+  pp->fn_itbd = NULL;
+}
+
+
 #define GET_BICOLOR(x) (pp->transparency_mode ? IRGB2PIXEL(x.transp) : IRGB2PIXEL(x.opaque))
 
 void
@@ -1921,6 +1976,7 @@ pp_change_transparency_mode(Dock *dock, int on_off)
   pp_set_prefs_colors(dock);
 }
 
+
 /* initialisation */
 void
 pp_build(Dock *dock) 
@@ -1941,8 +1997,11 @@ pp_build(Dock *dock)
 
   pp->win_width = Prefs.pp_width;
   pp->win_height = Prefs.pp_height;
-  pp->win_xpos = Prefs.pp_xpos;
-  pp->win_ypos = Prefs.pp_ypos;
+  pp->win_decor_xpos = Prefs.pp_xpos;
+  pp->win_decor_ypos = Prefs.pp_ypos;
+  pp->win_real_xpos = -1;
+  pp->win_real_ypos = -1;
+
   pp->lignes = NULL;
   pp->nb_lignes = 0;
   pp->lignes_sel = NULL;
@@ -1982,23 +2041,14 @@ pp_build(Dock *dock)
 
   pp->pv = NULL;
   pp->survol_hash = 0;
-  assert(Prefs.pp_fn_family);
-  if (pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
-    myprintf(_("Failed to load the '%s' fonts with size '%d'\nLet's try with helvetica/12.\n"),Prefs.pp_fn_family, Prefs.pp_fn_size);
-    if (pp_load_fonts(pp, dock->display, "helvetica", 12)==-1) {
-      myprintf(_("Uuuurg !! No helvetica, I shoot my nose.\n")); exit(-1);
-    }
-  }
 
   pp->use_minibar = Prefs.pp_minibar_on;
 
   //  if (pp->use_minibar)
   //    pp_minib_initialize(pp);
-  pp_widgets_set_pos(dock);
 
   pp->fn_minib = dock->fixed_font;
-
-  pp_tabs_build(dock);
+  pp_rebuild(dock);
 
   pp->flag_board_updated = 0;
 }
@@ -2011,40 +2061,41 @@ pp_destroy(Dock *dock)
   assert(pp->pv == NULL); assert(pp->sc == NULL); 
   assert(pp->lignes_sel == NULL); assert(pp->lignes == NULL);
   picohtml_destroy(dock->display, pp->ph_fortune);
-  XFreeFont(dock->display, pp->fn_base); XFreeFont(dock->display, pp->fn_it); 
-  XFreeFont(dock->display, pp->fn_bd); XFreeFont(dock->display, pp->fn_itbd);
+  pp_free_fonts(pp, dock->display);
   pp_tabs_destroy(pp);
   free(pp); dock->pinnipede = NULL;
 }
 
-
-
 void
-pp_update_bg_pixmap(Dock *dock)
+pp_rebuild(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
-  assert(pp->win != None);
-
-  if (pp->bg_pixmap != None) {
-    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
-  }
-  if (pp->transparency_mode) {
-    int xpos, ypos;
-    get_window_pos_without_decor(dock->display, dock->rootwin, pp->win, &xpos, &ypos);
-    //    printf("window pos: %d, %d (pp_xpos=%d, pp_ypos=%d)\n", xpos, ypos, pp->win_xpos, pp->win_ypos);
-    pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
-						  xpos, ypos, 
-						  pp->win_width, pp->win_height,
-						  &Prefs.pp_transparency, 
-						  Prefs.use_fake_real_transparency);
-    if (pp->bg_pixmap == None) {
-      myprintf(_("%<yel impossible to use the pseudo-transparency> (probable solution: relaunch wmsetbg or its equivalent)\n"));
-      pp_change_transparency_mode(dock, 0);
+  pp_pv_destroy(pp);
+  pp->survol_hash = 0;
+  pp_free_fonts(pp, dock->display);
+  if (pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
+    myprintf(_("Failed to load the '%s' fonts with size '%d'\nLet's try with helvetica/12.\n"),Prefs.pp_fn_family, Prefs.pp_fn_size);
+    if (pp_load_fonts(pp, dock->display, "helvetica", 12)==-1) {
+      myprintf(_("Uuuurg !! No helvetica, I shoot my nose.\n")); exit(-1);
     }
   }
+  pp_set_prefs_colors(dock);
+  if (pp_ismapped(dock)) {
+    if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
+    pp_update_bg_pixmap(dock);
+    pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20, pp->transparency_mode);
+  }
+  pp_tabs_destroy(pp);
+  pp_tabs_build(dock);
+  pp_widgets_set_pos(dock);  
+  if (pp_ismapped(dock)) {
+    pp_update_content(dock, pp->colle_en_bas ? 
+		      get_last_id_filtered(dock->sites->boards, &pp->filter) : 
+		      pp->id_base, 0, 0, 1);  
+    pp_refresh(dock, pp->win, NULL);
+    printf("refresh!\n");
+  }
 }
-
-
 
 
 /*
@@ -2077,13 +2128,14 @@ pp_show(Dock *dock)
     msgbox_show(dock, "looks like you fucked your options file, no board ");
     return;
   }
-  if (pp->win_xpos == -10000 && pp->win_ypos == -10000) {
+
+  if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
     xpos = 700; ypos = 500; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
   } else {
-    xpos = pp->win_xpos;
-    ypos = pp->win_ypos;
+    xpos = pp->win_decor_xpos;
+    ypos = pp->win_decor_ypos;
   }
-
+  
   pp->win = XCreateSimpleWindow (dock->display, dock->rootwin, 
 				 xpos, ypos, pp->win_width,pp->win_height, 0,
 				 WhitePixel(dock->display, dock->screennum),
@@ -2096,15 +2148,15 @@ pp_show(Dock *dock)
     StructureNotifyMask |
     EnterWindowMask | 
     //    ResizeRedirectMask |
-    
+      
     LeaveWindowMask;
-
+    
   /* ça sera a changer .. pour l'instant ça ira */
   //  if (pp->transparency_mode) {
   //    wa.override_redirect = True ;
   //  } else
-    wa.override_redirect = False ;
-
+  wa.override_redirect = False ;
+    
   
   //wa.background_pixmap = ParentRelative;
   //wa.override_redirect = False ;
@@ -2122,7 +2174,7 @@ pp_show(Dock *dock)
     XClassHint *class_hint;
     XWMHints *wm_hint;
     char s[512];
-
+      
     /* nom de la fenetre */
     window_title = str_printf("pinnipede teletype");
     rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
@@ -2134,12 +2186,12 @@ pp_show(Dock *dock)
     XSetWMIconName(dock->display, pp->win, &window_title_property);
     win_size_hints= XAllocSizeHints(); assert(win_size_hints);
     XFree(window_title_property.value);
-
+      
     free(window_title); window_title = NULL;
-
+      
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
        dans les options ) */
-    if (pp->win_xpos == -10000 && pp->win_ypos == -10000) {
+    if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
       win_size_hints->flags = PSize | PMinSize;
     } else {
       win_size_hints->flags = USPosition | PSize | PMinSize;
@@ -2152,20 +2204,20 @@ pp_show(Dock *dock)
     win_size_hints->base_height = 455;
     XSetWMNormalHints(dock->display, pp->win, win_size_hints);
     XFree(win_size_hints);
-
+      
     /*   win_hints = XAllocWMHints(); assert(win_hints);
-    win_hints->icon_window = dock->iconwin;
-    win_hints->flags = IconWindowHint;
-    XSetWMHints(dock->display, pp->win, win_hints);
-    XFree(win_hints);*/
-
+	 win_hints->icon_window = dock->iconwin;
+	 win_hints->flags = IconWindowHint;
+	 XSetWMHints(dock->display, pp->win, win_hints);
+	 XFree(win_hints);*/
+      
     class_hint = XAllocClassHint();
     class_hint->res_name = "pinnipede_teletype";
     sprintf(s, "wmcoincoin");
     class_hint->res_class = s;
     XSetClassHint(dock->display, pp->win, class_hint);
     XFree(class_hint);
-
+      
     wm_hint = XAllocWMHints(); assert(wm_hint);
     wm_hint->icon_pixmap = dock->wm_icon_pix;
     wm_hint->icon_mask = dock->wm_icon_mask;
@@ -2173,14 +2225,12 @@ pp_show(Dock *dock)
     XSetWMHints(dock->display, pp->win, wm_hint);
     XFree(wm_hint);
   }
-
+    
   /* pour etre informé de la fermeture de la fenetre demandee par le windowmanager */
   XSetWMProtocols(dock->display, pp->win, &dock->atom_WM_DELETE_WINDOW, 1);
-
-  pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
-
+ 
   /*
-  {
+    {
     XWMHints *mwh = XAllocWMHints();
     mwh->initial_state = WithdrawnState;
     XSetWMHints(dock->display, pp->win, mwh);
@@ -2277,7 +2327,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
 /* renvoie le nombre de references vers le message base_mi (sauf ipot) */
 /* to do: comptage inter-sites */
 static int
-pp_count_backrefs(board_msg_info *base_mi)
+pp_count_backrefs(Boards *b, board_msg_info *base_mi)
 {
   int nb_backrefs = 0;
   board_msg_info *mi;
@@ -2285,7 +2335,7 @@ pp_count_backrefs(board_msg_info *base_mi)
   if (base_mi == NULL) return 0;
 
   /* on parcourt tous les message postérieurs à base_mi */
-  mi = base_mi->next;
+  mi = b->first; //base_mi->next;
   while (mi) {
     int i;
     /* on regarde toutes ses references */
@@ -2300,12 +2350,17 @@ pp_count_backrefs(board_msg_info *base_mi)
 	
 	/* si on pointe vers le bon */
 	if (ref_mi == base_mi) {
+	  /*
+	    printf("%s/%5d backref: %s/%5d [cnt=%d]\n", Prefs.site[base_mi->id.sid]->site_name, base_mi->id.lid,
+	    Prefs.site[mi->id.sid]->site_name, mi->id.lid,
+	    nb_backrefs+1);
+	  */
 	  nb_backrefs++;
 	  break; /* si le message contient deux refs vers base_mi, on ne le compte qu'une fois */
 	}
       }
     }
-    mi = mi->next;
+    mi = mi->g_next;
   }
   return nb_backrefs;
 }
@@ -2366,7 +2421,7 @@ pp_check_survol(Dock *dock, int x, int y)
 	  hk = board_key_list_test_mi(boards, mi, hk->next);
 	}
       }
-      nrep = pp_count_backrefs(mi);
+      nrep = pp_count_backrefs(boards, mi);
 
       snprintf(survol, 1024, "[%s] id=%d ua=%s\n%d %s%s", 
 	       Prefs.site[pw->parent->id.sid]->site_name,
@@ -2413,14 +2468,16 @@ pp_unmap(Dock *dock)
   //  pp_refresh(dock, pp->win, NULL);
 
   /* on sauve la position de la fenetre (en prenant en compte les decorations du WM ) */
-  get_window_pos_with_decor(dock->display, pp->win, &pp->win_xpos, &pp->win_ypos);
-  //  pp_minib_hide(dock);
+  get_window_pos_with_decor(dock->display, pp->win, &pp->win_decor_xpos, &pp->win_decor_ypos);
+
+
   XDestroyWindow(dock->display, pp->win);
   XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
   if (pp->bg_pixmap != None) {
     XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
   }
   pp->win = None;
+
   pp->mapped = 0;
 
   if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
@@ -2568,7 +2625,7 @@ pp_balloon_help(Dock *dock, int x, int y)
 
   //  balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos, 15000,
   //	       0, 0, pp->win_width, pp->win_height,
-  balloon_show(dock, pp->win_xpos + x, pp->win_ypos + y, 40, 40, 
+  balloon_show(dock, pp->win_real_xpos + x, pp->win_real_ypos + y, 40, 40, 
 	       _("<p align=center> Welcome to the <b><font color=#008000>Pinnipede Teletype</font></b></p>"
 	       "This window was specially designed by the greatest experts to offer you "
 	       "optimal mouling conditions.<br>"
@@ -2620,7 +2677,7 @@ pp_thread_filter_add_refs(Boards *boards, struct _PinnipedeFilter *f, board_msg_
     for (j = 0; j < base_mi->refs[i].nbmi; j++) {
       /* realloc la liste si il faut */
       if ((f->nid)%THREAD_FILTER_SZ_REALLOC == 0) {
-	f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC) * sizeof(id_type)); assert(f->id);
+	f->id = (id_type*)realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC) * sizeof(id_type)); assert(f->id);
       }
       /* si la ref n'etait pas déjà dans la liste, on l'ajoute */
       if (pp_thread_filter_find_id(f, mi->id)==0) {
@@ -2659,7 +2716,7 @@ pp_thread_filter_add_backrefs(Boards *boards, struct _PinnipedeFilter *f, board_
 	if (ref_mi == base_mi) {
 	  /* realloc de la liste si necessaire */
 	  if ((f->nid)%THREAD_FILTER_SZ_REALLOC == 0) {
-	    f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC)*sizeof(int)); assert(f->id);
+	    f->id = (id_type*)realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC)*sizeof(id_type)); assert(f->id);
 	  }
 	  
 	  /* si le message n'a pas encore ete traite on l'ajoute */
@@ -2700,7 +2757,7 @@ pp_set_thread_filter(Dock *dock, id_type base_id)
   pp->filter.filter_name = strdup(fname);
 
   pp->filter.nid = 1;
-  pp->filter.id = calloc(THREAD_FILTER_SZ_REALLOC, sizeof(int)); assert(pp->filter.id);
+  pp->filter.id = (id_type*)calloc(THREAD_FILTER_SZ_REALLOC, sizeof(id_type)); assert(pp->filter.id);
   pp->filter.id[0] = base_id;
 
 
@@ -2836,7 +2893,7 @@ pp_handle_alt_clic(Dock *dock, XButtonEvent *ev)
     ww = str_preencode_for_http(w);
     if (strlen(ww)>512) ww[512] = 0; /* faut pas pousser grand mère */
     s = str_substitute(Prefs.gogole_search_url, "%s", ww);
-    open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, ev->button == Button1 ? 1 : 2);
+    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, ev->button == Button1 ? 1 : 2);
     free(s); free(ww); 
   }
 }
@@ -2964,7 +3021,7 @@ pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int 
 		 Prefs.site[sid]->site_root, 
 		 Prefs.site[sid]->site_port, 
 		 Prefs.site[sid]->site_path, w);
-  open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, bnum);
+  open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, bnum);
   free(s);
 }
 
@@ -3007,7 +3064,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
     /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
     if (pw->attr & PWATTR_LNK) {
       if (strlen(pw->attr_s)) {
-	open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
+	open_url(pw->attr_s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 1);
 	pp_visited_links_add(pp, pw->attr_s);
 	pp_pv_destroy(pp);
 	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
@@ -3177,7 +3234,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       } else if (pw && pw->attr & PWATTR_LNK) {
 	/* clic gauche sur une url , on affiche le truc dans le browser externe numero 2 */
 	if (strlen(pw->attr_s)) {
-	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 2);
+	  open_url(pw->attr_s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 2);
 	}
       } else if (pw && pw->attr & PWATTR_LOGIN) {
 	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);
@@ -3599,10 +3656,12 @@ pp_dispatch_event(Dock *dock, XEvent *event)
       
       //      printf("expose: width = %d (%d), height=%d (%d)\n", 
       //	     wa.width,pp->win_width,wa.height,pp->win_height);
-      XTranslateCoordinates(dock->display, pp->win, dock->rootwin, 
-      			    wa.x, wa.y, &pp->win_xpos, &pp->win_ypos, &child);
+      get_window_pos_with_decor(dock->display, pp->win, &pp->win_decor_xpos, &pp->win_decor_ypos);
       
-      //printf(" -> xpos=%d, ypos=%d\n", pp->win_xpos,pp->win_ypos);
+      XTranslateCoordinates(dock->display, pp->win, dock->rootwin, 
+      			    0/*wa.x*/, 0/*wa.y*/, &pp->win_real_xpos, &pp->win_real_ypos, &child);
+      
+      //      printf(" -> xpos=%d, ypos=%d [%d %d]\n", pp->win_real_xpos,pp->win_real_ypos, wa.x, wa.y);
       if (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height ||
 	  pp->transparency_mode) {
 	pp->win_width = MAX(event->xconfigure.width,80);
@@ -3689,7 +3748,7 @@ pp_save_state(Dock *dock, FILE *f) {
   int i;
   fprintf(f, "%d %d %d %d %d\n", 
 	  pp->mapped,
-	  pp->win_xpos, pp->win_ypos, 
+	  pp->win_decor_xpos, pp->win_decor_ypos, 
 	  pp->win_width, pp->win_height);
 
   fprintf(f, "LINKS %d\n", pp->nb_visited_links);
@@ -3712,8 +3771,8 @@ pp_restore_state(Dock *dock, FILE *f) {
     /* on vérifie qu'on n'a pas spécifié de préferences dans le fichier d'options */
     if (Prefs.pp_xpos == -10000 && Prefs.pp_ypos == -10000) {
       if (win_xpos != -10000) {
-	pp->win_xpos = MAX(MIN(win_xpos,3000),-20);
-	pp->win_ypos = MAX(MIN(win_ypos,3000),-20);
+	pp->win_decor_xpos = MAX(MIN(win_xpos,3000),-20);
+	pp->win_decor_ypos = MAX(MIN(win_ypos,3000),-20);
 	pp->win_width = MAX(MIN(win_width,3000),50);
 	pp->win_height = MAX(MIN(win_height,3000),50);
       }

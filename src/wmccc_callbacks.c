@@ -10,6 +10,9 @@
 #include "wmccc_support.h"
 #include "wmccc.h"
 
+int options_applied = 0;
+int options_saved = 0;
+
 /*
 void
 messagebox(char *msg) {
@@ -404,6 +407,7 @@ on_bt_remove_site_clicked(GtkButton *button, gpointer user_data UNUSED) {
 void
 on_bt_save_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
   save_prefs(glob.options_file, 1);
+  options_saved = 1;
 }
 
 void
@@ -429,6 +433,7 @@ on_bt_apply_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
   if (save_prefs(glob.tmp_options_file, 0) == 0) {
     g_assert(glob.wmcc_pid > 0);
     kill(glob.wmcc_pid, SIGUSR2);
+    options_applied = 1;
   }
 }
 
@@ -462,6 +467,7 @@ on_fileselection_ok_button_clicked(GtkButton *button, gpointer user_data UNUSED)
   if (filename && strlen(filename)) {
     save_prefs(filename,1);
     g_free(glob.options_file); glob.options_file = strdup(filename);
+    options_saved = 1;
   }
 }
 
@@ -522,7 +528,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
   GtkWidget *active_item;
   SitePrefs *sp;
   
-  enum { NONE, DLFP, WOOF, DLFP2, GLANDIUM, FCPU} item_index;
+  enum { NONE, DLFP, WOOF, DLFP2} item_index;
 
   active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
   item_index = g_list_index(menu_shell->children, active_item);
@@ -583,10 +589,6 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->check_board = 1;
       sp->check_comments = 0;
       sp->check_messages = 0;      
-    case GLANDIUM:
-      break;
-    case FCPU:
-      break;
     default:
       break;
     }

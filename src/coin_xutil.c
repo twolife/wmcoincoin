@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.6 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.7 2002/09/07 16:21:15 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.7  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.6  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -235,12 +238,12 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
 void 
 get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y)
 {
-  Window child_win;
+  Window child_win = None;
   XWindowAttributes win_attr;
 
   XGetWindowAttributes(display, win, &win_attr);
   XTranslateCoordinates(display, win, root_win,
-			0, 0, screen_x, screen_y,
+			win_attr.x, win_attr.y, screen_x, screen_y,
 			&child_win);
 }
 

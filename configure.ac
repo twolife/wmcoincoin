@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.4  2002/09/07 16:21:15  pouaite
+dnl   ça va releaser en douce
+dnl
 dnl   Revision 1.3  2002/09/03 22:42:17  pouaite
 dnl   coin
 dnl
@@ -97,7 +100,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.3.8dtc, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.0a, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -147,8 +150,12 @@ dnl  $X_LIBS -lX11 -lXext)
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
 
-AM_PATH_GTK(1.2.0, ,
-            AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
+dnl AM_PATH_GTK(1.2.0, ,
+dnl            AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
+GTK_CFLAGS="`gtk-config --cflags`"
+GTK_LIBS="`gtk-config --libs`"
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
 
 dnl Set PACKAGE_DATA_DIR in config.h.
 if test "x${datadir}" = 'x${prefix}/share'; then

@@ -100,8 +100,6 @@ pp_tabs_build(Dock *dock) {
     }
   }
 
-  printf("nb_tabs = %d\n",pp->nb_tabs);
-
   ALLOC_VEC(pp->tabs, pp->nb_tabs, PinnipedeTab);
   for (s = dock->sites->list, pt = pp->tabs; s; s = s->next) {
     if (s->board) {
@@ -120,7 +118,10 @@ pp_tabs_build(Dock *dock) {
 void
 pp_tabs_destroy(Pinnipede *pp)
 {
-  free(pp->tabs); pp->tabs = NULL; pp->nb_tabs = 0;
+  if (pp->tabs) {
+    free(pp->tabs); pp->tabs = NULL; 
+  }
+  pp->nb_tabs = 0;
   pp->active_tab = NULL;
 }
 
@@ -862,7 +863,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
       {
 	if (Prefs.use_fake_real_transparency) {
 	  pp_unmap(dock); XFlush(dock->display); 
-	  usleep(150); /* pour laisser le temps aux autres applis de se refresher
+	  usleep(300000); /* pour laisser le temps aux autres applis de se refresher
 			  on atteint des sommets de laideur
 			  pas sur que c'était une bonne idée cette option use_fake_real_transparency
 		       */
@@ -917,7 +918,7 @@ pp_refresh_fortune(Dock *dock, Drawable d)
 			 DefaultDepth(dock->display,dock->screennum));
     XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.pp_fortune_bgcolor));
     XFillRectangle(dock->display, fpix, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h);
-    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(128,128,128));
+    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(192,192,192));
     XDrawLine(dock->display, fpix, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width, pp->fortune_h-1);
 
     assert(!picohtml_isempty(pp->ph_fortune));
@@ -926,11 +927,11 @@ pp_refresh_fortune(Dock *dock, Drawable d)
     picohtml_render(dock, pp->ph_fortune, fpix, dock->NormalGC, x, 0);
     XCopyArea(dock->display, fpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h, 0, 0);
     XFreePixmap(dock->display, fpix);
-  } else {
-  /* nettoyage ligne du haut */
+  }/* nettoyage ligne du haut *//* else {
+      
     assert(LINEY0(0)>0);
     pp_clear_win_area(dock, 0, 0, pp->win_width, LINEY0(0));
-  }
+  }*/
 }
 
 /* a appeler quand la fortune est changée */
@@ -1005,7 +1006,7 @@ pp_check_balloons(Dock *dock, int x, int y)
       case CANCEL: msg = _("clic here to cancel the current download"); break;
       default: assert(0);
       }
-      balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos-15, 0, 
+      balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-15, 0, 
 		   pp->mb[i].x, MINIB_Y0, 
 		   pp->mb[i].w, MINIB_H, msg);
     }

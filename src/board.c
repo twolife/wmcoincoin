@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.9 2002/09/05 23:11:57 pouaite Exp $
+  rcsid=$Id: board.c,v 1.10 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.10  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.9  2002/09/05 23:11:57  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -807,7 +810,7 @@ boards_update_boitakon(Boards *boards)
     if (hk) { /* bienvenu dans la boitakon */
       mi->in_boitakon = 1;
     } else mi->in_boitakon = 0;
-    mi = mi->next;
+    mi = mi->g_next;
   }
   flag_board_updated = 1;
 }
@@ -1169,7 +1172,7 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 
 
     if (t_max - t_min > board->local_time_last_check_end-board->local_time_last_check_old) {
-      myprintf("%<YEL ------------------------------\nle backend LAGGUE !!\n----------------->\n");
+      BLAHBLAH(1,myprintf("%<YEL ------------------------------\nle backend LAGGUE !!\n----------------->\n"));
     }
     board->time_shift_min = MAX(board->time_shift_min, 
 				board->local_time_last_check_old - t_min);
@@ -1185,10 +1188,10 @@ board_update_time_shift(Board *board, int old_last_post_id) {
       int marge;
       time_t tmp;
       if (board->time_shift_min - board->time_shift_max > 1) {
-	myprintf("%<YEL ------------------------------\nRAAAAAAAAAAAAH SWAP!!\n----------------->\n");
+	BLAHBLAH(1,myprintf("%<YEL ------------------------------\nRAAAAAAAAAAAAH SWAP!!\n----------------->\n"));
 	marge = 10;
       } else {
-	myprintf("%<YEL petit ajustement>\n");
+	BLAHBLAH(1,myprintf("%<YEL petit ajustement>\n"));
 	marge = 1;
       }
       tmp = board->time_shift_min;
@@ -1198,17 +1201,19 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 
 
     board->time_shift = (board->time_shift_min+board->time_shift_max)/2;
-
-    myprintf("%<YEL %s>\n", board->site->prefs->site_name);
-    cctime(&t_min,s1); cctime(&t_max,s2);
-    printf("t_min : %s, t_max : %s, d=%ld nbmsg=%d\n", s1, s2, 
-	   t_max-t_min, nbmsg);
     
-    cctime(&board->local_time_last_check_old,s1); cctime(&board->local_time_last_check_end,s2); 
-    printf("loct1 : %s, loct2 : %s, d=%ld\n", s1, s2,
-	   board->local_time_last_check_end-board->local_time_last_check_old);
-    printf("time_shift_min : %ld, time_shift_max : %ld, ts=%ld\n", 
-	   board->time_shift_min, board->time_shift_max,board->time_shift);
+    if (Prefs.verbosity >= 1) {
+      myprintf("%<YEL %s>\n", board->site->prefs->site_name);
+      cctime(&t_min,s1); cctime(&t_max,s2);
+      printf("t_min : %s, t_max : %s, d=%ld nbmsg=%d\n", s1, s2, 
+	     t_max-t_min, nbmsg);
+    
+      cctime(&board->local_time_last_check_old,s1); cctime(&board->local_time_last_check_end,s2); 
+      printf("loct1 : %s, loct2 : %s, d=%ld\n", s1, s2,
+	     board->local_time_last_check_end-board->local_time_last_check_old);
+      printf("time_shift_min : %ld, time_shift_max : %ld, ts=%ld\n", 
+	     board->time_shift_min, board->time_shift_max,board->time_shift);
+    }
   }
 }
 

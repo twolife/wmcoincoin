@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.3 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.4 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.4  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.3  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -1746,6 +1749,33 @@ editw_set_pinnipede_filter(Dock *dock) {
   }
 }
 
+void
+editw_next_site(Dock *dock, int dir) {
+  EditW *ew = dock->editw;
+  Site *s0 = sl_find_site_by_name(dock->sites, ew->prefs->site_name);
+  Site *sb = NULL, *sc;
+  assert(s0);
+  
+  /* look for the next site with a board */
+  sc = s0->next;
+  while (sc != s0) {
+    if (sc == NULL) sc = dock->sites->list;
+    if (sc == s0) break;
+    assert(sc);
+    if (sc && sc->prefs->check_board) {
+      sb = sc;
+      if (dir == +1) break;
+    }
+    sc = sc->next; 
+  }
+  if (sb == NULL) sb = s0;
+
+  assert(sb);
+  editw_select_site(dock, sb->site_id);
+  editw_select_buff(dock, ew, ew->buff_num);
+}
+
+
 /*
 static void
 editw_balise_tt(EditW *ew) {
@@ -1792,6 +1822,12 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
     case 'F':
     case 'f': editw_set_pinnipede_filter(dock); break;
+    case XK_KP_Left:
+    case XK_Left:
+      editw_next_site(dock, -1); break;
+    case XK_KP_Right:
+    case XK_Right:
+      editw_next_site(dock, +1); break;
       /*
     case 'T':
     case 't': editw_balise_tt(ew); break;
@@ -1840,22 +1876,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 
     case XK_Tab:
       {
-	Site *s = sl_find_site_by_name(dock->sites, ew->prefs->site_name);
-	assert(s);
-	
-	/* look for the next site with a board */
-	while (s) {
-	  s = s->next; if (s && s->prefs->check_board) break;
-	}
-	if (s == NULL) {
-	  s = dock->sites->list;
-	  while (s && s->prefs->check_board == 0) {
-	    s = s->next; 
-	  }
-	}
-	assert(s);
-	editw_select_site(dock, s->site_id);
-	editw_select_buff(dock, ew, ew->buff_num);
+	editw_next_site(dock,+1);
       } break;
 
     case XK_KP_Left:
@@ -2280,6 +2301,8 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "<i>wolfenstein cd key</i>",
     "d'expliquer pourquoi vous n'irez pas passer vos vacances en Bretagne",
     "de disserter sur la fainéantise des fonctionnaires de ce pays",
+    "de raconter vos malheurs de façon larmoyante, tout en rappelant que vous gagnez 400kf/an et que votre boulot est super-génial",
+    "de répondre en tant qu'expert à la première question qui vient, en plaçant un maximum de buzzwords",
     "de demander à quoi sert le gros bouton rouge",
     "de poster un lien vers une news sur Britney Spears",
     "de demander combien Poolpy a de ventouses",

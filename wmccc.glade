@@ -848,12 +848,6 @@ Les tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci perme
 linuxfr.org
 woof.lu
 new.linuxfr.org
-glandium.org
-f-cpu
-sciencesnat.org
-gnusfr.org
-muttfr.org
-emacsfr.org
 </items>
 		  <initial_choice>0</initial_choice>
 		  <child>
@@ -3050,6 +3044,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 		    <widget>
 		      <class>GtkEntry</class>
 		      <name>entry_miniua</name>
+		      <visible>False</visible>
 		      <can_focus>True</can_focus>
 		      <editable>True</editable>
 		      <text_visible>True</text_visible>
@@ -3079,6 +3074,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 		    <widget>
 		      <class>GtkButton</class>
 		      <name>bt_mua_change</name>
+		      <visible>False</visible>
 		      <can_focus>True</can_focus>
 		      <signal>
 			<name>clicked</name>
@@ -3098,6 +3094,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 		    <widget>
 		      <class>GtkButton</class>
 		      <name>bt_mua_add</name>
+		      <visible>False</visible>
 		      <can_focus>True</can_focus>
 		      <signal>
 			<name>clicked</name>
@@ -3117,6 +3114,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 		    <widget>
 		      <class>GtkButton</class>
 		      <name>bt_mua_delete</name>
+		      <visible>False</visible>
 		      <can_focus>True</can_focus>
 		      <signal>
 			<name>clicked</name>

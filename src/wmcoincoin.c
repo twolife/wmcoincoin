@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.61 2002/09/05 23:11:58 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.62 2002/09/07 16:21:16 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.62  2002/09/07 16:21:16  pouaite
+  ça va releaser en douce
+
   Revision 1.61  2002/09/05 23:11:58  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -551,12 +554,13 @@ int
 launch_wmccc()
 {
   pid_t wmccc_pid;
-  char *spid = str_printf("%u", getpid());
+  char *spid = str_printf("%u", (unsigned)getpid());
   char *stmpopt = get_wmcc_tmp_options_filename();
   switch ( wmccc_pid = fork() ) {
   case -1: /* arrrrg */
     {
       fprintf(stderr, _("Fork failed...(%s)..\n you sux\n"), strerror(errno));
+      free(stmpopt); free(spid);
       return -1;
     } break;
   case 0: /* fiston (wmccc) */
@@ -575,6 +579,7 @@ launch_wmccc()
     } break;
   }  
   free(spid);
+  free(stmpopt);
   return 0;
 }
 
@@ -993,6 +998,7 @@ void X_loop()
     } else {
       dock_refresh_horloge_mode(dock);
     }
+    if (timer_cnt < 400) dock_refresh_other_win(dock);
 
     /* gestion des animations du dock */
     if (dock->door_state == OPENING) {
@@ -1358,7 +1364,7 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   
-  if (Prefs.use_iconwin) {
+  //  if (Prefs.use_iconwin) {
     /* create icon window */
     dock->iconwin = XCreateSimpleWindow(dock->display, dock->rootwin,
 					xsh.x, xsh.y, xsh.width, xsh.height, 0,
@@ -1369,8 +1375,8 @@ void initx(Dock *dock, int argc, char **argv) {
       fprintf(stderr, _("Couldn't create icon window\n"));
       exit(1);
     }
-  } else dock->iconwin = None;
-
+    //  } else dock->iconwin = None;
+    
 
 
   /* load interface pixmap */
@@ -1685,7 +1691,7 @@ main(int argc, char **argv)
 
   {
     Site *s;
-    myprintf("Site         Locale     Board           News       Comments     Messages\n");
+    myprintf("Site         Locale     Board                    News    Comments     Messages\n");
     for (s = dock->sites->list; s; s = s->next) {
       myprintf("%<YEL %10s>   \t", s->prefs->site_name);
       switch (s->prefs->locale) {
@@ -1695,13 +1701,13 @@ main(int argc, char **argv)
       }
       if (s->prefs->check_board) {
 	switch (s->prefs->board_backend_type) {
-	case 1:  myprintf(_("%<YEL modern style      >")); break;
-	case 2:  myprintf(_("%<YEL old style         >")); break;
+	case 1:  myprintf(_("%<YEL tags not encoded  >")); break;
+	case 2:  myprintf(_("%<YEL tags encoded      >")); break;
 	case 3:  myprintf(_("%<YEL without underpants>")); break;
 	default: myprintf(_("%<YEL prrrrrrt          >")); break;
 	}
       } else {
-	myprintf("       none       ");
+	myprintf("none              ");
       }
       myprintf("    %3s     ", s->prefs->check_news ? "Yes" : "No");
       myprintf("    %3s     ", s->prefs->check_comments ? "Yes" : "No");

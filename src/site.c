@@ -297,8 +297,8 @@ site_save_state(Dock *dock UNUSED, FILE *f, Site *site) {
     tmin = site->board->time_shift_min;
     tmax = site->board->time_shift_max;
     t = site->board->time_shift;
-    myprintf("%<yel site_save_state> %10s : tmin -> %<cya %3ld> tmax -> %<cya %3ld> t -> %<CYA %3ld>\n",
-	     site->prefs->site_name, tmin, tmax, t);
+    BLAHBLAH(1,myprintf("%<yel site_save_state> %10s : tmin -> %<cya %3ld> tmax -> %<cya %3ld> t -> %<CYA %3ld>\n",
+			site->prefs->site_name, tmin, tmax, t));
   }
   fprintf(f, "%ld %ld %ld", tmin, tmax, t);
 }
@@ -308,8 +308,8 @@ site_restore_state(Dock *dock UNUSED, FILE *f, Site *site) {
   long tmin,tmax,t;
   if (fscanf(f, "%ld %ld %ld\n",&tmin, &tmax, &t) != 3) return;
   if (tmin <= tmax && tmin <= t && t <= tmax && site->board) {
-    myprintf("%<yel site_restore_state> %10s : tmin <- %<cya %3ld> tmax <- %<cya %3ld> t <- %<CYA %3ld>\n",
-	     site->prefs->site_name, tmin, tmax, t);
+    BLAHBLAH(1,myprintf("%<yel site_restore_state> %10s : tmin <- %<cya %3ld> tmax <- %<cya %3ld> t <- %<CYA %3ld>\n",
+			site->prefs->site_name, tmin, tmax, t));
     site->board->time_shift_min = tmin;
     site->board->time_shift_max = tmax;
     site->board->time_shift = t;

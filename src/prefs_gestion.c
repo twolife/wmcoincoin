@@ -114,11 +114,11 @@ wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
     case 'P': TEST_CMDLINE_OPT(OPT_http_proxy); break;
     case 'A': TEST_CMDLINE_OPT(OPT_http_proxy_auth); break;
       */
-    case 'w': TEST_CMDLINE_OPT(OPT_dock_iconwin); break;
+    case 'w': optarg = "0"; TEST_CMDLINE_OPT(OPT_dock_iconwin); printf("dock.iconwin: %d\n", Prefs.use_iconwin);break;
     case 'B': TEST_CMDLINE_OPT(OPT_dock_draw_border); break;
+    case 'x': TEST_CMDLINE_OPT(OPT_dock_pos); break;
       /*
     case 'H': TEST_CMDLINE_OPT(OPT_dock_use_balloons); break;
-    case 'x': TEST_CMDLINE_OPT(OPT_dock_pos); break;
     case 'r': TEST_CMDLINE_OPT(OPT_http_site_url); break;
     case 's':
       {
@@ -762,16 +762,19 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     }
 
     if (rebuild_pinni) {
-      int showed = pp_ismapped(dock);
-      pp_destroy(dock);
-      pp_build(dock);
-      if (showed) pp_show(dock);
+      // int showed = pp_ismapped(dock);
+      //      pp_destroy(dock);
+      pp_rebuild(dock);
+      //      if (showed) pp_show(dock);
     } if (redraw_pinni) {
-      pp_set_prefs_colors(dock);
+      pp_rebuild(dock);
+      //pp_set_prefs_colors(dock);
+      /*
       if (pp_ismapped(dock)) {
 	pp_unmap(dock);
 	pp_show(dock);
       }
+      */
     }
 
     if (rebuild_palmi) {

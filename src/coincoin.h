@@ -612,6 +612,7 @@ void msgbox_build(Dock *dock);
 
 /* pinnipede.c */
 void pp_build(Dock *dock);
+void pp_rebuild(Dock *dock);
 void pp_destroy(Dock *dock);
 void pp_show(Dock *dock);
 void pp_unmap(Dock *dock);

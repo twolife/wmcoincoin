@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.7 2002/09/01 23:54:56 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.8 2002/09/07 16:21:15 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.8  2002/09/07 16:21:15  pouaite
+  ça va releaser en douce
+
   Revision 1.7  2002/09/01 23:54:56  pouaite
   completurage du wmc3 et compatibilitation avec new.linuxfr
 
@@ -674,7 +677,7 @@ board_msg_is_ref_to_me(Boards *boards, const board_msg_info *ref_mi) {
   /!\ la recherche est local à la board indiquée en parametre
 */
 static board_msg_info *
-board_find_horloge_ref(Board *board, int caller_id, 
+board_find_horloge_ref(Board *board, id_type caller_id, 
 		       int h, int m, int s, int num, unsigned char *commentaire, int comment_sz)
 {
   board_msg_info *mi, *best_mi;
@@ -689,7 +692,7 @@ board_find_horloge_ref(Board *board, int caller_id,
 
   while (mi) {
     match = 0;
-    if (mi->id.lid > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
+    if (mi->id.lid > id_type_lid(caller_id) && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
       if ((mi->hmsf[0] == h || (board->site->prefs->use_AM_PM && 
 				(mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
@@ -728,7 +731,7 @@ board_find_horloge_ref(Board *board, int caller_id,
     board_msg_info *caller_mi;
 
     commentaire[0] = 0;
-    caller_mi = board_find_id(board, caller_id);
+    caller_mi = boards_find_id(board->boards, caller_id);
     if (caller_mi) {
       commentaire[0] = 0;
       if (s == -1) {    
@@ -803,7 +806,7 @@ check_for_horloge_ref(Boards *boards, id_type caller_id,
     return NULL;
   }
   if (board) {
-    return board_find_horloge_ref(board, caller_id.lid, 
+    return board_find_horloge_ref(board, caller_id, 
 				  h, m, s, num, commentaire, comment_sz);
   } else return NULL;
 }
@@ -849,7 +852,7 @@ board_msg_find_refs(Board *board, board_msg_info *mi)
 	   mi->refs[mi->nb_refs].nbmi = 0;
 	   mi->refs[mi->nb_refs].mi = NULL;
 	   
-	   ref_mi = board_find_horloge_ref(ref_board, mi->id.lid, 
+	   ref_mi = board_find_horloge_ref(ref_board, mi->id, 
 					   h, m, s, num, NULL, 0);
 	   
 	   if (ref_mi && ((ref_mi->id.lid <= mi->id.lid) || ref_board != board)) {
