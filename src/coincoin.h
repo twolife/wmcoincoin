@@ -66,17 +66,17 @@ typedef struct _DLFP_news {
 //#define TRIBUNE_MAX_MSG 400 /* nb max de messages gardés en mémoire */
 
 /* la tribune load affiche les messages sur les 15 dernieres minutes */
-#define TRIBUNE_LOAD_NB_MINUTES 11
+#define TROLLOSCOPE_NB_MINUTES 11
 /* sur une minute, elle peut stocker 5 messages simultanes */
-#define TRIBUNE_LOAD_MAX_SIMUL 5
+#define TROLLOSCOPE_MAX_SIMUL 5
 
-#define TRIBUNE_LOAD_WIDTH TRIBUNE_LOAD_NB_MINUTES*5
+#define TROLLOSCOPE_WIDTH TROLLOSCOPE_NB_MINUTES*5
 /* le -2 c fait expres -> quand il y a + de 5 msg dans
    la meme minute, on voit le 5eme sans pouvoir l'identifier vraiment
    c mieux que de prendre une hauteur de exactement 4 formes */
-#define TRIBUNE_LOAD_HEIGHT TRIBUNE_LOAD_MAX_SIMUL*5-4
-#define TRIBUNE_LOAD_X 4
-#define TRIBUNE_LOAD_Y 25
+#define TROLLOSCOPE_HEIGHT TROLLOSCOPE_MAX_SIMUL*5-4
+#define TROLLOSCOPE_X 4
+#define TROLLOSCOPE_Y 25
 
 
 typedef struct _DLFP_trib_load_rule {
@@ -107,7 +107,7 @@ typedef struct _tribune_msg_info {
   /* tatouage pointe sur la regle que satisfie 'useragent' 
      c'est update_pix_trib_load qui s'en occupe
 
-     peut valoir etre NULL (non identifie, ne sera pas affiche dans tribune_load 
+     peut valoir etre NULL (non identifie, ne sera pas affiche dans trolloscope 
      mais attention, l'allocation ne se fait pas ici, le pointeur designe
      juste un element de 'tribune.rules'
   */
@@ -313,13 +313,17 @@ typedef struct _Pinnipede Pinnipede;
 #define DOCK_FIXED_FONT "-*-fixed-*--10-*"
 #define DOCK_FIXED_FONT_W 6
 
+
+#define MAX_NEWSTITLES_LEN 512 /* taille de dock->newstitles */
+#define MAX_MSGINFO_LEN 300 /* taille de dock->msginfo */
+
 typedef struct _Dock {
   Pixmap pix_porte, mask_porte_haut, mask_porte_bas;
   Leds leds;
   /* le pixmap du load de la tribune (il n'est regenere que
      quand la tribune a ete modifie, c'est quand meme plus cool
      que le faire a chaque refresh_dock */
-  Pixmap pix_tribune_load;
+  Pixmap pix_trolloscope;
 
   XFontStruct *fixed_font;
   
@@ -350,11 +354,20 @@ typedef struct _Dock {
   unsigned char *msginfo;
 
   /* pointe vers la structure tl_item si la souris
-     est au dessus d'un message dans la zone de tribune_load
+     est au dessus d'un message dans la zone de trolloscope
      (NULL sinon)
   */
   TL_item *tl_item_survol;
   int tl_item_clicked;
+
+  /* ça c'est le tableau du trolloscope */
+  TL_item **trolloscope;
+  /* trolloscope_resolution: 5(faible) ou 2(moyenne) ou 1(hires!)*/
+  int trolloscope_resolution; /* de retour, à la demande de monsieur 'The Original Palmipède' */
+  int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb; /* couleur de fond du trolloscope (oui c'est tout naze) */
+  int trolloscope_clign_step; /*  -1 -> pas de clignot, -2 -> arret demande */
+
+
   /* si non nul, c'est le compteur de defilement*/
   int msginfo_defil;
 
@@ -373,7 +386,7 @@ typedef struct _Dock {
   Atom atom_WM_PROTOCOLS;
 
   /* si non nul, on voit l'id du msg designe par tl_item_clicked, 
-     --> active par un click sur un symbole dans tribune_load 
+     --> active par un click sur un symbole dans trolloscope 
     (contient l'id, ce n'est pas un flag 0/1) */
   int view_id_in_newstitles;
   int view_id_timer_cnt;
@@ -453,10 +466,7 @@ typedef struct _Dock {
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 char* http_transfert(char *URL);
 unsigned char *fget_line(unsigned char *s, int n, FILE *f);
-//unsigned long pixel_color(Dock *dock, unsigned char r, unsigned char g, unsigned char b);
-void dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
-/* renvoie 1 si le bouton rouge a ete suffisament enfonce */
-int dock_red_button_check(Dock *dock);
+
 //int flush_expose(Window w);
 void block_sigalrm(int bloque);
 
@@ -475,6 +485,23 @@ XFontStruct *picohtml_get_fn_bold(PicoHtml *ph);
 PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int white_txt);
 void picohtml_destroy(Display *display, PicoHtml *ph);
 void picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix);
+
+/* dock.c */
+void dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib);
+int dock_red_button_check(Dock *dock); /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
+void dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
+void dock_dispatch_event(Dock *dock, XEvent *event);
+void dock_refresh_normal(Dock *dock); /* redessine l'applet (en mode normal, cad pas en mode horloge) */
+void dock_refresh_horloge_mode(Dock *dock); /* redessine l'applet en mode horloge */
+void dock_leds_set_state(Dock *dock); /* active/desactive le clignotement (et la couleur) des leds */
+void dock_leds_update(Leds *l); /* decremente les compteurs de clignotement */
+void dock_leds_create(Dock *dock, Leds *leds);
+void dock_checkout_newstitles(Dock *dock, DLFP *dlfp); /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
+void dock_set_horloge_mode(Dock *dock);
+
+/* useragents_file.c */
+int useragents_file_reread(Dock *dock, DLFP *dlfp);
+int useragents_file_read_initial(Dock *dock, DLFP *dlfp);
 
 /* coincoin_tribune.c */
 tribune_msg_info *tribune_find_id(const DLFP_tribune *trib, int id);

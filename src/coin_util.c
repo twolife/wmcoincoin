@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.8 2002/01/16 00:35:26 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.9 2002/01/16 21:27:35 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.9  2002/01/16 21:27:35  pouaite
+  gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
+
   Revision 1.8  2002/01/16 00:35:26  pouaite
   debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
 
@@ -452,6 +455,22 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
   }
   return id;
 }
+
+/*
+  verifie si la chaine est vide (cad si elle ne contient que des caractères non imprimables 
+*/
+int
+str_is_empty(const char *s) {
+  int i;
+  if (s == NULL) return 1;
+  else if (strlen(s) == 0) return 1;
+  else {
+    i = 0;
+    while (s[i] && s[i] <= ' ') i++;
+    return (i == (int)strlen(s));
+  }
+}
+
 
 /* recherche la première occurence d'une des chaines 'keys' dans 'src' et renvoie un pointeur vers
    cette occurence, ainsi que le numéro de la 'keys' trouvée
