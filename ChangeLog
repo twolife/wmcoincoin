@@ -1,3 +1,14 @@
+2003-03-09  pouaite  <c0in@altern.org>
+
+	* src/board.c (board_log_msg): le bug qui faisait apparaitre
+	certains messages d'une même tribune dans le mauvais ordre est
+	(semble-t-il) résolu.
+	* src/wmccc.c: correction du pb de refresh des boutons de
+	selection de couleur (merci choocroot). Suppression de la floppée
+	de g[td]k-warnings affichés par le wmccc.
+	* src/http.c: tentative de correction pour cygwin. Au moins ça
+	compile.
+	
 --------------------------v2.4.4-a-----------------------------------------
 2003-03-01  pouaite  <c0in@altern.org>
 

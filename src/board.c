@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.17 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: board.c,v 1.18 2003/03/09 13:02:47 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.18  2003/03/09 13:02:47  pouaite
+  ouéééééé
+
   Revision 1.17  2003/01/11 17:44:10  pouaite
   ajout de stats/coinping sur les sites
 
@@ -866,6 +869,45 @@ boards_update_boitakon(Boards *boards)
   flag_board_updated = 1;
 }
 
+/* la chasse au bug chelou est ouverte */
+void
+assert_boards_ok(Boards *boards) {
+  int pid = -1,i, ptab[MAX_SITES],sid;
+  board_msg_info *mi;
+
+  if (boards->last) {
+    assert(boards->last->next == NULL);
+    assert(boards->last->g_next == NULL);
+  }
+  if (boards->first) {
+    assert(boards->first->g_prev == NULL);
+  }
+  for (i = 0; i < MAX_SITES; ++i) {
+    Board *board = boards->btab[i];
+    if (board) {
+      pid = -1;
+      for (mi = board->msg; mi; mi = mi->next) {
+        assert(id_type_lid(mi->id)>pid);
+        pid = id_type_lid(mi->id);
+      }
+    }
+  }
+  for (i = 0; i < MAX_SITES; ++i) ptab[i] = -1;
+  for (mi = boards->first; mi; mi = mi->g_next) {
+    sid = id_type_sid(mi->id);
+    assert(ptab[sid] < id_type_lid(mi->id));
+    ptab[sid] = id_type_lid(mi->id);
+    if (mi->g_next) assert(mi->g_next->g_prev == mi);
+  }
+  for (i = 0; i < MAX_SITES; ++i) ptab[i] = 2000000000;
+  for (mi = boards->last; mi; mi = mi->g_prev) {
+    sid = id_type_sid(mi->id);
+    assert(ptab[sid] > id_type_lid(mi->id));
+    ptab[sid] = id_type_lid(mi->id);
+    if (mi->g_prev) assert(mi->g_prev->g_next == mi);
+  }
+}
+
 /*
   enregistre un nouveau message
 */
@@ -873,6 +915,7 @@ static board_msg_info *
 board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
 {
   board_msg_info *nit, *pit, *ppit, *it;
+  board_msg_info *g_it, *pg_it;
   char *message = NULL;
   Boards *boards = board->boards;
 
@@ -889,8 +932,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
     do_wiki_emulation(board, tmp, message);
     free(tmp);
   }
-
-
+#ifdef WMCC_EXTRA_CHECKS
+  assert_boards_ok(boards);
+#endif
   BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
   nit = board->msg;
   pit = NULL;
@@ -923,37 +967,39 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   id_type_set_lid(&it->id, id);
   id_type_set_sid(&it->id, board->site->site_id);
   
-
   /* insertion dans la grande chaine de messages globale (inter-sites)*/
-  {
-    board_msg_info *g_it, *pg_it;
-    g_it = ppit ? ppit : boards->first; /* on demarre sur le dernier message de la même tribune d'id inférieur
-					   histoire de respecter inconditionnellement l'ordre par tribune
-					   (sinon il y a des problèmes quand un backend laggue et qu'il y
-					   a des sauts de 'time_shift' */
-
-    pg_it = g_it ? g_it->g_prev : NULL;
-    while (g_it &&
-	   (it->timestamp +  board->boards->btab[it->id.sid]->time_shift > 
-	    g_it->timestamp +board->boards->btab[g_it->id.sid]->time_shift)) {
-      if (it->id.sid == g_it->id.sid && it->id.lid < g_it->id.lid) break; /* respect de l'ordre sur le site */
-      pg_it = g_it;
-      g_it = g_it->g_next;
-    }
-    if (pg_it) {
-      pg_it->g_next = it;
-    } else {
-      boards->first = it;
-    }
-    it->g_prev = pg_it;
-    if (g_it) {
-      g_it->g_prev = it;
-    } else {
-      boards->last = it;
-    }
-    it->g_next = g_it;
+  g_it = pit ? pit : boards->first; /* on demarre sur le dernier message de la 
+                                       même tribune d'id inférieur
+                                       histoire de respecter inconditionnellement 
+                                       l'ordre par tribune
+                                       (sinon il y a des problèmes quand 
+                                       un backend laggue et qu'il y
+                                       a des sauts de 'time_shift' */
+  pg_it = g_it ? g_it->g_prev : NULL;
+  while (g_it &&
+         (it->timestamp +  board->boards->btab[it->id.sid]->time_shift >= 
+          g_it->timestamp +board->boards->btab[g_it->id.sid]->time_shift)) {
+    if (it->id.sid == g_it->id.sid && it->id.lid < g_it->id.lid) 
+      break; /* respect de l'ordre sur le site */
+    pg_it = g_it;
+    g_it = g_it->g_next;
   }
 
+  if (pg_it) {
+    pg_it->g_next = it;
+  } else {
+    boards->first = it;
+  }
+  it->g_prev = pg_it;
+  if (g_it) {
+    g_it->g_prev = it;
+  } else {
+    boards->last = it;
+  }
+  it->g_next = g_it;
+#ifdef WMCC_EXTRA_CHECK
+  assert_boards_ok(boards);
+#endif
 
   if (board->last_post_id < it->id.lid) {
     board->last_post_timestamp = it->timestamp;
