@@ -270,7 +270,7 @@ http_iread (SOCKET fd, char *buf, int len)
 	  }
 #else
 	  if (res == SOCKET_ERROR) {
-	    printf("http_iread: socket error, res=%d (%s)\n", res, strerror(errno));
+	    printf("http_iread: socket error, res=%d (%s)\n", res, STR_LAST_ERROR);
             goto error;
 	  }
 	  if (res == 0) {
