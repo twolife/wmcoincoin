@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.7 2002/02/24 22:13:56 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.8 2002/04/01 01:39:38 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.8  2002/04/01 01:39:38  pouaite
+##   grosse grosse commition (cf changelog)
+##
 ##   Revision 1.7  2002/02/24 22:13:56  pouaite
 ##   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 ##
@@ -33,8 +36,8 @@ wmcoincoin_SOURCES = \
 	pinnipede.c editwin.c newswin.c \
 	picohtml.c picohtml.h msgbox.c balloon.c \
 	wmcoincoin.c coincoin.h global.h http.c http.h \
-	coin_util.c coin_util.h \
-	coincoin_prefs.c coincoin_prefs.h \
+	coin_util.c coin_util.h coin_xutil.c coin_xutil.h \
+	prefs.c prefs.h options_list.h prefs_gestion.c\
 	coincoin_news.c coincoin_tribune.c \
 	regexp.h regexp.c general.h \
 	spell_coin.c spell_coin.h
@@ -44,6 +47,9 @@ defaultuseragents.h: ../useragents
 
 defaultoptionsfile.h: ../options
 	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/"/\\"/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
+
+options_list.h: ../options
+	cd ..; /bin/sh ./genoptlst.sh
 
 useragents_file.o: defaultuseragents.h
 

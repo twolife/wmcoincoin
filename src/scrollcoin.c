@@ -2,6 +2,7 @@
 #include "global.h"
 #include "scrollcoin.h"
 #include "coin_util.h"
+#include "coin_xutil.h"
 
 unsigned long scroll_bg_pixel;
 unsigned long scroll_bg_light_pixel;

@@ -1,3 +1,20 @@
+2002-04-01  pouaite  <c0in@altern.org>
+
+	* très gros remaniement des préférences, l'ex-coincoin_prefs.c est splitté
+	en prefs.c et prefs_gestion.c. Un middle-clic sur la led du trollo permet
+	de relire le fichier d'options sans avoir à relancer le coincoin... 
+	Comme il y a eu énormément de changements dans cette partie du code, des
+	bugs sont à prévoir..
+
+	En outre, le coincoin peut (a priori) gèrer trois types de backend
+	de tribune: 
+	  * le backend à l'ancienne:
+              			<b> -> '&lt;b&gt;' et 'é' -> &amp;eacute, 
+	  * le backend nouveau style:
+				'<b>' -> '<b>'     et 'é' -> &eacute,
+	  * le backend sans slip (activé par défaut pour l'instant):
+                                '<b>  -> ça dépend et 'é' -> ça dépend
+	
 2002-03-27  pouaite  <c0in@altern.org>
 
 	* very ugly very quick very hack very pas beau bricolage pour que ça marchouille

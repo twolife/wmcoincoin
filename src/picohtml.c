@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.6 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.7  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.6  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -20,6 +23,7 @@
 */
 
 #include "coincoin.h"
+#include "coin_xutil.h"
 #include "picohtml.h"
 
 /* dans la famille des fonction pourries, je demande ... */
@@ -345,7 +349,7 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       }
 
       /* ca c'est recent (v2.2) et c'est Bien(tm) */
-      len = convert_to_ascii(tok, tok, MAX_TOK_LEN, 0, 0);
+      len = convert_to_ascii(tok, tok, MAX_TOK_LEN);
       
       w = XTextWidth(cur_fn, tok, len);
       
@@ -467,8 +471,8 @@ XFontStruct *picohtml_get_fn_bold(PicoHtml *ph)
 }
 
 static
-void
-picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
+int
+picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
 {
   char base_name[512];
   char ital_name[512];
@@ -481,7 +485,7 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
   if (!ph->fn_base) {
     fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
     fprintf(stderr, "Choisissez une autre police\n");
-    exit(-1);
+    return -1;
   }
 
   /* police italique -> on cherche d'abord la police oblique */
@@ -517,6 +521,18 @@ picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
     myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte courier: '%s'\n", tt_name);
     myfprintf(stderr, "on va utiliser la fonte de base\n");
     ph->fn_tt = XLoadQueryFont(display, base_name); assert(ph->fn_tt);
+  }
+  return 0;
+}
+
+static void
+picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size) {
+  if (picohtml_try_loadfonts(ph,display,fn_family,fn_size)==-1) {
+    myfprintf(stderr, "echec du chargement de la fonte '%s' en taille '%d'\non tente helvetica en 12\n");
+    if (picohtml_try_loadfonts(ph,display,"helvetica",12)==-1) {
+      myfprintf(stderr, "gaaargl pas d'helvetica/12 , je préfère mourir\n");
+      exit(-1);
+    }
   }
 }
 

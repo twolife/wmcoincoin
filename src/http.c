@@ -354,8 +354,9 @@ http_connect(const char *host_name, int port)
   */
   for (num_try = 0; num_try < 2; num_try++) 
     {
-      if (num_try == 1 || host == NULL)
+      if (num_try == 1 || host == NULL || flag_changed_http_params)
 	{
+	  flag_changed_http_params = 0;
 	  /*
 	  int t0,t1;
 	  myprintf("%<CYA gethostname>: "); fflush(stdout);

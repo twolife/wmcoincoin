@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.17 2002/03/28 00:06:15 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.18 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.18  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.17  2002/03/28 00:06:15  pouaite
   le clic sur un login ouvre le palmipede en remplissant '/msg lelogin '
 
@@ -85,6 +88,7 @@
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
 #include "coin_util.h"
+#include "coin_xutil.h"
 #include "coincoin.h"
 #include "../xpms/editwin_minib.xpm"
 #include "../xpms/clippy.xpm"
@@ -1334,6 +1338,45 @@ editw_hide(Dock *dock, EditW *ew) {
   //  ew->action_step = 0;
 }
 
+
+
+void
+editw_reload_colors(Dock *dock, EditW *ew)
+{
+  char s_xpm_bgcolor[30];
+
+  ew->win_bgpixel = RGB2PIXEL(200,200,200);
+  ew->dark_pixel = RGB2PIXEL(128, 128, 128);
+  ew->light_pixel = RGB2PIXEL(230, 230, 230);
+  ew->fill_bgpixel = RGB2PIXEL(230, 230, 230);
+  /* couleurs du texte */
+  ew->txt_fgpixel[EWC_NORMAL] = RGB2PIXEL(0,0,0);
+  ew->txt_bgpixel = RGB2PIXEL(255,255,255);
+  ew->txt_fgpixel[EWC_LONGWORD] = RGB2PIXEL(255,0,0);
+  ew->txt_fgpixel[EWC_BALISE] = RGB2PIXEL(0, 127, 0);
+  ew->txt_fgpixel[EWC_URL] = RGB2PIXEL(0, 0, 255);
+  ew->txt_fgpixel[EWC_SPELLWORD] = RGB2PIXEL(200, 50, 100);
+  ew->cur_bgpixel = RGB2PIXEL(255,0,0);
+  ew->cur_fgpixel = RGB2PIXEL(255,255,255);
+  ew->sel_bgpixel = RGB2PIXEL(255,215,0);
+  ew->sel_fgpixel = RGB2PIXEL(0,0,0);
+  
+  /* on remplace la ligne de la couleur transparente par notre couleur de fond,
+     c une ruse de sioux */
+  if (ew->minipix) { XFreePixmap(dock->display, ew->minipix); ew->minipix = None; }
+  snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.bgcolor);
+  editwin_minib_xpm[1] = s_xpm_bgcolor;
+  ew->minipix = RGBACreatePixmapFromXpmData(dock->rgba_context, editwin_minib_xpm); assert(ew->minipix);
+    
+  if (ew->clippy_pixmap) { XFreePixmap(dock->display, ew->clippy_pixmap); ew->clippy_pixmap = None; }
+  snprintf(s_xpm_bgcolor, 30, " \tc #%06X", (255 << 16) + (231 << 8) + 186);
+  clippy_xpm[1] = s_xpm_bgcolor;
+  ew->clippy_pixmap = RGBACreatePixmapFromXpmData(dock->rgba_context, clippy_xpm); assert(ew->clippy_pixmap);
+
+  sscanf(clippy_xpm[0], "%d %d", &ew->clippy_w, &ew->clippy_h);
+}
+
+
 /* initialisation */
 EditW *
 editw_build(Dock *dock)
@@ -1358,22 +1401,7 @@ editw_build(Dock *dock)
       exit(-1);
     }
   }
-  
-  ew->win_bgpixel = RGB2PIXEL(200,200,200);
-  ew->dark_pixel = RGB2PIXEL(128, 128, 128);
-  ew->light_pixel = RGB2PIXEL(230, 230, 230);
-  ew->fill_bgpixel = RGB2PIXEL(230, 230, 230);
-  /* couleurs du texte */
-  ew->txt_fgpixel[EWC_NORMAL] = RGB2PIXEL(0,0,0);
-  ew->txt_bgpixel = RGB2PIXEL(255,255,255);
-  ew->txt_fgpixel[EWC_LONGWORD] = RGB2PIXEL(255,0,0);
-  ew->txt_fgpixel[EWC_BALISE] = RGB2PIXEL(0, 127, 0);
-  ew->txt_fgpixel[EWC_URL] = RGB2PIXEL(0, 0, 255);
-  ew->txt_fgpixel[EWC_SPELLWORD] = RGB2PIXEL(200, 50, 100);
-  ew->cur_bgpixel = RGB2PIXEL(255,0,0);
-  ew->cur_fgpixel = RGB2PIXEL(255,255,255);
-  ew->sel_bgpixel = RGB2PIXEL(255,215,0);
-  ew->sel_fgpixel = RGB2PIXEL(0,0,0);
+ 
 
   ew->sel_anchor = ew->sel_head = -1;
   ew->y_scroll = 0;
@@ -1384,24 +1412,9 @@ editw_build(Dock *dock)
   anch = &ew->sel_anchor;
 
 
-  {
-    char s_xpm_bgcolor[30];
-
-    /* on remplace la ligne de la couleur transparente par notre couleur de fond,
-     c une ruse de sioux */
-    snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.bgcolor);
-
-    editwin_minib_xpm[1] = s_xpm_bgcolor;
-
-    
-    ew->minipix = RGBACreatePixmapFromXpmData(dock->rgba_context, editwin_minib_xpm); assert(ew->minipix);
-    
-    snprintf(s_xpm_bgcolor, 30, " \tc #%06X", (255 << 16) + (231 << 8) + 186);
-    clippy_xpm[1] = s_xpm_bgcolor;
-    ew->clippy_pixmap = RGBACreatePixmapFromXpmData(dock->rgba_context, clippy_xpm); assert(ew->clippy_pixmap);
-
-    sscanf(clippy_xpm[0], "%d %d", &ew->clippy_w, &ew->clippy_h);
-  }
+  ew->minipix = None;
+  ew->clippy_pixmap = None;
+  editw_reload_colors(dock, ew);
 
   {
     static int bt_x[NB_MINIBT] = { 0, 12, 27, 41, 55, 69, 83, 97, 111};

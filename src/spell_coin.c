@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.10 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.11 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.11  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.10  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -208,10 +211,10 @@ kill_ispell()
 
 /* appelée régulièrement par X_loop */
 int
-check_if_should_kill_ispell() 
+check_if_should_kill_ispell(int now) 
 {
   if (ispell_pid!=-1) {
-    if (difftime(time(NULL), ispell_time_last_used) > 10.0) { /* au bout de 10 secondes, on libère ispell.. */
+    if (difftime(time(NULL), ispell_time_last_used) > 10.0 || now) { /* au bout de 10 secondes, on libère ispell.. */
       kill_ispell();
     }
   }
@@ -370,8 +373,10 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	   (keskil renvoit aspell au fait? ... regarder son man
 	   sur une machine qui a ce truc)
 	*/
-	fprintf(stderr, "spellString: unknown option \'%02x\'\n", buff[0]); fflush(stderr);
-	kill_ispell(); /* je veux pas d'un ispell tout patraque */
+	fprintf(stderr, "spellString: unknown option \'0x%02x\'\n", buff[0]); fflush(stderr);
+	fprintf(stderr, "la réponse complete était: '%.512s'\n", buff);
+	fprintf(stderr, "Dans son immense mansuétude, wmcoincoin va laisser ispell en vie, pour voir ce qui se passe. Le suicide du coincoin n'est même pas envisagé: THE SHOW MUST GO ON\n");
+	//	kill_ispell(); /* je veux pas d'un ispell tout patraque */
 
 
 	/*
@@ -379,7 +384,7 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	   il faudra trouver pourquoi et gèrer autrement que par le suicide..
 	*/
 
-	assert(0);     /* voila une triste fin */
+	//	assert(0);     /* voila une triste fin */
       }
     } while (buff[0]);
   }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.8 2002/03/24 23:26:38 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.9 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.9  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.8  2002/03/24 23:26:38  pouaite
   patch de lordoric + bricoles à deux francs
 
@@ -28,7 +31,7 @@
 #include "coincoin.h"
 #include "picohtml.h"
 #include "scrollcoin.h"
-//#include "../xpms/fleche.xpm"
+#include "coin_xutil.h"
 
 /*
   ----------------------------------------------------------------------
@@ -833,7 +836,6 @@ newswin_build(Dock *dock)
   dock->newswin = nw;
 }
 
-#ifdef TEST_MEMLEAK
 void
 newswin_destroy(Dock *dock) {
   Newswin *nw = dock->newswin;
@@ -841,9 +843,8 @@ newswin_destroy(Dock *dock) {
   picohtml_destroy(dock->display, nw->phv_news.ph);
   picohtml_destroy(dock->display, nw->phv_titles.ph);
   picohtml_destroy(dock->display, nw->ph_survol);
-  free(nw);
+  free(nw); dock->newswin = NULL;
 }
-#endif
 
 int
 newswin_is_used(const Dock *dock) {

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.26 2002/03/27 23:27:10 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.27 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.27  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.26  2002/03/27 23:27:10  pouaite
   tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
 
@@ -586,6 +589,42 @@ tribune_check_my_messages(DLFP_tribune *trib, int old_last_post_id) {
   }
 }
 
+
+/* decodage du message, quel que soit l'état du backend .. */
+void
+tribune_decode_message(char *dest, const char *src) {
+  strncpy(dest, src, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0;
+  if (Prefs.tribune_encoding == 1) {
+    mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);
+  }
+  convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
+  if (Prefs.tribune_encoding == 2) {
+    mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);    
+    convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
+  }
+  if (Prefs.tribune_encoding == 3) {
+    char *s, *s2;
+    
+    s = strdup(dest); assert(s);
+    s2 = str_substitute(s, "</bgt;", "\t</b\t>"); free(s); s = s2; /* special super bug.. */
+    s2 = str_substitute(s, "<b>", "\t<b\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "</b>", "\t</b\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<i>", "\t<i\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "</i>", "\t</i\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<u>", "\t<u\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "</u>", "\t</u\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<s>", "\t<s\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "</s>", "\t</s\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<a href", "\t<a href"); free(s); s = s2;
+    s2 = str_substitute(s, "\">", "\"\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "</a>", "\t</a\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<!--", "\t<!--"); free(s); s = s2;
+    s2 = str_substitute(s, "-->", "--\t>"); free(s); s = s2;
+    strncpy(dest, s, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0; free(s);
+    convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN); /* deuxième passe, à tout hasard */
+  }
+}
+
 /*
   lecture des nouveaux messages reçus
 
@@ -694,7 +733,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	s[strlen(s)-7] = 0; /* vire le /info */
 	p = s + strlen(tribune_sign_info);
 
-        convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN, 1, 0);
+        convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN);
 
 	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(message)"; goto err; }
 	if (strncasecmp(s, tribune_sign_msg,strlen(tribune_sign_msg))) { errmsg="messagesign"; goto err; }
@@ -729,7 +768,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	}
 
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
-	convert_to_ascii(msg, p, TRIBUNE_MSG_MAX_LEN, 1, 1);
+	tribune_decode_message(msg, p);
 
 	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, tribune_sign_login,strlen(tribune_sign_login))) { errmsg="messagesign_login"; goto err; }
@@ -738,7 +777,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	s[strlen(s)-8] = 0; 
 	p = s + strlen(tribune_sign_login);
 	if (strcasecmp(p, "Anonyme") != 0) {
-	  convert_to_ascii(login, p, TRIBUNE_LOGIN_MAX_LEN, 1, 0);
+	  convert_to_ascii(login, p, TRIBUNE_LOGIN_MAX_LEN);
 	} else {
 	  login[0] = 0;
 	}

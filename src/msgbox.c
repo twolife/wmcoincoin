@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.3 2001/12/18 12:43:37 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.4 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.4  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.3  2001/12/18 12:43:37  pouaite
   ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 
@@ -33,6 +36,7 @@
 
 #include <X11/Xlib.h>
 #include "coincoin.h"
+#include "coin_xutil.h"
 
 struct _MsgBox {
   Window win;

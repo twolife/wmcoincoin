@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.16 2002/03/10 22:45:36 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.17 2002/04/01 01:39:38 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.17  2002/04/01 01:39:38  pouaite
+#%  grosse grosse commition (cf changelog)
+#%
 #%  Revision 1.16  2002/03/10 22:45:36  pouaite
 #%  <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
 #%
@@ -143,7 +146,7 @@
 
 ### si il y a une occurenre de '$u', '$v', '$s', '$r' et/ou '$m', elles seront
 ###  remplacés par les valeurs suivantes:
-###  $u -> votre username
+###  $u -> votre username (indiqué dans l'option 'palmipede.username')
 ###  $v -> version du canard
 ###  $s -> system name (Linux, ...)
 ###  $r -> system release
@@ -180,7 +183,7 @@
 
 # ## L'option 'http.browser' permet d'utiliser un navigateur externe, pour
 # ## lire les commentaires détecté par le flamophone, et pour afficher les [url] du
-# ## pinnipede teletype. on peut utiliser:
+# ## pinnipede teletype.
 # ## ATTENTION, ce genre de commande externe peut etre une source de vulnerabilité,
 # ## les caractères bizarres dans les urls sont escapés avant d'etre envoyés
 # ## au browser externe, mais si le browser est lui-même buggé...

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.6 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.7  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.6  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -172,7 +175,7 @@ RGBAImage2XImage(RGBAContext *ctx, RGBAImage *rimg)
   if (ximg == NULL) {
     return NULL;
   }
-  ximg->data = malloc(ximg->bytes_per_line * rimg->h);
+  ximg->data = calloc(ximg->bytes_per_line * rimg->h, 1);
   if (ximg->data == NULL) {
     XDestroyImage(ximg); return NULL;
   }

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.33 2002/03/23 10:37:29 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.34 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.34  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.33  2002/03/23 10:37:29  pouaite
   retournement de slip, merci lordoric
 
@@ -144,13 +147,12 @@
 
 #include <sys/utsname.h> /* pour la fonction uname */
 
-#include "coincoin_prefs.h"
 #include "coin_util.h"
+#include "coin_xutil.h"
 #include "http.h"
 
 /* quelques images */
 #include "../xpms/coin.xpm"
-#include "../xpms/porte.h"
 #include "../xpms/weekday.xpm"
 #include "../xpms/month.xpm"
 #include "../xpms/clock.xpm"
@@ -669,7 +671,7 @@ void X_loop()
   if (dock->coin_coin_request < 0) dock->coin_coin_request++; /* pour éteindre la led[1] apres un cours délai */
 
   /* verifie si il y a des ballons d'aide a afficher */
-  if (Prefs.no_balloons == 0) check_balloons(dock);
+  if (Prefs.use_balloons == 0) check_balloons(dock);
   
   editw_action(dock, dock->editw); /* animation du palmipede si necessaire */
 
@@ -679,7 +681,7 @@ void X_loop()
   timer_cnt++;
 
   if (timer_cnt % 10 == 0) {
-    check_if_should_kill_ispell();
+    check_if_should_kill_ispell(0);
   }
   
   if (timer_cnt % 5 == 0) {
@@ -975,7 +977,7 @@ wmcc_set_wm_icon(Dock *dock) {
   }
   dock->wm_icon_pix = RGBAImage2Pixmap(dock->rgba_context, out_img); assert(dock->wm_icon_pix);
   dock->wm_icon_mask = alpha2pixmap_mask(dock->display, DOCK_WIN(dock), w, h, 
-					 (unsigned char *)out_img->data, 255);  
+					 (unsigned char *)out_img->data[0], 255);
   RGBADestroyImage(in_img);
   RGBADestroyImage(out_img);
 }
@@ -1126,19 +1128,7 @@ void initx(Dock *dock, int argc, char **argv) {
   }
   XSetWMName(dock->display, dock->win, &xtp);
   
-  /* les trois couleurs du dock */
-  {
-    int r,g,b;
-    r = (Prefs.bgcolor>>16)&0xff; g = (Prefs.bgcolor>>8)&0xff; b = Prefs.bgcolor &0xff;
 
-    /* ces valeurs ne sont pas utilisees pour le dock lui-meme, qui passe par l'intermediaire
-       de l'horrible rcreate_image_from_raw_with_tint et compagnie
-       mais pour l'editwin qui est nettement mieux ecrite ainsi que pour msgbox... */
-    dock->bg_pixel   = RGB2PIXEL(r,g,b);
-    dock->light_pixel = RGB2PIXEL(MIN(255, (r*170)/128), MIN(255,(g*170)/128), MIN(255,(b*170)/128));
-    dock->dark_pixel = RGB2PIXEL(MIN(255, (r*97)/128), MIN(255,(g*97)/128), MIN(255,(b*97)/128));
-  }
-  
   /* create a graphics context */
   xgcv.foreground = RGB2PIXEL(0,0,0);
   xgcv.background = RGB2PIXEL(255,255,255);
@@ -1316,89 +1306,6 @@ void *Net_loop () {
   return NULL;
 }
 
-/* (c)(tm)(r) kadreg qui n'aime pas le jaune (pourtant moi j'aime bien le jaune) */
-void
-prepare_pixmap_porte(Dock *dock)
-{
-  Pixmap bg_pixmap;
-  /* debut modif kadreg */
-  /* chargement de pix_porte suivant si pixmap de fond */
-
-  dock->pix_porte = None;
-  if (Prefs.bgpixmap) {
-    int w, h;
-    bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.bgpixmap, &w, &h);
-    if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
-      myprintf("Erreur en chargeant le fichier : %<YEL %s> [xpm de 64x64 pixels svp]\n", Prefs.bgpixmap);
-    } else {
-      RGBAImage *rgba_porte;
-      XImage *XiPixPixmap;
-      int i, j;
-
-      rgba_porte = rimage_create_from_raw(porte_image.width, porte_image.height,porte_image.bytes_per_pixel,porte_image.pixel_data);
-
-      XiPixPixmap= XGetImage (dock->display, 
-			      bg_pixmap, 
-			      0, 0, 64, 64, AllPlanes, ZPixmap);
-      XFreePixmap(dock->display, bg_pixmap);
-
-      
-      for (i=0; i< (int)rgba_porte->w; i++) {
-	for (j=0; j< (int)rgba_porte->h; j++) {
-	  XColor color;
-	  unsigned char r, g, b;
-	  int shade;
-
-	  color.pixel = XGetPixel (XiPixPixmap, i, j);
-	  XQueryColor (dock->display, 
-		       DefaultColormap (dock->display, dock->screennum) , 
-		       &color);
-
-	  /* on ramene les composantes de 16bits à 8bits */
-	  r = color.red >> 8;
-	  g = color.green >> 8;
-	  b = color.blue >> 8;
-
-	  /* selon le niveau de gris de rgba_porte */
-	  shade = rgba_porte->data[j][i].rgba[0] - 0x7F; /* shade = 0 pour les couleurs non modifiees, ~92 pour les 
-							   bords clairs et  ~ -60 pour les bords sombres, voir xpms/porte.xcf */
-	  if (shade > 0) {
-	    r = MIN(r*1.3, 255.0);
-	    g = MIN(g*1.3, 255.0);
-	    b = MIN(b*1.3, 255.0);
-	  } else if (shade == -127) {
-	    r = g = b = 0;
-	  } else if (shade < 0) {
-	    r = MAX(r/1.3, 0.0); /* le MAX ne sert a rien, je sais */
-	    g = MAX(g/1.3, 0.0);
-	    b = MAX(b/1.3, 0.0);
-	  }
-	  rgba_porte->data[j][i].rgba[0] = r;
-	  rgba_porte->data[j][i].rgba[1] = g;
-	  rgba_porte->data[j][i].rgba[2] = b;
-	}
-      }
-
-      dock->pix_porte = RGBAImage2Pixmap(dock->rgba_context, rgba_porte);
-      //XpmWriteFileFromPixmap (dock->display, "pixporte.xpm", dock->pix_porte, 0, NULL);
-      RGBADestroyImage(rgba_porte);
-      XDestroyImage (XiPixPixmap);
-    }
-  }
-  /* pouille dans le cottage ? */
-  if (dock->pix_porte == None) {
-      /* et hop, on sauve les meubles */
-    dock->pix_porte = pixmap_create_from_raw_with_tint(dock->rgba_context, 
-						       porte_image.width, 
-						       porte_image.height, 
-						       porte_image.bytes_per_pixel, 
-						       porte_image.pixel_data, 
-						       Prefs.bgcolor);
-    
-  }
-  /* fin modif kadreg */
-}
-
 static void
 install_sighandlers()
 {
@@ -1484,11 +1391,9 @@ main(int argc, char **argv)
   ALLOC_OBJ(dock, Dock);
 
   myprintf("%<GRN wmc2> v.%<WHT " VERSION "> patch level " PATCH_LEVEL " [ compile le " __DATE__ " ]\n");
-
-  init_default_prefs (argc, argv, &Prefs);
-  check_wmcoincoin_dir();
-  read_coincoin_options (&Prefs); // lecture de '.wmcoincoin/options'
-  parse_cmdline(argc, argv, &Prefs);
+  
+  memset(&Prefs, 0, sizeof(structPrefs));
+  wmcc_prefs_initialize(argc, argv, &Prefs);
 
   http_init();
 
@@ -1509,7 +1414,7 @@ main(int argc, char **argv)
     strncpy(dock->coin_coin_message, Prefs.coin_coin_message, MESSAGE_MAX_LEN); 
   }
   dock->coin_coin_message[MESSAGE_MAX_LEN] = 0;
-  free(Prefs.coin_coin_message); Prefs.coin_coin_message = dock->coin_coin_message; /* pas beau */
+  free(Prefs.coin_coin_message); Prefs.coin_coin_message = NULL; //dock->coin_coin_message; /* pas beau */
 
   strncpy(dock->coin_coin_useragent, Prefs.user_agent, USERAGENT_MAX_LEN); 
   dock->coin_coin_useragent[USERAGENT_MAX_LEN] = 0;
@@ -1548,6 +1453,9 @@ main(int argc, char **argv)
   dock->discretion_saved_state.last_sig_is_usr1 = 0;
   dock->horloge_mode = 0;
 
+  dock->mask_porte_haut = None;
+  dock->mask_porte_bas = None;
+
   dock->news_refresh_delay    = Prefs.dlfp_news_check_delay*25;
   dock->tribune_refresh_delay = Prefs.dlfp_tribune_check_delay*25;
   dock->news_refresh_cnt      = dock->news_refresh_delay-100;
@@ -1559,6 +1467,7 @@ main(int argc, char **argv)
   dock->dlfp = dlfp_create();
 
   {
+    char *errmsg;
     char mask[64*64];
     
     XGCValues xgcv;
@@ -1568,15 +1477,14 @@ main(int argc, char **argv)
     initx(dock,argc, argv);
 
 
-    prepare_pixmap_porte(dock);
+    if ((errmsg=dock_build_pixmap_porte(dock))) {
+      fprintf(stderr, errmsg);
+    }
     //dock->pix_porte = pixmap_create_from_raw_with_tint(dock->rgba_context, porte_image.width, porte_image.height, porte_image.bytes_per_pixel, porte_image.pixel_data, Prefs.bgcolor);
 	
     //    exit(0);
     //dock->pix_porte = pixmap_create_from_raw_with_tint(dock->rcontext, porte_image.width, porte_image.height, porte_image.bytes_per_pixel, porte_image.pixel_data, 0x808080);
 
-    /* bouh comme c vilain */
-    dock->mask_porte_haut = alpha2pixmap_mask(dock->display, dock->coinpix, 64, 64, porte_image.pixel_data, 255);
-    dock->mask_porte_bas = alpha2pixmap_mask(dock->display, dock->coinpix, 64, 64, porte_image.pixel_data, 230);
 
     dock_leds_create(dock, &dock->leds);
 

@@ -544,7 +544,6 @@ typedef struct _Dock {
 /* wmcoincoin.c */
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 char* http_transfert(char *URL);
-unsigned char *fget_line(unsigned char *s, int n, FILE *f);
 
 //int flush_expose(Window w);
 void block_sigalrm(int bloque);
@@ -577,6 +576,7 @@ void dock_leds_update(Leds *l); /* decremente les compteurs de clignotement */
 void dock_leds_create(Dock *dock, Leds *leds);
 void dock_checkout_newstitles(Dock *dock, DLFP *dlfp); /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
 void dock_set_horloge_mode(Dock *dock);
+char *dock_build_pixmap_porte(Dock *dock);
 
 /* useragents_file.c */
 int useragents_file_reread(Dock *dock, DLFP *dlfp);
@@ -653,6 +653,7 @@ void dlfp_unset_unreaded_news(DLFP *dlfp);
 void editw_show(Dock *dock, EditW *ew, int useragent_mode);
 void editw_hide(Dock *dock, EditW *ew); /* rentrer le palmipede */
 void editw_unmap(Dock *dock, EditW *ew); /* cacher immediatement le palmipede */
+void editw_reload_colors(Dock *dock, EditW *ew);
 EditW *editw_build(Dock *dock);
 void editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode);
 void editw_set_kbfocus(Dock *dock, EditW *ew, int get_it);
@@ -705,9 +706,12 @@ Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
+void pp_set_prefs_colors(Dock *dock);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);
 
-
+/* prefs_gestion.c */
+void wmcc_prefs_initialize(int argc, char **argv, structPrefs *p);
+void wmcc_prefs_relecture(Dock *dock);
 #endif

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.20 2002/03/28 11:21:57 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.21 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.21  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.20  2002/03/28 11:21:57  pouaite
   bugfix crash messagerie (si l'utilisateur ne l'a jamais utilisee) -> merci bplessis
 
@@ -768,7 +771,7 @@ dlfp_updatenews(DLFP *dlfp)
 	if (p == NULL) { news_err = 3; break; }
 	*p = 0;
 	p = strstr(s, news_title_sign) + strlen(news_title_sign);
-	convert_to_ascii(title, p, 512, 0, 0);
+	convert_to_ascii(title, p, 512);
       } else if (strstr(s, news_url_sign)) {
 	char *p;
 	if (l_cnt != 2) { news_err = 4; break; }
@@ -1338,7 +1341,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
   }
 
   if (fd != INVALID_SOCKET) {
-    char *s, *p, *end;
+    char *s, *p, *end=NULL;
     int msgcnt;
     int err;
 

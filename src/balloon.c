@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.5 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.6 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.6  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.5  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -40,6 +43,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 #include "coincoin.h"
+#include "coin_xutil.h"
 
 /* TRES largement inspire de balloon.c de Windowmaker ... */
 

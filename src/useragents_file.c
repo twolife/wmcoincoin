@@ -24,9 +24,12 @@
   c'est des choses qui ne sont plus très utiles maintenant ( à part pour les couleurs du trolloscope..)
   Ce fichier a été crée pour désengorger wmcoincoin.c
 
-  rcsid=$Id: useragents_file.c,v 1.3 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: useragents_file.c,v 1.4 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: useragents_file.c,v $
+  Revision 1.4  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.3  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -86,7 +89,8 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
     char *s_shape, *s_coul, *s_regex, *s_name;
     do {
       s[0] = 0; /* pour la derniere ligne */
-      fget_line(s, 1024, f);
+      //      fget_line(s, 1024, f);
+      fgets(s, 1024, f); str_trim(s);
       linenum++;
       s_shape = strtok(s, delim); 
       if (str_is_empty(s_shape)) continue;

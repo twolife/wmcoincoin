@@ -40,20 +40,7 @@
 
 #define MARK myprintf("%<YEL ******************************************>\n");
 
-/* deux macros fort pratiques !! */
-#define RGB2PIXEL(r,g,b) (dock->rgba_context->rtable[r] + \
-                          dock->rgba_context->gtable[g] + \
-                          dock->rgba_context->btable[b])
-#define IRGB2PIXEL(rgb) (dock->rgba_context->rtable[(rgb>>16) & 0xff] + \
-                         dock->rgba_context->gtable[(rgb>> 8) & 0xff] + \
-                         dock->rgba_context->btable[(rgb    ) & 0xff])
 
-#define _RGB2PIXEL(c,r,g,b) (c->rtable[r] + \
-                             c->gtable[g] + \
-                             c->btable[b])
-#define _IRGB2PIXEL(c,rgb) (c->rtable[(rgb>>16) & 0xff] + \
-                            c->gtable[(rgb>> 8) & 0xff] + \
-                            c->btable[(rgb    ) & 0xff])
 
 
 /* macro pour troll_data.h et str_hache */
@@ -61,17 +48,11 @@
 
 #define IS_INSIDE(x, y, xmin, ymin, xmax, ymax) ((x) >= (xmin) && (x) <= (xmax) && (y) >= (ymin) && (y) <= (ymax))
 
-RGBAImage * rimage_create_from_raw(int w, int h, int bpp, const unsigned char *data);
-Pixmap pixmap_create_from_raw(RGBAContext *rc, int w, int h, int bpp, const unsigned char *data);
-RGBAImage * rimage_create_from_raw_with_tint(int w, int h, int bpp, const unsigned char *data, int rgb);
-Pixmap pixmap_create_from_raw_with_tint(RGBAContext *rc, int w, int h, int bpp, const unsigned char *data, int rgb);
-void alpha2mask(int w, int h, unsigned char *bitmap, const unsigned char *rgba, unsigned char mask_val);
-Pixmap alpha2pixmap_mask(Display *dpy, Window win, int w, int h, const unsigned char *rgba, unsigned char mask_val);
-void colorize_black_pixmap(char **pixtxt, int tint);
+
 /* construit un 'nom' à partir des premiers mots du useragent */
 void make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_sz);
-void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int *screen_y);
-int convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp, int special_encode_ltgt);
+int mark_html_tags(char *s, int sz);
+int convert_to_ascii(char *dest, const char *src, int dest_sz);
 int str_is_empty(const char *s);
 char *str_multi_str(const char *src, const char **keys, int nb_keys, int *key_idx);
 char *str_multi_substitute(const char *src, const char **keys, const char **substitutions, int nkeys);
@@ -81,5 +62,7 @@ int str_hache(const unsigned char *s, int max_len);
 unsigned char chr_noaccent_tolower(unsigned char c);
 void str_noaccent_tolower(unsigned char *s);
 unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille);
-
+char *str_printf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+char *str_fget_line(FILE *f);
+void str_trim(unsigned char *s);
 #endif

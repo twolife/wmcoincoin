@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.10 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.11 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.11  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.10  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -514,7 +517,7 @@ troll_detector(tribune_msg_info *mi) {
       
       
       w->td_idx = NULL;
-      w->nb_td_idx = tdata_lookup(hash_codes, w->len, &w->td_idx);
+      w->nb_td_idx = tdata_lookup(hash_codes, MIN(w->len, MAX_WLEN-1), &w->td_idx);
 
       if (w->nb_td_idx == 0) {
 	/* si pas trouvé, deuxieme chance: on */
@@ -529,7 +532,7 @@ troll_detector(tribune_msg_info *mi) {
 	for (i = 2; i < MAX_WLEN; i++) {
 	  hash_codes[i] = str_hache(s, MIN(i, (int)strlen(s)));
 	}
-	w->nb_td_idx = tdata_lookup(hash_codes, strlen(s), &w->td_idx);
+	w->nb_td_idx = tdata_lookup(hash_codes, MIN(strlen(s), MAX_WLEN-1), &w->td_idx);
       }
 
       if (w->nb_td_idx > 0) {

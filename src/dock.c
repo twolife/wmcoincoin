@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.6 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.7  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.6  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -53,10 +56,12 @@
 #include <time.h>
 #include <sys/time.h>
 #include "coincoin.h"
+#include "coin_xutil.h"
 #include "http.h"
 
 /* image */
 #include "../xpms/leds.h"
+#include "../xpms/porte.h"
 
 /* au max un defilement toutes les 15 secondes */
 #define TROLLO_MAX_SPEED 15
@@ -875,6 +880,112 @@ dock_show_tribune_frequentation(Dock *dock)
   msgbox_show(dock, s);
 }
 
+
+
+/* (c)(tm)(r) kadreg qui n'aime pas le jaune (pourtant moi j'aime bien le jaune) */
+char *
+dock_build_pixmap_porte(Dock *dock)
+{
+  Pixmap bg_pixmap;
+  /* debut modif kadreg */
+  /* chargement de pix_porte suivant si pixmap de fond */
+
+  dock->pix_porte = None;
+  if (Prefs.bgpixmap) {
+    int w, h;
+    bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.bgpixmap, &w, &h);
+    if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
+      return str_printf("Erreur en chargeant le fichier : '%s' [xpm de 64x64 pixels svp]", Prefs.bgpixmap);
+    } else {
+      RGBAImage *rgba_porte;
+      XImage *XiPixPixmap;
+      int i, j;
+
+      rgba_porte = rimage_create_from_raw(porte_image.width, porte_image.height,porte_image.bytes_per_pixel,porte_image.pixel_data);
+
+      XiPixPixmap= XGetImage (dock->display, 
+			      bg_pixmap, 
+			      0, 0, 64, 64, AllPlanes, ZPixmap);
+      XFreePixmap(dock->display, bg_pixmap);
+
+      
+      for (i=0; i< (int)rgba_porte->w; i++) {
+	for (j=0; j< (int)rgba_porte->h; j++) {
+	  XColor color;
+	  unsigned char r, g, b;
+	  int shade;
+
+	  color.pixel = XGetPixel (XiPixPixmap, i, j);
+	  XQueryColor (dock->display, 
+		       DefaultColormap (dock->display, dock->screennum) , 
+		       &color);
+
+	  /* on ramene les composantes de 16bits à 8bits */
+	  r = color.red >> 8;
+	  g = color.green >> 8;
+	  b = color.blue >> 8;
+
+	  /* selon le niveau de gris de rgba_porte */
+	  shade = rgba_porte->data[j][i].rgba[0] - 0x7F; /* shade = 0 pour les couleurs non modifiees, ~92 pour les 
+							   bords clairs et  ~ -60 pour les bords sombres, voir xpms/porte.xcf */
+	  if (shade > 0) {
+	    r = MIN(r*1.3, 255.0);
+	    g = MIN(g*1.3, 255.0);
+	    b = MIN(b*1.3, 255.0);
+	  } else if (shade == -127) {
+	    r = g = b = 0;
+	  } else if (shade < 0) {
+	    r = MAX(r/1.3, 0.0); /* le MAX ne sert a rien, je sais */
+	    g = MAX(g/1.3, 0.0);
+	    b = MAX(b/1.3, 0.0);
+	  }
+	  rgba_porte->data[j][i].rgba[0] = r;
+	  rgba_porte->data[j][i].rgba[1] = g;
+	  rgba_porte->data[j][i].rgba[2] = b;
+	}
+      }
+
+      dock->pix_porte = RGBAImage2Pixmap(dock->rgba_context, rgba_porte);
+      //XpmWriteFileFromPixmap (dock->display, "pixporte.xpm", dock->pix_porte, 0, NULL);
+      RGBADestroyImage(rgba_porte);
+      XDestroyImage (XiPixPixmap);
+    }
+  }
+  /* pouille dans le cottage ? */
+  if (dock->pix_porte == None) {
+      /* et hop, on sauve les meubles */
+    dock->pix_porte = pixmap_create_from_raw_with_tint(dock->rgba_context, 
+						       porte_image.width, 
+						       porte_image.height, 
+						       porte_image.bytes_per_pixel, 
+						       porte_image.pixel_data, 
+						       Prefs.bgcolor);
+    
+  }
+  /* bouh comme c vilain */
+  if (dock->mask_porte_haut == None) {
+    dock->mask_porte_haut = alpha2pixmap_mask(dock->display, dock->coinpix, 64, 64, porte_image.pixel_data, 255);
+    dock->mask_porte_bas = alpha2pixmap_mask(dock->display, dock->coinpix, 64, 64, porte_image.pixel_data, 230);
+  }
+  /* fin modif kadreg */
+
+  /* les trois couleurs du dock */
+  {
+    int r,g,b;
+    r = (Prefs.bgcolor>>16)&0xff; g = (Prefs.bgcolor>>8)&0xff; b = Prefs.bgcolor &0xff;
+
+    /* ces valeurs ne sont pas utilisees pour le dock lui-meme, qui passe par l'intermediaire
+       de l'horrible rcreate_image_from_raw_with_tint et compagnie
+       mais pour l'editwin qui est nettement mieux ecrite ainsi que pour msgbox... */
+    dock->bg_pixel   = RGB2PIXEL(r,g,b);
+    dock->light_pixel = RGB2PIXEL(MIN(255, (r*170)/128), MIN(255,(g*170)/128), MIN(255,(b*170)/128));
+    dock->dark_pixel = RGB2PIXEL(MIN(255, (r*97)/128), MIN(255,(g*97)/128), MIN(255,(b*97)/128));
+  }
+  
+  return NULL;
+}
+
+
 void
 dock_set_horloge_mode(Dock *dock) {
   if (Prefs.draw_border == 0) {
@@ -1138,12 +1249,20 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       }
     } else if (IS_INSIDE(x,y,50,18,60,22) && 
 	       (dock->door_state == CLOSED)) {
-      /* bouton milieu sur le trollometre:
-	     relire le .wmcoincoin/useragents
-	  */
-      int err;
-      err = useragents_file_reread(dock, dock->dlfp);
-      BLAHBLAH(2, printf("relecture RCfile -> code d'erreur renvoye: %d\n", err));
+      if ((xbevent->state & ShiftMask) == 0) {
+	/* 
+	   bouton du milieu sur le trollometre:
+	   relire le fichier d'options
+	 */
+	wmcc_prefs_relecture(dock);	
+      } else {
+	/* shift+bouton milieu sur le trollometre:
+	   relire le .wmcoincoin/useragents
+	*/
+	int err;
+	err = useragents_file_reread(dock, dock->dlfp);
+	BLAHBLAH(2, printf("relecture RCfile -> code d'erreur renvoye: %d\n", err));
+      }
     }
   }
 }

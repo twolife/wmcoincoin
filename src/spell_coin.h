@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: spell_coin.h,v 1.3 2001/12/02 18:11:45 pouaite Exp $
+  rcsid=$Id: spell_coin.h,v 1.4 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.h,v $
+  Revision 1.4  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.3  2001/12/02 18:11:45  pouaite
   amélioration du support de ispell (moins de pb de ralentissement du palmipede) au prix d'un vilain hack
 
@@ -42,5 +45,5 @@ ErrList spellString(const char* str);
 void ispell_run_background(const char* spellCmd, const char* spellDict);
 
 /* appele de X_loop de wmcoincoin.c, pour tuer le process quand il est reste inutilisé trop longtemps (10sec) */
-int check_if_should_kill_ispell();
+int check_if_should_kill_ispell(int now);
 #endif

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.41 2002/03/28 00:06:15 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.42 2002/04/01 01:39:38 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.42  2002/04/01 01:39:38  pouaite
+  grosse grosse commition (cf changelog)
+
   Revision 1.41  2002/03/28 00:06:15  pouaite
   le clic sur un login ouvre le palmipede en remplissant '/msg lelogin '
 
@@ -121,6 +124,7 @@
 #include "coincoin.h"
 #include "time.h"
 #include "scrollcoin.h"
+#include "coin_xutil.h"
 
 /* chuis con, les bitfields c pas pour les chiens */
 #define PWATTR_BD 1
@@ -2044,7 +2048,7 @@ pp_animate(Dock *dock)
   }
 }
 
-static void
+static int
 pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
 {
   char base_name[512];
@@ -2058,7 +2062,7 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   if (!pp->fn_base) {
     fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
     fprintf(stderr, "Choisissez une autre police\n");
-    exit(-1);
+    return -1;
   }
 
   /* police italique -> on cherche d'abord la police oblique */
@@ -2104,19 +2108,13 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
     }
   }
   pp->fn_h = pp->fn_base->ascent + pp->fn_base->descent+1;
+  return 0;
 }
 
-/* initialisation */
 void
-pp_build(Dock *dock) 
+pp_set_prefs_colors(Dock *dock) 
 {
-  Pinnipede *pp;
-
-  ALLOC_OBJ(pp, Pinnipede);
-  dock->pinnipede = pp;
-
-
-  pp->mapped = 0;
+  Pinnipede *pp = dock->pinnipede;
   pp->win_bgpixel = IRGB2PIXEL(Prefs.pp_bgcolor);
   pp->timestamp_pixel = IRGB2PIXEL(Prefs.pp_tstamp_color);
   pp->lnk_pixel = IRGB2PIXEL(Prefs.pp_url_color);
@@ -2136,6 +2134,20 @@ pp_build(Dock *dock)
   pp->hilight_answer_my_msg_pixel = IRGB2PIXEL(Prefs.pp_answer_my_msg_color);
   pp->hilight_keyword_pixel = IRGB2PIXEL(Prefs.pp_keyword_color);
   pp->plopify_pixel = IRGB2PIXEL(Prefs.pp_plopify_color);
+}
+
+/* initialisation */
+void
+pp_build(Dock *dock) 
+{
+  Pinnipede *pp;
+
+  ALLOC_OBJ(pp, Pinnipede);
+  dock->pinnipede = pp;
+
+
+  pp->mapped = 0;
+  pp_set_prefs_colors(dock);
 
   pp->id_base = -1; pp->decal_base = 0;
 
@@ -2182,7 +2194,12 @@ pp_build(Dock *dock)
   pp->pv = NULL;
   pp->survol_hash = 0;
   assert(Prefs.pp_fn_family);
-  pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size);
+  if (pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
+    myprintf("echec du chargement des fontes '%s' en taille '%d'\non prend de l'helvetica en 12 pour assurer\n",Prefs.pp_fn_family, Prefs.pp_fn_size);
+    if (pp_load_fonts(pp, dock->display, "helvetica", 12)==-1) {
+      myprintf("gruiiiiik !! pas d'helvetica je me tire une balle dans le nez\n"); exit(-1);
+    }
+  }
 
   pp->use_minibar = Prefs.pp_minibar_on;
 
@@ -2194,20 +2211,19 @@ pp_build(Dock *dock)
   pp->flag_tribune_updated = 0;
 }
 
-/* 
-   fonction inutile, sert juste à reperer si y'a des memory leaks 
-*/
-#ifdef TEST_MEMLEAK
 void
 pp_destroy(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
   if (pp->mapped) pp_unmap(dock);
-  assert(pp->pv == NULL); assert(pp->sc == NULL); assert(pp->lignes_sel == NULL);
+  assert(pp->pv == NULL); assert(pp->sc == NULL); 
+  assert(pp->lignes_sel == NULL); assert(pp->lignes == NULL);
   picohtml_destroy(dock->display, pp->ph_fortune);
+  XFreeFont(dock->display, pp->fn_base); XFreeFont(dock->display, pp->fn_it); 
+  XFreeFont(dock->display, pp->fn_bd); XFreeFont(dock->display, pp->fn_itbd);
+  
   free(pp); dock->pinnipede = NULL;
 }
-#endif 
 
 static void
 pp_update_bg_pixmap(Dock *dock)
@@ -2623,7 +2639,7 @@ pp_unmap(Dock *dock)
   get_window_pos_with_decor(dock->display, pp->win, &pp->win_xpos, &pp->win_ypos);
   //  pp_minib_hide(dock);
   XDestroyWindow(dock->display, pp->win);
-  XFreePixmap(dock->display, pp->lpix);
+  XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
   if (pp->bg_pixmap != None) {
     XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
   }
