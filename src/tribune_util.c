@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.22 2002/05/28 20:11:55 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.23 2002/05/28 23:22:58 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.23  2002/05/28 23:22:58  pouaite
+  ptit fix
+
   Revision 1.22  2002/05/28 20:11:55  pouaite
   modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
 
@@ -438,6 +441,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 {
   tribune_msg_info *mi, *best_mi;
   int best_mi_num;
+  int previous_mi_was_a_match = 0, match;
 
   mi = trib->msg;
   best_mi = NULL;
@@ -445,17 +449,18 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 
 
   while (mi) {
+    match = 0;
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
       if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
-	   && mi->hmsf[1] == m && best_mi == NULL) {
-	best_mi = mi;
+	   && mi->hmsf[1] == m && best_mi == NULL && !previous_mi_was_a_match) {
+	match = 1;
       }
     } else {
       if ((mi->hmsf[0] == h  || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
 	  && mi->hmsf[1] == m && mi->hmsf[2] == s) {
-	if (num == -1 || num == best_mi_num) {
-	  best_mi = mi; //break;
+	if ((num == -1 || num == best_mi_num) && !previous_mi_was_a_match) {
+	  match = 1; //break;
 	}
 	best_mi_num++;
       } else {
@@ -471,6 +476,9 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 			    best_mi_num, cqfd ;-) */			    
       }
     }
+    
+    if (match) best_mi = mi;
+    previous_mi_was_a_match = match;
     mi = mi->next;
   }
   
