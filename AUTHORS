@@ -7,11 +7,12 @@ mais aussi:
 * Josselin Mouette (ralentissement du coincoin, i18n)
 * Gael le Mignot (regexp.c)
 * Frederic Py (ispell)
-* Shift (commande externe)
-* Loic Restoux (plateau de fruits de mer)
+* Shift (commande externe, reprise du pdfm)
+* Loic Restoux (plateau de fruits de mer, patchs divers et variés)
 * Vincent Creuzillet (plop_words) 
 * Benjamin Michotte (option pinnipede.auto_open)
 * Jaimé Ragnagna aka jr-lamoule (idée du wmccc, promotion du wmccc :P)
+* Olivier Jeannet (retro traduction fr)
 et d'autres (...) que j'ai oublié car c'est le bordaile dans ma bal
 
 et aussi de vrais morceaux de wmpinboard et wget

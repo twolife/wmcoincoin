@@ -1,4 +1,7 @@
-2002-11-21  Plop  <c0in@altern.org>
+2002-11-21  pouaite  <c0in@altern.org>
+
+	* po/fr.po: retro-traductions de oje. Pas testé j'arrive a faire 
+	le coincoin :-/
 
 	* src/comments.c (site_yc_parse_dacode2): collection d'hiver pour
 	les patch de lo< : xp pour templeet, ajout du '/' manquant pour les
