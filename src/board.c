@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.8 2002/09/02 23:24:41 pouaite Exp $
+  rcsid=$Id: board.c,v 1.9 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.9  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.8  2002/09/02 23:24:41  pouaite
   bugfixes de la soiree
 
@@ -204,7 +207,6 @@ board_create(Site *site, Boards *boards)
   board->board_refresh_delay = sp->board_check_delay*(1000/WMCC_TIMER_DELAY_MS);
   /* juste pour que le premier check se fasse avant celui des news */
   board->board_refresh_cnt = board->board_refresh_delay-10; 
-  board->update_request = 0;
   strncpy(board->coin_coin_useragent, sp->user_agent, USERAGENT_MAXMAX_LEN);
   board->coin_coin_useragent[USERAGENT_MAXMAX_LEN] = 0;
 
@@ -1291,7 +1293,6 @@ board_update(Board *board)
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
   board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
 
-  board->update_in_progress = 1;
   pp_set_download_info(board->site->prefs->site_name, "updating board");
 
   if ((Prefs.debug & 2) == 0) {
@@ -1459,7 +1460,6 @@ board_update(Board *board)
   board_check_my_messages(board, old_last_post_id);
   board_update_time_shift(board, old_last_post_id);
 
-  board->update_in_progress = 0;
   pp_set_download_info(NULL, NULL);
 
   flag_board_updated = 1;  

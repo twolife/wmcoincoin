@@ -183,7 +183,7 @@ pp_tabs_refresh(Dock *dock)
 	int tw, tx, ty;
 	unsigned long fgpixel = 0x303030;
 	int main_site = 0;
-	if (pp->tabs[i].site->board->update_request) {
+	if (ccqueue_find(Q_BOARD_UPDATE, pp->tabs[i].site->site_id)) {
 	  int l = ABS((wmcc_tic_cnt % 30) - 15)*10;
 	  t = "-queued-";
 	  fgpixel = 0x303030 + (l<<16) + (l<<8) + l;
@@ -290,7 +290,8 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
 	}
       }
     } else if (event->button == Button2) {
-      board->update_request = 1;
+      ccqueue_push_board_update(pt->site->site_id);
+      pt->site->board->board_refresh_cnt = 0;
     } else if (event->button == Button3) {
       if (pt->selected == 0) pt->selected = 1;
     }
@@ -333,12 +334,12 @@ pp_minib_set_pos(Pinnipede *pp)
   pp->mb[i].type = FILTER;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = PREFS;           pp->mb[i].w = 40; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = CANCEL;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
 
   //  pp->mb[i].type = REFRESH_NEWS;    pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   //  pp->mb[i].type = REFRESH_TRIBUNE; pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-
-
   pp->mb_buttonbar_width = pp->win_width - x;
+
   assert(i == NB_MINIB);
 
   for (i=0; i < NB_MINIB; i++) {
@@ -477,7 +478,9 @@ pp_minib_refresh(Dock *dock)
     y = 1;
 
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, x, 0, pp->mb[i].w, pp->mb[i].h);
+
+    if (pp->mb[i].type != CANCEL || dl_info_site)
+      XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, x, 0, pp->mb[i].w, pp->mb[i].h);
 
 
 /*     if (pp->mb[i].clicked && pp->mb[i].type != REFRESH_TRIBUNE && pp->mb[i].type != REFRESH_NEWS) { */
@@ -505,7 +508,7 @@ pp_minib_refresh(Dock *dock)
     case PREFS:
       {
 	char *s;
-	if (flag_update_prefs_request == 0) {
+	if (ccqueue_find(Q_PREFS_UPDATE, -1) == NULL) {
 	  s = "wmc³";
 	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
 	} else {
@@ -664,6 +667,25 @@ pp_minib_refresh(Dock *dock)
 	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, ry, xc, ry+rh-1);
 	}
       } break;
+    case CANCEL:
+      if (dl_info_site) {
+	int rx, rw, ry, rh;
+	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-5; rh = pp->mb[i].h-5;
+	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8080ff));
+	if (flag_cancel_task == 0) {
+	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xb0b0ff));
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx + (wmcc_tic_cnt/5)%rw, ry,
+		    rx + (wmcc_tic_cnt/5)%rw, ry+rh-1);
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx, ry + (wmcc_tic_cnt/5)%rh, 
+		    rx+rw-1, ry + (wmcc_tic_cnt/5)%rh);
+	} else {
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+		    x+1,y+1,x+pp->mb[i].w-2, y+pp->mb[i].h-2);
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+		    x+1,y+pp->mb[i].h-2,x+pp->mb[i].w-2, y+1);
+	}
+      } break;
     default:
       abort(); break;
     }
@@ -686,7 +708,8 @@ pp_minib_get_button(Dock *dock, int x, int y)
   for (i=0; i < NB_MINIB; i++) {
     if (x >= pp->mb[i].x && x < pp->mb[i].x+pp->mb[i].w && 
 	y >= pp->mb[i].y && y < pp->mb[i].y+pp->mb[i].h) {
-      return &pp->mb[i];
+      if (pp->mb[i].type != CANCEL || dl_info_site)
+	return &pp->mb[i];
     }
   }
   return NULL;
@@ -700,7 +723,8 @@ pp_minib_pressed_button(Dock *dock)
 
   for (i=0; i < NB_MINIB; i++) {
     if (pp->mb[i].clicked)
-      return &pp->mb[i];
+      if (pp->mb[i].type != CANCEL || dl_info_site)
+	return &pp->mb[i];
   }
   return NULL;
 }
@@ -855,6 +879,10 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
       {
 	launch_wmccc();
       } break;
+    case CANCEL:
+      {
+	flag_cancel_task = 1;
+      } break;
     default:
       assert(0); 
     }
@@ -974,6 +1002,7 @@ pp_check_balloons(Dock *dock, int x, int y)
       case PREFS: msg = _("Launch wmccc (wmcoincoin configuration)"); break;
 /*       case REFRESH_NEWS: msg = _("Click here to force the refresh of the news, messages, fortune and XP"); break; */
 /*       case REFRESH_TRIBUNE: msg = _("Click here to force the refresh of the board"); break; */
+      case CANCEL: msg = _("clic here to cancel the current download"); break;
       default: assert(0);
       }
       balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos-15, 0, 

@@ -158,12 +158,12 @@ option_get_transp_val(const char *arg, const char * opt_name,TransparencyInfo *t
 
 static void
 option_set_useragent(const char *optarg,
-                     SitePrefs *p)
+                     SitePrefs *p, int verbatim)
 {
   if (optarg == NULL) p->user_agent[0] = 0;
   else {
     struct utsname utsn;
-    char *ua;
+    char *ua = NULL;
     const char *keys[] = {"$v", "$u", "$s", "$r", "$m"};
     const char *subs[] = {VERSION,"", ""  , ""  , ""};
 
@@ -179,11 +179,14 @@ option_set_useragent(const char *optarg,
       subs[3] = utsn.release;
       subs[4] = utsn.machine;
     }
-    ua = str_multi_substitute(optarg, keys, subs, 5);
-    strncpy(p->user_agent,ua,USERAGENT_MAXMAX_LEN);
+    if (verbatim == 0) {
+      ua = str_multi_substitute(optarg, keys, subs, 5);
+      strncpy(p->user_agent,ua,USERAGENT_MAXMAX_LEN);
+      free(ua);
+    } else {
+      strncpy(p->user_agent,optarg,USERAGENT_MAXMAX_LEN);
+    }
     p->user_agent[USERAGENT_MAXMAX_LEN] = 0;
-
-    free(ua);
   }
 }
 
@@ -1025,7 +1028,7 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg)
 
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
-wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, wmcc_options_id opt_num, unsigned char *arg)
+wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, wmcc_options_id opt_num, unsigned char *arg, int verbatim)
 {
   char *opt_name;
   assert(opt_num < NB_WMCC_OPTIONS);
@@ -1152,7 +1155,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     ASSIGN_STRING_VAL(sp->user_login, arg);
   } break; 
   case OPTSG_palmipede_useragent: {
-    option_set_useragent(arg, sp);
+    option_set_useragent(arg, sp, verbatim);
   } break; 
   case OPT_palmipede_default_message: {
     ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
@@ -1190,7 +1193,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTS_http_cookie: {
     char *old = sp->user_cookie;
     
-    if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what)");
+    if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what). Now you have to put the cookie name with its value");
     if (old == NULL) sp->user_cookie = strdup(arg);
     else { sp->user_cookie = str_printf("%s;%s", old, arg); free(old); }
   } break; 
@@ -1445,7 +1448,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
 /* lecture (recursive) du fichier d'option */
 static int
 wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char *_filename, 
-			       int lvl, char **err_str)
+			       int lvl, char **err_str, int verbatim)
 {
   int lcnt;
   char *opt_name = NULL, *opt_arg = NULL;
@@ -1519,14 +1522,14 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
 	    error = str_printf(_("line %d: option '%s' can't be used as a site option\n"), lcnt, opt_name);
 	    goto ouille;
 	  }
-	  error = wmcc_prefs_validate_option(p, sp, global_sp, i, opt_arg);
+	  error = wmcc_prefs_validate_option(p, sp, global_sp, i, opt_arg, verbatim);
 	  if (error) goto ouille;
 	  break;
 	}
       }
       if (i == NB_WMCC_OPTIONS) {
 	if (strcasecmp(opt_name, "include") == 0) {
-	  if (wmcc_prefs_read_options_recurs(p, global_sp, opt_arg, lvl+1, err_str)) {
+	  if (wmcc_prefs_read_options_recurs(p, global_sp, opt_arg, lvl+1, err_str, verbatim)) {
 	    error = str_printf(_(" [line %d] %s\n"), lcnt, *err_str);
 	    free(*err_str); *err_str = NULL;
 	    goto ouille;
@@ -1553,13 +1556,13 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
 
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
 char *
-wmcc_prefs_read_options(GeneralPrefs *p, const char *filename)
+wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
 {
   char *error = NULL;
   SitePrefs global_sp;
 
   wmcc_site_prefs_set_default(&global_sp);
-  wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error);
+  wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error, verbatim);
 
   if (p->nb_sites == 0) {
     myfprintf(stderr, _("oooooooh !!! you didn't define at least *ONE* site, you bad boy.\ni do it for you, but this is the last time"));

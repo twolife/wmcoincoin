@@ -360,9 +360,9 @@ void wmcc_prefs_destroy(GeneralPrefs *p);
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
 wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, 
-			   wmcc_options_id opt_num, unsigned char *arg);
+			   wmcc_options_id opt_num, unsigned char *arg, int verbatim);
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
-char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename);
+char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim);
 SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
 void wmcc_site_prefs_set_default(SitePrefs *p);
 void wmcc_site_prefs_destroy(SitePrefs *p);

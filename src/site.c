@@ -116,8 +116,6 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   site->comments_last_modified = NULL;
   site->comments_dl_cnt = 0;
   
-  site->news_update_request = 0;
-
   site->xp = site->xp_old = -100000;
   site->xp_change_flag = 0;
   site->comment_change_flag = 0;

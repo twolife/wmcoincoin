@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.12 2002/08/26 00:52:22 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.13 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.13  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.12  2002/08/26 00:52:22  pouaite
   coin coin coin
 
@@ -82,7 +85,7 @@ net_tcp_connect_with_timeout (SOCKET fd, SOCKADDR_IN *sock, int timeout_secs)
 	perror ("connect");
 	return -1;
       }
-      
+      if (flag_cancel_task) return -1;
     } else {
       printf (_("Connected succesfully!\n"));
       return 0;
@@ -102,6 +105,7 @@ net_tcp_connect_with_timeout (SOCKET fd, SOCKADDR_IN *sock, int timeout_secs)
 	perror ("select");
 	return -1;
       }
+      if (flag_cancel_task) return -1;
     }
     if (res == 0) {
       printf(_("Connection timed out (timeout=%d sec)!\n"), timeout_secs);

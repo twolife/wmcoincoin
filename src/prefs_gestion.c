@@ -12,7 +12,7 @@
 #define _(String) gettext (String)
 
 #define TEST_CMDLINE_OPT(optid) { \
-  char *errmsg = wmcc_prefs_validate_option(&Prefs,NULL, NULL, optid,optarg); \
+  char *errmsg = wmcc_prefs_validate_option(&Prefs,NULL, NULL, optid,optarg,0); \
   if (errmsg) { myprintf(_("Erreur pour l'option de la ligne de commande '%<GRN -%c>'\n: %s\n"),optc,errmsg); \
   exit(1); } }
 
@@ -264,7 +264,7 @@ wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p)
 
   options_full_file_name = check_install_data_file("options", options_file_name);
   assert(options_full_file_name);
-  errmsg = wmcc_prefs_read_options(p, options_full_file_name); /* lecture de '.wmcoincoin/options' */
+  errmsg = wmcc_prefs_read_options(p, options_full_file_name,0); /* lecture de '.wmcoincoin/options' */
   if (errmsg) {
     myprintf(_("Error during while reading '%s':\n%<YEL %s>\n") , options_full_file_name, errmsg);
     free(errmsg); exit(1);
@@ -455,7 +455,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
   } else {
     options_full_file_name = get_wmcc_tmp_options_filename();
   }
-  errmsg = wmcc_prefs_read_options(&newPrefs, options_full_file_name);
+  errmsg = wmcc_prefs_read_options(&newPrefs, options_full_file_name,0);
   if (errmsg) {
     char *s = str_printf(_("Error while rereading options [%s]<br>%s"),
 			 options_full_file_name, errmsg); free(errmsg);

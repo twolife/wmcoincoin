@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.60 2002/09/02 23:24:41 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.61 2002/09/05 23:11:58 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.61  2002/09/05 23:11:58  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.60  2002/09/02 23:24:41  pouaite
   bugfixes de la soiree
 
@@ -250,17 +253,11 @@
 
 /* des vieilles variables globales qui feraient mieux de rentrer dans une jolie structure */
 
-int temps_depuis_dernier_event = 0; /* incrémenté 25 fois / sec */
-
-
 GeneralPrefs Prefs;
 
 int opened_cnt; /* ça c'est de la bonne vieille variable qui date de la v0.9...*/
 
 Dock *_dock;
-
-int wmcc_run = 1; /* flag arretant wmcc (pour debug) */
-
 
 /*
    la fonction de la honte ...
@@ -472,19 +469,19 @@ wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path
    cette fonction est executée par la boucle principale
  */
 void
-exec_coin_coin(Dock *dock)
+exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
 {
   HttpRequest r;
   char *urlencod_msg;
   char path[2048];
   Site *site;
 
-  BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), dock->real_coin_coin_message));
-  BLAHBLAH(1, myprintf(_("    (useragent: '%<CYA %s>\n"), dock->real_coin_coin_useragent));
+  BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), msg));
+  BLAHBLAH(1, myprintf(_("    (useragent: '%<CYA %s>\n"), ua));
 
-  site = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
+  site = sl_find_site_id(dock->sites, sid);
   if (site == NULL) {
-    myprintf("?? unable to find site id %d (bug?)\n", dock->real_coin_coin_site_id);
+    myprintf("?? unable to find site id %d (bug?)\n", sid);
     return;
   }
   if (site->board == NULL) {
@@ -493,9 +490,7 @@ exec_coin_coin(Dock *dock)
   }
   pp_set_download_info(site->prefs->site_name, "posting ...");
 
-  flag_sending_coin_coin = 1;
-
-  urlencod_msg = http_url_encode(dock->real_coin_coin_message); assert(urlencod_msg);
+  urlencod_msg = http_url_encode(msg); assert(urlencod_msg);
 
   snprintf(path, 2048, "%s%s/%s", strlen(site->prefs->site_path) ? "/" : "", site->prefs->site_path, site->prefs->path_board_add);
 
@@ -504,7 +499,7 @@ exec_coin_coin(Dock *dock)
   r.type = HTTP_POST;
   r.referer = str_printf("http://%s:%d/%s/", site->prefs->site_root, site->prefs->site_port, site->prefs->site_path);
   if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
-  r.user_agent = strdup(dock->real_coin_coin_useragent);
+  r.user_agent = strdup(ua);
   r.post = str_printf(site->prefs->board_post, urlencod_msg);  free(urlencod_msg);
 
   
@@ -535,7 +530,7 @@ exec_coin_coin(Dock *dock)
   /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
   if (dock->post_anonyme) { site->board->just_posted_anonymous = 1; }
 
-  flag_sending_coin_coin = 0;
+  dock->coin_coin_sent_decnt = 50;
   pp_set_download_info(NULL,NULL);
 }
 
@@ -571,7 +566,7 @@ launch_wmccc()
 		       get_wmcc_options_filename(), stmpopt, 
 		       NULL);
       if( retExec==-1 ) {
-	fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux\n"), strerror(errno));
+	fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux (wmccc not in path?)\n"), strerror(errno));
       }
       exit(retExec);
     } break;
@@ -754,13 +749,6 @@ wmcoincoin_dispatch_events(Dock *dock)
 	dock->mouse_cnt = 0;
 	dock->mouse_win = None;
       } break;
-    case ButtonPress:
-#ifdef TEST_MEMLEAK
-      if (event.xbutton.button == Button3 && (event.xbutton.state & (Button1Mask | Button2Mask))) {
-	wmcc_run = 0; printf(_("suicide in progress...\n"));
-	break;
-      }
-#endif
     case ButtonRelease:
     case KeyPress:
       {
@@ -854,6 +842,104 @@ sigint_signal(int signum UNUSED) {
   exit(0);
 }
 
+
+/*
+  appelée pour la tribune et les news (delai_base == secondes)
+   (pour la tribune, delai_base = Prefs.dlfp_tribune_check_delay,
+    pour les news,   delai_base = Prefs.dlfp_news_check_delay)
+*/
+int
+wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
+{
+  int delay;
+
+  delay = 25*delay_base;
+
+  /* verifie si on a demandé d'éteindre le coincoin au bout d'un certain nb de minutes */
+  if (Prefs.switch_off_coincoin_delay != 0) {
+    if (temps_depuis_dernier_event/(25*60) > Prefs.switch_off_coincoin_delay) {
+      if (dock->horloge_mode == 0) flag_discretion_request = 1; /* passage en horloge :) */
+      delay = 10000000; return delay;
+    }
+  }
+
+  if (Prefs.max_refresh_delay == 0) return delay;
+
+  if (temps_depuis_dernier_event/25 < 300) {
+    delay = 25*delay_base;
+  } else if (temps_depuis_dernier_event/25 < 1200) {          /* cad entre 5 min et 20mind'inactivité */
+    delay = 25*2*delay_base;                                 /* on passe à (par defaut) un refresh/min */
+  } else if (temps_depuis_dernier_event/25 < 90*60) {         /* en 20 min et 1h30 */
+    delay = 25*10*delay_base;                                /* on passe à un refresh/5min */
+  } else {                                                    /* apres 1h30 */
+    delay = 25*60*delay_base;                                /* on passe aux delai_max (qui est exprime en minutes) */ 
+  }
+  delay = MIN(delay, Prefs.max_refresh_delay*25*60);
+  return delay;
+}
+
+
+/*
+  maj les differents timers et remplit la file d'attente 
+*/
+void
+update_timers(Dock *dock)
+{
+  Site *site;
+  if (dock->coin_coin_sent_decnt >= 1) dock->coin_coin_sent_decnt--; /* pour éteindre la led[1] apres un cours délai */
+
+  if (flag_update_prefs_request) {
+    ccqueue_push_prefs_update(flag_update_prefs_request);
+    flag_update_prefs_request = 0;
+  }
+
+  /* 
+     ces 5 lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
+     (si le coincoin rafraichissait 1fois/15min, il va faire très rapidement un refresh) 
+     par contre, le delai ne peut être accru que juste après un refresh (c'est mieux pour 
+     l'affichage du temps avant le prochain refresh dans le pinni, ça évite des sauts)
+  */
+  for (site = dock->sites->list; site; site = site->next) {
+    site->news_refresh_delay = 
+      MIN(site->news_refresh_delay, 
+	  wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay));
+    if (site->board) {
+      site->board->board_refresh_delay = 
+	MIN(site->board->board_refresh_delay, 
+	    wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay));
+    }
+  }
+
+  /* les tribunes */
+  for (site = dock->sites->list; site; site = site->next) {
+    if (site->prefs->check_board && ccqueue_find(Q_BOARD_UPDATE, site->site_id)==NULL) {
+      site->board->board_refresh_cnt++;
+      if (site->board->board_refresh_cnt > site->board->board_refresh_delay) {
+	ccqueue_push_board_update(site->site_id);
+	site->board->board_refresh_cnt = 0;
+	site->board->board_refresh_delay = 
+	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay);
+      }
+    }
+  }
+
+  /* news comments etc */
+  for (site = dock->sites->list; site; site = site->next) {
+    site->news_refresh_cnt++;
+    if (site->news_refresh_cnt > site->news_refresh_delay) {
+      if (site->prefs->check_news)
+	ccqueue_push_newslst_update(site->site_id);
+      if (site->prefs->check_messages)
+	ccqueue_push_messages_update(site->site_id);
+      if (site->prefs->check_comments)
+	ccqueue_push_comments_update(site->site_id);
+      site->news_refresh_cnt = 0;
+      site->news_refresh_delay = 
+	wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
+    }
+  }
+}
+
 /* la boucle principale (appelée 25 fois par seconde, mais uniquement aux moments 
    propices (cad pas au milieu d'un malloc..)) */
 void X_loop()
@@ -877,11 +963,11 @@ void X_loop()
 			 mieux ne pas trop toucher à cette variable... */
   
   timer_cnt++;
-
   dock->view_id_timer_cnt++;
   dock->mouse_cnt+=40;
 
-  if (dock->coin_coin_request < 0) dock->coin_coin_request++; /* pour éteindre la led[1] apres un cours délai */
+  update_timers(dock);
+
 
   /* verifie si il y a des ballons d'aide a afficher */
   if (Prefs.use_balloons) check_balloons(dock); 
@@ -1425,41 +1511,6 @@ void initx(Dock *dock, int argc, char **argv) {
   wmcc_set_wm_icon(dock);
 }
 
-/*
-  appelée pour la tribune et les news (delai_base == secondes)
-   (pour la tribune, delai_base = Prefs.dlfp_tribune_check_delay,
-    pour les news,   delai_base = Prefs.dlfp_news_check_delay)
-*/
-int
-wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
-{
-  int delay;
-
-  delay = 25*delay_base;
-
-  /* verifie si on a demandé d'éteindre le coincoin au bout d'un certain nb de minutes */
-  if (Prefs.switch_off_coincoin_delay != 0) {
-    if (temps_depuis_dernier_event/(25*60) > Prefs.switch_off_coincoin_delay) {
-      if (dock->horloge_mode == 0) flag_discretion_request = 1; /* passage en horloge :) */
-      delay = 10000000; return delay;
-    }
-  }
-
-  if (Prefs.max_refresh_delay == 0) return delay;
-
-  if (temps_depuis_dernier_event/25 < 300) {
-    delay = 25*delay_base;
-  } else if (temps_depuis_dernier_event/25 < 1200) {          /* cad entre 5 min et 20mind'inactivité */
-    delay = 25*2*delay_base;                                 /* on passe à (par defaut) un refresh/min */
-  } else if (temps_depuis_dernier_event/25 < 90*60) {         /* en 20 min et 1h30 */
-    delay = 25*10*delay_base;                                /* on passe à un refresh/5min */
-  } else {                                                    /* apres 1h30 */
-    delay = 25*60*delay_base;                                /* on passe aux delai_max (qui est exprime en minutes) */ 
-  }
-  delay = MIN(delay, Prefs.max_refresh_delay*25*60);
-  return delay;
-}
-
 #ifdef __CYGWIN__
 void *Timer_Thread(void *arg UNUSED)
 {
@@ -1485,150 +1536,6 @@ void *Timer_Thread(void *arg UNUSED)
 }
 #endif 
 
-/* is there a board to update ? */
-int
-is_board_update_requested(SiteList *sl)
-{
-  Site *site;
-  for (site = sl->list; site; site = site->next) {
-    if (site->prefs->check_board && site->board->update_request == 1) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/* ----------------------------------- */
-/*        Main Network thread          */
-/* ----------------------------------- */
-void *Net_loop (Dock *dock) {
-  int save_state_cnt = 0;
-  strcpy(dock->newstitles, _("Transfer in progress..."));
-
-  while (wmcc_run) {
-    Site *site;
-    /* ces 5 lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
-       (si le coincoin rafraichissait 1fois/15min, il va faire très rapidement un refresh) 
-
-       par contre, le delai ne peut être accru que juste après un refresh (c'est mieux pour l'affichage du
-       temps avant le prochain refresh dans le pinni, ça évite des sauts)
-    */
-    for (site = dock->sites->list; site; site = site->next) {
-      site->news_refresh_delay = 
-	MIN(site->news_refresh_delay, 
-	    wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay));
-      if (site->board) {
-	site->board->board_refresh_delay = 
-	  MIN(site->board->board_refresh_delay, 
-	      wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay));
-      }
-    }
-
-    /* envoi du message ? */
-    if (dock->coin_coin_request > 0) {
-      Site *s;
-      dock->wmcc_state_info = WMCC_SENDING_COINCOIN;
-      exec_coin_coin(dock); 
-      dock->coin_coin_request = -50; /* on va le repasser progressivement à zero (pour permettre à la led
-					de s'éteindre progressivement) */
-      s = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
-      if (s && s->board)
-	s->board->update_request = 2; /* va falloir mettre la tribune à jour */
-      ALLOW_X_LOOP;
-    }
-
-    if (flag_update_prefs_request) {
-      wmcc_prefs_relecture(dock, flag_update_prefs_request); flag_update_prefs_request = 0;
-    }
-    
-
-    /* update loop for all sites */
-    for (site = dock->sites->list; site; site = site->next) {
-      if (flag_update_prefs_request) break; /* priorité !! */
-      if (dock->coin_coin_request > 0) break;
-      if (site->prefs->check_board && site->board->update_request > 1) {
-	  site->board->update_request--;
-      }
-
-      if (site->news_update_request > 1)
-	site->news_update_request--;
-
-      if (!is_board_update_requested(dock->sites)) {
-	/* this is a good example of how long variable names may lead
-	   to an unreadable source code */
-	if (site->news_refresh_cnt > site->news_refresh_delay || 
-	    site->news_update_request == 1) {
-	  site->news_refresh_cnt = 0;
-	  site->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
-	  if (site->prefs->check_news) {
-	    dock->wmcc_state_info = WMCC_UPDATING_NEWS;
-	    site_news_dl_and_update(site); ALLOW_X_LOOP;
-	  }
-	  if (flag_update_prefs_request) break; /* priorité !! */
-	  
-	  if (site->prefs->check_comments && !is_board_update_requested(dock->sites)) {
-	    dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
-	    site_yc_dl_and_update(site); ALLOW_X_LOOP;
-	  }
-	  if (flag_update_prefs_request) break; /* priorité !! */
-	  
-	  if (site->prefs->check_messages && !is_board_update_requested(dock->sites)) {
-	    dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
-	    site_msg_dl_and_update(site); ALLOW_X_LOOP;
-	  }
-	  site->news_update_request = 0;
-	}
-      }
-    
-      if (site->prefs->check_board &&
-	  (site->board->board_refresh_cnt > site->board->board_refresh_delay ||
-	   site->board->update_request == 1)) {
-	site->board->board_refresh_cnt = 0;
-	site->board->board_refresh_delay = 
-	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay);
-
-	if (flag_update_prefs_request) break; /* priorité !! */
-
-	dock->wmcc_state_info = WMCC_UPDATING_BOARD;
-	board_update(site->board);
-	ALLOW_X_LOOP;
-	site->board->update_request = 0;
-      }
-    }
-
-    if (Prefs.ew_do_spell) ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);
-    
-    /* sauvegarde auto de la pos/dim du pinni & newswin */
-    if (save_state_cnt == ((1000/WMCC_TIMER_DELAY_MS)*60*10)) {
-      save_state_cnt = 0;
-      wmcc_save_or_restore_state(dock, 0); 
-    }
-    dock->wmcc_state_info = WMCC_IDLE;
-    ALLOW_X_LOOP;
-#if (defined(__CYGWIN__) || defined(NOSIGNALS))
-    usleep(10000); 
-#else
-    pause(); 
-#endif
-    {
-      pid_t pid;
-      int status;
-      if ((pid = waitpid(0, &status, WNOHANG))) {
-	if (pid > 1 && WIFEXITED(status)) {
-	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", pid, WEXITSTATUS(status));
-	}
-      }
-    }
-    ALLOW_X_LOOP;
-    for (site = dock->sites->list; site; site = site->next) {
-      site->news_refresh_cnt++;
-      if (site->board && site->board->auto_refresh) site->board->board_refresh_cnt++;
-    }
-    temps_depuis_dernier_event++;
-    save_state_cnt++;
-  }
-  return NULL;
-}
 
 static void
 install_sighandlers()
@@ -1769,6 +1676,7 @@ main(int argc, char **argv)
   dock->sites = sl_create();
 
   http_init();
+  ccqueue_build();
 
   if (Prefs.debug & 1) {
     _Xdebug = 1; /* oblige la synchronisation */
@@ -1825,8 +1733,6 @@ main(int argc, char **argv)
   dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
   free(Prefs.coin_coin_message); Prefs.coin_coin_message = NULL; //dock->coin_coin_message; /* pas beau */
 
-  dock->real_coin_coin_useragent[0] = 0;
-  dock->real_coin_coin_site_id = -1;
   dock->coin_coin_site_id = -1;
 
   /* pour les http_get, on utilisera Prefs.user_agent, qui est non modifiable
@@ -1841,8 +1747,6 @@ main(int argc, char **argv)
 
   /*  dock->trolloscope_bgr = dock->trolloscope_bgb = dock->trolloscope_bgg = 0;
       dock->trolloscope_clign_step = -1;*/
-
-  dock->coin_coin_request = 0;
 
   dock->view_id_in_newstitles = id_type_invalid_id();
   dock->flag_survol_trollo = 0;
@@ -1861,8 +1765,6 @@ main(int argc, char **argv)
 
   dock->mask_porte_haut = None;
   dock->mask_porte_bas = None;
-
-  dock->wmcc_state_info = WMCC_IDLE; /* moyennement vrai au début ! */
 
   dock->trib_trollo_rate = 0; dock->trib_trollo_score = 0;
 
@@ -1977,7 +1879,7 @@ main(int argc, char **argv)
 #  endif
 #endif  
   /* launching the network update thread */
-  Net_loop(dock);
+  ccqueue_loop(dock);
 
   return 0;
 }

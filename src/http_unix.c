@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.15 2002/06/23 14:01:36 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.16 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.16  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.15  2002/06/23 14:01:36  pouaite
   ouups, j'avais flingué les modifs depuis la v2.3.8b
 
@@ -104,7 +107,7 @@ net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
 	perror ("net_tcp_connect_with_timeout: connect");
 	return -1;
       }
-      
+      if (flag_cancel_task) { return -1; }
     } else {
       //fprintf (stderr, "Connected succesfully!\n");
       return 0;
@@ -205,7 +208,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     time_debut = time(NULL);
     while (1) {
       int retval;
-
+      if (flag_cancel_task) break;
       ALLOW_X_LOOP_MSG("daddy listens to his son"); ALLOW_ISPELL;
 
       retval = http_select_fd(tube[0], 0, 10000, 0);
@@ -247,6 +250,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     close(tube[0]);
 
     while (waitpid(pid,&cstat,WNOHANG) == 0) {
+      if (flag_cancel_task) break; /* on s'en fout, le ramasse zombie est là pour ça */
       usleep(10000);
       ALLOW_X_LOOP_MSG("return from the forked gethostbyname"); ALLOW_ISPELL;
       printf(_("We're waiting for the son... Come here boy !\n"));

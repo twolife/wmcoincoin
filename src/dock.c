@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.25 2002/09/03 22:42:17 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.26 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.26  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.25  2002/09/03 22:42:17  pouaite
   coin
 
@@ -744,17 +747,21 @@ dock_leds_set_state(Dock *dock)
     led_color(&dock->leds.led[0], BLUE, BLUE, BLUE);
   } else if (flag_http_error) {
     led_color(&dock->leds.led[0], OFF, OFF, RED);
-  } else if (flag_updating_news || flag_updating_board) {
+  } else if (ccqueue_state() == Q_NEWSLST_UPDATE || 
+	     ccqueue_state() == Q_NEWSTXT_UPDATE || 
+	     ccqueue_state() == Q_BOARD_UPDATE ||
+	     ccqueue_state() == Q_COMMENTS_UPDATE ||
+	     ccqueue_state() == Q_MESSAGES_UPDATE) {
     led_color(&dock->leds.led[0], CYAN, CYAN, CYAN);
   } else {
     led_color(&dock->leds.led[0], OFF, OFF, OFF);
   }
 
-  if (flag_sending_coin_coin) {
+  if (ccqueue_state() == Q_BOARD_POST) {
     led_color(&dock->leds.led[1], YELLOW, YELLOW, YELLOW);
-  } else if (dock->coin_coin_request > 0) {
+  } else if (ccqueue_find(Q_BOARD_POST,-1)) {
     led_color(&dock->leds.led[1], OFF, YELLOW, YELLOW);    
-  } else if (dock->coin_coin_request < 0) {
+  } else if (dock->coin_coin_sent_decnt > 0) {
     led_color(&dock->leds.led[1], GREEN, GREEN, GREEN);
   } else {
     led_color(&dock->leds.led[1], OFF, OFF, OFF);
@@ -766,8 +773,7 @@ dock_leds_set_state(Dock *dock)
     led_color(&dock->leds.led[2], OFF, OFF, OFF);
   }
 
-
-  if (flag_updating_messagerie) {
+  if (ccqueue_state() == Q_MESSAGES_UPDATE) {
     led_color(&dock->leds.led[3], VIOLET, VIOLET, VIOLET);
   } else if (sl_find_unreaded_msg(dock->sites)) {
     led_color(&dock->leds.led[3], OFF, GREENLIGHT, GREEN);
@@ -895,39 +901,31 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
 /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
 int
 dock_red_button_check(Dock *dock) {
+  int kikoo = 0;
   if (dock->red_button_press_flag) {
     /* si on a appuye assez fort ... */
     if (dock->red_button_press_state == 5) {
+      Site *s;
       BLAHBLAH(1,printf(_("Coin !\n")));
 
-      if (dock->coin_coin_request == 0) { /* petite precaution */
-	Site *s;
-	/* On utilise real_coin_coin_message pour éviter un bug si on modifier
-	   le message entre l'appuie du bouton rouge et exec_coin_coin */
-	dock->real_coin_coin_site_id = dock->coin_coin_site_id;
-
-	if (dock->coin_coin_site_id == -1) {
-	  msgbox_show(dock, "<b>Please</b> fill your options file with a valid site equiped with a board...");
+      if (dock->coin_coin_site_id == -1) {
+	msgbox_show(dock, _("<b>Please</b> fill your options file with a valid site equiped with a board..."));
+      } else {
+	s = sl_find_site_id(dock->sites, dock->coin_coin_site_id);
+	if (s && s->board) {
+	  ccqueue_push_board_post(s->site_id,  
+				  s->board->coin_coin_useragent, 
+				  dock->coin_coin_message);
+	  kikoo = 1;
 	} else {
-	  s = sl_find_site_id(dock->sites, dock->real_coin_coin_site_id);
-	  if (s && s->board) {
-	    strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
-		    MESSAGE_MAXMAX_LEN);
-	    strncpy(dock->real_coin_coin_useragent, s->board->coin_coin_useragent, 
-		    USERAGENT_MAXMAX_LEN);
-	    dock->real_coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
-	    dock->real_coin_coin_useragent[USERAGENT_MAXMAX_LEN] = 0;
-	    dock->coin_coin_request = 1;
-	  } else {
-	    myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
-	  }
+	  myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
 	}
       }
     }
     
     dock->red_button_press_flag = -1;
   }
-  return dock->coin_coin_request;
+  return kikoo;
 }
 
 /* statistique à la noix */
@@ -1328,9 +1326,13 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       /* rafraichissement des news */
       Site *site;
       for (site = dock->sites->list; site; site = site->next) {
-	if (site->prefs->check_news || site->prefs->check_comments ||
-	    site->prefs->check_messages)
-	  site->news_update_request = 1;
+	if (site->prefs->check_news) 
+	  ccqueue_push_newslst_update(site->site_id);
+	if (site->prefs->check_comments)
+	  ccqueue_push_comments_update(site->site_id);
+	if (site->prefs->check_messages)
+	  ccqueue_push_messages_update(site->site_id);
+	site->news_refresh_cnt = 0;
       }
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
@@ -1342,7 +1344,9 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       Site *site;
       for (site = dock->sites->list; site; site = site->next) {
 	if (site->prefs->check_board) {
-	  site->board->update_request = 1;
+	  printf("%d \n",  site->board->board_refresh_cnt );
+	  ccqueue_push_board_update(site->site_id);
+	  site->board->board_refresh_cnt = 0;
 	}
       }
 

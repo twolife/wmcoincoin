@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.6 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: news.c,v 1.7 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.7  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.6  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -507,7 +510,7 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
     p2++;
 	    
 
-
+    flag_news_updated = 1;
     err = 0; n->nb_comment = 0;
 
     free(s);
@@ -520,7 +523,8 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
   if (err) {
     myfprintf(stderr,_("%<RED Error while downloading '%s' (err=%d)>\n"), URL, err);
   }
-  
+  pp_set_download_info(NULL,NULL);
+
   if (texte) free(texte);
   if (liens) free(liens);
   if (date) free(date);
@@ -537,7 +541,7 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
   hum.. [parental advisory]
   c'est pas joli-joli, mais comment veux-tu, comment veux-tu
 */
-static
+
 int
 site_news_update_txt(Site *site, id_type id)
 {
@@ -876,13 +880,7 @@ site_news_dl_and_update(Site *site)
 	  if (site_news_find_id(site,id)) {	    
 	    site_news_delete_news(site, id);
 	  }
-	} else if ((n=site_news_find_id(site,id))) {
-	  BLAHBLAH(1,printf(_("** This news is already saved, no problemo.\n")));
-	  if (n->txt == NULL) {
-	    BLAHBLAH(1,printf(_("** But the text hasn't been updated, let's try again.\n")));
-	    site_news_update_txt(site, id);
-	  }
-	} else {
+	} else if (site_news_find_id(site,id) == NULL) {
 	  ALLOW_X_LOOP;
 	  n = site_news_insert_news(site); assert(n);
 	  n->titre = strdup(title);
@@ -893,17 +891,12 @@ site_news_dl_and_update(Site *site)
 	  n->mail = strdup("mailpic");
 	  strncpy(n->date, date, 11); date[10] = 0;
 	  n->id = id;
+	  n->dl_nb_tries = 0;
 	  site->news_updated = 1;
 	  BLAHBLAH(2,printf(_(" . title='%s'\n"), title));
 	  BLAHBLAH(2,printf(_(" . author='%s', mail='%s'\n"), n->auteur, n->mail));
 	  BLAHBLAH(2,printf(_("** News ADDED\n")));
-	  site_news_update_txt(site, id);
 	  flag_news_updated = 1;
-	    //if (site_updatenews_txt(site, id) != 0) return;
-
-	    //	    if (site_count_news(site) > 4) break;
-	    //	    break;
-	    //	    site_updatenews_txt(site, 2293);
 	}
       } /* nouvelle news ajoutée */
     } /* while http_get_line */
@@ -920,6 +913,16 @@ site_news_dl_and_update(Site *site)
   /* elimine les eventuelles news trop vielles, et qui ne sont plus
      dans short.php3 */
   site_news_remove_old(site);
+
+  {
+    News *n;
+    for (n = site->news; n ; n = n->next) {
+      if (n->txt == NULL && n->dl_nb_tries < 4) {
+	n->dl_nb_tries++;
+	ccqueue_push_newstxt_update(site->site_id, id_type_lid(n->id));
+      }
+    }
+  }
 
   ALLOW_X_LOOP;
       

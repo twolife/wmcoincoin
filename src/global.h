@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.24 2002/08/28 00:42:32 pouaite Exp $
+  rcsid=$Id: global.h,v 1.25 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.25  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.24  2002/08/28 00:42:32  pouaite
   wmccc aware
 
@@ -161,7 +164,6 @@ DECL_GLOB_INIT(volatile int flag_updating_messagerie, 0);
 DECL_GLOB_INIT(volatile int flag_news_updated, 0);
 DECL_GLOB_INIT(volatile int flag_updating_comments, 0); /* utilisé aussi pour la maj de la fortune et du CPU */
 DECL_GLOB_INIT(volatile int flag_updating_board, 0);
-DECL_GLOB_INIT(volatile int flag_sending_coin_coin, 0); /* utilisé pour savoir si on est en train de poster un message */
 DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led si on est dans 'troll_detector' */
 DECL_GLOB_INIT(volatile int flag_gethostbyname,0); /* pour savoir si le coincoin est en plein gethostbyname */
 DECL_GLOB_INIT(volatile int flag_board_updated, 0);
@@ -169,10 +171,14 @@ DECL_GLOB_INIT(volatile int flag_http_transfert, 0);
 DECL_GLOB_INIT(volatile int flag_http_error, 0);
 DECL_GLOB_INIT(volatile int flag_spell_request, 0); /* pour le palmipede (ça commence à puer le vilain hack... mais bon, je veux pas de threads alors j'assume) */
 DECL_GLOB_INIT(volatile int flag_spell_finished, 0);
+DECL_GLOB_INIT(int temps_depuis_dernier_event, 0); /* incrémenté 25 fois / sec */
+
+DECL_GLOB_INIT(volatile int flag_cancel_task, 0); /* positionné qd l'utilisateur demande l'annulation du d/l en cours */
 
 /*
   1 == relire le fichier d'options normal
   2 == relire le fichier d'options temporaire écrit par wmccc
+  ne pas utiliser directement, passer par ccqueue_find
 */
 DECL_GLOB_INIT(volatile int flag_update_prefs_request, 0);
 

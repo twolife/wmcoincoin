@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.12 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: http.h,v 1.13 2002/09/05 23:11:57 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.13  2002/09/05 23:11:57  pouaite
+  <blog>ce soir g mangé une omelette</blog>
+
   Revision 1.12  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -102,6 +105,6 @@ void http_request_send(HttpRequest *r);
 void http_request_close(HttpRequest *r);
 int  http_read(HttpRequest *r, char *buff, int max_len);
 int http_get_line(HttpRequest *r, char *s, int sz);
-char *http_url_encode(char *string);
+char *http_url_encode(const char *string);
 unsigned char *http_read_all(HttpRequest *r, char *what);
 #endif

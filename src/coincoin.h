@@ -60,6 +60,7 @@ struct _News {
   int heure; /* en nombre de minutes depuis minuit */
   id_type id;
   int nb_comment; /* pas très utile... */
+  int dl_nb_tries; /* nombre d'essais de d/l du texte de la news */
   struct _News *next;
   Site *site;
 };
@@ -222,13 +223,7 @@ struct _Board {
 
   /* compteurs mis à jour dans Net_loop (25 fois/sec) */
   int board_refresh_cnt, board_refresh_delay;
-  /* nul => update non demandée
-     1 => update immediate
-     2 => update dans 40millesecondes
-     3 =>  "       "  80 "
-     etc...     
-  */
-  volatile int update_request, update_in_progress;
+
   volatile int auto_refresh; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
 };
 
@@ -286,13 +281,6 @@ struct _Site {
 
   SitePrefs *prefs;
   struct _Site *next;
-  /* nul => update non demandée
-     1 => update immediate
-     2 => update dans 40millesecondes
-     3 =>  "       "  80 "
-     etc...     
-  */
-  volatile int news_update_request;
 
   int site_id; /*
 		 un numéro unique au site,
@@ -435,7 +423,9 @@ typedef struct _Dock {
   id_type view_id_in_newstitles;
   int view_id_timer_cnt;
 
-  volatile int coin_coin_request;
+  unsigned char coin_coin_message[MESSAGE_MAXMAX_LEN+1];
+  int coin_coin_site_id;
+  int coin_coin_sent_decnt;
 
   Cursor trib_load_cursor;
   int flag_trib_load_cursor;
@@ -472,12 +462,6 @@ typedef struct _Dock {
 
   MsgBox *msgbox;
 
-  unsigned char real_coin_coin_useragent[USERAGENT_MAXMAX_LEN+1];
-  unsigned char coin_coin_message[MESSAGE_MAXMAX_LEN+1];
-  unsigned char real_coin_coin_message[MESSAGE_MAXMAX_LEN+1];
-  int coin_coin_site_id;
-  int real_coin_coin_site_id;
-
   int trolloscope_speed; /* vitesse de defilement du trolloscope (1,2,4 ou 8), defaut:2 */
 
   struct {
@@ -492,16 +476,20 @@ typedef struct _Dock {
 
   float trib_trollo_rate, trib_trollo_score;
 
-  /* ça ne fait pas doublon avec les 'flag_totooto' de global.h (qui sont la pour eviter les possible race conditions,
-     quoiqu'elles doivent être bien rare puisque wmcc n'est pas multithreadé mais bon)
-     
-     ce champ n'a qu'une valeur d'information
-  */
-  enum { WMCC_UPDATING_NEWS, WMCC_UPDATING_COMMENTS, WMCC_UPDATING_MESSAGES, WMCC_UPDATING_BOARD, WMCC_SENDING_COINCOIN, WMCC_IDLE } wmcc_state_info;
-
-
   Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
 } Dock;
+
+typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, Q_COMMENTS_UPDATE, Q_MESSAGES_UPDATE, 
+	       Q_NEWSLST_UPDATE, Q_NEWSTXT_UPDATE } ccqueue_elt_type;
+typedef struct _ccqueue_elt {
+  ccqueue_elt_type what;
+  int  sid;
+
+  char *ua;
+  char *msg;
+  int  nid;
+  struct _ccqueue_elt *next;
+} ccqueue_elt;
 
 
 /* wmcoincoin.c */
@@ -510,6 +498,8 @@ void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
 void block_sigalrm(int bloque);
 int launch_wmccc();
+void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);
+void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 
 /* picohtml.c */
 void picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width);
@@ -527,7 +517,20 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
 void picohtml_destroy(Display *display, PicoHtml *ph);
 void picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix);
 
-
+/* cc_queue.c */
+void ccqueue_build();
+void ccqueue_push_prefs_update(int whatfile);
+void ccqueue_push_board_post(int sid, char *ua, char *msg);
+void ccqueue_push_board_update(int sid);
+void ccqueue_push_comments_update(int sid);
+void ccqueue_push_messages_update(int sid);
+void ccqueue_push_newslst_update(int sid);
+void ccqueue_push_newstxt_update(int sid, int nid);
+int ccqueue_state();
+const ccqueue_elt *ccqueue_doing_what();
+ccqueue_elt* ccqueue_find_next(ccqueue_elt_type what, int sid, ccqueue_elt *q);
+ccqueue_elt* ccqueue_find(ccqueue_elt_type what, int sid);
+void ccqueue_loop(Dock *dock);
 
 /* useragents_file.c */
 int useragents_file_reread(Dock *dock, Site*dlfp);
@@ -540,6 +543,7 @@ int site_newslues_find(Site *site, int lid);
 void site_news_restore_state(Site *site);
 void site_news_save_state(Site *site);
 void site_news_dl_and_update(Site* dlfp);
+int site_news_update_txt(Site *site, id_type id);
 Site* site_news_create();
 void site_news_destroy(Site *dlfp);
 News *site_news_find_id(Site *dlfp, id_type id);

@@ -44,12 +44,12 @@
 #  define LASTERR_EINTR (WSAGetLastError() == WSAEINTR)
 #  define LASTERR_EAGAIN (WSAGetLastError() == WSAEINPROGRESS)
 #  define SETERR_TIMEOUT WSASetLastError(WSAETIMEDOUT)
-#  define STR_LAST_ERROR strerror(WSAGetLastError())
+#  define STR_LAST_ERROR (flag_cancel_task ? "donwload canceled" : strerror(WSAGetLastError()))
 #  define LASTERR_ESUCCESS (WSAGetLastError() == 0) /* à tester ... */
 #else
 #  define LASTERR_EINTR (errno==EINTR)
 #  define SETERR_TIMEOUT errno=ETIMEDOUT
-#  define STR_LAST_ERROR strerror(errno)
+#  define STR_LAST_ERROR (flag_cancel_task ? "donwload canceled" : strerror(errno))
 #  define LASTERR_EAGAIN (errno==EAGAIN)
 #  define LASTERR_ESUCCESS (errno==0)
 #endif
@@ -100,7 +100,7 @@ int http_close(SOCKET fd);
    encore un fonction piquee dans curl
  */
 char *
-http_url_encode(char *string)
+http_url_encode(const char *string)
 {
    int alloc=strlen(string)+1;
    char *ns = malloc(alloc);
@@ -269,7 +269,7 @@ http_select_fd (int fd, int maxtime_sec, int maxtime_usec, int writep)
    and uses select() to timeout the stale connections (a connection is
    stale if more than OPT.TIMEOUT time is spent in select() or
    read()).  */
-int
+static int
 http_iread (SOCKET fd, char *buf, int len)
 {
   int res;
@@ -279,6 +279,7 @@ http_iread (SOCKET fd, char *buf, int len)
 
   do
     {
+      if (flag_cancel_task) goto error;
 #ifdef HAVE_SELECT
       if (Prefs.http_timeout)
 	{
@@ -292,6 +293,7 @@ http_iread (SOCKET fd, char *buf, int len)
 		SETERR_TIMEOUT;
 		printf(_("timeout (t=%d milliseconds)..\n"), (wmcc_tic_cnt - tic0)*WMCC_TIMER_DELAY_MS);
 	      }
+	      if (flag_cancel_task) goto error;
 	    }
 	  while (res == SOCKET_ERROR && LASTERR_EINTR);
 #ifndef __CYGWIN__
@@ -343,7 +345,7 @@ http_iread (SOCKET fd, char *buf, int len)
    all of BUF is actually written to FD, so callers needn't bother
    with checking that the return value equals to LEN.  Instead, you
    should simply check for -1.  */
-int
+static int
 http_iwrite (SOCKET fd, char *buf, int len)
 {
   int res = 0;
@@ -356,11 +358,13 @@ http_iwrite (SOCKET fd, char *buf, int len)
      innermost loop deals with the same during select().  */
   while (len > 0) {
     do {
+      if (flag_cancel_task) goto error;
 #ifdef HAVE_SELECT
       if (Prefs.http_timeout) {
 	do {
 	  res = http_select_fd (fd, Prefs.http_timeout, 0, 1);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
+	  if (flag_cancel_task) goto error;
 	} while (res == SOCKET_ERROR && LASTERR_EINTR);
 #ifndef __CYGWIN__
 	if (res <= 0) {
@@ -422,6 +426,7 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
 
   ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
 				  jour la led indiquant 'gethostbyname' */
+  if (flag_cancel_task) return -1;
   ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
   phost = GETHOSTBYNAME(hostname); /* rahhh comme c'est lent :-( */
   ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
@@ -430,7 +435,6 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
     memcpy(addr+1, phost->h_addr_list[0], addr[0]);
     return 0;
   } else {
-    addr[0] = 0;
     return -1;
   }
 }

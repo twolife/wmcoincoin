@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.14 2002/08/31 21:26:46 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.15 2002/09/05 23:11:56 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.15  2002/09/05 23:11:56  pouaite
+##   <blog>ce soir g mangé une omelette</blog>
+##
 ##   Revision 1.14  2002/08/31 21:26:46  pouaite
 ##   ajout du wmccc
 ##
@@ -52,7 +55,7 @@ EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 #salete d'autoconf j'y comprends rien
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
-wmcoincoin_SOURCES = \
+wmcoincoin_SOURCES = cc_queue.c \
         board_util.c board_util.h \
 	regexp.h regexp.c general.h \
 	myprintf.c myprintf.h \
