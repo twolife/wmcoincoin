@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.8 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.9 2002/03/03 11:58:55 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.9  2002/03/03 11:58:55  pouaite
+  bugfix du crash avec les posts autoreferants (gniiii)
+
   Revision 1.8  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -466,7 +469,7 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
 	     /* gestion des post multiples */
 	     tribune_msg_info *ref_mi2;
 	     ref_mi2 = ref_mi->next;
-	     while (ref_mi2->timestamp == ref_mi->timestamp) {
+	     while (ref_mi2 && ref_mi2->timestamp == ref_mi->timestamp) {
 	       mi->refs[mi->nb_refs].nbmi++;
 	       ref_mi2 = ref_mi2->next;
 	     }
@@ -616,7 +619,7 @@ tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klis
       tribune_msg_info *tmi;
       int id;
       int antibug = 0;
-
+      
       tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
       id = atoi(hk->key);
       
