@@ -225,8 +225,6 @@ scrollcoin_create(int vmin, int vmax, int pos, int x, int y, int h) {
   scrollcoin_setbounds(sc, vmin, vmax);
   scrollcoin_setpos(sc, pos);
 
-  scrollcoin_compute_bar_size(sc);
-  scrollcoin_compute_pixel_pos(sc, sc->pos);
   scrollcoin_update_pixmap(sc);
   return sc;
 }
@@ -249,7 +247,7 @@ scrollcoin_refresh(ScrollCoin *sc, Drawable d, int force_redraw)
 void
 scrollcoin_setpos(ScrollCoin *sc, int new_pos)
 {
-  if (!new_pos >= sc->vmin && new_pos <= sc->vmax) {
+  if (!(new_pos >= sc->vmin && new_pos <= sc->vmax)) {
     printf("setpos out of bounds: %d min=%d, mx=%d\n", new_pos, sc->vmin, sc->vmax);
   }
   new_pos = MIN(MAX(new_pos, sc->vmin),sc->vmax);
@@ -283,6 +281,7 @@ scrollcoin_setbounds(ScrollCoin *sc, int vmin, int vmax)
   sc->vmin = vmin; sc->vmax = vmax;
   if (sc->pos < vmin) scrollcoin_setpos(sc, vmin);
   if (sc->pos > vmax) scrollcoin_setpos(sc, vmax);
+  scrollcoin_compute_bar_size(sc);
   scrollcoin_compute_pixel_pos(sc, sc->pos);
   scrollcoin_update_pixmap(sc);
 }

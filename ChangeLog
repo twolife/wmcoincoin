@@ -1,5 +1,6 @@
 2002-02-27  pouaite  <c0in@altern.org>
 
+	* src/newswin.c ajout de la scrollcoin a la fenetre des news
 	* soirée gruik, correction d'un petit pb sur cygwin et
 	reconnaissance plus précise des tags html (mais porchou-style).. a
 	tester un peu

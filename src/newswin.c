@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.3 2002/02/28 01:12:33 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.3  2002/02/28 01:12:33  pouaite
+  scrollcoin dans la fenetre des news
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -10,7 +13,8 @@
 #include <X11/xpm.h>
 #include "coincoin.h"
 #include "picohtml.h"
-#include "../xpms/fleche.xpm"
+#include "scrollcoin.h"
+//#include "../xpms/fleche.xpm"
 
 /*
   ----------------------------------------------------------------------
@@ -32,6 +36,7 @@ typedef struct _PHView {
      (suppose un bon ordonnancement des htmlitems)
   */
   PicoHtmlItem *first, *last;
+  ScrollCoin *sc;
 } PHView;
 
 struct _Newswin {
@@ -60,8 +65,6 @@ struct _Newswin {
 
   int active_znum;
   Pixmap pix; /* un gros pixmap de la taille de la fenetre: c'est pas très classe */
-  Pixmap flechepix;
-  //RImage *rimage_bordure;
 };
 
 
@@ -141,54 +144,13 @@ phview_draw(Dock *dock, Drawable d, PHView *phv, unsigned long bg_pixel, int tit
     it = it->next;
   }
   XSetClipMask(dock->display, nw->gc, None);
-}
 
-#define FLECHE_BW 21
-#define FLECHE_BH 7
-#define FLECHE_BX1 nw->phv_titles.x
-#define FLECHE_BX2 nw->phv_news.x
-#define FLECHE_BY1 1
-#define FLECHE_BY2 nw->win_height - FLECHE_BH - 2
-
-/* press_num = numero du bouton presse, dans l'ordre:
-
-  0  2
-  1  3
-
-(-1) = pas de fleche pressee
-*/
-void
-newswin_redraw_fleches(Dock *dock, Drawable d, int press_num)
-{
-  Newswin *nw = dock->newswin;
-  int x0;
-  
-  XSetForeground(dock->display, nw->gc, nw->win_bgpixel);
-  if (nw->phv_titles.decal > 0) {
-    x0 = (press_num == 0) ?  FLECHE_BW : 0;
-    XCopyArea(dock->display, nw->flechepix, d, nw->gc, x0, 0, FLECHE_BW, FLECHE_BH, FLECHE_BX1, FLECHE_BY1);
-  } else {
-    XFillRectangle(dock->display, d, nw->gc, FLECHE_BX1, FLECHE_BY1, FLECHE_BW, FLECHE_BH);
-  }
-  if (nw->phv_titles.decal + nw->phv_titles.h < nw->phv_titles.ph_h) {
-    x0 = (press_num == 1) ?  FLECHE_BW : 0;
-    XCopyArea(dock->display, nw->flechepix, d, nw->gc, x0, FLECHE_BH, FLECHE_BW, FLECHE_BH, FLECHE_BX1, FLECHE_BY2);
-  } else {
-    XFillRectangle(dock->display, d, nw->gc, FLECHE_BX1, FLECHE_BY2, FLECHE_BW, FLECHE_BH);
-  }
-  if (nw->phv_news.decal > 0) {
-    x0 = (press_num == 2) ?  FLECHE_BW : 0;
-    XCopyArea(dock->display, nw->flechepix, d, nw->gc, x0, 0, FLECHE_BW, FLECHE_BH, FLECHE_BX2, FLECHE_BY1);
-  } else {
-    XFillRectangle(dock->display, d, nw->gc, FLECHE_BX2, FLECHE_BY1, FLECHE_BW, FLECHE_BH);
-  }
-  if (nw->phv_news.decal + nw->phv_news.h < nw->phv_news.ph_h) {
-    x0 = (press_num == 3) ?  FLECHE_BW : 0;
-    XCopyArea(dock->display, nw->flechepix, d, nw->gc, x0, FLECHE_BH, FLECHE_BW, FLECHE_BH, FLECHE_BX2, FLECHE_BY2);
-  } else {
-    XFillRectangle(dock->display, d, nw->gc, FLECHE_BX2, FLECHE_BY2, FLECHE_BW, FLECHE_BH);
+  if (phv->sc) {
+    scrollcoin_setpos(phv->sc, phv->decal);
+    scrollcoin_refresh(phv->sc, d, 1);
   }
 }
+
 
 void
 newswin_draw(Dock *dock)
@@ -197,7 +159,6 @@ newswin_draw(Dock *dock)
 
   phview_draw(dock, nw->pix, &nw->phv_titles, nw->titles_bgpixel, 1);
   phview_draw(dock, nw->pix, &nw->phv_news, nw->win_bgpixel,0);
-  newswin_redraw_fleches(dock, nw->pix, -1);
   XCopyArea(dock->display, nw->pix, nw->window, nw->gc, 0, 0, nw->win_width, nw->win_height, 0, 0);
 }
 
@@ -237,6 +198,19 @@ get_news_sorted(DLFP *dlfp, DLFP_news *previous)
   return best;
 }
 
+static void
+newswin_adjust_scrollcoin(Dock *dock UNUSED, PHView *phv)
+{
+  if (phv->sc) {
+    scrollcoin_setbounds(phv->sc, 0, MAX(10+phv->ph_h-phv->h,0));
+    scrollcoin_resize(phv->sc, phv->x+phv->w+6, phv->y, phv->h);
+  } else {
+    phv->sc = scrollcoin_create(0, MAX(10+phv->ph_h-phv->h,0), 0, 
+				phv->x+phv->w+6,
+				phv->y, phv->h);
+  }
+}
+
 
   /* met à jour les données du contenu (nouvelles news, ou bien changement de la news affichée) */
 void
@@ -273,6 +247,7 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
   picohtml_parse(dock, nw->phv_titles.ph, buff, nw->phv_titles.w);
   picohtml_gettxtextent(nw->phv_titles.ph, &bidon, &nw->phv_titles.ph_h);
 
+
   /* dectection des positions y des différents titres de news (c'est TRES porchou...) */
   if (nw->nb_ztitle > 0) {
     assert(nw->ztitle);
@@ -305,9 +280,12 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
   if (!picohtml_isempty(nw->phv_news.ph)) {
     picohtml_freetxt(nw->phv_news.ph);
   }
+
   if (reset_decal) {
     nw->phv_news.decal = 0;
   }
+
+  nw->phv_news.ph_h = 0;
   if (nw->news_id <= 0) {
     printf("pas de news...\n");
   } else {
@@ -319,6 +297,8 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
       picohtml_gettxtextent(nw->phv_news.ph, &bidon, &nw->phv_news.ph_h);
     }
   }
+  newswin_adjust_scrollcoin(dock, &nw->phv_titles);
+  newswin_adjust_scrollcoin(dock, &nw->phv_news);
 }
 
 static void
@@ -332,8 +312,8 @@ newswin_adjust_size(Dock *dock)
   nw->phv_titles.x = 10; nw->phv_titles.w = 170;
   nw->phv_titles.y = 11; nw->phv_titles.h = nw->win_height - 12 - nw->phv_titles.y;
 
-  nw->phv_news.x = nw->phv_titles.x + nw->phv_titles.w + 10;
-  nw->phv_news.w = nw->win_width - nw->phv_news.x - 10;
+  nw->phv_news.x = nw->phv_titles.x + nw->phv_titles.w + 20;
+  nw->phv_news.w = nw->win_width - nw->phv_news.x - 20;
   nw->phv_news.y = 9;
   nw->phv_news.h = nw->win_height - nw->phv_news.y - 10;
   
@@ -345,6 +325,9 @@ newswin_adjust_size(Dock *dock)
   assert(nw->pix != None);
   XSetForeground(dock->display, nw->gc, nw->win_bgpixel);
   XFillRectangle(dock->display, nw->pix, nw->gc, 0, 0, nw->win_width, nw->win_height);
+
+  newswin_adjust_scrollcoin(dock, &nw->phv_titles);
+  newswin_adjust_scrollcoin(dock, &nw->phv_news);
 }
 
 static void
@@ -360,49 +343,9 @@ newswin_createXWindow(Dock *dock)
   char s[512];
   int xpos, ypos;
 
-  //  int iconx, icony;  /* position de wmcoincoin */
-
-
-
-  /* dimensions de la fenetre cree */
-  //  picohtml_gettxtextent(nw->ph, &nw->win_width, &nw->win_height);
-
-  //  printf("%d h=%d\n",nw->win_width, nw->win_height);
-
-  //  nw->win_width += NEWSWIN_HTML_X*2;
-  //  nw->win_height += NEWSWIN_HTML_Y +20;
-
-  //  nw->win_height = MIN(nw->win_height, HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum)));
-
   assert(nw->win_width>0 && nw->win_height>0);
   BLAHBLAH(2, printf("newswin_createXWindow: creation d'une fenetre de dimensions %d %d\n",  
 		     nw->win_width, nw->win_height));
-
-  /* maintenant on laisse le windowmanager positionner la fenetre */
-  /*
-  dock_get_icon_pos(dock, &iconx, &icony);
-
-
-  nw->win_xpos = iconx - 128;
-  nw->win_ypos = icony - nw->win_height;
-
-  //  printf("winpos: %d %d, w=%d, h=%d\n", iconx, icony,nw->win_width,nw->win_height);
-
-  if (iconx+64 > WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum)) - nw->win_width) {
-    nw->win_xpos = iconx - nw->win_width;
-  } else {
-    nw->win_xpos = iconx + 64;
-  }
-  nw->win_ypos = icony;
-  if (nw->win_ypos + nw->win_height > HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum))) {
-    nw->win_ypos = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum)) - nw->win_height;
-  }
-
-  nw->win_xpos = MAX(nw->win_xpos, 0); // situations pathologiques
-  nw->win_width = MIN(nw->win_width, WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum)));
-  nw->win_ypos = MAX(nw->win_ypos, 0);
-  nw->win_height = MIN(nw->win_height, HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum)));
-  */
 
   if (nw->win_xpos == -10000 && nw->win_ypos == -10000) {
     xpos = 0; ypos = 0; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
@@ -457,10 +400,7 @@ newswin_createXWindow(Dock *dock)
   XSetBackground(dock->display, nw->gc, nw->win_bgpixel);
   XSetLineAttributes(dock->display, nw->gc, 1, LineSolid, CapButt, JoinBevel);
   XSetFillStyle(dock->display, nw->gc, FillSolid);
-  //  XSetFont(dock->display, nw->gc, picohtml_get_fn_base(nw->ph)->fid);
-  
 
-  //  newswin_draw(dock, nw);
   XMapRaised(dock->display, nw->window);
 }
 
@@ -494,8 +434,14 @@ newswin_unmap(Dock *dock)
 
   if (!picohtml_isempty(nw->phv_titles.ph)) 
     picohtml_freetxt(nw->phv_titles.ph);
+  if (nw->phv_titles.sc) {
+    scrollcoin_destroy(nw->phv_titles.sc); nw->phv_titles.sc = NULL;
+  }
   if (!picohtml_isempty(nw->phv_news.ph))
     picohtml_freetxt(nw->phv_news.ph);
+  if (nw->phv_news.sc) {
+    scrollcoin_destroy(nw->phv_news.sc); nw->phv_news.sc = NULL;
+  }
   if (nw->nb_ztitle > 0) {
     assert(nw->ztitle);
     free(nw->ztitle); nw->ztitle = NULL; nw->nb_ztitle = 0;
@@ -622,24 +568,29 @@ void
 newswin_handle_button_press(Dock *dock, XButtonEvent *event)
 {
   Newswin *nw = dock->newswin;
-  int mx,my;
-  mx = event->x; my = event->y;
-  if (IS_INSIDE(mx,my, FLECHE_BX1, FLECHE_BY1, 
-		FLECHE_BX1+FLECHE_BW-1, FLECHE_BY1+FLECHE_BH-1)) {
-    newswin_redraw_fleches(dock, nw->window, 0);
+  if (nw->phv_titles.sc && 
+      scrollcoin_handle_button_press(nw->phv_titles.sc, event, nw->pix)) {
+  } else if (nw->phv_news.sc && 
+	     scrollcoin_handle_button_press(nw->phv_news.sc, event, nw->pix)) {
   }
-  if (IS_INSIDE(mx,my, FLECHE_BX1, FLECHE_BY2, 
-		FLECHE_BX1+FLECHE_BW-1, FLECHE_BY2+FLECHE_BH-1)) {
-    newswin_redraw_fleches(dock, nw->window, 1);
+}
+
+void
+newswin_testscroll(Dock *dock)
+{
+  Newswin *nw = dock->newswin;
+  int pos, redraw = 0;
+  if (nw->phv_titles.sc && scrollcoin_read_requested_pos(nw->phv_titles.sc, &pos)) {
+    if (nw->phv_titles.decal != pos) {
+      nw->phv_titles.decal = pos; redraw = 1;
+    }
   }
-  if (IS_INSIDE(mx,my, FLECHE_BX2, FLECHE_BY1, 
-		FLECHE_BX2+FLECHE_BW-1, FLECHE_BY1+FLECHE_BH-1)) {
-    newswin_redraw_fleches(dock, nw->window, 2);
+  if (nw->phv_news.sc && scrollcoin_read_requested_pos(nw->phv_news.sc, &pos)) {
+    if (nw->phv_news.decal != pos) {
+      nw->phv_news.decal = pos; redraw = 1;
+    }
   }
-  if (IS_INSIDE(mx,my, FLECHE_BX2, FLECHE_BY2, 
-		FLECHE_BX2+FLECHE_BW-1, FLECHE_BY2+FLECHE_BH-1)) {
-    newswin_redraw_fleches(dock, nw->window, 3);
-  }
+  if (redraw) newswin_draw(dock);
 }
 
 static void
@@ -678,7 +629,11 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
   if (in_news) phv = &nw->phv_news;
   else if (in_titles) phv = &nw->phv_titles;
 
-  if (event->button == Button4 && phv) {
+  if (nw->phv_titles.sc && 
+      scrollcoin_handle_button_release(nw->phv_titles.sc, event, nw->pix)) {
+  } else if (nw->phv_news.sc && 
+	     scrollcoin_handle_button_release(nw->phv_news.sc, event, nw->pix)) {
+  } else if (event->button == Button4 && phv) {
     newswin_scrollup(dock, phv, 20);
   } else if (event->button == Button5 && phv) {
     newswin_scrolldown(dock, phv, 20);
@@ -707,7 +662,7 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
       }
     }
   }
-
+  /*
   if (event->button == Button1 || event->button == Button3) {
     int q;
     q = event->button == Button1 ? 10 : (nw->win_height / 2);
@@ -727,7 +682,9 @@ newswin_handle_button_release(Dock *dock, DLFP *dlfp, XButtonEvent *event) {
 		  FLECHE_BX2+FLECHE_BW-1, FLECHE_BY2+FLECHE_BH-1)) {
       newswin_scrolldown(dock, &nw->phv_news, q);
     }
-  }
+    }*/
+
+  newswin_testscroll(dock);
 }
 
 void
@@ -750,6 +707,12 @@ newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
     case MotionNotify:
       {
 	newswin_update_info(dock, dlfp, event->xmotion.x, event->xmotion.y);
+	if (nw->phv_titles.sc &&
+	    scrollcoin_handle_motion(nw->phv_titles.sc, &event->xmotion, nw->pix)) {
+	} else if (nw->phv_news.sc && 
+		   scrollcoin_handle_motion(nw->phv_news.sc, &event->xmotion, nw->pix)) {
+	}
+	newswin_testscroll(dock);
       } break;
     case EnterNotify:
     case LeaveNotify:
@@ -811,8 +774,12 @@ newswin_build(Dock *dock)
   nw->phv_news.ph = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 1);
   picohtml_set_default_pixel_color(nw->phv_news.ph, nw->win_fgpixel);
 
+  nw->phv_news.sc = NULL;
+
   nw->phv_titles.ph = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 1);
   picohtml_set_default_pixel_color(nw->phv_titles.ph, nw->titles_fgpixel);
+
+  nw->phv_titles.sc = NULL;
 
   nw->ph_survol = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 0);
   picohtml_set_parag_indent(nw->ph_survol, 0);
@@ -829,21 +796,9 @@ newswin_build(Dock *dock)
   nw->active_znum = -1;
   nw->pix = None;
   nw->news_id = -1;
-  {
-    char s_xpm_bgcolor[30];
-    /* on remplace la ligne de la couleur transparente par notre couleur de fond,
-     c une ruse de sioux */
-    snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.news_bgcolor);
-
-    fleche_xpm[1] = s_xpm_bgcolor;
-
-    assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
-				   fleche_xpm, &nw->flechepix, NULL, NULL) == XpmSuccess);
-  }
 
 
   dock->newswin = nw;
-
 }
 
 int
