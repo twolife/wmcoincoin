@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.18 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.19 2002/03/27 23:27:10 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.19  2002/03/27 23:27:10  pouaite
+  tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
+
   Revision 1.18  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -1332,7 +1335,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
   }
 
   if (fd != INVALID_SOCKET) {
-    char *s, *p;
+    char *s, *p, *end;
     int msgcnt;
     int err;
 
@@ -1359,6 +1362,13 @@ dlfp_msg_update_messages(DLFP *dlfp)
     do {
       const char *sign = "messages/view.php3?id=";
       p = strstr(p+1, sign); /* p+1 pour pas tourner en rond comme un çon ..*/
+      if (end == NULL) { /* pour éviter de clignoter lorsqu'on vient d'envoyer un message
+			    on tronque à la fin de la premiere table, ce qui évite de lire
+			    la liste des messages que l'on a envoyé, et donc qu'ils soient
+			    signalés comme de nouveau messages */
+	end = strstr(p, "</table");
+	if (end) *end = 0;
+      }
       if (p) {
 	int mid;
 

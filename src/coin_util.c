@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.17 2002/03/27 21:22:29 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.18 2002/03/27 23:27:10 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.18  2002/03/27 23:27:10  pouaite
+  tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
+
   Revision 1.17  2002/03/27 21:22:29  pouaite
   microbugfix
 
@@ -469,7 +472,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
     } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-2) { // cas particulier pour l'odieux EURO (encodage windows) 
       dest[id++] = '¤';
       is++;
-    } else if (src[is] == '<' || src[is] == '>') {
+    } else if ((src[is] == '<' || src[is] == '>') && special_encode_ltgt) {
       if (id < dest_sz) dest[id++] = '\t';
       if (id < dest_sz) dest[id++] = src[is];
       is++;

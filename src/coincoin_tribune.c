@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.25 2002/03/27 19:02:04 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.26 2002/03/27 23:27:10 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.26  2002/03/27 23:27:10  pouaite
+  tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
+
   Revision 1.25  2002/03/27 19:02:04  pouaite
   bugfix pour le nouveau format du backend
 
@@ -113,7 +116,7 @@ char tribune_last_modified[512] = "";
 /* utilise tres localement, c'est la longueur DANS remote.rdf, la longueur réelle sera moindre
    (remplacement de &eacute par 'é' etc... ) */
 #define TRIBUNE_UA_MAX_LEN 1000
-#define TRIBUNE_MSG_MAX_LEN 6000
+#define TRIBUNE_MSG_MAX_LEN 15000 /* on peut y arriver avec un bon gros message plein de [][][][]... */
 #define TRIBUNE_LOGIN_MAX_LEN 60
 
 
@@ -413,7 +416,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   it->nb_refs = 0;
   it->refs = NULL; /* ça sera traité un peu plus tard */
 
-  BLAHBLAH(3, printf("log msg id=%d, login=%s timestamp=%u msg='%s'\n", id, it->login, (unsigned)it->timestamp, it->msg));
+  BLAHBLAH(3, myprintf("log msg id=%d, login=%s timestamp=%u msg='%<YEL %s>'\n", id, it->login, (unsigned)it->timestamp, it->msg));
 
   /* et on n'oublie pas..*/
   trib->nbsec_since_last_msg = 0;
@@ -593,7 +596,7 @@ void
 dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 {
   time_t now;
-  char s[8192];
+  char s[16384];
   SOCKET fd;
   char *errmsg;
   int old_last_post_id;
@@ -620,19 +623,19 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
   flag_updating_tribune--;
 
-  snprintf(s, 8192, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
+  snprintf(s, 16384, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   if ((Prefs.debug & 2) == 0) {
     fd = http_get(Prefs.site_root, Prefs.site_port, s, 
 		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified, 512);
   } else {
-    snprintf(s, 8192, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
+    snprintf(s, 16384, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);
     fd = open(s, O_RDONLY);
   }
 
   if (fd != INVALID_SOCKET) {
     int roll_back_cnt = 0;
-    while (http_get_line(s, 8192, fd) > 0) {
+    while (http_get_line(s, 16384, fd) > 0) {
       if (strncasecmp(s,tribune_sign_posttime, strlen(tribune_sign_info)) == 0) {
 	char stimestamp[15];
 	char ua[TRIBUNE_UA_MAX_LEN];
@@ -684,7 +687,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	  }
 	}
 
-	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(info)"; goto err; }
+	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(info)"; goto err; }
 
 	if (strncasecmp(s, tribune_sign_info,strlen(tribune_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
@@ -693,16 +696,17 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
         convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN, 1, 0);
 
-	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(message)"; goto err; }
+	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(message)"; goto err; }
 	if (strncasecmp(s, tribune_sign_msg,strlen(tribune_sign_msg))) { errmsg="messagesign"; goto err; }
 	
+	//	myprintf("message: '%<YEL %s>'\n\n", s); 
 
 	// il arrive que le post tienne sur plusieurs lignes (je sais pas pourquoi) 
 	{
 	  int l;
 	  l = strlen(s);
 	  while (strncasecmp("</message>", s+l-10,10)) {
-	    if (http_get_line(s+l, 8192 - l, fd) <= 0) {
+	    if (http_get_line(s+l, 16384 - l, fd) <= 0) {
 	      errmsg="</message>"; goto err; 
 	    }
 	    l = strlen(s);
@@ -727,7 +731,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
 	convert_to_ascii(msg, p, TRIBUNE_MSG_MAX_LEN, 1, 1);
 
-	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(login)"; goto err; }
+	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, tribune_sign_login,strlen(tribune_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 
