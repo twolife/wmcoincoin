@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.30 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.31 2003/01/11 23:28:13 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.31  2003/01/11 23:28:13  pouaite
+  meilleur calcul de la qualitai
+
   Revision 1.30  2003/01/11 17:44:10  pouaite
   ajout de stats/coinping sur les sites
 
@@ -1013,6 +1016,18 @@ dock_show_tribune_frequentation(Dock *dock)
   msgbox_show(dock, "desactive");
 }
 
+float myexp(float x) {
+  float s = 1, c = 1;
+  int i;
+  assert(x <= 0);
+  for (i = 1; (c > 1e-10 || c < -1e-10) && i < 100; i++) {
+    c *= x/i;
+    s += c; 
+  }
+  printf("myexp(%f)=%f\n",x,s);
+  return MIN(MAX(s,0.),1.);  
+}
+
 void
 show_http_stats(Dock *dock) {
   char *err_msg;
@@ -1024,14 +1039,16 @@ show_http_stats(Dock *dock) {
     int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
     if (site->http_success_cnt) {
       q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
+      q = q * q * (site->http_ping_stat<=0. ? 0. :
+		   myexp(-MAX(site->http_ping_stat/3,0.02))/myexp(-0.02));
     }
     if (total) {
-      err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s :<tab7><b>%1.2f</b><tab2> %d<tab2> %d<tab2> %d<tab2> %4.0fms.",
+      err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s :<tab7><b>%.1f</b><tab3> %d<tab3> %d<tab3> %d<tab3> %4.0fms.",
 			       q < .2 ? "<b>" : "",
 			       q > .5 ? "#000080" : "#e00000",
 			       site->prefs->site_name, 
 			       q < .2 ? "</b>" : "",
-			       q, site->http_error_cnt,
+			       q*10, site->http_error_cnt,
 			       site->http_recent_error_cnt, 
 			       site->http_success_cnt,
 			       site->http_ping_stat*1000);
