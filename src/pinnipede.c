@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.33 2002/03/09 19:45:52 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.34 2002/03/10 16:07:10 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.34  2002/03/10 16:07:10  pouaite
+  pseudo transp basique dans le pinnipede (en cours..)
+
   Revision 1.33  2002/03/09 19:45:52  pouaite
   microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
 
@@ -115,20 +118,6 @@
 #define PWATTR_TROLLSCORE 2048
 #define PWATTR_LOGIN 4096
 
-/*
-#define MINIB_BW 20
-#define MINIB_BH 12
-#define MINIB_W (NB_MINIB*(MINIB_BW+1))
-#define MINIB_X0 (pp->win_width - MINIB_W)
-#define MINIB_X1 (MINIB_X0 + MINIB_W - 1)
-#define MINIB_Y1 (MINIB_Y0 + MINIB_H - 1)
-
-#define MINIB_BX(i) (pp->win_width+1 - (MINIB_BW+1)*(i+1))
-#define MINIB_BY(i) (MINIB_Y0+1)
-
-#define NB_MINIB 11*/
-
-
 typedef struct _PostVisual PostVisual;
 typedef struct _PostWord PostWord;
 
@@ -182,11 +171,11 @@ typedef struct _PinnipedeLignesSel {
 } PinnipedeLignesSel;
 
 typedef struct _PPMinib {
-#define NB_MINIB 10
+#define NB_MINIB 11
 #define MINIB_H 10
 #define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, REFRESH_TRIBUNE, REFRESH_NEWS, UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY } type;
+  enum { HELP, SCROLLBAR, REFRESH_TRIBUNE, REFRESH_NEWS, UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY, TRANSPARENT } type;
   int x, y;
   int w, h;
   int clicked;
@@ -252,6 +241,8 @@ struct _Pinnipede {
 
   struct _PinnipedeFilter filter;
 
+  Pixmap bg_pixmap;
+  int use_bg_pixmap;
   //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
 
@@ -1195,6 +1186,7 @@ pp_minib_initialize(Pinnipede *pp)
   i = 0;
   pp->mb[i].type = HELP;            pp->mb[i].w = SC_W-1; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = TRANSPARENT;     pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = UA;              pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = TSCORE;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
@@ -1203,6 +1195,7 @@ pp_minib_initialize(Pinnipede *pp)
   pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = REFRESH_NEWS;    pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = REFRESH_TRIBUNE; pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+
   assert(i == NB_MINIB);
 
   for (i=0; i < NB_MINIB; i++) {
@@ -1333,6 +1326,14 @@ pp_minib_refresh(Dock *dock)
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, 8);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, 7);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, 7);
+      } break;
+    case TRANSPARENT:
+      {
+	int j;
+	for (j=0; j < 8; j++) {
+	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(j*20,0,0));
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-4, 3, xc+j-4, 7);
+	}
       } break;
     case REFRESH_TRIBUNE:
       {
@@ -1536,6 +1537,18 @@ pp_minib_hide(Dock *dock)
 }
 
 
+static void
+pp_clear_win_area(Dock *dock, int x, int y, int w, int h)
+{
+  Pinnipede *pp = dock->pinnipede;
+  if (pp->use_bg_pixmap == 0 && w > 0 && h > 0) {
+    XClearArea(dock->display, pp->win, x, y, w, h, False);
+  } else {
+    XCopyArea(dock->display, pp->bg_pixmap, pp->win, dock->NormalGC, x, y, 
+	      w, h, x, y);
+  }
+}
+
 /* redessine la fortune */
 void
 pp_refresh_fortune(Dock *dock, Drawable d)
@@ -1563,14 +1576,14 @@ pp_refresh_fortune(Dock *dock, Drawable d)
   } else {
   /* nettoyage ligne du haut */
     assert(LINEY0(0)>0);
-    XClearArea(dock->display, pp->win, 0, 0, pp->win_width, LINEY0(0), False);
+    pp_clear_win_area(dock, 0, 0, pp->win_width, LINEY0(0));
   }
 }
 
 /* dessine une ligne */
 PostWord *
 pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, 
-	     unsigned long bgpixel, PinnipedeLignesSel *sel_info)
+	     unsigned long bgpixel, PinnipedeLignesSel *sel_info, int use_bg_pixmap, int dest_y)
 {
   Pinnipede *pp = dock->pinnipede;
   int pl;
@@ -1579,9 +1592,12 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   int y;
 
   XSetForeground(dock->display, dock->NormalGC, bgpixel);
-  XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
-
-
+  if (use_bg_pixmap == 0) {
+    XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
+  } else {
+    assert(pp->bg_pixmap != None);
+    XCopyArea(dock->display, pp->bg_pixmap, pp->lpix, dock->NormalGC, 0, dest_y, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, 0);
+  }
 
   if (sel_info) {
     if (sel_info->x0 < sel_info->x1) {
@@ -1794,11 +1810,12 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     int y,h;
     y = LINEY0(pp->nb_lignes);
     h = (pp->win_height - y) - (pp->use_minibar ? (MINIB_H) : 0);
-    if (h>0)
-      XClearArea(dock->display, pp->win, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h, False);
+    if (h>0) {
+      pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
+    }
   }
   if (LINEY0(0) > pp->fortune_h) {
-    XClearArea(dock->display, pp->win, 0, pp->fortune_h, pp->win_width, LINEY0(0)-pp->fortune_h, False);
+    pp_clear_win_area(dock, 0, pp->fortune_h, pp->win_width, LINEY0(0)-pp->fortune_h);
   }
 
   caller_mi = NULL;
@@ -1884,7 +1901,8 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
       }
     }
 
-    pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL);
+    pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
+		 pp->use_bg_pixmap && bgpixel == pp->win_bgpixel, LINEY0(l));
 
     XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
   }
@@ -1906,7 +1924,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
       if (pv) {
 	PostWord *pw = pv->first;
 	while (pw) {
-	  pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL); //WhitePixel(dock->display, dock->screennum));
+	  pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); //WhitePixel(dock->display, dock->screennum));
 	  XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
 	  y += pp->fn_h;
 	}
@@ -2111,6 +2129,8 @@ pp_build(Dock *dock)
   picohtml_set_parag_skip(pp->ph_fortune, 1.0);
   picohtml_set_line_skip(pp->ph_fortune, 1.0);
 
+  pp->bg_pixmap = None;
+  pp->use_bg_pixmap = 0;
 
   pp->pv = NULL;
   pp->survol_hash = 0;
@@ -2142,6 +2162,81 @@ pp_destroy(Dock *dock)
 }
 #endif 
 
+static void
+pp_update_bg_pixmap(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  assert(pp->win != None);
+
+  if (pp->bg_pixmap != None) {
+    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
+  }
+  if (pp->use_bg_pixmap) {
+    //    XSetWindowAttributes wa;
+    pp->bg_pixmap = XCreatePixmap(dock->display, pp->win, 
+				  pp->win_width, pp->win_height,
+				  DefaultDepth(dock->display,dock->screennum));
+    assert(pp->bg_pixmap != None);
+    /*
+    wa.override_redirect = True;
+    XChangeWindowAttributes (dock->display, pp->win,
+			     CWOverrideRedirect, &wa);
+    */
+    XSetWindowBackgroundPixmap(dock->display, pp->win, ParentRelative);
+    XClearWindow(dock->display, pp->win);
+
+    /*
+    XCopyArea(dock->display, dock->rootwin, pp->bg_pixmap, dock->NormalGC, 
+	      pp->win_xpos, pp->win_ypos, 
+	      pp->win_width, pp->win_height, 0, 0);
+    */
+    XFlush(dock->display);
+    XCopyArea(dock->display, pp->win, pp->bg_pixmap, dock->NormalGC, 
+	      0, 0, pp->win_width, pp->win_height, 0, 0);
+
+    printf("coucou!\n");
+    /*
+    XCopyArea(dock->display, dock->rootwin, pp->win, dock->NormalGC, 
+	      pp->win_xpos, pp->win_ypos, pp->win_width, pp->win_height, 0, 0);
+    */
+    XLowerWindow(dock->display, pp->win);
+
+    //    XSetWindowBackgroundPixmap(dock->display, pp->win, None);
+    /*
+    wa.override_redirect = False;
+    XChangeWindowAttributes (dock->display, pp->win,
+			     CWOverrideRedirect, &wa);
+    */
+   
+    if (1) {
+      int i,j;
+      XImage *ximg;
+      ximg = XGetImage(dock->display, pp->bg_pixmap, 0, 0, pp->win_width, pp->win_height, 
+		       AllPlanes, ZPixmap);
+      for (i=0; i < pp->win_width; i++) {
+	for (j=0; j < pp->win_height; j++) {
+	  unsigned long pixel;
+	  unsigned char r, g, b;
+
+#define TRANSFO(x,m,d) ((d) > 0 ? (((x)&(m))>>(unsigned)(d)) : (((x)&(m))<<(unsigned)(-(d))))
+
+	  pixel = XGetPixel(ximg, i, j);
+	  
+	  r = TRANSFO(pixel, dock->rgba_context->visual->red_mask,   dock->rgba_context->rdecal);
+	  g = TRANSFO(pixel, dock->rgba_context->visual->green_mask, dock->rgba_context->gdecal);
+	  b = TRANSFO(pixel, dock->rgba_context->visual->blue_mask,  dock->rgba_context->bdecal);
+	  r = MIN((r*2)/3 + 40,255);
+	  g = MIN((g*2)/3 + 80,255);
+	  b = MIN((b*2)/3 + 40,255);
+	  XPutPixel(ximg, i, j, RGB2PIXEL(r,g,b));
+	}
+      }
+      XPutImage(dock->display, pp->bg_pixmap, dock->NormalGC, ximg, 0, 0, 0, 0, pp->win_width, pp->win_height);
+      XDestroyImage(ximg);
+    }
+  }
+}
+
 /*
   un petit mot: j'ai enfin compris comment faire apparaitre cette fenetre
    ou je veux: il suffit de donner la position dans xcreatewindow
@@ -2156,7 +2251,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
   int xpos, ypos;
 
   if (pp->win_xpos == -10000 && pp->win_ypos == -10000) {
-    xpos = 0; ypos = 0; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
+    xpos = 700; ypos = 500; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
   } else {
     xpos = pp->win_xpos;
     ypos = pp->win_ypos;
@@ -2176,8 +2271,16 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     //    ResizeRedirectMask |
     
     LeaveWindowMask;
-  wa.override_redirect = False ;
-  //wa.override_redirect = True ;
+
+  /* ça sera a changer .. pour l'instant ça ira */
+  if (pp->use_bg_pixmap) {
+    wa.override_redirect = True ;
+  } else {
+    wa.override_redirect = False ;
+  }
+  
+  //wa.background_pixmap = ParentRelative;
+  //wa.override_redirect = False ;
   XChangeWindowAttributes (dock->display, pp->win,
 			   //CWBackPixmap | 
 			   CWEventMask | CWOverrideRedirect, &wa);
@@ -2238,6 +2341,8 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     }*/
 
   XMapRaised(dock->display, pp->win);
+
+  pp_update_bg_pixmap(dock);
 
   assert(pp->sc == NULL);
 
@@ -2452,6 +2557,9 @@ pp_unmap(Dock *dock)
   //  pp_minib_hide(dock);
   XDestroyWindow(dock->display, pp->win);
   XFreePixmap(dock->display, pp->lpix);
+  if (pp->bg_pixmap != None) {
+    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
+  }
   pp->win = None;
   pp->mapped = 0;
 
@@ -2727,6 +2835,12 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, trib, pp->win, NULL);
+      } break;
+    case TRANSPARENT:
+      {
+	pp_unmap(dock);
+	pp->use_bg_pixmap = 1-pp->use_bg_pixmap;
+	pp_show(dock, trib);
       } break;
     default:
       assert(0); 
@@ -3433,7 +3547,7 @@ pp_selection_refresh(Dock *dock)
 
     if (pp->lignes_sel[l].trashed) {
     
-      pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l]);
+      pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l], pp->use_bg_pixmap, LINEY0(l));
       XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
     }
   }
@@ -3639,6 +3753,8 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	/* eh oui, faut pas oublier ça.... */
 	XFreePixmap(dock->display, pp->lpix);
 	pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
+
+	pp_update_bg_pixmap(dock);
 	
 	pp_minib_initialize(pp);
 	pp_pv_destroy(pp);

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.3 2002/03/10 16:07:10 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.3  2002/03/10 16:07:10  pouaite
+  pseudo transp basique dans le pinnipede (en cours..)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -31,6 +34,9 @@ typedef struct RGBAContext {
   unsigned long white;
 
   unsigned long rtable[256], gtable[256], btable[256];
+
+  /* decalage à appliquer sur un pixel (apres l'avoir masque avec visual->red_mask etc) pour se retrouver avec une valeur entre 0 et 255 */
+  int rdecal, gdecal, bdecal;
 } RGBAContext;
 
 

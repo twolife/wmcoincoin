@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.3 2002/03/10 16:07:10 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.3  2002/03/10 16:07:10  pouaite
+  pseudo transp basique dans le pinnipede (en cours..)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -90,6 +93,33 @@ RGBACreateContext(Display *dpy, int screen_number)
     context->gtable[i] = foobarize(i, context->visual->green_mask);
     context->btable[i] = foobarize(i, context->visual->blue_mask);
     //    printf("i=%02x: %lx %lx %lx\n", i, context->rtable[i], context->gtable[i], context->btable[i]);
+  }
+
+  {
+    unsigned long mask;
+    int nbits;
+
+    context->rdecal = context->gdecal = context->bdecal = 0;
+    mask = context->visual->red_mask; nbits = 0;
+    while ((mask & 1) == 0) { context->rdecal++; mask >>= 1; }
+    while ((mask & 1) == 1) { nbits++; mask >>= 1; }
+    printf("rmask=%08lx, decal=%d, nbits=%d\n", 
+	   context->visual->red_mask, context->rdecal, nbits);
+    context->rdecal += (nbits-8);
+
+    mask = context->visual->green_mask; nbits = 0;
+    while ((mask & 1) == 0) { context->gdecal++; mask >>= 1; }
+    while ((mask & 1) == 1) { nbits++; mask >>= 1; }
+    printf("gmask=%08lx, decal=%d, nbits=%d\n", 
+	   context->visual->green_mask, context->gdecal, nbits);
+    context->gdecal += (nbits-8);
+
+    mask = context->visual->blue_mask; nbits = 0;
+    while ((mask & 1) == 0) { context->bdecal++; mask >>= 1; }
+    while ((mask & 1) == 1) { nbits++; mask >>= 1; }
+    printf("bmask=%08lx, decal=%d, nbits=%d\n", 
+	   context->visual->blue_mask, context->bdecal, nbits);
+    context->bdecal += (nbits-8);
   }
   return context;
 }

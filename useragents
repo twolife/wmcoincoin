@@ -1,4 +1,4 @@
-#useragents rcsid=$Id: useragents,v 1.2 2001/12/16 20:28:45 pouaite Exp $ 
+#useragents rcsid=$Id: useragents,v 1.3 2002/03/10 16:07:10 pouaite Exp $ 
 #syntaxe: forme[tab]couleur_hexa[tab]regexp[tab]nom[fin_de_ligne]
 #Utilisez bien des TABULATIONS pour separer les champs
 #les formes disponibles:
@@ -10,11 +10,11 @@
 # NOUVEAU: si le nom est '?', alors wmcoincoin déterminera le nom par rapport au useragent
 # en utilisant les premiers caractères du useragent
 #
-carre		ff6080		Mozilla/5.0 \(X11; U; Linux 2.2.19 i686; en-US; m18\) Gecko/20	F.Penso?
-carre		00d0a0		.*Galeon.*		Galeon
 carre		ffff00		wmCoinCoin/2.0 .*	NOOOON!
-carre		ffff00		wmCoinCoin/2.[01].*	vieuxcoin
+carre		ffff00		wmCoinCoin/2.[012].*	vieuxcoin
 carre		40ff20		.*wm[cC]oin[cC]oin.*	wmc²
+carre		ffd020		.*py[cC]oin[cC]oin.*	pyc²
+carre		404fff		.*[Vv]i[Mm]oule.*	vimoule
 carre		0000ff		.*[jJ][cC]oin[cC]oin.*	jc²
 carre		a0a000		.*[Tt]roll[Bb]rowser.*	TBrowser
 carre		ffff00		.*[Tt]ribune[Cc]lient.*	TClient
@@ -23,6 +23,7 @@ croix		4040ff		.*[Kk]ad.*		Kadreg
 croix		00ffff		jr-lamoule		JR
 carre		ff00ff		.*OmniWeb.*		MACOS X
 trianglegauche	ffff00		.*Nautilus.*		Nautilus
+carre		00d0a0		.*Galeon.*		Galeon
 carre		ff0000		.*MSIE 6.0; Windows NT 5.1.*	IE6/WinXP
 losange		f07010		Mozilla/5.0.*Linux.*	Moz-Linux
 carre		ff0000		.*Linux.*smp		LinuxSMP
@@ -34,6 +35,7 @@ carre		ffb040		.*Linux 2.2.16-22.*	RedHat7 ?
 carre		ff6000		.*Linux.2.0.*		Linux 2.0
 carre		ffd000		.*Linux.2.2.*		Linux 2.2
 carre		ffa000		.*Linux.2.4.*		Linux 2.4
+carre		ff20ff		.*Linux.2.5.*		Linux 2.5
 triangle	40ff40		.*Konqueror.*		Konqueror
 losange		c0c080		.*PPC.*			PPC
 losange		c0c080		.*ppc.*			ppc
