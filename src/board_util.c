@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.11 2002/11/11 15:26:38 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.12 2003/02/17 19:16:58 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.12  2003/02/17 19:16:58  pouaite
+  fix urls relatives pour la tribune
+
   Revision 1.11  2002/11/11 15:26:38  pouaite
   fix soulignement et strike avec les span
 
@@ -614,7 +617,8 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
       const unsigned char *s1 = "\t<a href=\"http://";
       const unsigned char *s2 = "\t<a href=\"ftp://";
       const unsigned char *s3 = "\t<a href=\"https://";
-      const unsigned char *s4 = "\t<a href=\"..";
+      const unsigned char *s4 = "\t<a href=\"../";
+      const unsigned char *s5 = "\t<a href=\"./";
       /* puis les <a href> (c'est un peu particulier */
 
       /* c'est un peu facho, d'autant que c'est reverifié au niveau de open_url, mais
@@ -624,6 +628,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
       if (strncasecmp(start, s2, strlen(s2)) == 0) is_href = 1; 
       if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
       if (strncasecmp(start, s4, strlen(s4)) == 0) is_href = 1; 
+      if (strncasecmp(start, s5, strlen(s5)) == 0) is_href = 1; 
       if (is_href) {
 	/* printf("get_tok: '"); */
 	end = start+1;
