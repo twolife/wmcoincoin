@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.57 2002/04/23 23:16:29 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.58 2002/04/23 23:31:02 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.58  2002/04/23 23:31:02  pouaite
+  je suis une buse
+
   Revision 1.57  2002/04/23 23:16:29  pouaite
   \o/ j'ai enfin réussi à chopper le bug mysterieux de l'autoscroll du pinni \o/
 
@@ -2123,18 +2126,24 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 {
   Pinnipede *pp = dock->pinnipede;
   if (pp && pp->mapped && flag_updating_tribune == 0) {
-    if (pp->lignes_sel) {
-      if (difftime(time(NULL), pp->time_sel) > 20.) {
-	pp_selection_unselect(pp);
-      } else {
-	return;
-      }
-    }
-
     /* test si on scrolle qutomatiquement pour afficher le nouveau message */
     //    if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
     if (pp->flag_tribune_updated) {
       int last_id;
+
+      /* eh oui, il faut pas autoscroller ou rafraichir alors qu'une selection est active 
+	 (le update_content deselectionne automatiquement, mais faut être sûr que
+	 l'utilisateur n'est pas justement *en train* de selectionner)
+       */
+      if (pp->lignes_sel) {
+	printf("%f\n",difftime(time(NULL),pp->time_sel));
+	if (difftime(time(NULL),pp->time_sel) > 20.) { /* on accorde 20 sec. de delai */
+	  pp_selection_unselect(pp);
+	} else {
+	  return;
+	}
+      }
+
       if (pp->sc) { 
 	pp_scrollcoin_update_bounds(dock, trib); 
       }      
@@ -4037,6 +4046,8 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
       } else if (event->xmotion.state & Button1Mask && 
 	  SQR(mouse_button_press_x - event->xbutton.x)+
 	  SQR(mouse_button_press_y - event->xbutton.y) >= 6) {
+
+	pp->time_sel = time(NULL);
 	if (pp->lignes_sel == NULL) {
 	  pp->sel_anchor_x = old_mouse_x; pp->sel_anchor_y = old_mouse_y;
 	  pp_refresh(dock, trib, pp->win, NULL);
