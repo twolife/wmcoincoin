@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.14 2003/06/24 22:27:57 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.15 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.15  2003/06/25 20:18:21  pouaite
+  support xinerama qui marche
+
   Revision 1.14  2003/06/24 22:27:57  pouaite
   speciale dedicace a nos amis de l'ile de beaute
 
@@ -1232,7 +1235,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
   XSetWindowAttributes wa;
   Pixmap shape_mask;
   GC monoGC;
-
+  int xiscr;
   if (sp) ew->prefs = sp;
   if (ew->prefs == NULL) {
     editw_select_default_site(dock);
@@ -1251,8 +1254,8 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
   assert(ew->mapped == 0);
   ew->mapped = 1;
 
-  dock_get_icon_pos(dock, &ew->dock_x, &ew->dock_y);
-  if (ew->dock_x < EW_SHAPED_WIDTH) ew->dock_side = LEFT; else ew->dock_side = RIGHT;
+  xiscr = MAX(dock_get_icon_pos(dock, &ew->dock_x, &ew->dock_y),0);
+  if (ew->dock_x - dock->xiscreen[xiscr].x_org < EW_SHAPED_WIDTH) ew->dock_side = LEFT; else ew->dock_side = RIGHT;
   
   ew->win = XCreateSimpleWindow (
         dock->display, dock->rootwin, 0, 0, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 0,

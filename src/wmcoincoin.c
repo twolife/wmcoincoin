@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.82 2003/06/24 22:27:57 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.83 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.83  2003/06/25 20:18:21  pouaite
+  support xinerama qui marche
+
   Revision 1.82  2003/06/24 22:27:57  pouaite
   speciale dedicace a nos amis de l'ile de beaute
 
@@ -446,8 +449,18 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
   system(s);
 }
 
+int
+dock_find_xiscreen_num(Dock *dock, int x, int y) {
+  int i;
+  for (i=0; i < dock->nb_xiscreen; ++i) {
+    if (x >= dock->xiscreen[i].x_org && x < dock->xiscreen[i].x_org + dock->xiscreen[i].width &&
+        y >= dock->xiscreen[i].y_org && y < dock->xiscreen[i].y_org + dock->xiscreen[i].height)
+      return i;
+  }
+  return -1;
+}
 
-void
+int
 dock_get_icon_pos(Dock *dock, int *iconx, int *icony)
 {
   Window junkwin;
@@ -460,6 +473,7 @@ dock_get_icon_pos(Dock *dock, int *iconx, int *icony)
 			 -wa.border_width,
 			 -wa.border_width,
 			 iconx, icony, &junkwin);
+  return dock_find_xiscreen_num(dock,*iconx+32,*icony+32);
 }
 
 
@@ -1484,36 +1498,52 @@ void initx(Dock *dock, int argc, char **argv) {
     printf("Erreur ! echec de XOpenIM(), ca pue !\n");
   }
 
-#ifdef XINERAMA
-  {
-    int event_base, error_base;
-    if (XineramaQueryExtension(dock->display, &event_base, &error_base)) {
-      int xv1=0, xv2=0,i;
-      XineramaQueryVersion(dock->display,&xv1, &xv2);
-      myprintf("Xinerama extension %<YEL supported> by X server (version %d.%d)\n", xv1, xv2);
-      dock->xine_scr = XineramaQueryScreens(dock->display, &dock->nb_xine_scr);
-      assert(dock->nb_xine_scr>0);
-
-      for (i = 0; i < dock->nb_xine_scr; ++i) {
-	myprintf("screen %d: [%<yel %d>-%<yel %d>]x[%<yel %d>-%<yel 4d>]\n", 
-		 dock->xine_scr[i].screen_number,
-		 dock->xine_scr[i].x_org,
-		 dock->xine_scr[i].y_org,
-		 dock->xine_scr[i].x_org+dock->xine_scr[i].width-1,
-		 dock->xine_scr[i].y_org+dock->xine_scr[i].height-1);
-      }
-    } else myprintf("no Xinerama for this server\n");
-  }
-#else 
-  myprintf("Xinerama support disabled\n");
-#endif
-  
 
   /* get screen and root window */
   dock->screennum = DefaultScreen(dock->display);
   dock->rootwin = RootWindow(dock->display, dock->screennum);
 
   dock->rgba_context = RGBACreateContext(dock->display, dock->screennum);    
+
+  /* detect xinerama */
+  dock->nb_xiscreen = 0;
+#ifdef XINERAMA
+  {
+    int event_base, error_base;
+    if (XineramaQueryExtension(dock->display, &event_base, &error_base)) {
+      XineramaScreenInfo *xsi;
+      int xv1=0, xv2=0,i;
+      XineramaQueryVersion(dock->display,&xv1, &xv2);
+      myprintf("Xinerama extension %<YEL supported> by X server (version %d.%d)\n", xv1, xv2);
+      xsi = XineramaQueryScreens(dock->display, &dock->nb_xiscreen);
+      if (dock->nb_xiscreen>0) {        
+        dock->xiscreen = calloc(dock->nb_xiscreen, sizeof *(dock->xiscreen));
+        for (i = 0; i < dock->nb_xiscreen; ++i) {
+          dock->xiscreen[i].screen_number = xsi[i].screen_number;
+          dock->xiscreen[i].x_org = xsi[i].x_org;
+          dock->xiscreen[i].y_org = xsi[i].y_org;
+          dock->xiscreen[i].width = xsi[i].width;
+          dock->xiscreen[i].height= xsi[i].height;
+          myprintf("screen %d: [%<yel %d>-%<yel %d>]x[%<yel %d>-%<yel %d>]\n", 
+                   dock->xiscreen[i].screen_number,
+                   dock->xiscreen[i].x_org,
+                   dock->xiscreen[i].y_org,
+                   dock->xiscreen[i].x_org+dock->xiscreen[i].width-1,
+                   dock->xiscreen[i].y_org+dock->xiscreen[i].height-1);
+        }
+      }
+    } else myprintf("no Xinerama for this server\n");
+  }
+#endif
+  if (dock->nb_xiscreen==0) {
+    myprintf("Xinerama support disabled\n");
+    dock->xiscreen = calloc(1, sizeof *(dock->xiscreen));
+    dock->xiscreen[0].screen_number = 0;
+    dock->xiscreen[0].x_org = 0;
+    dock->xiscreen[0].y_org = 0;
+    dock->xiscreen[0].width = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
+    dock->xiscreen[0].height= HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
+  }
 
   /* set size hints 64 x 64 */
   xsh.flags = USSize | USPosition;

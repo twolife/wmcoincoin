@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.93 2003/06/24 22:27:57 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.94 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -1851,8 +1851,7 @@ pp_build(Dock *dock)
   pp->sel_anchor_y = pp->sel_head_y = 0;
   pp->last_selected_text = NULL;
 
-  pp->kbnav_current_id = id_type_invalid_id();
-  pp->kbnav_current_tstamp = -1;
+  pp_unset_kbnav(dock);
 
   pp->sc = NULL;
 
@@ -3507,10 +3506,19 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       pp_update_content(dock, pp->id_base, 0,0,0);
       pp_refresh(dock, pp->win, NULL);
     } break;
+    /* ctrl-s : mode recherche -- emule le isearch-mode de emacs */
     case 'S':
-    case 's': if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) { /* ctrl-s : mode recherche */
-      if (pp->filter.filter_mode) { pp->filter.filter_mode = 0; }
-      else { pp_set_anything_filter(dock, pp->filter.anything ? pp->filter.anything : ""); }
+    case 's': if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) { 
+      static char *old_s = 0;
+      if (pp->filter.filter_mode) { 
+        if (pp->filter.anything && strlen(pp->filter.anything))
+          pp->filter.filter_mode = 0; 
+        else pp_set_anything_filter(dock, old_s);
+      }
+      else { 
+        if (pp->filter.anything) { if (old_s) free(old_s); old_s = strdup(pp->filter.anything); }
+        pp_set_anything_filter(dock, ""); 
+      }
       pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
       pp_refresh(dock, pp->win, NULL);
       ret++;
@@ -3904,6 +3912,11 @@ pp_dispatch_event(Dock *dock, XEvent *event)
       }
     } break;
   }
+}
+
+void pp_unset_kbnav(Dock *dock) {
+  dock->pinnipede->kbnav_current_id = id_type_invalid_id();
+  dock->pinnipede->kbnav_current_tstamp = -1;
 }
 
 Window pp_get_win(Dock *dock) {

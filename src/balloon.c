@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.8 2003/06/24 22:27:56 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.9 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.9  2003/06/25 20:18:21  pouaite
+  support xinerama qui marche
+
   Revision 1.8  2003/06/24 22:27:56  pouaite
   speciale dedicace a nos amis de l'ile de beaute
 
@@ -50,6 +53,7 @@
 #include <X11/extensions/shape.h>
 #include "coincoin.h"
 #include "coin_xutil.h"
+#include "dock.h"
 
 #include <libintl.h>
 #define _(String) gettext(String)
@@ -62,7 +66,6 @@ struct _Balloon {
   GC monoGC;
   PicoHtml *ph;
   int mapped;
-  int scr_width, scr_height;
   unsigned long bgpixel;
 
   Pixmap imgpix; /* affichage d'un pixmap à gauche (pour le clippy dans editwin ! ) */
@@ -109,9 +112,6 @@ balloon_build(Dock *dock)
   b->monoGC = None;
   b->mapped = 0;
   b->imgpix = None; b->imgpix_w = b->imgpix_h = 0;
-
-  b->scr_width = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
-  b->scr_height = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
 
   b->ph = picohtml_create(dock, Prefs.balloon_fn_family, Prefs.balloon_fn_size, 0);
   picohtml_set_parag_skip(b->ph, 1.0);
@@ -238,7 +238,11 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   int ty;
   int bx, by;
   Balloon *b = dock->balloon;
-
+  int xiscr;
+  int sx,sy,sw,sh;
+  xiscr = MAX(dock_find_xiscreen_num(dock,x,y),0);
+  sx = dock->xiscreen[xiscr].x_org; sw = dock->xiscreen[xiscr].width;
+  sy = dock->xiscreen[xiscr].y_org; sh = dock->xiscreen[xiscr].height;
   if (b->mapped) {
     balloon_hide(dock);
   }
@@ -248,34 +252,30 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   width = bwidth; //300; //w - 10;
   picohtml_parse(dock, b->ph, text, width);
   picohtml_gettxtextent(b->ph, &width, &height);
-
-  //  printf("ballon width=%d, h=%d\n", width, height);
-
+  
   height = MAX(height, b->imgpix_h);
-
   height += 7;
   width += 10 + b->imgpix_w;
-  //h = 1;//height;
-  //w = 1;//width;
   
   if (height < 16)
     height = 16;
   if (width < height)
     width = height;
   
-  if (x + width > b->scr_width) {
+
+  if (x + width > sx + sw) {
     side = RIGHT;
     bx = x - width + w/2;
-    if (bx < 0)
-      bx = 0;
+    if (bx < sx)
+      bx = sx;
   } else {
     side = LEFT;
     bx = x + w/2;
   }
-  if (bx + width > b->scr_width)
-    bx = b->scr_width - width;
+  if (bx + width > sx+sw)
+    bx = sx+sw - width;
 
-  if (y - (height + SPACE) < 0) {
+  if (y - (height + SPACE) < sy) {
     side |= TOP;
     by = y+h-1;
     ty = SPACE;
@@ -284,7 +284,7 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
     by = y - (height + SPACE);
     ty = 0;
   }
-  
+  //printf("ballon x=%d y=%d width=%d, h=%d side=%d, x=%d y=%d sx=%d sy=%d sw=%d sh=%d\n", bx, by, width, height,side,x,y,sx,sy,sw,sh);
 
   XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
   
@@ -338,6 +338,8 @@ balloon_check_event(Dock *dock, XEvent *event)
     case MotionNotify:
       //    case EnterNotify:
       //case LeaveNotify:
+      balloon_hide(dock);
+      break;
     case KeyPress:
       {
         if (event->xkey.keycode != check_key)

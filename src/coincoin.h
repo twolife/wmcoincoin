@@ -501,10 +501,15 @@ typedef struct _Dock {
   Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
   pid_t wmccc_pid;
 
-#ifdef XINERAMA
-  XineramaScreenInfo *xine_scr;
-  int nb_xine_scr;
-#endif
+  /* multi-head support */
+  struct {
+    int   screen_number;
+    short x_org;
+    short y_org;
+    short width;
+    short height;
+  } *xiscreen;
+  int nb_xiscreen;
 } Dock;
 
 /* c'est classé par ordre de priorité décroissante */
@@ -683,6 +688,7 @@ Site *pp_tabs_get_main_site(Dock *dock);
 int pp_tabs_is_site_visible(Dock *dock, Site *s);
 void pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s);
 void pp_set_download_info(char *site, char *what);
+void pp_unset_kbnav(Dock *dock);
 
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);

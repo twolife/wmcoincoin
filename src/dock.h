@@ -5,7 +5,8 @@
 
 void dock_update_pix_trolloscope(Dock *dock);
 int dock_red_button_check(Dock *dock); /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
-void dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
+int dock_find_xiscreen_num(Dock *dock, int x, int y);
+int dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
 void dock_dispatch_event(Dock *dock, XEvent *event);
 void dock_refresh_normal(Dock *dock); /* redessine l'applet (en mode normal, cad pas en mode horloge) */
 void dock_refresh_horloge_mode(Dock *dock); /* redessine l'applet en mode horloge */

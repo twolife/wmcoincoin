@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.8 2003/02/25 23:05:58 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.9 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.9  2003/06/25 20:18:21  pouaite
+  support xinerama qui marche
+
   Revision 1.8  2003/02/25 23:05:58  pouaite
   fix warning
 
@@ -130,7 +133,7 @@ msgbox_show(Dock *dock, char *text)
   MsgBox *m;
   //  int scr_width, scr_height;
   int iconx, icony, mx, my;
-
+  int xiscr;
   m = dock->msgbox;
   
   //  fprintf(stderr, "MSGBOX: %s\n", text);
@@ -153,17 +156,15 @@ msgbox_show(Dock *dock, char *text)
   m->w = MAX(m->w, 150);
 
   m->h += 20; m->w += 10;
-  //  scr_width = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
-  //  scr_height = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
 
-  dock_get_icon_pos(dock, &iconx, &icony);
-
-  if (iconx < m->w+10) {
+  xiscr = MAX(dock_get_icon_pos(dock, &iconx, &icony),0);
+  
+  if (iconx - dock->xiscreen[xiscr].x_org < m->w+10) {
     mx = iconx + 70;
   } else {
     mx = iconx - m->w - 10;
   }
-  if (icony < m->h+10) {
+  if (icony - dock->xiscreen[xiscr].y_org < m->h+10) {
     my = icony + 70;
   } else {
     my = icony - m->h - 10;

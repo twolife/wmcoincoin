@@ -1,5 +1,6 @@
+--------------------------v2.4.5-b-----------------------------------------
 2003-06-25  pouaite  <c0in@altern.org>
-
+	* support correct du xinerama
 	* src/palmipede.c: un petit timer pour les gens qui s'endorment
 	sur la touche "return"
 
@@ -7,7 +8,7 @@
 
 	* navigation clavier possible quand le palmi est sorti (pour
 	pouvoir répondre à plusieurs messages avec ctrl-enter). Du coup le
-	post aninyme n'est plus ctrl-enter mais shift-enter.
+	post anonyme n'est plus ctrl-enter mais shift-enter.
 	fix compile pour cygwin (particulièrement pour ouinouin-ixpé)
 	
 --------------------------v2.4.5-a-----------------------------------------

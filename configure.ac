@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.30  2003/06/25 20:18:21  pouaite
+dnl   support xinerama qui marche
+dnl
 dnl   Revision 1.29  2003/06/23 22:43:46  pouaite
 dnl   shift-enter pour le post anonyme + fix ouinouin
 dnl
@@ -175,7 +178,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.5a, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.5b, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -233,21 +236,21 @@ dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)
 
+LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
+CFLAGS="$CFLAGS $X_CFLAGS"
 
 dnl XINERAMA support (stolen from wmaker)
 dnl ================
-xinerama=no
+xinerama=yes
 AC_ARG_ENABLE(xinerama, 
 [  --disable-xinerama	  disable XInerama extension support],
 		xinerama=$enableval, xinerama=yes)
 if test x$xinerama = xyes; then
-	AC_CHECK_LIB(Xinerama, XineramaQueryScreens, [XLIBS="-lXinerama $XLIBS"
-                AC_DEFINE([XINERAMA],1,[define if xinerama API is supported])], xinerama=no, $XLFLAGS $XLIBS)
+	AC_CHECK_LIB(Xinerama, XineramaQueryScreens, [LIBS="-lXinerama $LIBS"
+                AC_DEFINE([XINERAMA],1,[define if xinerama API is supported])], xinerama=no)
 fi
 
 
-LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
-CFLAGS="$CFLAGS $X_CFLAGS"
 
 
 build_wmccc="yes"

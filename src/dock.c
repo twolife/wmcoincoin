@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.34 2003/06/24 22:27:57 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.35 2003/06/25 20:18:21 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.35  2003/06/25 20:18:21  pouaite
+  support xinerama qui marche
+
   Revision 1.34  2003/06/24 22:27:57  pouaite
   speciale dedicace a nos amis de l'ile de beaute
 
@@ -962,6 +965,7 @@ dock_red_button_check(Dock *dock) {
 	  ccqueue_push_board_post(s->site_id,  
 				  s->board->coin_coin_useragent, 
 				  dock->coin_coin_message);
+          pp_unset_kbnav(dock);
 	  //	  ccqueue_print();
 	  kikoo = 1;
           dock->red_button_send_cnt = 0;
