@@ -1,7 +1,8 @@
 #ifdef __CYGWIN__
 #  define __USE_W32_SOCKETS
 #  include "windows.h"
-#  include "ws2tcpip.h"
+#  include "winsock.h"
+//#  include "ws2tcpip.h"
 #define __INSIDE_HTTP
 #include "global.h"
 #include "http.h"
@@ -87,6 +88,9 @@ HostEntry *dns_cache = NULL;
 
 int http_close(SOCKET fd);
 
+/* pas de fioritures */
+#include "fake-getaddrinfo.h"
+#include "fake-getaddrinfo.c"
 
 static void 
 dns_cache_destroy(HostEntry *h) {

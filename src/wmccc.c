@@ -1057,8 +1057,7 @@ main (int argc, char *argv[])
   umask(077);
   gtk_init (&argc, &argv);
 
-  add_pixmap_directory (PACKAGE_DATA_DIR "/pixmaps");
-  add_pixmap_directory (PACKAGE_SOURCE_DIR "/xpms");
+  add_pixmap_directory (WMCCDATADIR);
 
   //  gtk_rc_parse("wmccc_gtkrc");
   //  gtk_rc_parse_string(WMCCC_RC_STYLE);
@@ -1114,9 +1113,6 @@ main (int argc, char *argv[])
       sp->site_name = NULL;
     }
   }
-
-  add_pixmap_directory (PACKAGE_DATA_DIR "/pixmaps");
-  add_pixmap_directory (PACKAGE_SOURCE_DIR "/pixmaps");
 
   /*
    * The following code was added by Glade to create one of each component

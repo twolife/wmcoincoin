@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.24  2003/03/11 23:40:32  pouaite
+dnl   rajout fake-getaddrinfo .. si ça compile alors cygwin remarche (pas testé)
+dnl
 dnl   Revision 1.23  2003/03/06 20:24:08  pouaite
 dnl   cygwin remarche, ou pas
 dnl
@@ -157,7 +160,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.4a, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.4b, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -251,25 +254,19 @@ dnl AC_SUBST(GTK_LIBS)
 fi
 AC_SUBST(WMCCC)
 
-AC_DEFINE([PACKAGE_DATA_DIR], [], [data directory for wmcc])
-AC_DEFINE([PACKAGE_SOURCE_DIR], [], [source directory for wmcc])
+dnl AC_DEFINE([PACKAGE_DATA_DIR], [], [data directory for wmcc])
+dnl AC_DEFINE([PACKAGE_SOURCE_DIR], [], [source directory for wmcc])
 
 dnl Set PACKAGE_DATA_DIR in config.h.
-if test "x${datadir}" = 'x${prefix}/share'; then
-  if test "x${prefix}" = "xNONE"; then
-    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${ac_default_prefix}/share/${PACKAGE}")
-  else
-    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${prefix}/share/${PACKAGE}")
-  fi
-else
-  AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${datadir}/${PACKAGE}")
-fi
-
-dnl Set PACKAGE_SOURCE_DIR in config.h.
-packagesrcdir=`cd $srcdir && pwd`
-AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
-
-
+dnl if test "x${datadir}" = 'x${prefix}/share'; then
+dnl  if test "x${prefix}" = "xNONE"; then
+dnl    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${ac_default_prefix}/share/${PACKAGE}")
+dnl  else
+dnl    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${prefix}/share/${PACKAGE}")
+dnl  fi
+dnl else
+dnl  AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${datadir}/${PACKAGE}")
+dnl fi
 
 dnl Checks for library functions.
 dnl ============================
@@ -279,7 +276,7 @@ AC_CHECK_HEADERS(sys/select.h sys/utsname.h pwd.h signal.h windows.h)
 AC_HEADER_TIME
 AC_CHECK_FUNCS(strdup strstr strcasecmp strncasecmp)
 AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
-AC_CHECK_FUNCS(uname getaddrinfo)
+AC_CHECK_FUNCS(uname getaddrinfo freeaddrinfo gai_strerror )
 
 AC_C_CONST
 AC_C_INLINE
@@ -287,6 +284,39 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
+
+
+dnl those two tests were taken from openssh-3.5p1
+AC_CACHE_CHECK([for struct sockaddr_storage], ac_cv_have_struct_sockaddr_storage, [
+	AC_TRY_COMPILE(
+		[
+#include <sys/types.h>
+#include <sys/socket.h>
+		],
+		[ struct sockaddr_storage s; ],
+		[ ac_cv_have_struct_sockaddr_storage="yes" ],
+		[ ac_cv_have_struct_sockaddr_storage="no" ]
+	)
+])
+if test "x$ac_cv_have_struct_sockaddr_storage" = "xyes" ; then
+	AC_DEFINE(HAVE_STRUCT_SOCKADDR_STORAGE,1,[struct sockaddr])
+fi
+AC_CACHE_CHECK([for struct addrinfo], ac_cv_have_struct_addrinfo, [
+	AC_TRY_COMPILE(
+		[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+	],
+		[ struct addrinfo s; s.ai_flags = AI_PASSIVE; ],
+		[ ac_cv_have_struct_addrinfo="yes" ],
+		[ ac_cv_have_struct_addrinfo="no" ]
+	)
+])
+if test "x$ac_cv_have_struct_addrinfo" = "xyes" ; then
+	AC_DEFINE(HAVE_STRUCT_ADDRINFO,1,[struct addrinfo])
+fi
+
 
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
@@ -303,7 +333,7 @@ case "$host" in
 	  ;;
     *-cygwin*)
 	  echo -e "\n${YELLOW}cygwin detected !, may the force be with you, young mussel${RESET}\n"
-     	  AC_CHECK_LIB(ws2_32,select)
+     	  AC_CHECK_LIB(wsock32,select)
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
 	  LIBS="${LIBS} /lib/libregex.a -lm"        

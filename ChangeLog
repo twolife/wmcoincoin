@@ -1,3 +1,4 @@
+--------------------------v2.4.4-b-----------------------------------------
 2003-03-09  pouaite  <c0in@altern.org>
 
 	* src/board.c (board_log_msg): le bug qui faisait apparaitre
@@ -7,7 +8,7 @@
 	selection de couleur (merci choocroot). Suppression de la floppée
 	de g[td]k-warnings affichés par le wmccc.
 	* src/http.c: tentative de correction pour cygwin. Au moins ça
-	compile.
+	compile. Par contre ça ne marche plus que sous winXP :-/
 	
 --------------------------v2.4.4-a-----------------------------------------
 2003-03-01  pouaite  <c0in@altern.org>

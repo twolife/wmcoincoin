@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2003-03-06 21:22+0100\n"
+"POT-Creation-Date: 2003-03-10 01:41+0100\n"
 "PO-Revision-Date: 2003-03-02 18:43+0100\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -61,16 +61,16 @@ msgstr ""
 "qu'il arrivera. Ne pensez même pas à suicider le coincoin : THE SHOW MUST GO "
 "ON\n"
 
-#: src/http_win.c:92
+#: src/http_win.c:95
 msgid "Connected succesfully!\n"
 msgstr "Connexion réussie\n"
 
-#: src/http_win.c:113 src/http_unix.c:141
+#: src/http_win.c:116 src/http_unix.c:141
 #, c-format
 msgid "Connection timed out (timeout=%d sec)!\n"
 msgstr "Timeout de connexion (timeout=%d sec)!\n"
 
-#: src/http_win.c:123
+#: src/http_win.c:126
 msgid "could not set socket to blocking\n"
 msgstr "impossible de mettre la chaussette en bloquant\n"
 
@@ -624,7 +624,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr "Erreur d'ouverture de %s\n"
 
-#: src/comments.c:415 src/news.c:719 src/board.c:1537
+#: src/comments.c:415 src/news.c:719 src/board.c:1583
 #, fuzzy
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr "Erreur d'ouverture de %s\n"
@@ -696,7 +696,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:278 src/news.c:534 src/board.c:1364
+#: src/news.c:278 src/news.c:534 src/board.c:1410
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -2028,30 +2028,30 @@ msgstr ""
 msgid "No new messages."
 msgstr "Pas de nouveaux messages."
 
-#: src/board.c:554
+#: src/board.c:557
 #, c-format
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:894
+#: src/board.c:938
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr "message loggué: '%s'\n"
 
-#: src/board.c:1012
+#: src/board.c:1058
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1309
+#: src/board.c:1355
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1310
+#: src/board.c:1356
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1482
+#: src/board.c:1528
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -2063,7 +2063,7 @@ msgstr ""
 "PAS DE PANIQUE, le coincoin s'en charge bien, ça prouve seulement que je\n"
 "n'ai pas écrit ce correctif pour des cacahouette.\n"
 
-#: src/board.c:1529
+#: src/board.c:1575
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"

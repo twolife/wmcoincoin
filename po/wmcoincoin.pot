@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-03-06 21:22+0100\n"
+"POT-Creation-Date: 2003-03-10 01:41+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,16 +60,16 @@ msgid ""
 "happens. Don't even think of suiciding the coincoin : THE SHOW MUST GO ON\n"
 msgstr ""
 
-#: src/http_win.c:92
+#: src/http_win.c:95
 msgid "Connected succesfully!\n"
 msgstr ""
 
-#: src/http_win.c:113 src/http_unix.c:141
+#: src/http_win.c:116 src/http_unix.c:141
 #, c-format
 msgid "Connection timed out (timeout=%d sec)!\n"
 msgstr ""
 
-#: src/http_win.c:123
+#: src/http_win.c:126
 msgid "could not set socket to blocking\n"
 msgstr ""
 
@@ -580,7 +580,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr ""
 
-#: src/comments.c:415 src/news.c:719 src/board.c:1537
+#: src/comments.c:415 src/news.c:719 src/board.c:1583
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
@@ -650,7 +650,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:278 src/news.c:534 src/board.c:1364
+#: src/news.c:278 src/news.c:534 src/board.c:1410
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -1821,30 +1821,30 @@ msgstr ""
 msgid "No new messages."
 msgstr ""
 
-#: src/board.c:554
+#: src/board.c:557
 #, c-format
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:894
+#: src/board.c:938
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr ""
 
-#: src/board.c:1012
+#: src/board.c:1058
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1309
+#: src/board.c:1355
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1310
+#: src/board.c:1356
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1482
+#: src/board.c:1528
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -1852,7 +1852,7 @@ msgid ""
 "this bugfix for coconuts.\n"
 msgstr ""
 
-#: src/board.c:1529
+#: src/board.c:1575
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.22 2003/03/02 17:56:25 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.23 2003/03/11 23:40:30 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.23  2003/03/11 23:40:30  pouaite
+##   rajout fake-getaddrinfo .. si ça compile alors cygwin remarche (pas testé)
+##
 ##   Revision 1.22  2003/03/02 17:56:25  pouaite
 ##   wmcoincoin-2.4.4a.tar.gz is ready for distribution
 ##
@@ -76,7 +79,7 @@ EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_mini
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
-             xpms/logo.xpm xpms/badnews.xpm xpms/bracket.xpm ./wmcoincoin.spec ./wmpanpan \
+            xpms/badnews.xpm  xpms/bracket.xpm  xpms/logo.xpm ./wmcoincoin.spec ./wmpanpan \
              ./options ./config.rpath
 
 rpm-dist: dist
@@ -96,6 +99,6 @@ nightly: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz ../wmcoincoin-cvs.tar.gz
 	(cd ..; ./up.sh ./wmcoincoin-cvs.tar.gz download/devel)
 
-pkgdata_DATA = options README wmcoincoin.spec
+pkgdata_DATA = options README wmcoincoin.spec xpms/bracket.xpm  xpms/logo.xpm xpms/badnews.xpm
 
 CLEANFILES = stamp-h
