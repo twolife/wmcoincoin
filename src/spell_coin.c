@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.5 2001/12/02 19:04:42 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.6 2001/12/03 08:20:59 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.6  2001/12/03 08:20:59  pouaite
+  remplacement du GRUIKesque vfork par un honnete fork (damned!)
+
   Revision 1.5  2001/12/02 19:04:42  pouaite
   suppression de messages de debug...
 
@@ -124,11 +127,13 @@ launch_ispell(const char *spell_cmd, const char* spell_dict)
   }
   /* Attention je suis co**llu je suis un male ... je prends des risques
      je fait un vfork (Vous les petits jeunes regardez pas ca c'est MAL(tm)
+
+     UPDATE: vfork c'est trop GRUIK pour moi :) --signé pouaite
   */
-  switch ( spell_pid = vfork() ) {
+  switch ( spell_pid = fork() ) {
   case -1: /* arrrrg */
     {
-      fprintf(stderr, "échec du vfork..(%s)\n", strerror(errno));
+      fprintf(stderr, "échec du fork..(%s)\n", strerror(errno));
       close(tube_stdin[0]); close(tube_stdin[1]);
       close(tube_stdout[0]); close(tube_stdout[1]);	
       return -1;
