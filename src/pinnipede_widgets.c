@@ -1,5 +1,7 @@
 #include "pinnipede.h"
 #include "site.h"
+#include "dock.h"
+
 static char *dl_info_site = NULL;
 static char *dl_info_what = NULL;
 
@@ -29,18 +31,26 @@ pp_tabs_set_pos_vert(Pinnipede *pp) {
     if (rest > pp->nb_tabs) rest = 0;
   }
 
-  pp->zmsg_x1 = pp->tabs_w; pp->zmsg_w = pp->zmsg_x2 - pp->zmsg_x1 + 1;
+  if (pp->tabs_pos == PPT_LEFT) {
+    pp->zmsg_x1 = pp->tabs_w; 
+    pp->tabs_x0 = 0; 
+  } else {
+    pp->zmsg_x1 = 0;
+    pp->zmsg_x2 = pp->win_width - pp->tabs_w - 1 - (pp->sc ? SC_W : 0);
+    pp->tabs_x0 = pp->win_width - pp->tabs_w;
+  }
+  pp->zmsg_w = pp->zmsg_x2 - pp->zmsg_x1 + 1;
+
   pp->mb_x0 = 0; // la minibar a toute la place
 
   if (pp->nb_tabs == 0 || pp->use_minibar == 0) return;
   
-  pp->tabs_x0 = 0; 
   pp->tabs_w = 80;
   pp->tabs_y0 = pp->win_height  - (pp->use_minibar ? MINIB_H : 0) - tab_h - (rest ? 1 : 0);
   pp->tabs_h = 0;
   for (cnt = 0; cnt < pp->nb_tabs; cnt++) {
     PinnipedeTab *pt = &pp->tabs[cnt];
-    pt->x = 0;
+    pt->x = pp->tabs_x0;
     pt->y = pp->tabs_y0;
     pt->w = pp->tabs_w;
     pt->h = tab_h + (rest ? 1 : 0); if (rest > 0) --rest;
@@ -56,7 +66,7 @@ pp_tabs_set_pos_horiz(Pinnipede *pp)
   
   int tab_max_w,tab_min_w, tab_w, tabs_min_w=-1, tabs_max_w=-1, tabs_w=-1;
   int x,y;
-  
+
   pp->zmsg_y1 = 0;
   pp->zmsg_y2 = pp->win_height - 1 - (pp->use_minibar ? MINIB_H : 0);
   pp->zmsg_h = pp->zmsg_y2-pp->zmsg_y1+1;
@@ -113,7 +123,7 @@ pp_tabs_set_pos_horiz(Pinnipede *pp)
 static void
 pp_tabs_set_pos(Pinnipede *pp) {
   if (pp->use_minibar) {
-    if (pp->tabs_pos == PPT_LEFT)
+    if (pp->tabs_pos == PPT_LEFT || pp->tabs_pos == PPT_RIGHT)
       pp_tabs_set_pos_vert(pp);
     else 
       pp_tabs_set_pos_horiz(pp);
@@ -267,7 +277,7 @@ pp_tabs_build(Dock *dock) {
   Site *s;
   PinnipedeTab *pt;
 
-  pp->tabs_pos = PPT_LEFT;
+  pp->tabs_pos = Prefs.pp_tabs_pos;
   pp->nb_tabs = 0; 
   for (s = dock->sites->list; s; s = s->next) {
     if (s->board) {
@@ -323,12 +333,14 @@ void pp_tabs_rebuild(Dock *dock) {
     int j;
     for (j = 0; j < old_nb_tabs; ++j) {
       if (strcmp(pp->tabs[i].site_name, old_tabs[j].site_name) == 0) {
-        PinnipedeTab tmp = pp->tabs[i]; pp->tabs[i] = old_tabs[i]; old_tabs[i] = tmp;
+        pp->tabs[i].selected = old_tabs[j].selected;
+        pp->tabs[i].was_selected = old_tabs[j].was_selected;
       }
       if (old_active_tab && strcmp(pp->tabs[i].site_name, old_active_tab) == 0) pp->active_tab = pp->tabs + i;
     }
   }
   pp_tabs_destroy_(&old_tabs, &old_nb_tabs);
+  pp_tabs_set_visible_sites(pp);
 }
 
 
@@ -422,7 +434,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
   int fn_h = ccfont_height(pp->fn_minib);
   int draw_grip = 0; /*  draw_grip : la fleche bleu.  < 0 -> à gauche, > 0 -> à droite*/
 
-  if (pt == pp->survol_tab) {
+  if (pt == pp->survol_tab && Prefs.pp_use_classical_tabs == 0) {
     if (pp->survol_tab_part == PPT_MAY_SET_MAIN_TAB) draw_grip = -1;
     else if (pp->survol_tab_part == PPT_MAY_UNSELECT_TAB) draw_grip = +1;
   }
@@ -492,7 +504,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
       gpts[0].x = d_x + 6;
     } else {
       gpts = get_grip(&nb_pts, 1);
-      gpts[0].x = pt->w - 8;
+      gpts[0].x = d_x + pt->w - 8;
     }
     gpts[0].y = d_y + pt->h/2;
     XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x106fe5));
@@ -538,7 +550,8 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
     } else { cw = 0; clen = 0; }
     
     /* position du titre et du compteur */
-    ty = d_y + ccfont_ascent(pp->fn_minib)+1 + pt->clicked*2;
+    ty = d_y + ccfont_ascent(pp->fn_minib) + 1 + pt->clicked*2;
+    if (pt->h <= 12) ty--;
     if (!count_below_title) {
       tx = base_x + MAX((maxw - tw - cw - 2)/2,0);
       cx = tx + tw + 4; 
@@ -555,10 +568,10 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
       XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(fgcolor));
     } else {
       XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(fgcolor));
-      if (main_site && tlen) {
+      if (main_site && tlen && pp->tabs_pos != PPT_UP && pp->tabs_pos != PPT_DOWN) {
         //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(fgpixel));//IRGB2PIXEL(0x80ff80));
         //XDrawString(dock->display, drawable, dock->NormalGC, tx+1, ty+1, t, tlen);
-        XDrawLine(dock->display, drawable, dock->NormalGC, tx-1, ty+1, tx+tw, ty + 1);
+        XDrawLine(dock->display, drawable, dock->NormalGC, tx-1, ty+1, tx+tw, ty+1);
       }
     }
     //printf("t = %s, tw=%d tlen=%d tx=%d ww=%d\n", t, tw, tlen, tx, ccfont_text_width8(pp->fn_minib, t, -1));
@@ -598,7 +611,9 @@ pp_tabs_refresh(Dock *dock)
 
     /* dessine la ligne du haut */
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_dark_color));
-    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, y1, pp->tabs_width, y1); 
+    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, y1, pp->tabs_w, y1); 
+
+
     for (i=0; i < pp->nb_tabs; i++) {
       PinnipedeTab *pt = &pp->tabs[i];
       /* le separateur à droite */
@@ -608,9 +623,15 @@ pp_tabs_refresh(Dock *dock)
 
       pp_tabs_draw_one_tab(dock, pt, pp->lpix, pt->x, 0);
     }
+
+    /* "ouvre" le tab active */
+    XSetForeground(dock->display, dock->NormalGC, pp_tabs_bg_pixel_of_tab(dock,pp->active_tab));
+    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+              pp->active_tab->x-1, y1, pp->active_tab->x + pp->active_tab->w-1, y1);
+
     /* et hop */
     XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
-              0,0,pp->tabs_width, pp->tabs[0].h, pp->tabs[0].x,pp->tabs[0].y);
+              0,0,pp->tabs_w, pp->tabs[0].h, pp->tabs[0].x,pp->tabs[0].y);
   } else {
     int i;
     /* efface toute la ligne */
@@ -620,21 +641,22 @@ pp_tabs_refresh(Dock *dock)
     for (i=0; i < pp->nb_tabs; i++) {
       PinnipedeTab *pt = &pp->tabs[i];
       PinnipedeTab *npt = (i<pp->nb_tabs-1) ? &pp->tabs[i+1] : NULL;
-
+      int xbord = (pp->tabs_pos == PPT_LEFT ?  pt->x+pt->w-1 : pt->x);
+      //int dx = (pp->tabs_pos == PPT_LEFT ? -1 : +1);
       /* le contenu */
       pp_tabs_draw_one_tab(dock, &pp->tabs[i], pp->lpix, 0, 0);
 
       /* le separateur à droite */
       XSetForeground(dock->display, dock->NormalGC, pt != pp->active_tab ?
                      cccolor_pixel(pp->minib_dark_color) : pp_tabs_bg_pixel_of_tab(dock,pt));
-      XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 
-                0, pt->x+pt->w-1, pt->h);
+      XDrawLine(dock->display, pp->lpix, dock->NormalGC, xbord, 
+                0, xbord, pt->h);
 
       /* le point en haut à droite si le prochain tab est le principal
          pour l'effet "vaguement arondi" */
       if (npt == pp->active_tab) { 
         XSetForeground(dock->display, dock->NormalGC, pp_tabs_bg_pixel_of_tab(dock,npt));
-        XDrawPoint(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 0);
+        XDrawPoint(dock->display, pp->lpix, dock->NormalGC, xbord, 0);
       }
 
       /* la ligne du haut */
@@ -645,7 +667,7 @@ pp_tabs_refresh(Dock *dock)
       } else {
         XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_dark_color));
       }
-      XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x, 0, pt->x+pt->w-2, 0);
+      XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, 0, pt->w-2, 0);
       /* la ligne a gauche pour le tab principal */
       /*      if (pt == pp->active_tab) {
         XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x, 0, pt->x, pt->h-1);
@@ -655,7 +677,7 @@ pp_tabs_refresh(Dock *dock)
         }*/
 
       XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
-                0,0,pp->tabs[i].w, pp->tabs[i].h, pp->tabs[i].x,pp->tabs[i].y);
+                0,0,pp->tabs[i].w, pp->tabs[i].h, pp->tabs[i].x + (pp->tabs_pos == PPT_RIGHT ? 1 : 0),pp->tabs[i].y);
     }
   }
 
@@ -749,7 +771,11 @@ void pp_tabs_switch_all_selected(Pinnipede *pp) {
 void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt, ppt_survol_actions survol_part) {
   int i, nb_selected = pp_tabs_nb_selected(pp);
   //printf("cliquouille %d, selected = %d, nb_sel=%d, part=%d\n", pt - pp->tabs, pt->selected, nb_selected, survol_part);
-  if (survol_part == PPT_MAY_UNSELECT_TAB) {
+  if (Prefs.pp_use_classical_tabs) {
+    pp->active_tab = pt;
+    for (i=0; i < pp->nb_tabs; i++) 
+      pp->tabs[i].selected = (pp->tabs+i == pt);
+  } else if (survol_part == PPT_MAY_UNSELECT_TAB) {
     if (pt->selected && nb_selected > 1) { pt->selected = 0; pp_tabs_save_selected(pp); }
     else if (nb_selected == 1) pp_tabs_swap_selected(pp);
     else { pt->selected = 1; pp_tabs_save_selected(pp); }
@@ -872,6 +898,7 @@ pp_minib_set_pos(Pinnipede *pp)
   i = 0;
   pp->mb[i].type = HELP;            pp->mb[i].w = SC_W-1; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = BALLTRAP;        pp->mb[i].w = 22; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = TRANSPARENT;     pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = UA;              pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   // pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
@@ -999,75 +1026,79 @@ pp_minib_refresh(Dock *dock)
       XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, 1, pp->mb[i].w-2, pp->mb[i].h-2);
 /*     }     */
     switch (pp->mb[i].type) {
-    case SCROLLBAR:
-      {
-	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_dark_color));
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, pp->mb[i].h-2);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, pp->mb[i].h-3);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, pp->mb[i].h-4);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, pp->mb[i].h-3);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, pp->mb[i].h-4);
-      } break;
-    case TRANSPARENT:
-      {
-	int j;
-	for (j=0; j < 7; j++) {
-	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, pp->mb[i].h-3);
-	}
-      } break;
-    case MB_RSS:
-    case MB_BOARDS:
-      {
-        char *s = (i == MB_RSS ? "feeds" : "boards");
-        int w = ccfont_text_width8(pp->fn_minib, s, -1);
-        //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); 
-        //XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
-        ccfont_draw_string8(pp->fn_minib, dock->gray_colors[3], pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
-      } break;
-    case PREFS:
-      {
-	char *s;
-        CCColorId cid;
-	if (ccqueue_find(Q_PREFS_UPDATE, -1) == NULL) {
-	  s = "wmc³";
-	  //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); /* COUL */
-          cid = dock->gray_colors[3];
-	} else {
-	  if ((wmcc_tic_cnt % 24) < 12) s = "updt!";
-	  else s = "wait";
-	  //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xff3000 + (wmcc_tic_cnt & 0xff))); /* COUL */
-          cid = dock->gray_colors[3 + (wmcc_tic_cnt/16)%12];
-	}
-	//XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
-        int w = ccfont_text_width8(pp->fn_minib, s, -1);
-        ccfont_draw_string8(pp->fn_minib, cid, pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
-      } break;
-
-    case HELP:
-      {
-        //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); /* COUL */
-	//XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-MINIB_FN_W/2+1, pp->fn_minib->ascent+1, "?", 1);
-        char *s = "?";
-        int w = ccfont_text_width8(pp->fn_minib, s, -1);
-        ccfont_draw_string8(pp->fn_minib, dock->gray_colors[3], pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
-      } break;
-      /*
-    case SECOND:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel[main_site->site_id]);
-	
-	if (pp->show_sec_mode == 0) {
+      case SCROLLBAR:
+        {
+          XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_dark_color));
+          XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, pp->mb[i].h-2);
+          XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, pp->mb[i].h-3);
+          XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, pp->mb[i].h-4);
+          XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, pp->mb[i].h-3);
+          XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, pp->mb[i].h-4);
+        } break;
+      case BALLTRAP: 
+        {
+          XCopyArea(dock->display, pp->miniduck_pixmap, pp->lpix, dock->NormalGC, (Prefs.hunt_opened ? 0 : 19), 0, 19, 11, x+2, 2);
+        } break;
+      case TRANSPARENT:
+        {
+          int j;
+          for (j=0; j < 7; j++) {
+            XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, pp->mb[i].h-3);
+          }
+        } break;
+      case MB_RSS:
+      case MB_BOARDS:
+        {
+          char *s = (i == MB_RSS ? "feeds" : "boards");
+          int w = ccfont_text_width8(pp->fn_minib, s, -1);
+          //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); 
+          //XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
+          ccfont_draw_string8(pp->fn_minib, dock->gray_colors[3], pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
+        } break;
+      case PREFS:
+        {
+          char *s;
+          CCColorId cid;
+          if (ccqueue_find(Q_PREFS_UPDATE, -1) == NULL) {
+            s = "wmc³";
+            //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); /* COUL */
+            cid = dock->gray_colors[3];
+          } else {
+            if ((wmcc_tic_cnt % 24) < 12) s = "updt!";
+            else s = "wait";
+            //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xff3000 + (wmcc_tic_cnt & 0xff))); /* COUL */
+            cid = dock->gray_colors[3 + (wmcc_tic_cnt/16)%12];
+          }
+          //XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
+          int w = ccfont_text_width8(pp->fn_minib, s, -1);
+          ccfont_draw_string8(pp->fn_minib, cid, pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
+        } break;
+        
+      case HELP:
+        {
+          //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030)); /* COUL */
+          //XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-MINIB_FN_W/2+1, pp->fn_minib->ascent+1, "?", 1);
+          char *s = "?";
+          int w = ccfont_text_width8(pp->fn_minib, s, -1);
+          ccfont_draw_string8(pp->fn_minib, dock->gray_colors[3], pp->lpix, xc-w/2, ccfont_ascent(pp->fn_minib), s, -1);
+        } break;
+        /*
+          case SECOND:
+          {
+          int rx, rw, ry, rh;
+          
+          rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
+          XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel[main_site->site_id]);
+          
+          if (pp->show_sec_mode == 0) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
+          } else {
 	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case TSCORE:
-      {
+          }
+          } break;
+          case TSCORE:
+          {
 	int rx, rw, ry, rh;
 
 	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
@@ -1094,71 +1125,71 @@ pp_minib_refresh(Dock *dock)
 	}
       } break;
       */
-    case FILTER:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->lnk_color[main_site->site_id]));
-	
-	if (pp->filter.filter_mode) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case PLOPIFY:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->plopify_color));
-	
-	if (pp->disable_plopify) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
-	} else {
-	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	}
-      } break;
-    case UA:
-      {
-	int rx, rw, ry, rh;
-
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->useragent_color[main_site->site_id]));
-	
-	XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	if (pp->nick_mode == 3) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	} else if (pp->nick_mode == 1) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx,ry,xc-rx+1,rh);
-	} else if (pp->nick_mode == 2) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, xc,ry,xc-rx+1,rh);
-	} else if (pp->nick_mode == 4) {
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, ry, xc, ry+rh-1);
-	}
-      } break;
-    case CANCEL:
-      if (dl_info_site) {
-	int rx, rw, ry, rh;
-	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-5; rh = pp->mb[i].h-5;
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8080ff));
-	if (flag_cancel_task == 0) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xb0b0ff));
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx + (wmcc_tic_cnt/5)%rw, ry,
-		    rx + (wmcc_tic_cnt/5)%rw, ry+rh-1);
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx, ry + (wmcc_tic_cnt/5)%rh, 
-		    rx+rw-1, ry + (wmcc_tic_cnt/5)%rh);
-	} else {
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
-		    x+1,y+1,x+pp->mb[i].w-2, y+pp->mb[i].h-2);
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
-		    x+1,y+pp->mb[i].h-2,x+pp->mb[i].w-2, y+1);
-	}
-      } break;
-    default:
-      abort(); break;
+      case FILTER:
+        {
+          int rx, rw, ry, rh;
+          
+          rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
+          XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->lnk_color[main_site->site_id]));
+          
+          if (pp->filter.filter_mode) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
+          } else {
+            XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+          }
+        } break;
+      case PLOPIFY:
+        {
+          int rx, rw, ry, rh;
+          
+          rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
+          XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->plopify_color));
+          
+          if (pp->disable_plopify) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
+          } else {
+            XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+          }
+        } break;
+      case UA:
+        {
+          int rx, rw, ry, rh;
+          
+          rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
+          XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->useragent_color[main_site->site_id]));
+          
+          XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+          if (pp->nick_mode == 3) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+          } else if (pp->nick_mode == 1) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx,ry,xc-rx+1,rh);
+          } else if (pp->nick_mode == 2) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, xc,ry,xc-rx+1,rh);
+          } else if (pp->nick_mode == 4) {
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, ry, xc, ry+rh-1);
+          }
+        } break;
+      case CANCEL:
+        if (dl_info_site) {
+          int rx, rw, ry, rh;
+          rx = x + 3; ry  = y+2; rw = pp->mb[i].w-5; rh = pp->mb[i].h-5;
+          XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8080ff));
+          if (flag_cancel_task == 0) {
+            XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+            XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xb0b0ff));
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx + (wmcc_tic_cnt/5)%rw, ry,
+                      rx + (wmcc_tic_cnt/5)%rw, ry+rh-1);
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, rx, ry + (wmcc_tic_cnt/5)%rh, 
+                      rx+rw-1, ry + (wmcc_tic_cnt/5)%rh);
+          } else {
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+                      x+1,y+1,x+pp->mb[i].w-2, y+pp->mb[i].h-2);
+            XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+                      x+1,y+pp->mb[i].h-2,x+pp->mb[i].w-2, y+1);
+          }
+        } break;
+      default:
+        abort(); break;
     }
   }
 
@@ -1284,77 +1315,101 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
 /* 	dock->news_update_request = 1; pp_minib_refresh(dock); */
 /*       } break; */
       
-    case HELP:
-      {
-	pp_minib_refresh(dock);
-	pp_balloon_help(dock, mb->x-20, mb->y-20);
-      } break;
-    case UA:
-      {
-	pp->nick_mode = (pp->nick_mode + 1) % 5;
-	pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
-      } break;
-    case FILTER:
-      {
-	pp->filter.filter_mode = (1-pp->filter.filter_mode);
-	/* reset du scroll (necessaire, faut etre que le post 'id_base' 
-	   soit bien affiché par le filtre) */
-	if (pp->filter.filter_mode) pp->id_base = id_type_invalid_id(); 
-	pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
-      } break;
-    case PLOPIFY:
-      {
-	pp->disable_plopify = (1-pp->disable_plopify);
-	pp->filter.filter_boitakon = 1-pp->disable_plopify;
-	pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
-      } break;
-    case SCROLLBAR:
-      {
-	pp_scrollcoin_set(dock,pp->sc == NULL);
-	pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
-      } break;
-    case TRANSPARENT:
-      {
-	if (Prefs.use_fake_real_transparency) {
-	  pp_unmap(dock); XFlush(dock->display); 
-	  usleep(300000); /* pour laisser le temps aux autres applis de se refresher
-			  on atteint des sommets de laideur
-			  pas sur que c'était une bonne idée cette option use_fake_real_transparency
-		       */
-	}
-	pp_change_transparency_mode(dock, 1-pp->transparency_mode);
-	if (Prefs.use_fake_real_transparency) 
-	  pp_show(dock);
-	else {
-	  pp_update_bg_pixmap(dock);
-	}
-	pp_refresh(dock, pp->win, NULL);
-      } break;
-    case MB_RSS:
-    case MB_BOARDS:
-      {
-        int i;
-        pp->active_tab = NULL;
-        for (i = 0; i < pp->nb_tabs; ++i) {
-          pp->tabs[i].selected =  board_is_rss_feed(pp->tabs[i].site->board) ? 1 : 0;
-          if (mb->type == MB_BOARDS) pp->tabs[i].selected = 1 - pp->tabs[i].selected;
-          if (pp->tabs[i].selected && !pp->active_tab) pp->active_tab = pp->tabs+i;
-        }
-        if (pp->active_tab == NULL) {
-          pp->active_tab = pp->tabs; pp->tabs[0].selected = 1;
-        }
-        pp_tabs_changed(dock);
-      } break;
-    case PREFS:
-      {
-	launch_wmccc(dock, NULL);
-      } break;
-    case CANCEL:
-      {
-	flag_cancel_task = 1;
-      } break;
-    default:
-      assert(0); 
+      case HELP:
+        {
+          pp_minib_refresh(dock);
+          pp_balloon_help(dock, mb->x-20, mb->y-20);
+        } break;
+      case UA:
+        {
+          pp->nick_mode = (pp->nick_mode + 1) % 5;
+          pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
+        } break;
+      case FILTER:
+        {
+          pp->filter.filter_mode = (1-pp->filter.filter_mode);
+          /* reset du scroll (necessaire, faut etre que le post 'id_base' 
+             soit bien affiché par le filtre) */
+          /*if (pp->filter.filter_mode) pp->id_base = id_type_invalid_id(); 
+            pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);*/
+          pp_update_and_redraw(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 0,0,1);
+        } break;
+      case PLOPIFY:
+        {
+          pp->disable_plopify = (1-pp->disable_plopify);
+          pp->filter.filter_boitakon = 1-pp->disable_plopify;
+          pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
+        } break;
+      case SCROLLBAR:
+        {
+          pp_scrollcoin_set(dock,pp->sc == NULL);
+          pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
+        } break;
+      case BALLTRAP:
+        {
+          Prefs.hunt_opened = 1 - Prefs.hunt_opened;
+        } break;
+      case TRANSPARENT:
+        {
+          if (Prefs.use_fake_real_transparency) {
+            pp_unmap(dock); XFlush(dock->display); 
+            usleep(300000); /* pour laisser le temps aux autres applis de se refresher
+                               on atteint des sommets de laideur
+                               pas sur que c'était une bonne idée cette option use_fake_real_transparency
+                            */
+          }
+          pp_change_transparency_mode(dock, 1-pp->transparency_mode);
+          if (Prefs.use_fake_real_transparency) 
+            pp_show(dock);
+          else {
+            pp_update_bg_pixmap(dock);
+          }
+          pp_refresh(dock, pp->win, NULL);
+        } break;
+      case MB_RSS:
+      case MB_BOARDS:
+        {
+          int i, feed_cnt = 0, board_cnt = 0, feed_selected_cnt = 0, board_selected_cnt = 0;
+          for (i = 0; i < pp->nb_tabs; ++i) {
+            if (board_is_rss_feed(pp->tabs[i].site->board)) {
+              feed_cnt++; if (pp->tabs[i].selected) feed_selected_cnt++;
+            }
+            if (board_is_regular_board(pp->tabs[i].site->board)) {
+              board_cnt++; if (pp->tabs[i].selected) board_selected_cnt++;
+            }
+          }
+          if ((feed_cnt == 0 && mb->type == MB_RSS) ||
+              (board_cnt == 0 && mb->type == MB_BOARDS))
+            break;
+          if ((mb->type == MB_BOARDS && board_cnt == board_selected_cnt && feed_selected_cnt == 0) ||
+              (mb->type == MB_RSS && feed_cnt == feed_selected_cnt && board_selected_cnt == 0)) {
+            pp_tabs_restore_selected(pp);pp_tabs_check_active(pp);
+          } else {
+            pp_tabs_save_selected(pp);
+            pp->active_tab = NULL;
+            for (i = 0; i < pp->nb_tabs; ++i) {
+              if (mb->type == MB_RSS) {
+                pp->tabs[i].selected =  board_is_rss_feed(pp->tabs[i].site->board) ? 1 : 0;
+              } else pp->tabs[i].selected =  board_is_regular_board(pp->tabs[i].site->board) ? 1 : 0;
+              //if (mb->type == MB_BOARDS) pp->tabs[i].selected = 1 - pp->tabs[i].selected;
+              if (pp->tabs[i].selected && !pp->active_tab) pp->active_tab = pp->tabs+i;
+            }
+            if (pp->active_tab == NULL) {
+              pp->active_tab = pp->tabs; pp->tabs[0].selected = 1;
+            }
+          }
+          pp_tabs_changed(dock);
+        } break;
+      case PREFS:
+        {
+          launch_wmccc(dock, NULL);
+        } break;
+      case CANCEL:
+        {
+          flag_cancel_task = 1;
+        } break;
+      default:
+        assert(0); 
     }
     ret = 1;
   }
@@ -1457,6 +1512,14 @@ pp_update_fortune(Dock *dock)
   }
 }
 #endif
+static const char *backend_flavour_name(backend_flavour_enum f) {
+  switch (f) {
+    case BACKEND_FLAVOUR_UNENCODED: return "raw tags";
+    case BACKEND_FLAVOUR_ENCODED: return "htmlentitized tags";
+    case BACKEND_FLAVOUR_NO_PANTS: return "no pants";
+  }
+  assert(0); return NULL;
+}
 
 void
 pp_check_balloons(Dock *dock, int x, int y)
@@ -1470,6 +1533,11 @@ pp_check_balloons(Dock *dock, int x, int y)
       switch (pp->mb[i].type) {
       case HELP: msg = _("Bring some help"); break;
       case SCROLLBAR: msg = _("Bring/hide the scrollcoin"); break;
+        case BALLTRAP: msg = _("Enable/disable the balltrap<br>(note that you can also kill "
+                               "all flying ducks with a right clic on the upper part of the dock applet<br>"
+                               "You can also use the wmccc to disable duck hunt on some sites (for example"
+                               "<font color=blue><tt>woof.lu</tt></font>, since the webserver does not enjoy receiving hundreds of <tt>pan!pan!</tt>"
+                               "in the same second)"); break;
       case TRANSPARENT: msg = _("Activate/deactivate the pseudo-transparency (may not work)."); break;
       case UA: msg = _("Change the display mode of the logins/useragents (5 different modes)"); break;
 	//      case SECOND: msg = _("Bring/hide the seconds (when there are less than two messages in the same minute)"); break;
@@ -1497,22 +1565,34 @@ pp_check_balloons(Dock *dock, int x, int y)
         Board *board = pp->tabs[i].site->board;
         char *msg;
         if (board_is_rss_feed(board)) {
-          msg = str_printf("<p>RSS Feed: <b>%s</b></p><br>",
+          msg = str_printf("RSS Feed: <b>%s</b><br>",
                            board->rss_title ? board->rss_title : s->prefs->site_name);
         } else {
-          msg = str_printf("<p>Regular board: <b>%s</b></p>"
-                           "time shift: <font color=blue>%+02d:%02d:%02d</font><br>", 
+          msg = str_printf("Regular board: <b>%s</b>"
+                           "time shift: <font color=blue>%+02d:%02d:%02d</font><br><br>", 
                            s->prefs->site_name,
                            (int)(board->time_shift/3600), 
                            (int)((abs(board->time_shift)/60)%60), 
                            (int)(abs(board->time_shift)%60));
         }
         msg = str_cat_printf(msg, "backend: <font color=blue>%s</font><br>"
+                             "   (flavour=<font color=blue>%s</font>, "
+                             "quality = <font color=blue>%1.1f</font>, "
+                             "ping=<font color=blue>%4.0fms</font>) <br>"
                              "auto_refresh: %s (use ctrl-clic to switch)<br>"
-                             "refresh frequency: <font color=blue>%d</font> sec",
-                             s->prefs->backend_url,
-                             board->auto_refresh ? "<font color=blue>yes</font>" : "<font color=red>no</font>",
+                             "refresh frequency: <font color=blue>%d</font> sec<br>",
+                             s->prefs->backend_url, 
+                             backend_flavour_name(s->prefs->backend_flavour), 
+                             http_stats_site_quality(s), s->http_ping_stat*1000.,
+                             board->auto_refresh ? "<font color=blue>yes</font>" : "<font color=red>no</font><br>",
                              board->board_refresh_delay / (1000/WMCC_TIMER_DELAY_MS));
+        if (!str_is_empty(s->prefs->post_url)) {
+          msg = str_cat_printf(msg, "post: <font color=blue>%s</font> ; <font color=blue>%s</font><br>",
+                               s->prefs->post_url, s->prefs->post_template);
+        } else msg = str_cat_printf(msg, "this board is <font color=blue>read-only</font><br>");
+        if (!str_is_empty(s->prefs->user_cookie)) {
+          msg = str_cat_printf(msg, "cookie: <font color=blue>%.20s%s</font><br>", s->prefs->user_cookie, (strlen(s->prefs->user_cookie)>20) ? "(...)" : "");
+        }
         balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-10, 0, 
                      pp->tabs[i].x, pp->tabs[i].y,
                      pp->tabs[i].w, pp->tabs[i].h, msg);
@@ -1571,15 +1651,16 @@ pp_scrollcoin_move_resize(Dock *dock)
    + mise à jour de pp->zmsg_x2 & pp->zmsg_w */
 void pp_scrollcoin_set(Dock *dock, int show_sc) {
   Pinnipede *pp = dock->pinnipede;
+  int width =  pp->win_width - (pp->tabs_pos == PPT_RIGHT ? pp->tabs_w : 0);
   if (!show_sc) {
     if (pp->sc) scrollcoin_destroy(pp->sc); pp->sc = NULL;
-    pp->zmsg_x2 = pp->win_width - 1;
+    pp->zmsg_x2 = width - 1;
   } else {
-    pp->zmsg_x2 = pp->win_width - SC_W;
+    pp->zmsg_x2 = width - SC_W;
     if (!pp->sc)  
       pp->sc = scrollcoin_create(1,1,1,pp->zmsg_x2+1, pp->zmsg_y1-1, pp->zmsg_h+2, pp->transparency_mode);
     else scrollcoin_resize(pp->sc, pp->zmsg_x2+1, pp->zmsg_y1-1, pp->zmsg_h+2);
-    pp->zmsg_x2 = pp->win_width - SC_W;
+    pp->zmsg_x2 = width - SC_W;
   }
   pp->zmsg_w = pp->zmsg_x2 - pp->zmsg_x1 + 1;
 }
@@ -1634,7 +1715,11 @@ pp_widgets_set_pos(Dock *dock)
   pp_minib_set_pos(pp);
   pp_tabs_set_pos(pp);
   pp_scrollcoin_set(dock, pp->sc != NULL);
-  sw_layout_dockapps(dock, 0, 0, pp->tabs_w-1, pp->tabs_y0-1);
+  if (pp->tabs_pos == PPT_LEFT || pp->tabs_pos == PPT_RIGHT)
+    sw_layout_dockapps(dock, pp->tabs_x0, 0, pp->tabs_x0 + pp->tabs_w-1, pp->tabs_y0-1);
+  else if (pp->tabs_pos == PPT_DOWN)
+    sw_layout_dockapps(dock, -2, -2, 62, 62);
+  else sw_layout_dockapps(dock, -2, pp->tabs_y0, 62, pp->tabs_y0+62);
 }
 
 void

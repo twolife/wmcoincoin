@@ -167,6 +167,8 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVESTR(OPT_dock_balloons_font_family,balloon_fn_family);
   G_SAVEINT(OPT_dock_balloons_font_size,balloon_fn_size);
 
+  G_SAVEBOOL(OPT_balltrap_enable, hunt_opened);
+  G_SAVEINT(OPT_balltrap_max_ducks, hunt_max_duck);
 
   G_SAVEPOS(OPT_dock_pos, dock_xpos, dock_ypos);
 
@@ -184,6 +186,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEBOOL(OPT_pinnipede_use_fake_real_transparency,use_fake_real_transparency);
   G_SAVEBOOL(OPT_pinnipede_use_classical_tabs,pp_use_classical_tabs);
   G_SAVEBOOL(OPT_pinnipede_use_colored_tabs,pp_use_colored_tabs);
+  G_SAVEINT(OPT_pinnipede_tabs_position,pp_tabs_pos);
   G_SAVEBOOL(OPT_pinnipede_hungry_boitakon,hungry_boitakon);
 
   if (memcmp(&p->pp_transparency, &default_p->pp_transparency, sizeof(p->pp_transparency))) {
@@ -318,6 +321,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     SP_SAVEBOOL(OPTSG_pinnipede_use_AM_PM, use_AM_PM);
     //SP_SAVEBOOL(OPTSG_board_auto_refresh, board_auto_refresh);
     SP_SAVEBOOL(OPTSG_pinnipede_mark_id_gaps, mark_id_gaps);
+    SP_SAVEBOOL(OPTS_balltrap_enable, hunt_opened_on_site);
   }
 }
 

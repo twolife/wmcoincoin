@@ -325,6 +325,7 @@ int pop3_board_update(Board *board, char *path) {
   prelog_commit(board);
   return 0;
  err:
+  telnet_session_close(&ts);
   if (uidls) { int i; for (i = 0; i < nb_msg; ++i) FREE_STRING(uidls[i]); free(uidls); }
   prelog_commit(board);
   return 1;

@@ -489,7 +489,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     int i;
 
     myprintf(_("rereading of options '%<YEL %s>' successful\n"), options_full_file_name);
-
+    /*printf("VIREZ MOIVIREZ MOIVIREZ MOIVIREZ MOIVIREZ MOIVIREZ MOIVIREZ MOI\n"
+           "sites=%s,%s,%s..\n", newPrefs.site[0]->site_name,newPrefs.site[1]->site_name,newPrefs.site[2]->site_name);
+    */
     if (editw_ismapped(dock->editw)) editw_unmap(dock, dock->editw);
 
     /* recopie bête de certaines options modifiables sans difficultes */
@@ -531,7 +533,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     if (G_INT_OPT_COPY_IF_CHANGED(palmipede_override_redirect))
       close_palmi = 1;
 
-    if (G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) +
+    if (G_INT_OPT_COPY_IF_CHANGED(pp_tabs_pos) +
+        G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) +
         G_BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) +
 	G_BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) + 
 	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) +
@@ -572,7 +575,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       redraw_pinni = 1;
     }
 
-    G_INT_OPT_COPY_IF_CHANGED(hunt_opened);
+    //G_INT_OPT_COPY_IF_CHANGED(hunt_opened);
     G_INT_OPT_COPY_IF_CHANGED(hunt_max_duck);
 
     /* les options plus light se négocient avec un bon gros refresh */
@@ -606,11 +609,19 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     
     for (i=0; i < MAX_SITES; i++) {
       SitePrefs *p, *np;
-
+      int inp;
       if (Prefs.site[i] == NULL) continue;
       p = Prefs.site[i];
-      np = wmcc_prefs_find_site(&newPrefs, p->site_name); 
-      if (np == NULL) continue;
+      //np = wmcc_prefs_find_site(&newPrefs, p->site_name); 
+      //if (np == NULL) continue;
+      inp = wmcc_prefs_find_site_id(&newPrefs, p->site_name); 
+      if (inp == -1) continue;
+      np = newPrefs.site[inp];
+
+      /* test du changement d'ordre dans les sites */
+      if (inp != i) {
+        rebuild_pinni = 1;
+      }
 
       SP_INT_OPT_COPY(rss_ignore_description);
       SP_INT_OPT_COPY(board_check_delay);
@@ -622,7 +633,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(proxy_auth_user);
       SP_STR_OPT_COPY(proxy_auth_pass);
       SP_INT_OPT_COPY(locale);
-      
+      SP_INT_OPT_COPY(hunt_opened_on_site);
+
       if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) +
 	  SP_STR_OPT_COPY_IF_CHANGED(backend_url)) {
 	myprintf(_("You changed the site/proxy, gethostbyname soon in progress\n"));
@@ -721,6 +733,22 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	sl_insert_new_site(dock->sites, sp);
 
 	rebuild_pinni = 1;
+      }
+    }
+
+    /* remise dans l'ordre de dock->sites->list */
+    {
+      Site * slist[MAX_SITES], *s;
+      int i;
+      memset(slist, 0, sizeof slist);
+      for (s = dock->sites->list; s; s = s->next) {
+        int nid = wmcc_prefs_find_site_id(&newPrefs, s->prefs->site_name);
+        assert(nid != -1);
+        slist[nid] = s;
+      }
+      dock->sites->list = NULL;
+      for (i=MAX_SITES-1; i >= 0; --i) {
+        if (slist[i]) { slist[i]->next = dock->sites->list; dock->sites->list = slist[i]; }
       }
     }
 

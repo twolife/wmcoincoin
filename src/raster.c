@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.19 2004/04/26 20:32:32 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.20 2004/05/16 12:54:30 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.20  2004/05/16 12:54:30  pouaite
+  250c
+
   Revision 1.19  2004/04/26 20:32:32  pouaite
   roger demande le commit
 
@@ -346,8 +349,8 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
 
     s+= cpp;
     if (!(*s == '\t' || *s == ' ')) { err = 1; goto ralala; }
-    s++;
-    if (*s != 'c' && *s != 'g') {err = 2; goto ralala;} /* seulement les fichiers xpms en couleur ou en niveau de gris (en gris les couleurs sont qd même sous la forme #rrggbb, avec rr=gg=bb)  */
+    while (*s == '\t' || *s == ' ') s++;
+    if (*s != 'c' && *s != 'g') {err = 2; printf("expected 'c' or 'g' got '%c'\n", *s); goto ralala;} /* seulement les fichiers xpms en couleur ou en niveau de gris (en gris les couleurs sont qd même sous la forme #rrggbb, avec rr=gg=bb)  */
 
     s++; if (!(*s == ' ')) { err=3; goto ralala; }
     s++;

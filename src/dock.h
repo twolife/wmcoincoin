@@ -18,5 +18,5 @@ void dock_checkout_newstitles(Dock *dock); /* mise à jour du titre défilant de l
 void dock_set_horloge_mode(Dock *dock);
 void dock_unset_horloge_mode(Dock *dock);
 char *dock_build_pixmap_porte(Dock *dock);
-
+float http_stats_site_quality(Site *site);
 #endif

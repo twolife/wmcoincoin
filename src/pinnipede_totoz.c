@@ -6,7 +6,7 @@
 
 typedef struct pp_totoz_img {
   int hash;
-  int status;
+  int status; /* status: 0 = new, 1 = d/l en cours, 2 = notfound, 3 = found */
   char *name, *mime, *realname;
   int w,h;
 } pp_totoz_img;
@@ -20,6 +20,7 @@ struct pp_totoz {
   struct pp_totoz_img *img;
 };
 
+volatile int pp_totoz_state_cnt = 0; /* incrementé a chaque changement d'état d'une image */
 
 static pp_totoz_img*
 pp_totoz_find_img_(Pinnipede *pp, int hash, int *found) {
@@ -50,8 +51,10 @@ pp_totoz_register_img(Pinnipede *pp, char *imgname, int status) {
   img = pp_totoz_find_img_(pp,hash,&found);
   if (found) {
     if (strcmp(imgname, img->name) != 0) {
-      BLAHBLAH(0,printf("ouiiiin collision de hache tout pourri: '%s' = '%s' -> taper sur l'auteur pour qu'il cherche une vrai fonction de hachage\n", imgname, img->name));
+      BLAHBLAH(0,printf("ouiiiin collision de hache tout pourri: '%s' = '%s' -> "
+                        "taper sur l'auteur pour qu'il cherche une vrai fonction de hachage\n", imgname, img->name));
     }
+    if (img->status != status) pp_totoz_state_cnt++;
     img->status = status;
   } else {
     int imgi = img - pp->totoz->img;
@@ -67,6 +70,8 @@ pp_totoz_register_img(Pinnipede *pp, char *imgname, int status) {
     img->realname = 0;
     img->mime = 0;
     img->w = img->h = 0;
+    pp_totoz_state_cnt++;
+    BLAHBLAH(1, myprintf("new image registered: '%<YEL %s>'\n", imgname));
   }
   if (img > pp->totoz->img) assert(img->hash > (img-1)->hash);
   if (img < pp->totoz->img+pp->totoz->nb_img-1) assert(img->hash < (img+1)->hash);
@@ -114,7 +119,11 @@ pp_totoz_rebuild(Dock *dock) {
   pp->totoz->win = None;
   pp->totoz->survol_hash = -42;
   pp->totoz->animate_pid = 0;
-  if (pp->totoz->img) free(pp->totoz->img);
+  if (pp->totoz->img) {
+    int i;
+    for (i = 0; i < pp->totoz->nb_img; ++i) FREE_STRING(pp->totoz->img[i].name);
+    free(pp->totoz->img);
+  }
   pp->totoz->nb_img = 0;
   pp->totoz->max_img = 20;
   ALLOC_VEC(pp->totoz->img, pp->totoz->max_img, struct pp_totoz_img);
@@ -249,14 +258,14 @@ pp_totoz_update_status(Dock *dock, char *imgname) {
         
     /* record de concentration de gotos ! */
     if (f == NULL) { 
-      status = PP_TOTOZ_STATUS_UNKNOWN;
+      status = pp_totoz_img_status(pp, imgname); //PP_TOTOZ_STATUS_UNKNOWN;
     } else if (fgets(s, 512,f) == NULL) { 
       printf("pp_totoz_update_status: uuurg?\n");
       status = PP_TOTOZ_STATUS_NOTFOUND;
     } else if (strncmp(s, "NOTFOUND", 8) == 0) {
       status = PP_TOTOZ_STATUS_NOTFOUND;
     } else if (sscanf(s, " %511s %dx%d %99s", realname, &tw, &th, mimetype) != 4) {
-      printf("pp_totoz_update_status: grunt?\n");
+      printf("pp_totoz_update_status: %s %s grunt?\n", imgname, realname);
       status = PP_TOTOZ_STATUS_NOTFOUND;    
     } else {
       status = PP_TOTOZ_STATUS_FOUND;
@@ -265,39 +274,45 @@ pp_totoz_update_status(Dock *dock, char *imgname) {
     img = pp_totoz_register_img(pp,imgname,status);
     if (status == PP_TOTOZ_STATUS_FOUND) {
       img->w = tw; img->h = th;
-      if (img->mime) free(img->mime);
-      img->mime = strdup(mimetype);
-      if (img->realname) free(img->realname);
-      img->realname = strdup(realname);
+      ASSIGN_STRING_VAL(img->mime, mimetype);
+      ASSIGN_STRING_VAL(img->realname, realname);
     }
     free(fname);
   }
   return img;
 }
 
-int
+static void
 pp_totoz_update_status_all(Dock *dock) {
   Pinnipede *pp = dock->pinnipede;
-  int i, cnt=0;
+  int i;
   for (i = 0; i < pp->totoz->nb_img; ++i) {
-    if (pp->totoz->img[i].status == PP_TOTOZ_STATUS_DOWNLOADING) {
-      /*pp_totoz_update_status(dock, pp->totoz->img[i].name);*/
+    /*if (pp->totoz->img[i].status == PP_TOTOZ_STATUS_DOWNLOADING) {
+      //pp_totoz_update_status(dock, pp->totoz->img[i].name);
       cnt++;
-    } else if (Prefs.board_auto_dl_pictures && pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) {
+    } else */
+    if (Prefs.board_auto_dl_pictures && pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) {
       pp_totoz_update_status(dock, pp->totoz->img[i].name);
       if (pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) pp_totoz_download(dock, pp->totoz->img[i].name);
     }
   }
-  return cnt;
 }
 
 void
 pp_totoz_check_updates(Dock *dock) {
   Pinnipede *pp = dock->pinnipede;
-  if (pp_ismapped(dock) && pp_totoz_update_status_all(dock)) {
-    pp_pv_destroy(pp); 
-    pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
-    pp_refresh(dock, pp->win, NULL);
+  if (pp_ismapped(dock)) {
+    static int saved_pp_totoz_state_cnt = 0;
+    pp_totoz_update_status_all(dock);
+    //printf("pp_totoz_check_updates : pp_totoz_state_cnt = %d\n", pp_totoz_state_cnt);
+    if (pp_totoz_state_cnt != saved_pp_totoz_state_cnt) {
+      //printf("pp_totoz_check_updates : pp_totoz_state_cnt = %d - > pp_update_request\n", pp_totoz_state_cnt);
+      //pp->flag_pp_update_request = 1;
+      pp_pv_destroy(pp); 
+      pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+      pp_refresh(dock, pp->win, NULL);
+    }
+    saved_pp_totoz_state_cnt = pp_totoz_state_cnt;
   }
 }
 
@@ -309,7 +324,6 @@ pp_totoz_request(Dock *dock, char *imgname, int x, int y) {
 
   int old_status = pp_totoz_img_status(pp, imgname);
   pp_totoz_img *img = pp_totoz_update_status(dock,imgname); assert(img);  
-  urlencod_img = pp_totoz_realfname(imgname,0);
   switch (img->status) {
   case PP_TOTOZ_STATUS_UNKNOWN: 
     snprintf(info,1024, "This picture [%s] has not been downloaded, use the popup menu (right clic) "
@@ -358,7 +372,7 @@ pp_totoz_request(Dock *dock, char *imgname, int x, int y) {
         "-background", "white", "-window", swin, sfile, NULL, NULL);
         }
       */
-      BLAHBLAH(0,myprintf("exec wmcoincoin_player %<YEL %s> %s\n", sfile, swin));
+      BLAHBLAH(1,myprintf("exec wmcoincoin_player %<YEL %s> %s\n", sfile, swin));
       ret = execlp("wmcoincoin_player", "wmcoincoin_player", sfile, swin, NULL, NULL);
       if( ret==-1 ) {
         fprintf(stderr, _("Exec failed...(%s)\n"), strerror(errno));
@@ -404,67 +418,75 @@ pp_totoz_download(Dock *dock, unsigned char *imgname) {
 }*/
 
 void
-pp_totoz_download(Dock *dock, unsigned char *imgname) {
-  char *realname = pp_totoz_realfname(imgname,0);
+pp_totoz_download(Dock *dock, unsigned char *imgname) {  
   pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_DOWNLOADING);
-  ccqueue_push_smiley_dl(realname);
-  BLAHBLAH(0, myprintf("Download of picture [%s] queued!\n", realname));
-  free(realname);
+  ccqueue_push_smiley_dl(imgname);
+  BLAHBLAH(0, myprintf("Download of picture %<MAG %s> queued!\n", imgname));
 }
 
+/* appele depuis ccqueue_loop */
 void
 pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
+  Pinnipede *pp = dock->pinnipede;
   HttpRequest r;
-  char *realname, *imgurl=NULL, *pathimg=NULL, *pathdesc=NULL, *cmd;
+  char *imgurl=NULL, *pathimg=NULL, *pathdesc=NULL, *cmd;
   int is_found=0, i=0, lu;
   static char siteroot[]="http://forum.hardware.fr/images/perso";
   static char *extlist[]={"gif", "png", NULL};
   static char *mimelist[]={"image/gif", "image/png", NULL};
   char buf[1500];
   FILE *f;
-  
-  realname = str_printf("[:%s]", imgname);
-  
+
+  //printf("pp_totoz_get_image(%s) : status = %d\n", imgname, pp_totoz_img_status(pp,imgname));
+
+  char *imgfname = pp_totoz_realfname(imgname,0);  
+  pathdesc = str_printf("%s/.wmcoincoin/totoz/%s.desc", getenv("HOME"), imgfname);
   while( !is_found && extlist[i] ) {
-    imgurl = str_printf("%s/%s.%s", siteroot, imgname, extlist[i]);
+    imgurl = str_printf("%s/%s.%s", siteroot, imgfname, extlist[i]);
     wmcc_init_http_request(&r, dock->sites->list->prefs, imgurl);
     http_request_send(&r);
+
+    //printf("pp_totoz_get_image(%s,%s) : status = %d\n", imgname, extlist[i], pp_totoz_img_status(pp,imgname));
     
     if (http_is_ok(&r)) {
       is_found = 1;
-      pathimg  = str_printf("%s/.wmcoincoin/totoz/%s.%s", getenv("HOME"), imgname, extlist[i]);
-      pathdesc = str_printf("%s/.wmcoincoin/totoz/%s.desc", getenv("HOME"), imgname);
+      pathimg  = str_printf("%s/.wmcoincoin/totoz/%s.%s", getenv("HOME"), imgfname, extlist[i]);
       wmcc_log_http_request(dock->sites->list, &r);
       
       f = fopen(pathimg, "w");
       if (f == NULL) {
-        myfprintf(stderr, "Impossible d'ouvrir/creer le fichier\n");
-        pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_UNKNOWN);
+        myfprintf(stderr, "pp_totoz_get_image : Impossible d'ouvrir/creer %s : %s\n", pathimg, strerror(errno));
+        pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_UNKNOWN);
       }
       else {
         while( (lu = http_read(&r, buf, 1500)) > 0 && !r.telnet.error && !ferror(f) )
-          fwrite(buf, lu, 1, f);
-        
+          fwrite(buf, lu, 1, f);        
         if ( r.telnet.error || ferror(f) ) {
-         fclose(f);
-          myfprintf(stderr, "Erreur lors du telechargement du fichier\n");
-          pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_NOTFOUND);
-       }
-       else {
-         fclose(f);
-         cmd = str_printf("echo \"%s.%s\" `wmcoincoin_player -i \"%s\"` \"%s\" > \"%s\"", imgname, extlist[i], pathimg, mimelist[i], pathdesc);
-         system(cmd);
+          fclose(f);
+          myfprintf(stderr, "Erreur lors du telechargement du fichier %s\n", pathimg);
+          pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_NOTFOUND);
+        } else {
+          fclose(f);
+          cmd = str_printf("echo \"%s.%s\" `wmcoincoin_player -i \"%s\"` \"%s\" > \"%s\"", imgfname, extlist[i], pathimg, mimelist[i], pathdesc);
+          system(cmd);
           free(cmd);
-          pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_FOUND);
-         pp_totoz_update_status(dock, realname);
+          pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_FOUND);
+          pp_totoz_update_status(dock, imgname);
         }
-        http_request_close(&r);
-       
       }
-      free(pathimg);
-    }
+      FREE_STRING(pathimg);
+      //printf("pp_totoz_get_image(%s,%s) / http_is_ok : status = %d\n", imgname, extlist[i], pp_totoz_img_status(pp,imgname));
+
+    } else pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_NOTFOUND);
+    printf("pp_totoz_get_image(%s,%s) / http_is_not_ok : status = %d\n", imgname, extlist[i], pp_totoz_img_status(pp,imgname));
+    http_request_close(&r);
     i++;
     free(imgurl);
   }
-  free(realname);
+  if (pp_totoz_img_status(pp, imgname) == PP_TOTOZ_STATUS_NOTFOUND) {
+    printf("writing NOTFOUND to %s\n", pathdesc);
+    f = fopen(pathdesc, "w"); if (f) { fprintf(f, "NOTFOUND\n"); fclose(f); }
+  }
+  FREE_STRING(pathdesc);
+  free(imgfname);
 }

@@ -8,3 +8,19 @@
 #include "wmccc_interface.h"
 #include "wmccc_support.h"
 #include "wmccc.h"
+
+void
+on_bottom1_activate                    (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+
+}
+
+
+void
+on_left1_activate                      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+
+}
+

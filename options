@@ -1,5 +1,5 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.64 2004/04/28 22:18:57 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.65 2004/05/16 12:54:28 pouaite Exp $
 
 ###vous pouvez decommenter des options et changer leur valeurs
 
@@ -199,6 +199,9 @@
 
 ### pour que les tabs aient la couleur de fond de leur tribune
 #pinnipede.use_colored_tabs: on
+
+### 1 -> tabs en bas, 2 -> tabs a gauche
+#pinnipede.tabs.position: 1
 
 ### liste des elements declenchant la plopification (en plus de ceux
 ### que vous pouvez ajouter en faisant shift+right clic dans le pinni)
@@ -406,6 +409,13 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 ### qui rode et paf)
 #board.auto_dl_pictures: on
 
+
+#balltrap.enable: off
+#balltrap.max_ducks: 12
+
+### on peut aussi desactiver le balltrap pour certains sites
+#.balltrap.enable: on
+
 ### nombre maximum de messages qui sont conserves en memoire (et affichables dans le pinnipede
 ### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas ete concu pour ca !
 #[.]tribune.max_messages: 400
@@ -505,9 +515,13 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 #OBSOLETE#news.font_family:
 #OBSOLETE#news.font_size:
 #OBSOLETE#[.]check_news:
+#OBSOLETE#[.]check_comments:
 #OBSOLETE#[.]news.delay:
 #OBSOLETE#[.]http.path_end_news_url:
 #OBSOLETE#[.]tribune.backend_type: 
 #OBSOLETE#[.]backend_type: 
 #OBSOLETE#[.]http.path_myposts:
-
+#OBSOLETE#pinnipede.fortune_font_size:
+#OBSOLETE#pinnipede.show_fortune:
+#OBSOLETE#[.]http.path_news_backend:
+#OBSOLETE#[.]news.max_age:

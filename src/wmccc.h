@@ -44,7 +44,7 @@ void prefs_write_to_file(GeneralPrefs *p, FILE *f);
 typedef enum { DLG_SITELIST, DLG_NEW_BOARD, DLG_NEW_RSS, DLG_NEW_POP, 
                DLG_BRONSON_WIZARD, DLG_EDIT_OPTIONS, 
                DLG_CHANGE_BOARD_SETTINGS, DLG_CHANGE_RSS_SETTINGS, DLG_CHANGE_POP_SETTINGS, 
-               DLG_SITE_COLORS, DLG_GLOBAL_PINNIPEDE_OPTIONS, NB_DLG } wmccc_dialog_t;
+               DLG_SITE_COLORS, DLG_GLOBAL_PINNIPEDE_OPTIONS, DLG_PROXY, NB_DLG } wmccc_dialog_t;
 GtkWidget *getdlg(wmccc_dialog_t dlg);
 GtkWidget *my_lookup_widget(GtkWidget *widget, const gchar *widget_name_);
 void wmccc_run_dialog(wmccc_dialog_t dlg, gboolean hide_parent);
@@ -67,4 +67,5 @@ void run_new_board_dialog();
 void run_new_rss_dialog();
 void run_new_pop_dialog();
 void run_edit_dialog();
+GtkWidget *bronson_wizard(const char *widget_name);
 #endif

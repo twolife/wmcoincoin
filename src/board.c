@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.28 2004/04/26 20:32:31 pouaite Exp $
+  rcsid=$Id: board.c,v 1.29 2004/05/16 12:54:29 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.29  2004/05/16 12:54:29  pouaite
+  250c
+
   Revision 1.28  2004/04/26 20:32:31  pouaite
   roger demande le commit
 
@@ -1314,7 +1317,7 @@ board_do_balltrap(Board *board, int last_id) {
    it = board_find_id(board, last_id);
    if (it) it = it->next;
  } else {
-    //return; /* à l'initialisation, on de lacher un milliard de canards */
+   return; /* à l'initialisation, on de lacher un milliard de canards */
   }
   while (it) { 
     balltrap_check_message(it->id, it->msg);
@@ -1626,14 +1629,17 @@ regular_board_update(Board *board, char *path) {
     clear_XMLBlock(&xmlb);
     if ((pos = get_XMLBlock(s, strlen(s), "?xml", &xmlb))>=0) {
       XMLAttr *a;
+      int found = 0;
+      if (board->encoding) free(board->encoding);
       for (a = xmlb.attr; a; a = a->next) {
         if (str_case_startswith(a->name, "encoding")) {
-          if (board->encoding) free(board->encoding);
           board->encoding = str_ndup(a->value,a->value_len);
           BLAHBLAH(1,printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding));
+          found = 1;
           break;
         }
       }
+      if (!found) board->encoding = strdup("UTF-8"); /* defaut si pas d'encoding specifie */
     }
     destroy_XMLBlock(&xmlb);
   }
@@ -1797,12 +1803,12 @@ regular_board_update(Board *board, char *path) {
 		board->site->prefs->site_name,
 		board->site->prefs->backend_url, errmsg);
     }
-    http_request_close(&r);
   } else {
     http_err_flag = 1;
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      board->site->prefs->site_name, board->site->prefs->backend_url, http_error());
   }
+  http_request_close(&r);
   return http_err_flag;
 }
 

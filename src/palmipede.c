@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.24 2004/04/28 22:19:00 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.25 2004/05/16 12:54:29 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.25  2004/05/16 12:54:29  pouaite
+  250c
+
   Revision 1.24  2004/04/28 22:19:00  pouaite
   bugfixes dae + des trucs que j'ai oublie
 
@@ -175,6 +178,7 @@
 #include "coin_xutil.h"
 #include "coincoin.h"
 #include "fontcoincoin.h"
+#include "kbcoincoin.h"
 #include "../xpms/editwin_minib.xpm"
 #include "../xpms/clippy.xpm"
 #include "spell_coin.h" 
@@ -240,7 +244,6 @@ struct _EditW {
   Window win;
   Pixmap pix;
   CCFontId fn; //XFontStruct *fn;
-  XIC input_context;
   unsigned char *buff;
 
   int  buff_sz;
@@ -288,7 +291,7 @@ struct _EditW {
 
   Pixmap clippy_pixmap;
   int clippy_w, clippy_h;
-  
+
   SitePrefs *prefs;
 };
 
@@ -967,9 +970,11 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   
   /* le texte */
   //XSetFont(dock->display, dock->NormalGC, ew->fn->fid);
-  if (!Prefs.pp_use_colored_tabs) 
+  if (!Prefs.pp_use_colored_tabs) {
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->txt_bgcolor));
-  else {
+    XFillRectangle(dock->display, d, dock->NormalGC, 
+                   EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
+  } else {
     XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_bgcolor));
     XFillRectangle(dock->display, d, dock->NormalGC, 
                    EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
@@ -1338,32 +1343,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
                            EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
   */
   set_window_class_hint(dock->display, ew->win, "wmcoincoin", "palmipede");
-  /* cette ligne marchait pile poil sur mon qwerty, je la garde en reserve...
-     en la reregardant je crois qu'elle etait debile, elle defibnit
-     deux fois XNInputSyle avec deux valeurs diffrenetes...
-    ew->input_context = 
-        XCreateIC(dock->input_method, 
-	      XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-	      XNInputStyle, XIMStatusNothing,
-	      XNClientWindow, ew->win,
-	      NULL);
-  */
-
-  /* celle-ci est parfaite sur l'azerty...
-    ew->input_context = 
-    XCreateIC(dock->input_method, XNInputStyle, 1032,
-	      XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);*/
-#ifndef sun
-  if (dock->input_method) {
-    ew->input_context = 
-      XCreateIC(dock->input_method, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-		XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);
-
-    if(ew->input_context == NULL){
-      fprintf(stderr, _("Warning : errot in XCreateIC() !\n"));
-    }
-  }
-#endif
+  kb_create_input_context_for(dock, ew->win);
 
   /* cree le pixmap et le rempli de noir */
   ew->pix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
@@ -1406,11 +1386,7 @@ void
 editw_unmap(Dock *dock, EditW *ew)
 {
   ew->mapped = 0;
-#ifndef sun
-  if (ew->input_context)
-    XDestroyIC(ew->input_context);
-  ew->input_context = NULL;
-#endif
+  kb_release_input_context();
   //  fprintf(stderr, "destroy! %lx\n", (unsigned long)ew->win);
   XDestroyWindow(dock->display, ew->win);
   //  fprintf(stderr, "destroy2!\n");
@@ -1623,7 +1599,7 @@ editw_build(Dock *dock)
   ALLOC_OBJ(ew, EditW);
   ew->mapped = 0;
   ew->action = NOACTION;
-  ew->input_context = NULL;
+  kb_build();
   ew->buff_num = 0;
   ew->win_xpos = ew->win_ypos = 0;
   ew->undo.buff = NULL;
@@ -1676,15 +1652,11 @@ editw_build(Dock *dock)
 void
 editw_rebuild(Dock *dock)
 {
-  Site *s;
   EditW *ew = dock->editw;
   int show = 0;
   if (editw_ismapped(ew)) { editw_unmap(dock, ew); show = 1; }
   editw_reload_colors(dock, ew);
-  ew->prefs = NULL;
-  for (s = dock->sites->list; s; s = s->next) {
-    if (s->prefs->check_board) ew->prefs = s->prefs;
-  }
+  editw_select_default_site(dock);
   if (show) { editw_show(dock, ew->prefs, 0); }
 }
 
@@ -1932,7 +1904,7 @@ editw_next_site(Dock *dock, int dir) {
     if (sc == NULL) sc = dock->sites->list;
     if (sc == s0) break;
     assert(sc);
-    if (sc && sc->prefs->check_board && str_is_empty(sc->prefs->post_url)) {
+    if (sc && sc->prefs->check_board && !str_is_empty(sc->prefs->post_url)) {
       sb = sc;
       if (dir == +1) break;
     }
@@ -1955,7 +1927,7 @@ editw_balise_tt(EditW *ew) {
 */
 
 #define FORWARD_KEY XSendEvent(dock->display, dock->rootwin, True, KeyPressMask, event); \
-                    editw_set_kbfocus(dock, ew, 1);
+  if (editw_ismapped(dock->editw)) editw_set_kbfocus(dock, ew, 1);
 
 static void floude(Dock *dock, char *s) {
   char *msg = s; 
@@ -1975,28 +1947,26 @@ static void floude(Dock *dock, char *s) {
   editw_hide(dock, dock->editw);
 }
 
+
 int
 editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 {
-  KeySym ksym;
-  int klen;
-  unsigned char buff[4];
-  static XComposeStatus compose_status = { 0, 0 };
+  //static XComposeStatus compose_status = { 0, 0 };
   static unsigned ctrl_mem = 0;
   static unsigned lev = 0;
   if (!editw_ismapped(dock->editw) || ew->action != NOACTION) return 0; /* animation encours */
   if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
-      (ew->input_context && XFilterEvent(event, None))) {
+      (kb_state()->input_context && XFilterEvent(event, None))) {
     //printf("forward key: \n");
     FORWARD_KEY;
     return 1;
   }
-
-  klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
+  kb_lookup_string(dock, &event->xkey);
   if (!(event->xkey.state & ControlMask) || !(event->xkey.state & ShiftMask)) { ctrl_mem = 0; lev = 0; }
-  else { ctrl_mem ^= ksym; ctrl_mem += (ksym & 0xff) << 4; lev++; }
-  //printf("klen=%2d %08x %c state=%08x %04x lev=%d buff=%02x%02x%02x%02x\n", klen, ksym, ksym, event->xkey.state, ctrl_mem, lev,
-  //buff[0],buff[1],buff[2],buff[3]);
+  else { ctrl_mem ^= kb_state()->ksym; ctrl_mem += (kb_state()->ksym & 0xff) << 4; lev++; }
+  /*printf("klen=%2d %08x %c state=%08x buff=%02x%02x%02x%02x\n", 
+         kb_state()->klen, (int)kb_state()->ksym, (int)kb_state()->ksym, event->xkey.state,
+         kb_state()->buff[0],kb_state()->buff[1],kb_state()->buff[2],kb_state()->buff[3]);*/
 
   if (lev >= 3) {
     switch (ctrl_mem) {
@@ -2021,10 +1991,10 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     return 1;
   }
 
-  if (ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
+  if (kb_state()->ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
     editw_insert_char(ew, (unsigned char)'¤');
   } else if (event->xkey.state & Mod1Mask) {
-    switch (ksym) {
+    switch (kb_state()->ksym) {
       case 'I':
       case 'i': editw_balise(ew,"<i>", "</i>"); break;
       case 'B':
@@ -2036,17 +2006,17 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       case 'M':
       case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
       case 'O':
-      case 'o': editw_insert_string(ew, _("_o/* <b>BLAM</b>!")); break;
+      case 'o': editw_insert_string(ew, _("_o/* <b>BLAM</b>! ")); break;
       case 'P':
-      case 'p': editw_insert_string(ew, _("_o/* <b>paf</b>!")); break;
+      case 'p': editw_insert_string(ew, _("_o/* <b>paf</b>! ")); break;
       case 'C':
-      case 'c': editw_insert_string(ew, _("sale chauve")); break;
+      case 'c': editw_insert_string(ew, _("sale chauve ")); break;
       case 'N':
-      case 'n': editw_insert_string(ew, "ounet"); break;
+      case 'n': editw_insert_string(ew, "ounet "); break;
       case 'G':
-      case 'g': editw_insert_string(ew, "Ta gueule pwet"); break;
+      case 'g': editw_insert_string(ew, "Ta gueule pwet "); break;
       case 'Z':
-      case 'z': editw_insert_string(ew, "La SuSE sa sent bon, sai libre"); break;
+      case 'z': editw_insert_string(ew, "La SuSE sa sent bon, sai libre "); break;
       case 'F':
       case 'f': editw_set_pinnipede_filter(dock); break;
       case XK_KP_Left:
@@ -2063,7 +2033,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
         FORWARD_KEY; break;
     }
   } else if (event->xkey.state & ControlMask) {
-    switch (ksym) {
+    switch (kb_state()->ksym) {
     case 'A':
     case 'a': editw_move_start_of_line(ew, 0); break;
 
@@ -2124,15 +2094,10 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       FORWARD_KEY; break;
     }
   } else {
-    if (ew->input_context) {
-      klen = XmbLookupString(ew->input_context, &event->xkey, (char*) buff, sizeof(buff), &ksym, 0);
-    } else {
-      klen = XLookupString(&event->xkey, (char*) buff, sizeof(buff), &ksym,
-      			   0);
-    }
-    //printf("(BIS) klen=%2d %08x %c\n", klen, ksym, ksym);
+    kb_lookup_mb_string(dock, &event->xkey);
+    //printf("(BIS) klen=%2d %08x %c\n", kb_state()->klen, kb_state()->ksym, kb_state()->ksym);
 
-    switch (ksym) {
+    switch (kb_state()->ksym) {
     case XK_KP_Left:
     case XK_Left:
       editw_move_left(ew, event->xkey.state & ShiftMask); break;
@@ -2187,7 +2152,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case XK_KP_6:
     case XK_KP_7:
     case XK_KP_8:
-    case XK_KP_9: editw_insert_char(ew, (unsigned char)(ksym - XK_KP_0) + '0'); break;
+    case XK_KP_9: editw_insert_char(ew, (unsigned char)(kb_state()->ksym - XK_KP_0) + '0'); break;
     case XK_KP_Decimal: editw_insert_char(ew, '.'); break;
     case XK_KP_Subtract: editw_insert_char(ew, '-'); break;
     case XK_KP_Add: editw_insert_char(ew, '+'); break;
@@ -2206,21 +2171,21 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       }
       break;
     default:
-      if (ksym <= 0x00ff && (ksym & 0xff)) {
-        //printf("insert ksym=%04x -> car = '%c'", ksym, buff[0]);
-	//editw_insert_char(ew, (unsigned char)(ksym & 0xff));
-	if (buff[0])
-	  editw_insert_char(ew, (unsigned char)buff[0]);
+      if (kb_state()->ksym <= 0x00ff && (kb_state()->ksym & 0xff)) {
+        //printf("insert kb_state()->ksym=%04x -> car = '%c'", kb_state()->ksym, buff[0]);
+	//editw_insert_char(ew, (unsigned char)(kb_state()->ksym & 0xff));
+	if (kb_state()->buff[0])
+	  editw_insert_char(ew, (unsigned char)kb_state()->buff[0]);
       }
       break;
     }
     /*
-    if (ksym > ' ' && ksym <= 0xff) {
+    if (kb_state()->ksym > ' ' && kb_state()->ksym <= 0xff) {
       editw_insert_char(dock, ew, c);
     */
   }
   editw_refresh(dock, ew);
-  //printf("ksym=%04x klen=%d buff=%02x(%c) %02x %02x %02x\n",(unsigned)ksym,klen, buff[0], buff[0], buff[1],buff[2],buff[3]);
+  //printf("kb_state()->ksym=%04x klen=%d buff=%02x(%c) %02x %02x %02x\n",(unsigned)kb_state()->ksym,klen, buff[0], buff[0], buff[1],buff[2],buff[3]);
   //printf("cassos\n");
   return 1;
 }

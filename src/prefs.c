@@ -20,6 +20,7 @@ struct {
   char site_url[500];
   char path_tribune_add[500];
   char path_tribune_backend[500];
+  int backend_type;
 } ObsoleteFeatures;
 
 void update_prefs_from_obsolete_features(SitePrefs *sp) {
@@ -32,6 +33,11 @@ void update_prefs_from_obsolete_features(SitePrefs *sp) {
   while (path_tribune_add[0] == '/') path_tribune_add++;
   ASSIGN_STRING_VAL(sp->backend_url, str_printf("%s/%s", site_url, path_tribune_backend));
   ASSIGN_STRING_VAL(sp->post_url, str_printf("%s/%s", site_url, path_tribune_add));
+  switch (ObsoleteFeatures.backend_type) {
+    case 1 : sp->backend_flavour = BACKEND_FLAVOUR_UNENCODED; break;
+    case 2 : sp->backend_flavour = BACKEND_FLAVOUR_ENCODED; break;
+    case 3 : sp->backend_flavour = BACKEND_FLAVOUR_NO_PANTS; break;
+  }
 }
 
 /* construit le useragent par défaut */
@@ -757,6 +763,7 @@ wmcc_site_prefs_set_default(SitePrefs *p, int verbatim) {
   p->time_difference = 0;
   p->mark_id_gaps = 1;
   p->check_board = 1;
+  p->hunt_opened_on_site = 1;
   //p->board_auto_refresh = 1;
 }
 
@@ -909,6 +916,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pp_trollscore_mode = 1;           
   p->pp_use_classical_tabs = 0;
   p->pp_use_colored_tabs = 1;
+  p->pp_tabs_pos = 2; /* a gauche */
   
   p->ew_do_spell = 0;                  /*Ca fonctionne (?)
 					 donc je l'active par defaut
@@ -992,7 +1000,7 @@ wmcc_prefs_destroy(GeneralPrefs *p)
     FREE_STRING(p->post_cmd[i]);
   }
   FREE_STRING(p->board_scrinechote);
-
+  FREE_STRING(p->gogole_search_url);
   for (i=0; i < p->nb_sites; i++) { 
     assert(p->site[i]);
     wmcc_site_prefs_destroy(p->site[i]); free(p->site[i]); p->site[i] = NULL; 
@@ -1106,8 +1114,13 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     case OBSOLETE_OPT_news_font_family:
     case OBSOLETE_OPT_news_font_size:
     case OBSOLETE_OPTSG_check_news:
+    case OBSOLETE_OPTSG_check_comments:
     case OBSOLETE_OPTSG_news_delay:
+    case OBSOLETE_OPTSG_news_max_age:
     case OBSOLETE_OPTSG_http_path_end_news_url:
+    case OBSOLETE_OPTSG_http_path_news_backend:
+    case OBSOLETE_OPT_pinnipede_fortune_font_size:
+    case OBSOLETE_OPT_pinnipede_show_fortune:
     case OBSOLETE_OPTSG_board_auto_refresh: { 
     } break;
     case OPT_verbosity_underpants: {
@@ -1139,6 +1152,15 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     } break;
     case OPT_board_enable_hfr_pictures: {
       CHECK_BOOL_ARG(p->board_enable_hfr_pictures);
+    } break;
+    case OPT_balltrap_enable: {
+      CHECK_BOOL_ARG(p->hunt_opened);
+    } break;
+    case OPT_balltrap_max_ducks: {
+      CHECK_INTEGER_ARG(0, 1000, p->hunt_max_duck);
+    } break;
+    case OPTS_balltrap_enable: {
+      CHECK_BOOL_ARG(sp->hunt_opened_on_site);
     } break;
     case OPT_tribune_post_cmd: {
       ASSIGN_STRING_VAL(p->post_cmd[0], arg);
@@ -1199,7 +1221,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     } break; 
     case OPTSG_rss_ignore_description: {
       CHECK_BOOL_ARG(sp->rss_ignore_description);
-    }
+    } break;
     case OPTSG_palmipede_username: {
       ASSIGN_STRING_VAL(sp->user_name, arg);
     } break; 
@@ -1219,7 +1241,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
       ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
     } break; 
     case OBSOLETE_OPTSG_tribune_backend_type: 
-    case OBSOLETE_OPTSG_backend_type: 
+    case OBSOLETE_OPTSG_backend_type: {
+      CHECK_INTEGER_ARG(1,3, ObsoleteFeatures.backend_type);
+    } break;
     case OPTSG_backend_flavour: {
       CHECK_INTEGER_ARG(1,3, sp->backend_flavour);
     } break;
@@ -1426,6 +1450,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     case OPT_pinnipede_use_colored_tabs: {
       CHECK_BOOL_ARG(p->pp_use_colored_tabs);
     } break; 
+    case OPT_pinnipede_tabs_position: {
+      CHECK_INTEGER_ARG(1, 3, p->pp_tabs_pos);
+    } break;
     case OPT_pinnipede_plop_keywords: {
       CHECK_KEY_LIST(p->plopify_key_list,0,3);
     } break; 
@@ -1490,6 +1517,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
         else if (opt_num == OPT_pop_site) bt = BACKEND_TYPE_POP;
         if ((err = wmcc_prefs_add_site(p, global_sp, arg, bt))) return err;
         ObsoleteFeatures.site_url[0] = ObsoleteFeatures.path_tribune_add[0] = ObsoleteFeatures.path_tribune_backend[0] = 0;
+        ObsoleteFeatures.backend_type = 1;
       }
     } break;
     case OPT_pinnipede_auto_open: {
@@ -1564,6 +1592,7 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
       char *s;
       wmcc_options_id i;
       SitePrefs *sp;
+      int bestmatch;
 
       if (opt_name[0] == '.') {
 	s = opt_name + 1;
@@ -1577,29 +1606,29 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
 	sp = global_sp;
       }
 
+      bestmatch = -1;
       for (i=0; i < NB_WMCC_OPTIONS; i++) {
-	char *w;
 	if (wmcc_options_strings[i][0] == '.' || wmcc_options_strings[i][0] == '!') {
-	  w = wmcc_options_strings[i] + 1;
+          if (strcasecmp(wmcc_options_strings[i]+1, s) == 0)
+            if (opt_name[0] == '.' || bestmatch < 0)
+              bestmatch = i;
 	} else {
-	  w = wmcc_options_strings[i];
-	}
-
-	if (strcasecmp(s, w)==0) {
-	  if (opt_name[0] != '.' && wmcc_options_strings[i][0] == '.') {
-	    error = str_printf(_("line %d: option '%s' is a site option\n"), lcnt, opt_name); 
-	    goto ouille;
-	  }
-	  if (opt_name[0] == '.' && wmcc_options_strings[i][0] != '.' && wmcc_options_strings[i][0] != '!') {
-	    error = str_printf(_("line %d: option '%s' can't be used as a site option\n"), lcnt, opt_name);
-	    goto ouille;
-	  }
-	  error = wmcc_prefs_validate_option(p, sp, global_sp, i, opt_arg, verbatim);
-	  if (error) goto ouille;
-	  break;
+          if (strcasecmp(wmcc_options_strings[i], opt_name)==0) bestmatch = i;
 	}
       }
-      if (i == NB_WMCC_OPTIONS) {
+      if (bestmatch >= 0) {
+        i = bestmatch;
+        if (opt_name[0] != '.' && wmcc_options_strings[i][0] == '.') {
+          error = str_printf(_("line %d: option '%s' is a site option\n"), lcnt, opt_name); 
+          goto ouille;
+        }
+        if (opt_name[0] == '.' && wmcc_options_strings[i][0] != '.' && wmcc_options_strings[i][0] != '!') {
+          error = str_printf(_("line %d: option '%s' can't be used as a site option\n"), lcnt, opt_name);
+          goto ouille;
+        }
+        error = wmcc_prefs_validate_option(p, sp, global_sp, i, opt_arg, verbatim);
+        if (error) goto ouille;
+      } else {
 	if (strcasecmp(opt_name, "include") == 0) {
 	  if (wmcc_prefs_read_options_recurs(p, global_sp, opt_arg, lvl+1, err_str, verbatim)) {
 	    error = str_printf(_(" [line %d] %s\n"), lcnt, *err_str);
@@ -1673,6 +1702,7 @@ wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname) {
           exit(1);
         }
       }
+      FREE_STRING(s);
     } while (!feof(f) && err == NULL);
   } else {
     fprintf(stderr, "could not open %s : %s\n", fname, strerror(errno));

@@ -71,7 +71,7 @@ totoz_bookmark_append_file(Dock *dock, const char *fname) {
     pop = 0;
     p = strrchr(line, ']'); 
     if (p == NULL || p == line
-        || strncmp(line,"[:",2)) {
+        || strncmp(line,"[:",2) || p - line < 3) {
       printf("wrong hfr smiley in '%s' here: '%s'\n", fname, line); continue;
     }
     if (p[1]) { sscanf(p+1, "%d",&pop); p[1] = 0; }

@@ -65,7 +65,7 @@ int from64tobits(char *out, const char *in, int maxlen)
     register unsigned char digit1, digit2, digit3, digit4;
     char *a, *b;
 
-    for (a = in, b=in; *a; ++a) {
+    for (a = (char*)in, b=(char*)in; *a; ++a) {
       if (!isspace(*a)) *b++ = *a;
     }
 

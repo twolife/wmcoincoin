@@ -38,4 +38,5 @@ void set_window_sizepos_hints(Display *display, Window win,
                               int minh, int baseh, int maxh);
 void set_window_class_hint(Display *display, Window win, char *res_class, char *res_name);
 void show_gc(Display *, GC);
+
 #endif

@@ -1,4 +1,5 @@
 #include "coincoin.h"
+#include "dock.h"
 #include "coin_xutil.h"
 
 typedef struct _Plopup_entry {
@@ -109,13 +110,16 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
   Plopup_entry *e;
   XSetWindowAttributes wa;
   int y;
-  int scrw, scrh;
+  int xiscrnum = 0;
+  int scrw, scrh, scrx, scry;
   PicoHtml *ph_descr = NULL;
 
   assert(pup->win == None);
   if (pup->first == NULL) return;
 
   pup->callback = cback;
+
+  xiscrnum = MAX(dock_find_xiscreen_num(dock, winx, winy), 0);
 
   pup->win_xpos = winx;
   pup->win_ypos = winy;
@@ -140,12 +144,14 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
   pup->win_height += pup->descr_height;
   pup->win_ypos -= pup->descr_height;
 
-  scrw = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
-  scrh = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
-  if (pup->win_xpos < 0) pup->win_xpos = 0;
-  if (pup->win_ypos < 0) pup->win_ypos = 0;
-  if (pup->win_xpos + pup->win_width > scrw) pup->win_xpos = scrw-pup->win_width;
-  if (pup->win_ypos + pup->win_height > scrh) pup->win_ypos = scrh-pup->win_height;
+  scrw = dock->xiscreen[xiscrnum].width; //WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
+  scrh = dock->xiscreen[xiscrnum].height; //HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
+  scrx = dock->xiscreen[xiscrnum].x_org;
+  scry = dock->xiscreen[xiscrnum].y_org;
+  if (pup->win_xpos < scrx) pup->win_xpos = scrx;
+  if (pup->win_ypos < scry) pup->win_ypos = scry;
+  if (pup->win_xpos + pup->win_width > scrx + scrw) pup->win_xpos = scrx + scrw - pup->win_width;
+  if (pup->win_ypos + pup->win_height > scry + scrh) pup->win_ypos = scry + scrh - pup->win_height;
 
   pup->active_entry = NULL;
   pup->win = XCreateSimpleWindow (dock->display, RootWindow(dock->display,dock->screennum), 

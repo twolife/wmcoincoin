@@ -1,7 +1,46 @@
+--------------------------v2.5.0-c-----------------------------------------
+2004-05-16  pouaite  <c0in@altern.org>
+	
+	* encore des bugfixes, en particulier sur le balltrap, qui est
+	maintenant contrôlé par deux switches:
+	
+	  - le canard de la barre de boutons du pinnipede permet de
+	  desactiver globalement le balltrap.
+	
+	  - dans le wmccc, le dialogue "site options" permet de desactiver
+	  le balltrap sur certains sites (par ex. sur woof.lu)
+	
+	Il est aussi possible de liquider silencieusement tous les canards
+	qui volent avec un clic droit sur la partie supérieure de l'applet
+	(et le clic gauche permet de faire des lâchers de canards en
+	plastique).
+	
+	* les tabs peuvent être positionnés à gauche du pinni (par
+	défaut), ou bien en bas, ou à droite du pinni.
+	
+	* le pb de couleur de fond du palmi (qd l'options 'colored tabs'
+	n'est pas cochée) est fixé.
+	
+	* le d/l des smileys hfr ne devrait plus partir en vrille quand
+	hfr est down.
+	
+--------------------------v2.5.0-b-----------------------------------------
+2004-05-02  pouaite  <c0in@altern.org>
+
+	* plein de petits bugs fixes sur le balltrap, la relecture des
+	anciennes options, le changement de l'ordre des sites dans le
+	wmccc, etc (j'ai déjà oublié la liste :/)
+	
+--------------------------v2.5.0-a-----------------------------------------
 2004-04-28  pouaite  <c0in@altern.org>
 
+	* src/http.c: wmcc va chercher un proxy par défaut dans la
+	variable d'env http_proxy. c'est aussi celui qui est utilisé pour
+	le d/l des smileys hfr.
+
 	* quelques microbugfixes inspirés par les remarques constructives
-	du pointilleux dae.
+	du pointilleux dae (qui decroche le titre envié de Bug Reporter Of
+	The Month) + mini corrections dans le totoz_get
 
 2004-04-27  pouaite  <c0in@altern.org>
 

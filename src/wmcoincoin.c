@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.93 2004/04/28 22:19:01 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.94 2004/05/16 12:54:30 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.94  2004/05/16 12:54:30  pouaite
+  250c
+
   Revision 1.93  2004/04/28 22:19:01  pouaite
   bugfixes dae + des trucs que j'ai oublie
 
@@ -512,6 +515,7 @@ dock_get_icon_pos(Dock *dock, int *iconx, int *icony)
 void
 check_if_board_was_updated(Dock *dock)
 {
+  static int pix_trolloscope_refresh_cnt = 0;
   if (flag_updating_board == 0) {
     if (flag_board_updated) {
       Site *s;
@@ -530,11 +534,14 @@ check_if_board_was_updated(Dock *dock)
       }
       BLAHBLAH(2,myprintf("%<red checkout_tribune>: %<WHT trollo_rate <- %f, trollo_score <- %f>\n", dock->trib_trollo_rate, dock->trib_trollo_score));
 
-      dock_update_pix_trolloscope(dock);
+      pix_trolloscope_refresh_cnt = 1000;
 
       pp_set_board_updated(dock);
 
       flag_board_updated = 0;
+    } 
+    if (++pix_trolloscope_refresh_cnt > 100) {
+      dock_update_pix_trolloscope(dock); pix_trolloscope_refresh_cnt = 0;
     }
   }
 }
@@ -556,10 +563,12 @@ wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url)
   r->host_path = NULL;
   for (i=0; i < su.path_len; ++i) r->host_path = str_cat_printf(r->host_path, "/%s", su.path[i]);
   if (r->host_path == NULL) r->host_path = strdup("/");
-  if (sp->proxy_name) r->proxy_name = strdup(sp->proxy_name);
-  if (sp->proxy_auth_user && sp->proxy_auth_pass) 
-    r->proxy_user_pass = str_printf("%s:%s", sp->proxy_auth_user, sp->proxy_auth_pass);
-  if (sp->proxy_port) r->proxy_port = sp->proxy_port;
+  if (sp->proxy_name) {
+    r->proxy_name = strdup(sp->proxy_name);
+    if (sp->proxy_auth_user && sp->proxy_auth_pass) 
+      r->proxy_user_pass = str_printf("%s:%s", sp->proxy_auth_user, sp->proxy_auth_pass);
+    r->proxy_port = sp->proxy_port;
+  }
   r->pragma_nocache = sp->proxy_nocache;
   r->use_if_modified_since = sp->use_if_modified_since;
   r->user_agent = strdup(app_useragent);
@@ -715,8 +724,7 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
     if ( *reponse != 0 ) {
 			char *s;
       s = formate_erreur( site->prefs->site_name, reponse ); 
-      if (s) msgbox_show(dock, s);
-      free(s);
+      if (s) { msgbox_show(dock, s); free(s); }
       free(reponse);
     }
     http_request_close(&r);
@@ -794,13 +802,14 @@ launch_wmccc(Dock *dock,...)
       } break;
     default: /* pôpa (wmcc) */
       {
-        printf("forked wmccc, pid=%d\n", dock->wmccc_pid);
+        BLAHBLAH(1,printf("forked wmccc, pid=%d\n", dock->wmccc_pid));
       } break;
     }
   } else {
     printf("wmccc is already running .. pid = %d\n", dock->wmccc_pid);
   }
   va_end(ap);
+  free(args[3]);
   free(spid);
   free(stmpopt);
   return 0;
@@ -874,10 +883,9 @@ void check_balloons(Dock *dock)
 
       if (dock->door_state == CLOSED && dock->horloge_mode == 0) {
 	char s[2048];
-	snprintf(s,2048,_("<p align=center><b>Titles of the news</b></p>"
-			  "<font color=blue><tt>Left Click</tt></font><tab>: display the article currently scrolling<br>"
-			  "<font color=blue><tt>Middle Click</tt></font><tab>: instant update of the list of news<br>"
-			  "<font color=blue><tt>Right Click</tt></font><tab>: open/close the news window<br>"));
+	snprintf(s,2048,_("If the balltrap is enabled, you can:<br>"
+			  "- launch plastic ducks with <font color=blue><tt>Left Click</tt></font><br>"
+			  "- quickly kill all ducks with a <font color=blue><tt>Right Click</tt></font><br>"));
 	balloon_test(dock,x,y,iconx,icony,0,3,3,57,11,
 		     s);
 	balloon_test(dock,x,y,iconx,icony,0,TROLLOSCOPE_X,TROLLOSCOPE_Y,TROLLOSCOPE_WIDTH,TROLLOSCOPE_HEIGHT,
@@ -1064,7 +1072,7 @@ sigpipe_signal(int signum UNUSED) {
   if (in_sigpipe == 0) { /* bon finalement je l'ai eu le bug occasionnel de sigpipe infini quand on se delogue..
                             ça devrait un peu aider */
     in_sigpipe++;
-    fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n"));
+    BLAHBLAH(1,fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n")));
     wmcc_save_or_restore_state(_dock, 0);
     in_sigpipe--;
   }
@@ -1379,6 +1387,7 @@ void X_loop()
 
   /* le chef est-il dans le bureau ? */
   if (flag_discretion_request == +1 && !Prefs.auto_swallow) {
+    balltrap_armageddon(dock);
     if ((dock->discretion_saved_state.palmipede_used = editw_ismapped(dock->editw))) {
       editw_unmap(dock, dock->editw);
     }
@@ -1989,7 +1998,7 @@ void test_time_functions() {
  exit(0);
 }
 #endif
-int x_error_handler_debug(Display *dpy, XErrorEvent *err) {
+int x_error_handler_debug(Display *dpy UNUSED, XErrorEvent *err UNUSED) {
   fprintf(stderr, "X11 error\n");
   dump_backtrace();
   abort();

@@ -37,7 +37,6 @@ void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1) {
   SwallowCoincoin *sw = dock->swallow;;
   SwallowedApp *sa;
   int y = y1, yspacing = 2, count = 0;
-  //printf("sw->apps=%p x0=%d y0=%d x1=%d y1=%d winh=%d\n", sw->apps,x0,y0,x1,y1,sw->apps ? sw->apps->winh : -1);
   if (sw->x0 != x0 || sw->x1 != x1 || sw->y0 != y0 || sw->y1 != y1 || sw->layout_dirty) {
     sw->layout_dirty = 0;
     sw->x0 = x0; sw->x1 = x1; sw->y0 = y0; sw->y1 = y1;
@@ -46,7 +45,9 @@ void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1) {
       if (nexty >= y0) y = nexty; else break;
     }
     if (count) {
-      yspacing = (y1-y0+1) / ((y - y0) * count);
+      if (y != y0) 
+        yspacing = (y1-y0+1) / ((y - y0) * count);
+      else yspacing = 0;
       
       y = y0 + MIN((x1-x0-64)/2, (y1-y0-64)/2);
       //y = y1;
@@ -57,7 +58,6 @@ void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1) {
         sa->frameh = sa->winh + yspacing;
         sa->winx = x0 + (sa->framew - sa->winw)/2;
         sa->winy = sa->framey + yspacing/2;
-        //printf("move %8x to %d, %d\n", (int)sa->win, sa->winx, sa->winy);
         XMoveWindow(dock->display, sa->win, sa->winx, sa->winy);
         //y -= sa->frameh;
         y += sa->frameh;

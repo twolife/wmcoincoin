@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.44 2004/04/28 22:19:00 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.45 2004/05/16 12:54:29 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.45  2004/05/16 12:54:29  pouaite
+  250c
+
   Revision 1.44  2004/04/28 22:19:00  pouaite
   bugfixes dae + des trucs que j'ai oublie
 
@@ -169,6 +172,7 @@
 #include <X11/extensions/shape.h>
 #include <time.h>
 #include <sys/time.h>
+#include <math.h>
 #include "coin_xutil.h"
 #include "http.h"
 #include "site.h"
@@ -673,14 +677,23 @@ refresh_msginfo(Dock *dock)
 	assert(b);
 	nbsec_since_last_msg = time(NULL) - (mi->timestamp + b->time_shift);
 	if (nbsec_since_last_msg < 600) {
-          sprintf(dock->msginfo, "%.6s+%02d%s", sp->site_name,
-                  nbsec_since_last_msg, strlen(sp->site_name) <= 4 ? "s" : "");
+          if (nbsec_since_last_msg < 100) {
+            sprintf(dock->msginfo, "%.6s+%02d%s", sp->site_name,
+                    nbsec_since_last_msg, strlen(sp->site_name) <= 5 ? "s" : "");
+          } else {
+            sprintf(dock->msginfo, "%.6s+%02d%s", sp->site_name,
+                    nbsec_since_last_msg, strlen(sp->site_name) <= 4 ? "s" : "");
+          }
 	} else {
 	  if ((nbsec_since_last_msg % 42) == 0) {
 	    sprintf(dock->msginfo, "GNU/HOLE!!");
 	  } else {
-	    sprintf(dock->msginfo, "%.6s+%02dm", sp->site_name,
-		    nbsec_since_last_msg/60);
+            if (nbsec_since_last_msg/60 < 100) {
+              sprintf(dock->msginfo, "%.6s+%dm", sp->site_name,
+                      nbsec_since_last_msg/60);
+            } else
+              sprintf(dock->msginfo, "%.5s+%dm", sp->site_name,
+                      nbsec_since_last_msg/60);
 	  }
 	}
       } else sprintf(dock->msginfo, "  ...  ");
@@ -1060,15 +1073,15 @@ dock_show_tribune_frequentation(Dock *dock)
   msgbox_show(dock, "desactive");
 }
 
-float myexp(float x) {
-  float s = 1, c = 1;
-  int i;
-  assert(x <= 0);
-  for (i = 1; (c > 1e-10 || c < -1e-10) && i < 100; i++) {
-    c *= x/i;
-    s += c; 
+float http_stats_site_quality(Site *site) {
+  float q = 0.0;
+  int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
+  if (site->http_success_cnt) {
+    q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
+    q = q * (site->http_ping_stat<=0. ? 1. :
+             exp(-MAX(site->http_ping_stat/3,0.02))/exp(-0.02));
   }
-  return MIN(MAX(s,0.),1.);  
+  return q;
 }
 
 void
@@ -1078,14 +1091,8 @@ show_http_stats(Dock *dock) {
   err_msg = http_complete_error_info();
   err_msg = str_cat_printf(err_msg, "<br><br><b>statistiques générales sur les d/l:</b><br> (qualité, erreurs, err. récentes, succès, temps de réponse)");
   for (site = dock->sites->list; site; site = site->next) {
-    float q = 0.0;
-    int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
-    if (site->http_success_cnt) {
-      q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
-      q = q * (site->http_ping_stat<=0. ? 1. :
-	       myexp(-MAX(site->http_ping_stat/3,0.02))/myexp(-0.02));
-    }
-    if (total) {
+    float q = http_stats_site_quality(site);
+    if (site->http_success_cnt + site->http_error_cnt) {
       err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s <tab6><b>%.2f</b><tab3> %d<tab3> %d<tab3> %d<tab3> %4.0fms.",
 			       q < .2 ? "<b>" : "",
 			       q > .5 ? "#000080" : "#e00000",
@@ -1259,6 +1266,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
   /* Ctrl-Clic1 -> passage en mode horloge */
   if (xbevent->button == Button1 && (xbevent->state & ControlMask)) {
+    balltrap_armageddon(dock);
     dock_set_horloge_mode(dock);
   } else if (xbevent->button == Button1) {
     if (IS_INSIDE(x,y,20,20,40,40) && 

@@ -32,6 +32,8 @@ struct DuckImgs {
 } duck_img;
 
 double wmcc_drand() {
+  static int isinit = 0;
+  if (!isinit) { srand((unsigned)time(NULL)); isinit = 1; }
   return rand()/(RAND_MAX+1.);
 }
 
@@ -64,6 +66,8 @@ balltrap_build(Dock *dock) {
                                               (char*)xbm, 32, 32);
   }
   duck_img.pix = RGBAImage2Pixmap(dock->rgba_context, rdst);
+  RGBADestroyImage(rsrc);
+  RGBADestroyImage(rdst);
 }
 
 static int duck_find_screen(Dock *dock, float x, float y) {
@@ -88,7 +92,6 @@ balltrap_add(Dock *dock, id_type id) {
     ALLOC_OBJ(d,Duck);
     dock->nb_duck++;
     d->next = dock->duck_lst; dock->duck_lst = d;
-    printf("ducks_add!\n");
     d->id = id;
     d->step = 0;
     d->age = 0;
@@ -97,11 +100,11 @@ balltrap_add(Dock *dock, id_type id) {
       d->speed_phase[i] = wmcc_drand()*M_PI*2;
       d->angle_phase[i] = wmcc_drand()*M_PI*2;
       d->speed_ampli[i] = wmcc_drand()*(DUCK_NCX-i);
-      d->angle_ampli[i] = wmcc_drand()/2;
+      d->angle_ampli[i] = wmcc_drand()/1.6;
     }
     int dx,dy;
     get_window_pos_with_decor(dock->display, DOCK_WIN(dock), &dx, &dy);
-    d->x = dx; d->y = dy;
+    d->x = dx - 20 + wmcc_rand(40); d->y = dy - 20 + wmcc_rand(40);
     d->xiscreen = duck_find_screen(dock, dx, dy);
     d->win = XCreateSimpleWindow(dock->display, dock->rootwin, 0, 0, 32, 32, 0,
                                  cccolor_pixel(dock->white_color),
@@ -112,7 +115,7 @@ balltrap_add(Dock *dock, id_type id) {
     wa.cursor = XCreateFontCursor(dock->display, XC_target); //XC_cross);
     XChangeWindowAttributes (dock->display, d->win,
                              CWCursor | CWSaveUnder | CWEventMask | CWOverrideRedirect, &wa);
-    XMapWindow(dock->display, d->win);
+    XMapRaised(dock->display, d->win);
   }
 }
 
@@ -135,8 +138,8 @@ enum {DUCK_GOING_LEFT0=0, DUCK_GOING_LEFT1=7,
       DUCK_GOING_RIGHT0=8, DUCK_GOING_RIGHT1=15,
       DUCK_TURNS_LHR0=16, DUCK_TURNS_LHR1=23,
       DUCK_TURNS_RHL0=24, DUCK_TURNS_RHL1=31,
-      DUCK_DIES_LEFT0=32,DUCK_DIES_LEFT1=49,
-      DUCK_DIES_RIGHT0=50,DUCK_DIES_RIGHT1=67};
+      DUCK_DIES_LEFT0=32,DUCK_DIES_LEFT1=54,
+      DUCK_DIES_RIGHT0=55,DUCK_DIES_RIGHT1=77};
 
 enum {DUCKIMG_GOING_LEFT0=0, DUCKIMG_GOING_LEFT1=3,
       DUCKIMG_TURNS_LHR0=4, DUCKIMG_TURNS_LHR1=7,
@@ -222,7 +225,7 @@ void balltrap_animate(Dock *dock) {
     d_next = d->next;
     d->age++;
     if (!duck_is_dead(d)) {
-      float angle = 0, speed = 1, vx, vy;
+      float angle = 0, speed = 3 /* vitess mini */, vx, vy;
       int k;
       for (k=0; k < DUCK_NCX; ++k) {
         angle += d->angle_ampli[k]*sin(d->angle_phase[k]+t*k);
@@ -261,7 +264,9 @@ void balltrap_animate(Dock *dock) {
       if (d->shot) {
         d->shot = 0;
         board_msg_info *mi = boards_find_id(dock->sites->boards, d->id);
-        if (mi && Prefs.site[id_type_sid(d->id)]->post_url) {
+        if (mi && mi->is_my_message) {
+          myprintf("proutch ... you killed yourself\n");
+        } else if (mi && Prefs.site[id_type_sid(d->id)]->post_url) {
           char s[200], s_subts[3];
           Site *site = sl_find_site_id(dock->sites, id_type_sid(d->id)); assert(site);
           snprintf(s, sizeof s, "[%s]", Prefs.site[id_type_sid(d->id)]->site_name);
@@ -275,12 +280,12 @@ void balltrap_animate(Dock *dock) {
             default: s_subts[0] = ':'; s_subts[1] = '1' + mi->sub_timestamp;
           }
           snprintf(s, sizeof s, "%02d:%02d:%02d%s %s", mi->hmsf[0], mi->hmsf[1], mi->hmsf[2], s_subts,
-                   wmcc_rand(20) != 17 ? "pan ! pan !" : "cliclic (fusil enrayé)");;
-          myprintf("BALLTRAP : [%s] %s\n", Prefs.site[id_type_sid(d->id)]->site_name, s);
+                   wmcc_rand(15) != 13 ? "pan ! pan !" : "cliclic (fusil enrayé)");;
+          BLAHBLAH(1,myprintf("BALLTRAP : [%s] %s\n", Prefs.site[id_type_sid(d->id)]->site_name, s));
           ccqueue_push_board_post(site->site_id,  
                                   site->board->coin_coin_useragent, s);
         } else {
-          myprintf("clic ! clic ! you shot a plastic duck\n");
+          myprintf("%<BLU clic ! clic !> you shot a plastic duck\n");
         }
       }
       if (duck_dies_left(d)) { d->x -= 1; d->step++; if (!duck_dies_left(d)) destroy_it = 1; }
@@ -308,9 +313,15 @@ void balltrap_animate(Dock *dock) {
 void balltrap_airstrike(Dock *dock) {
   Duck *d;
   for (d = dock->duck_lst; d; d = d->next) 
-    if (duck_going_left(d) || duck_turns_rhl(d)) {
-      d->step = DUCK_DIES_LEFT0;
-    } else d->step = DUCK_DIES_RIGHT0;
+    if (!duck_is_dead(d)) {
+      if (duck_going_left(d) || duck_turns_rhl(d)) {
+        d->step = DUCK_DIES_LEFT0;
+      } else d->step = DUCK_DIES_RIGHT0;
+    }
+}
+
+void balltrap_armageddon(Dock *dock) {
+  while (dock->duck_lst) balltrap_remove(dock, dock->duck_lst);
 }
 
 int
@@ -321,10 +332,12 @@ balltrap_dispatch_event(Dock *dock, XEvent *ev) {
         Duck *d;      
         for (d = dock->duck_lst; d; d = d->next) {
           if (ev->xany.window == d->win) {
-            if (duck_going_left(d) || duck_turns_rhl(d)) {
-              d->step = DUCK_DIES_LEFT0;
-            } else d->step = DUCK_DIES_RIGHT0;
-            d->shot = 1;
+            if (!duck_is_dead(d)) {
+              if (duck_going_left(d) || duck_turns_rhl(d)) {
+                d->step = DUCK_DIES_LEFT0;
+              } else d->step = DUCK_DIES_RIGHT0;
+              d->shot = 1;
+            }
             return 1;
           }
         }
@@ -354,39 +367,58 @@ static void pan_pan(Dock *dock, board_msg_info *mi) {
   for (d = dock->duck_lst; d; d = d_next) {
     d_next = d->next;
     if (id_type_eq(d->id, mi->id)) {
-      balltrap_remove(dock, d);
+      if (!duck_is_dead(d)) {
+        if (duck_going_left(d) || duck_turns_rhl(d)) {
+              d->step = DUCK_DIES_LEFT0;
+            } else d->step = DUCK_DIES_RIGHT0;
+        break; /* un de moins (si plusieurs ont été laches par un meme post, il faudra plusieurs coups de fusil) */
+      }
+      //balltrap_remove(dock, d);
     }
   }
 }
 
 void balltrap_check_message(id_type id, const unsigned char *msg) {
   int coin_found = 0, pan_found = 0;
-  if (!Prefs.hunt_opened) return;
-  
+  if (!Prefs.hunt_opened || get_dock()->horloge_mode) return;
+  if (id_type_sid(id) >= 0 && !Prefs.site[id_type_sid(id)]->hunt_opened_on_site) return;
   board_msg_info *mi = boards_find_id(get_dock()->sites->boards, id);
   if (mi == NULL) return;
   
-  if (!mi->is_my_message) {
-    if (str_case_str(msg, "\\_o<") || str_case_str(msg, ">o_/")) coin_found = 1;
-    else {
-      char *pattern = "(.*[^A-Za-z0-9_]|^)[cC][oO0][iI1][nN]([^A-Za-z0-9_].*|$)";
+  if (1) { //!mi->is_my_message) {    
+    /* on compte le nombre de ascii-canards */
+    const char *p, *q, **ad;
+    const char *ascii_ducks[] = {"\\_o<", "\\_O<", "\\_0<", "\\_°<", ">o_/", ">O_/", ">0_/", ">°_/", NULL};
+    for (ad = ascii_ducks; *ad; ++ad) {
+      p = msg;
+      while ((q=strstr(p, *ad))) {
+        coin_found++; p = q+strlen(*ad);
+      }
+    }
+    coin_found = MIN(coin_found, 4); /* faut pas exagerer non plus! */
+
+    /* et les coin ! coin ! */
+    {
+      char *pattern = "(.*[^A-Za-z0-9_]|^)([cC][oO0][iI1][nN] *! *[cC][oO0][iI1][nN] *!|[Pp][oO]*[uU]+[lL]+[eE]? *!)([^A-Za-z0-9_].*|$)";
       static regex_t re;
       static int isinit = 0;
       if (!isinit) {
         if (regcomp(&re, pattern, REG_EXTENDED | REG_NOSUB)) assert(0);
         isinit = 1;
       }
-      /*if (strstr(msg, "coin")) {
-        }*/
       if (regexec(&re, msg, 0, NULL, 0) == 0) {
         //printf("hunt candidat : %s\n", msg);
-        coin_found = 1;
+        coin_found++;
       }
+      /*if (strstr(msg, "coin !")) {
+        printf("COIN candidate : %s -> coin_found=%d\n", msg, coin_found);
+        }*/
     }
+    if (mi->in_boitakon) coin_found = 0;
   }
 
-  {
-    char *pattern = "(.*[^A-Za-z0-9_]|^)(([pP][aA4]+[nN]+)|([bB]+[lL]+[aA4]+[mM]+)|([bB]+[lL]+[aA4]+[mM]+))([^A-Za-z0-9_].*|$)";
+  if (!mi->is_my_message) {
+    char *pattern = "(.*[^A-Za-z0-9_]|^)(([pP][aA4]+[nNfF]+[gG]?)|([bB]+[lL]+[aA4]+[mM]+)|([bB]+[oO]+[uU]+[mM]+))([^A-Za-z0-9_].*|$)";
     static regex_t re;
     static int isinit = 0;
     if (!isinit) {
@@ -398,14 +430,15 @@ void balltrap_check_message(id_type id, const unsigned char *msg) {
       printf("pan candidate: %s\n", msg);
       }*/
     if (regexec(&re, msg, 0, NULL, 0) == 0) {
-      printf("PAN FOUND! %s\n", msg);
+      BLAHBLAH(1, printf("PAN FOUND! %s\n", msg));
       pan_found = 1;
     }
   }
 
-  if (coin_found && queue_sz < MAX_QUEUE) {
+  while (coin_found && queue_sz < MAX_QUEUE) {
     queue[queue_sz++] = id;
     BLAHBLAH(1, myprintf("duck hunt is opened ! prepare your guns!\n -> [%s] msg=%s\n", Prefs.site[id_type_sid(id)]->site_name, msg));
+    coin_found--;
     //balltrap_add(get_dock(), id);
   }
   if (pan_found) {
@@ -423,7 +456,7 @@ void balltrap_launch() {
   while (queue_sz) {
     int i = wmcc_rand(queue_sz);   assert(i < queue_sz);
     balltrap_add(get_dock(), queue[i]);
-    printf("new duck launched : %s\n", boards_find_id(get_dock()->sites->boards, queue[i])->msg);
+    BLAHBLAH(1,printf("new duck launched : %s\n", boards_find_id(get_dock()->sites->boards, queue[i])->msg));
     memmove(queue+i, queue+i+1, (queue_sz - i - 1)*sizeof(queue[0]));
     queue_sz--;
   }

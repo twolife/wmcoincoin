@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "coincoin.h"
-#include "pinnipede.h"
 #include "site.h"
 #include <libintl.h>
 #define _(String) gettext (String)
@@ -48,7 +47,10 @@ ccqueue_push(ccqueue *q, ccqueue_elt_type what, int sid, char *ua, char *msg, in
       if (what == Q_BOARD_POST) {
 	assert(ua); assert(msg);
 	if (strcmp(ua, qe->ua)) continue;
-	if (strcmp(msg, qe->msg)) continue;
+	if (strcmp(msg, qe->msg) && strcmp(msg, "pan ! pan !")) continue; /* on fait une exception pour le ball-trap, c'est tres tres moche */
+      }
+      if (what == Q_SMILEY_DL) {
+        if (strcmp(msg, qe->msg)) continue;
       }
       is_dup = 1;
     }
@@ -230,14 +232,15 @@ void ccqueue_loop(Dock *dock) {
           }*/
       } break;
       case Q_SMILEY_DL: {
-       /* L'url de l'image à télécharger devrait être dans q->msg */
-       if ( q->msg == NULL )
-         myfprintf(stderr, "mmm, il me semble que la fonction de récupération de smiley a ete programmee avec les pieds\n");
-       else {
-         pp_set_download_info(NULL, "downloading smiley");
-         pp_totoz_get_image(dock, q->msg);
-         /*pp_set_download_info(NULL, NULL); Je ne le met pas vu qu'il est présent 9 lignes plus bas*/
-       }
+        static char download_info[100];
+        /* L'url de l'image à télécharger devrait être dans q->msg */
+        if ( q->msg == NULL )
+          myfprintf(stderr, "mmm, il me semble que la fonction de récupération de smiley a ete programmee avec les pieds\n");
+        else {
+          snprintf(download_info, sizeof download_info, "downloading HFR smiley %s", q->msg);
+          pp_set_download_info(NULL, download_info);
+          pp_totoz_get_image(dock, q->msg);
+        }
       } break;
       }
       if (flag_cancel_task) {
@@ -268,10 +271,10 @@ void ccqueue_loop(Dock *dock) {
       int status;
       if ((pid = waitpid(0, &status, WNOHANG))) {
 	if (pid > 1 && WIFEXITED(status)) {
-	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", pid, WEXITSTATUS(status));
+	  BLAHBLAH(1,myfprintf(stderr, "fiston n° %u vient de mourir, son dernier mot a été %d\n", pid, WEXITSTATUS(status)));
 	}
 	if (pid == dock->wmccc_pid && dock->wmccc_pid > 1) {
-	  myfprintf(stderr, "wmccc RIP\n");
+	  BLAHBLAH(1,myfprintf(stderr, "wmccc RIP\n"));
 	  dock->wmccc_pid = -1;
 	}
       }

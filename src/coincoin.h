@@ -267,7 +267,7 @@ struct Site_ {
 };
 
 struct SiteList_ {
-  Site *list;
+  Site *list; /* liste de sites, reordonnees lors de la relecture des prefs */
   Boards *boards;
 };
 
@@ -662,7 +662,7 @@ void pp_set_download_info(char *site, char *what);
 void pp_unset_kbnav(Dock *dock);
 void pp_totoz_check_updates(Dock *dock);
 char *pp_totoz_realfname(unsigned char *name, int with_path);
-
+void pp_totoz_get_image(Dock *dock, unsigned char *imgname);
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
 void wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p);

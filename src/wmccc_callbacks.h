@@ -29,3 +29,11 @@ on_mark_id_gaps_checkbutton_toggled    (GtkToggleButton *togglebutton,
 void
 edit_bt_clicked                        (GtkButton       *button,
                                         gpointer         user_data);
+
+void
+on_bottom1_activate                    (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
+on_left1_activate                      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);

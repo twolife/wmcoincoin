@@ -211,11 +211,11 @@ rss_board_update(Board *board, char *path) {
   wmcc_init_http_request(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
-  if (!http_is_ok(&r)) return 1;
+  if (!http_is_ok(&r)) { http_request_close(&r);return 1; }
   wmcc_log_http_request(board->site, &r);
   rsstxt = http_read_all(&r, path);
-  if (!http_is_ok(&r)) goto ratai;
   http_request_close(&r);
+  if (!http_is_ok(&r)) goto ratai;
   if (!rsstxt || !http_is_ok(&r)) return 1; /* "not modified" */
   
   if (strlen(rsstxt)==0) goto RAS;
@@ -223,15 +223,18 @@ rss_board_update(Board *board, char *path) {
   /* tentative de conversion vers iso8859-15 */
   if ((pos = get_XMLBlock(rsstxt, strlen(rsstxt), "?xml", &xmlb))>=0) {
     XMLAttr *a;
+    int found = 0;
+    if (board->encoding) { free(board->encoding); board->encoding = NULL; }
     for (a = xmlb.attr; a; a = a->next) {
       if (str_case_startswith(a->name, "encoding")) {
-        if (board->encoding) { free(board->encoding); board->encoding = NULL; }
         board->encoding = str_ndup(a->value,a->value_len);
         BLAHBLAH(1,printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding));
-        convert_to_iso8859(board->encoding, &rsstxt);
+        found = 1;
         break;
       }
     }
+    if (!found) board->encoding = strdup("UTF-8"); /* defaut si pas d'encoding specifie */
+    convert_to_iso8859(board->encoding, &rsstxt);
   }
 
   pos = get_XMLBlock(rsstxt, strlen(rsstxt), "title", &xmlb);

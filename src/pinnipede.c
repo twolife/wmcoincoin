@@ -1,11 +1,14 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.104 2004/04/28 22:19:00 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.105 2004/05/16 12:54:29 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
 */
 #include <X11/keysym.h>
 #include "pinnipede.h"
+#include "kbcoincoin.h"
+#include "xpms/miniduck.xpm"
+
 inline static int
 pp_thread_filter_find_id(const struct _PinnipedeFilter *f, id_type id) {
   int i;
@@ -2026,6 +2029,11 @@ pp_build(Dock *dock)
   pp_rebuild(dock,1);
 
   pp->flag_board_updated = 0;
+
+  char s_xpm_bgcolor[30];
+  snprintf(s_xpm_bgcolor, 30, "  \tc #%06X", GET_BICOLOR(Prefs.pp_buttonbar_bgcolor));
+  miniduck_xpm[1] = s_xpm_bgcolor;
+  pp->miniduck_pixmap = RGBACreatePixmapFromXpmData(dock->rgba_context, miniduck_xpm); assert(pp->miniduck_pixmap);
 }
 
 void
@@ -2218,7 +2226,6 @@ pp_show(Dock *dock)
 		    pp->id_base, 0, 0, 1);
     
   pp->survol_hash = 0;
-
   //XReparentWindow(dock->display, DOCK_WIN(dock), pp->win, 5, 5);
 }
 
@@ -2302,7 +2309,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
       XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
       XDrawLine(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry1, pp->zmsg_x1+pp->zmsg_w-1, ry1);
     }
-    ccfont_draw_string8(pp->fn_bd, pp->popup_fgcolor, pp->win, pp->zmsg_x1+8, (l+1)*pp->fn_h,
+    ccfont_draw_string8(pp->fn_bd, pp->popup_fgcolor, pp->win, pp->zmsg_x1+8, (l+1)*fn_h,
                         s, cnt);
     s += cnt;
     if (*s == '\n') s++;
@@ -3115,7 +3122,7 @@ pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
     editw_refresh(dock, dock->editw);
   } else {
     char s[300];
-    if (editw_get_site_id(dock) == id_type_sid(pw->parent->id)) {
+    if (editw_get_site_id(dock) == id_type_sid(pw->parent->id) || is_rss) {
       snprintf(s, sizeof s, "%s ", s_ts);
     } else { 
       snprintf(s, sizeof s, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
@@ -3301,8 +3308,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
 	} else {
 	  pp_minib_hide(dock);
 	}    
-	pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
-	pp_refresh(dock, pp->win, NULL);
+        pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,0);
       }
     } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
       // pp_handle_alt_clic(dock, event);
@@ -3679,24 +3685,32 @@ static void pp_update_viewed_messages(Dock *dock, int x, int y) {
   }
 }
 
+#define FORWARD_KEY XSendEvent(dock->display, dock->rootwin, True, KeyPressMask, event); 
+
 /* /!\ spaghettis */
 int
 pp_handle_keypress(Dock *dock, XEvent *event)
 {
   Pinnipede *pp = dock->pinnipede;
   Boards *boards = dock->sites->boards;
-  KeySym ksym;
-  int klen;
-  unsigned char buff[4];
-  static XComposeStatus compose_status = { 0, 0 };
   int ret = 0;
 
-  klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
+  /*if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
+      (kb_state()->input_context && XFilterEvent(event, None))) {
+    //printf("forward key: \n");
+    FORWARD_KEY;
+    return 1;
+  }
+  */
+  kb_lookup_string(dock, &event->xkey);
+  /*printf("klen=%2d %08x %c state=%08x buff=%02x%02x%02x%02x\n", 
+         kb_state()->klen, (int)kb_state()->ksym, (int)kb_state()->ksym, event->xkey.state,
+         kb_state()->buff[0],kb_state()->buff[1],kb_state()->buff[2],kb_state()->buff[3]);*/
   if (event->xkey.state & Mod1Mask) {
     /* ALT-TOUCHE */
   } else if (event->xkey.state & ControlMask) {
     /* CTRL-TOUCHE */
-    switch (ksym) {
+    switch (kb_state()->ksym) {
     case ' ': { /* ctrl-espace : rafraichit tous les sites */
       Site *site;
       for (site = dock->sites->list; site; site = site->next) {
@@ -3768,11 +3782,11 @@ pp_handle_keypress(Dock *dock, XEvent *event)
   } else if (pp->filter.filter_mode && pp->filter.anything && !editw_ismapped(dock->editw)) {
     /* TOUCHE NORMALE EN MODE RECHERCHE */
     int c = 0;
-    //fprintf(stderr, "recherche : ksym = %04x (%c), klen=%04x, buff=%02x%02x%02x%02x\n", ksym, ksym, klen, buff[0],buff[1],buff[2],buff[3]);
-    if (ksym >= ' ' && ksym < 255) { c = ksym; }
-    else if (ksym >= XK_KP_0 && ksym <= XK_KP_9) { c = '0' + ksym - XK_KP_0; }
+    //fprintf(stderr, "recherche : kb_state()->ksym = %04x (%c), klen=%04x, buff=%02x%02x%02x%02x\n", kb_state()->ksym, kb_state()->ksym, klen, buff[0],buff[1],buff[2],buff[3]);
+    if (kb_state()->ksym >= ' ' && kb_state()->ksym < 255) { c = kb_state()->ksym; }
+    else if (kb_state()->ksym >= XK_KP_0 && kb_state()->ksym <= XK_KP_9) { c = '0' + kb_state()->ksym - XK_KP_0; }
     else {
-      switch (ksym) {
+      switch (kb_state()->ksym) {
       case XK_KP_Decimal: c = '.'; break;
       case XK_KP_Subtract: c = '-'; break;
       case XK_KP_Add: c = '+'; break;
@@ -3817,8 +3831,10 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     }
     ret++;
   } else {
+    //kb_lookup_mb_string(dock, &event->xkey);
+    //printf("(BIS) klen=%2d %08x %c\n", kb_state()->klen, kb_state()->ksym, kb_state()->ksym);
     /* TOUCHE NORMALE */
-    switch (ksym) {
+    switch (kb_state()->ksym) {
       /* fleche droite: active le tab de droite */
     case XK_KP_Left:
     case XK_Left: if (!editw_ismapped(dock->editw)) {
@@ -3920,7 +3936,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     case '7':
     case '8':
     case '9': if (!editw_ismapped(dock->editw)) {
-      int c = ksym - '1';
+      int c = kb_state()->ksym - '1';
       if (c < pp->nb_tabs) {
         pp_tabs_cliquouille(pp, pp->tabs+c, PPT_MAY_SET_MAIN_TAB); pp_tabs_changed(dock);
       }
@@ -4082,6 +4098,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
     } break;
   case LeaveNotify:
     {
+      pp->survol_tab = NULL;
     } break;
   case Expose:
     {

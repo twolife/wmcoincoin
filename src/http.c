@@ -625,7 +625,7 @@ http_try_connect_to_resolved_host(HostEntry *h) {
          sigalrm balance par l'itimer de wmcoincoin n'interferent
          pas avec le connect...
       */
-      BLAHBLAH(Prefs.verbosity_http, printf(_("connecting...\n")));
+      BLAHBLAH(Prefs.verbosity_http, printf(_("connecting on port %d...\n"), h->port));
 #ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
       err = net_tcp_connect(sockfd, (struct sockaddr *)&sock_name, salen);
 #else
@@ -1124,18 +1124,46 @@ http_request_init(HttpRequest *r) {
   memset(r, 0, sizeof(HttpRequest));
   r->content_length = -1;
   r->is_chunk_encoded = 0;
+  /* proxy par défaut choppé dans la var d'env "http_proxy" 
+     
+  TODO: gerer aussi la var. d'env "no_proxy"
+  */
+  if (!str_is_empty(getenv("http_proxy"))) {
+    char *http_proxy_ = str_ndup(getenv("http_proxy"),1024), *p;
+    char *http_proxy = http_proxy_;
+    for (p = http_proxy; *p; ++p)
+      if ((*p) >= 0 && *p < ' ') *p = ' ';
+    if (str_startswith(http_proxy, "http://")) http_proxy += 7;
+    
+    if ((p=strchr(http_proxy, '@'))) {
+      char auth[200]; strncpy(auth, http_proxy, MIN(200, p - http_proxy)); auth[(sizeof auth) - 1] = 0;
+      http_proxy = p+1; 
+      ASSIGN_STRING_VAL(r->proxy_user_pass, auth);
+    }
+
+    /* remove trailing slashes */
+    for (p = http_proxy; *p; ++p)
+      if (*p == '/') *p = 0;
+
+    if ((p=strchr(http_proxy, ':'))) {
+      r->proxy_name = str_ndup(http_proxy, p - http_proxy);
+      r->proxy_port = atoi(p+1);
+    } else {
+      ASSIGN_STRING_VAL(r->proxy_name, http_proxy);
+      r->proxy_port = 3128;
+    }
+  }
   telnet_session_init(&r->telnet);
 }
 
 void http_request_close (HttpRequest *r) {
-  if (r->host_path) free(r->host_path); r->host_path = NULL;
-  if (r->proxy_name) free(r->proxy_name); r->proxy_name = NULL;
-  if (r->proxy_user_pass) free(r->proxy_user_pass); r->proxy_user_pass = NULL;
-  if (r->user_agent) free(r->user_agent); r->user_agent = NULL;
-  if (r->referer) free(r->referer); r->referer = NULL;
-  if (r->cookie) free(r->cookie); r->cookie = NULL;
-  if (r->post) free(r->post); r->post = NULL;
-
+  FREE_STRING(r->host_path);
+  FREE_STRING(r->proxy_name);
+  FREE_STRING(r->proxy_user_pass);
+  FREE_STRING(r->user_agent);
+  FREE_STRING(r->referer);
+  FREE_STRING(r->cookie);
+  FREE_STRING(r->post);
   r->content_length = -1;
   telnet_session_close(&r->telnet);
 }

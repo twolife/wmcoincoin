@@ -55,6 +55,9 @@ static GtkWidget *getdlg_(wmccc_dialog_t dlg, gboolean destroy) {
       case DLG_GLOBAL_PINNIPEDE_OPTIONS: {
         w[dlg] = create_global_pinnipede_options_dialog();
       } break;
+      case DLG_PROXY: {
+        w[dlg] = create_proxy_dialog();
+      } break;
     default: assert(0);
     } /* switch */
   }
@@ -79,7 +82,7 @@ void global_pinnipede_options_font_bt_cb() {
 
   gtk_font_selection_dialog_set_font_name(w, pango_font_description_to_string(oldpfn));
   pango_font_description_free(oldpfn);
-  if (gtk_dialog_run(w) == GTK_RESPONSE_OK) {
+  if (gtk_dialog_run(GTK_DIALOG(w)) == GTK_RESPONSE_OK) {
     char *newfnname = gtk_font_selection_dialog_get_font_name(w);
     PangoFontDescription* pfn = pango_font_description_from_string(newfnname);
     //printf("new selection : %s:pixelsize=%d\n", pango_font_description_get_family(pfn), pango_font_description_get_size(pfn)/PANGO_SCALE);
@@ -125,6 +128,9 @@ static void wmccc_initialize_dialog(wmccc_dialog_t dlg) {
                        G_CALLBACK(global_pinnipede_options_font_bt_cb),
                        NULL);
       break;
+    case DLG_PROXY:
+      prepare_conf_dialog(w);
+      break;
     default: assert(0);
   }
   isinit[dlg] = 1;
@@ -167,6 +173,7 @@ void wmccc_dialog_response_cb(GtkWidget *dlg, gint response, int idx) {
     case DLG_CHANGE_RSS_SETTINGS:
     case DLG_CHANGE_POP_SETTINGS:
     case DLG_GLOBAL_PINNIPEDE_OPTIONS:
+    case DLG_PROXY:
     case DLG_SITE_COLORS: {
       if (response == GTK_RESPONSE_OK || response == GTK_RESPONSE_APPLY) {
         finalize_conf_dialog(dlg);

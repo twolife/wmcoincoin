@@ -150,6 +150,7 @@ typedef struct _SitePrefs {
   long time_difference; /* decalage horaire du site */
   int mark_id_gaps; /* la ligne rouge pointillée */
   int check_board;
+  int hunt_opened_on_site;
 } SitePrefs;
 
 #define MAX_SITES 126 /* au-dela, faut vraiment songer à consulter */
@@ -228,6 +229,7 @@ typedef struct _GeneralPrefs{
     pp_buttonbar_progressbar_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_show_sec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode;
+  int pp_tabs_pos; /* 1 -> bas, 2-> gauche */
   int enable_troll_detector;
   int pp_use_classical_tabs;
   int pp_use_colored_tabs;

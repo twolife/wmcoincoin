@@ -105,7 +105,7 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   if (sp->backend_type != BACKEND_TYPE_POP) {
     site->relative_urls_base = strdup(sp->backend_url);
     url_au_coiffeur(site->relative_urls_base, 1); /* vire le nom du backend */
-    printf("%s -> relative_urls_base : %s\n", sp->backend_url, site->relative_urls_base);
+    //printf("%s -> relative_urls_base : %s\n", sp->backend_url, site->relative_urls_base);
   } else site->relative_urls_base = strdup("invalid://");
   
 

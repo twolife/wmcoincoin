@@ -103,11 +103,11 @@ typedef struct _PinnipedeLignesSel {
 } PinnipedeLignesSel;
 
 typedef struct _PPMinib {
-#define NB_MINIB 10
+#define NB_MINIB 11
 #define MINIB_H 12
   //#define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, /* SECOND, TSCORE, FORTUNE, */ FILTER, PLOPIFY, TRANSPARENT, PREFS, MB_RSS, MB_BOARDS, CANCEL } type;
+  enum { HELP, SCROLLBAR, BALLTRAP, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, /* SECOND, TSCORE, FORTUNE, */ FILTER, PLOPIFY, TRANSPARENT, PREFS, MB_RSS, MB_BOARDS, CANCEL } type;
   int x, y, w, h;
   int clicked;
 } PPMinib;
@@ -223,18 +223,19 @@ struct _Pinnipede {
   int mb_buttonbar_width; /* largeur du bloc de boutons */
   int mb_x0;  /* position x de la minibar (non nul qd les tabs sont au même niveau, a gauche) */
 
-  enum {PPT_UP, PPT_DOWN, PPT_LEFT} tabs_pos; /* position des tabs */
+  enum {PPT_UP, PPT_DOWN, PPT_LEFT, PPT_RIGHT} tabs_pos; /* position des tabs */
   int nb_tabs; /* == nb de sites avec une tribune */
   PinnipedeTab *tabs; /* tableau de tabs (une par site avec tribune) */
   PinnipedeTab *active_tab;  
   PinnipedeTab *survol_tab; ppt_survol_actions survol_tab_part;
-  int tabs_width, tabs_x0, tabs_y0, tabs_w, tabs_h;
+  int tabs_x0, tabs_y0, tabs_w, tabs_h;
 
 #define MAX_VISITED_LINKS 200
   int visited_links[MAX_VISITED_LINKS]; /* hash des urls deja visitées */
   int nb_visited_links;
-  
+
   struct pp_totoz *totoz;  
+  Pixmap miniduck_pixmap;
 };
 
 int filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter);
@@ -282,16 +283,17 @@ void pp_update_and_redraw(Dock *dock, id_type id_base, int decal, int adjust, in
 
 int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite, int use_js);
 
+/* quelques fonctions de pp_totoz sont declarees dans coincoin.h */
 void pp_totoz_build(Dock *dock);
 void pp_totoz_rebuild(Dock *dock);
 void pp_totoz_destroy(Dock *dock);
 void pp_totoz_unmap(Dock *dock);
 int pp_totoz_img_status(Pinnipede *pp, char *imgname);
-int pp_totoz_update_status_all(Dock *dock);
+//int pp_totoz_update_status_all(Dock *dock);
 void pp_check_totoz(Dock *dock, PostWord *pw, int x_root, int y_root);
 int  pp_totoz_dispatch_event(Dock *dock, XEvent *event);
 void pp_totoz_download(Dock *dock, unsigned char *imgname);
-void pp_totoz_get_image(Dock *dock, unsigned char *imgname);
+//void pp_totoz_get_image(Dock *dock, unsigned char *imgname);
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->zmsg_y2 - (pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2)
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1)

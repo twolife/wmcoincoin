@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.26 2004/04/26 20:32:31 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.27 2004/05/16 12:54:29 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.27  2004/05/16 12:54:29  pouaite
+##   250c
+##
 ##   Revision 1.26  2004/04/26 20:32:31  pouaite
 ##   roger demande le commit
 ##
@@ -98,6 +101,7 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
 	myprintf.c myprintf.h \
 	raster.c raster.h \
 	fontcoincoin.c fontcoincoin.h \
+	kbcoincoin.c kbcoincoin.h \
 	swallowcoincoin.c \
         troll_detector.c troll_data.h \
 	pinnipede.c pinnipede_widgets.c pinnipede_pdfm.c pinnipede_totoz.c pinnipede.h \

@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <ctype.h>
+#include <unistd.h>
 #define GLOBALS_HERE
 #define WMCCC_C
 #include "wmccc.h"
@@ -121,7 +122,7 @@ GtkWidget *change_pop_settings_dialog(char *widget) {
   return (widget == NULL) ? d : my_lookup_widget_assert(d, widget); 
 }
 
-GtkWidget *bronson_wizard(char *widget) {
+GtkWidget *bronson_wizard(const char *widget) {
   GtkWidget *d = getdlg(DLG_BRONSON_WIZARD);
   return (widget == NULL) ? d : my_lookup_widget_assert(d, widget); 
 }
@@ -456,7 +457,7 @@ int multi_get_option_menu(GtkWidget *w, gboolean *value) {
 
 /* ------------------- text entry ---------------------------- */
 int check_for_non_ascii(const char *s) {
-  int i;
+  unsigned i;
   for (i = 0; i < strlen(s); ++i) 
     if (s[i] < 0 || s[i] == 127) {
       quick_message("Please, please, please !!!\n Avoid non-ASCII characters in wmccc...\n"
@@ -464,14 +465,16 @@ int check_for_non_ascii(const char *s) {
                     "if you put accentuated character everywhere... So for now, it is restricted to pure ascii.\nYes, it sux.");
       return -1;
     }
+  return 0;
 }
+
 char *gtk_entry_get_text_iso8859(GtkEntry *w) {
   /*int new_len;
   const char *s = gtk_entry_get_text(w);
   char *s2 = g_convert(s, -1, "iso-8859-15", "utf8", NULL, &new_len, NULL);
   return s2 == NULL ? "invalid!!" : s2;*/
   const char *s = gtk_entry_get_text(w);
-  check_for_non_ascii(s); return s;
+  check_for_non_ascii(s); return (char*)s;
 }
 
 void multi_set_text_entry(GtkWidget *w, GtkWidget *feedback_label, char *value, int count) {
@@ -765,12 +768,19 @@ static int prepare_or_finalize_conf_dialog_(GtkWidget *dialog, int finalize) {
   PFC_TEXT_ENTRY_S(pop3_user);
   PFC_TEXT_ENTRY_S(pop3_pass);
   PFC_TEXT_ENTRY_S(user_agent);
+  PFC_TEXT_ENTRY_S(proxy_name);
+  PFC_SPIN_BUTTON_S(proxy_port);
+  PFC_TEXT_ENTRY_S(proxy_auth_user);
+  PFC_TEXT_ENTRY_S(proxy_auth_pass);
+  PFC_TOGGLE_BUTTON_S(proxy_nocache);
+  PFC_TOGGLE_BUTTON_S(use_if_modified_since);
   PFC_TEXT_ENTRY_G(pp_fn_family);
   PFC_SPIN_BUTTON_G(pp_fn_size);
   PFC_TOGGLE_BUTTON_S(rss_ignore_description);
   PFC_TOGGLE_BUTTON_G(pinnipede_open_on_start);
   PFC_TOGGLE_BUTTON_G(pp_use_classical_tabs);
   PFC_TOGGLE_BUTTON_G(pp_use_colored_tabs);
+  PFC_OPTION_MENU_G(pp_tabs_pos);
   PFC_TOGGLE_BUTTON_G(hungry_boitakon);
   PFC_TOGGLE_BUTTON_G(disable_xft_antialiasing);
   PFC_TOGGLE_BUTTON_S(mark_id_gaps);
@@ -779,6 +789,7 @@ static int prepare_or_finalize_conf_dialog_(GtkWidget *dialog, int finalize) {
   PFC_TOGGLE_BUTTON_G(board_enable_hfr_pictures);
   PFC_TOGGLE_BUTTON_G(board_auto_dl_pictures);
   PFC_TOGGLE_BUTTON_G(hunt_opened);
+  PFC_TOGGLE_BUTTON_S(hunt_opened_on_site);
   PFC_SPIN_BUTTON_G(hunt_max_duck);
   PFC_TEXT_ENTRY_G(browser_cmd);
   PFC_TEXT_ENTRY_G(browser2_cmd);
@@ -1200,18 +1211,18 @@ void sitelist_update_site_order() {
 
 void sitelist_remove_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   GtkTreeIter iter;
-  unsigned count, j;
+  int count, j;
   sitelist_update_site_order();
   if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
     do {
       if (gtk_tree_selection_iter_is_selected(mdl->select,&iter) &&
-          (count = sitelist_iter_to_sid(mdl->store, &iter)) != -1) {
+          (count = sitelist_iter_to_sid(GTK_TREE_MODEL(mdl->store), &iter)) != -1) {
         wmcc_site_prefs_destroy(Prefs->site[count]);
         Prefs->site[count] = NULL;
       }
     } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(mdl->store), &iter));
   }
-  for (count = 0, j=0; count < (unsigned)Prefs->nb_sites; ++count) {
+  for (count = 0, j=0; count < Prefs->nb_sites; ++count) {
     if (Prefs->site[count]) {
       Prefs->site[j++] = Prefs->site[count];
     }
@@ -1222,13 +1233,13 @@ void sitelist_remove_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
 
 void sitelist_edit_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   GtkTreeIter iter;
-  unsigned count, count2 = 0;
+  int count, count2 = 0;
   glob.nb_selected_sites = 0;
   if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
     do {
-      count = sitelist_iter_to_sid(mdl->store,&iter);
+      count = sitelist_iter_to_sid(GTK_TREE_MODEL(mdl->store),&iter);
       if (gtk_tree_selection_iter_is_selected(mdl->select,&iter) &&
-          (count = sitelist_iter_to_sid(mdl->store,&iter)) != -1) {
+          (count = sitelist_iter_to_sid(GTK_TREE_MODEL(mdl->store),&iter)) != -1) {
         if (glob.nb_selected_sites && 
             Prefs->site[count]->backend_type != glob.selected_sites[0]->backend_type) {
           quick_message("You are not allowed to edit multiple sites with different backend types");
@@ -1253,12 +1264,12 @@ void sitelist_edit_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
 
 void sitelist_colors_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   GtkTreeIter iter;
-  unsigned count = 0, count2 = 0;
+  int count = 0, count2 = 0;
   glob.nb_selected_sites = 0;
   if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
     do {
       if (gtk_tree_selection_iter_is_selected(mdl->select,&iter) &&
-          (count = sitelist_iter_to_sid(mdl->store,&iter)) != -1) {
+          (count = sitelist_iter_to_sid(GTK_TREE_MODEL(mdl->store),&iter)) != -1) {
         glob.selected_sites[glob.nb_selected_sites++] = Prefs->site[count];
         count2++;
       }
@@ -1266,9 +1277,26 @@ void sitelist_colors_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   }
   if (count2) {
     wmccc_run_dialog(DLG_SITE_COLORS, FALSE);
-    //run_pinnipede_site_colors_dialog();
-    //gtk_dialog_response(GTK_DIALOG(pinnipede_site_colors_dialog(NULL)),1);
   } else quick_message("Please concentrate yourself!\nYou forgot to select (at least) one site");
+}
+
+void sitelist_proxy_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
+  GtkTreeIter iter;
+  int count = 0, count2 = 0;
+  glob.nb_selected_sites = 0;
+  if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(mdl->store), &iter)) {
+    do {
+      if (gtk_tree_selection_iter_is_selected(mdl->select,&iter) &&
+          (count = sitelist_iter_to_sid(GTK_TREE_MODEL(mdl->store),&iter)) != -1) {
+        glob.selected_sites[glob.nb_selected_sites++] = Prefs->site[count];
+        count2++;
+      }
+    } while (gtk_tree_model_iter_next(GTK_TREE_MODEL(mdl->store), &iter));
+  }
+  if (count2) {
+    wmccc_run_dialog(DLG_PROXY, FALSE);
+  } else quick_message("Please concentrate yourself!\nYou forgot to select (at least) one site. \n"
+                       "If you may to change proxy settings for all sites, select them all.");
 }
 
 void sitelist_new_site_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl UNUSED) {
@@ -1296,7 +1324,7 @@ void sitelist_site_name_edited_cb(GtkCellRendererText *cell UNUSED,
   int i;
   gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter, path_string);
   printf("edited %s, new value : %s\n", path_string, new_text);
-  i = sitelist_iter_to_sid(store,&iter);assert(i >= 0);
+  i = sitelist_iter_to_sid(GTK_TREE_MODEL(store),&iter);assert(i >= 0);
   if (strcmp(Prefs->site[i]->all_names[0], new_text))
     validate_site_name(new_text, Prefs->site[i], TRUE);
   sitelist_set_row(store, &iter, Prefs->site[i]);
@@ -1308,7 +1336,7 @@ void sitelist_site_enabled_toggled_cb(GtkCellRendererToggle *cell UNUSED,
   GtkTreeIter   iter;
   int i;
   gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter, path_string);
-  i = sitelist_iter_to_sid(store,&iter);assert(i >= 0);
+  i = sitelist_iter_to_sid(GTK_TREE_MODEL(store),&iter);assert(i >= 0);
   //i = atoi(path_string);
   Prefs->site[i]->check_board = Prefs->site[i]->check_board ? 0 : 1;
   sitelist_set_row(store, &iter, Prefs->site[i]);
@@ -1389,6 +1417,9 @@ int prepare_sitelist_dialog(int isinit) {
     g_signal_connect(G_OBJECT(sitelist_dialog("colors_bt")), "clicked",
                      G_CALLBACK(sitelist_colors_cb),
                      (gpointer)&mdl);
+    g_signal_connect(G_OBJECT(sitelist_dialog("proxy_bt")), "clicked",
+                     G_CALLBACK(sitelist_proxy_cb),
+                     (gpointer)&mdl);
     g_signal_connect(G_OBJECT(sitelist_dialog("new_site_bt")), "clicked",
                      G_CALLBACK(sitelist_new_site_cb),
                      (gpointer)&mdl);
@@ -1446,7 +1477,7 @@ main (int argc, char *argv[])
 
   if (argc > 1) {
     if (strcmp(argv[1], "-wmccpid")==0) {
-      g_print("wmc³ launched from wmc²\n"); g_assert(argc >= 5);
+      printf("wmc³ (pid=%d) launched from wmc²\n", (int)getpid()); g_assert(argc >= 5);
       glob.wmcc_pid = atoi(argv[2]);
       glob.options_file = abs_options_filename(argv[3]);
       glob.tmp_options_file = abs_options_filename(argv[4]);
