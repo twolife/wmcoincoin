@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.16 2002/03/27 20:45:06 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.17 2002/03/27 21:22:29 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.17  2002/03/27 21:22:29  pouaite
+  microbugfix
+
   Revision 1.16  2002/03/27 20:45:06  pouaite
   deuxième vague de bugfix
 
@@ -440,7 +443,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
       }
       i = (special_encode_ltgt && is_bug == 0) ? 0 : 2; found = -1;
       */
-      i = 0;
+      i = 0; found = -1;
       while (tab[i].sign) {
 	if (strncmp(tab[i].sign, src+is+1, strlen(tab[i].sign))==0) {
 	  is += strlen(tab[i].sign)+1;
