@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.91 2003/06/22 12:17:19 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.92 2003/06/23 22:43:47 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2232,22 +2232,26 @@ pp_count_backrefs(Boards *b, board_msg_info *base_mi, int *nrep, int *nrep_bak)
 }
 
 
+
+
 /* celle la est tordue ...
    il s'agit de verifier si on survole (avec la souris) une info interessante, 
    et d'agir le cas echeant (de maniere un peu désordonnée)
+
+   force_refresh : -1 => on n'appelle jamais pp_refresh
+                    0 => on appelle si il faut
+                   +1 => on appelle toujours
 */
 void
-pp_check_survol(Dock *dock, int x, int y)
+pp_check_survol(Dock *dock, PostWord *pw, int force_refresh)
 {
   Pinnipede *pp = dock->pinnipede;
   Boards *boards = dock->sites->boards;
-  PostWord *pw;
   char survol[1024];
   char *p;
   int survol_hash;
   int is_a_ref = 0;
 
-  pw = pp_get_pw_at_xy(pp,x,y);
   survol[0] = 0;
   if (pw) {
     if (pw->attr_s && (pw->attr & PWATTR_REF)==0) { /* pour les [url] */
@@ -2320,7 +2324,7 @@ pp_check_survol(Dock *dock, int x, int y)
 
   /* on evite de reafficher tant qu'on survolle le meme objet (pour eviter le clignotement) */
   if (pp->survol_hash != survol_hash) {
-    if (is_a_ref || strlen(survol) == 0) {
+    if (force_refresh != -1 && (is_a_ref || strlen(survol) == 0 || force_refresh == +1)) {
       pp_refresh(dock, pp->win, is_a_ref ? pw : NULL);
     }
     pp_popup_show_txt(dock, survol);
@@ -3454,6 +3458,17 @@ kbnav_move(Dock *dock, int dir) {
             if (pw) pw->attr |= PWATTR_TMP_EMPH;*/
     }
     pp_refresh(dock, pp->win, refpw);
+    {
+      PostWord *pwts = 0;
+      if (pv) { 
+        PostWord *pw = pv->first;
+        while (pw) {
+          if ((pw->attr & PWATTR_TSTAMP)) { pwts = pw;  break; }
+          pw = pw->next;
+        }
+      }
+      pp_check_survol(dock,pwts,-1);
+    }
   }
 }
 
@@ -3506,7 +3521,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     } break;
     /* CTRL-ENTER : ouvre le palmi pour répondre au message affiché en bas du pinni */
     case XK_Return:
-    case XK_KP_Enter: if (!editw_ismapped(dock->editw)) {
+    case XK_KP_Enter: {
       PostWord *pwts = NULL;
       PostVisual *pv;
       if ((pv = pp_find_pv(pp, pp->kbnav_current_id))) {
@@ -3535,12 +3550,12 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       ret++;
     } break;
     case XK_KP_Up:
-    case XK_Up: if (!editw_ismapped(dock->editw)) {
+    case XK_Up: {
       kbnav_move(dock,-1);
       ret++;
     } break;
     case XK_KP_Down:
-    case XK_Down: if (!editw_ismapped(dock->editw)) {
+    case XK_Down: {
       kbnav_move(dock,+1);
       ret++;
     } break;
@@ -3798,7 +3813,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	  time_drag = event->xmotion.time;
 	}
       } else {
-	pp_check_survol(dock, event->xmotion.x, event->xmotion.y);
+	pp_check_survol(dock, pp_get_pw_at_xy(dock->pinnipede, event->xmotion.x, event->xmotion.y),0);
 	old_mouse_x = event->xmotion.x;
 	old_mouse_y = event->xmotion.y;
       }

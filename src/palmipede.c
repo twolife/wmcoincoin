@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.12 2003/06/22 12:17:19 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.13 2003/06/23 22:43:47 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.13  2003/06/23 22:43:47  pouaite
+  shift-enter pour le post anonyme + fix ouinouin
+
   Revision 1.12  2003/06/22 12:17:19  pouaite
   2.4.5a a la piscine
 
@@ -1986,18 +1989,6 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case XK_End:
       editw_move_end(ew, event->xkey.state & ShiftMask); break;
 
-    case XK_Return:
-    case XK_KP_Enter:
-      //      printf("state %d\n", dock->door_state);
-      if (dock->door_state != OPENING && dock->door_state != OPENED) {
-	//printf("opening %d\n", dock->door_state);
-	dock->door_state = OPENING;
-      } else if (dock->door_state == OPENED || dock->door_state_step > 12) {
-	dock->red_button_press_flag = 1;
-	dock->post_anonyme = 1;
-      }
-      break;
-
     default:
       FORWARD_KEY; break;
     }
@@ -2080,7 +2071,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 	dock->door_state = OPENING;
       } else if (dock->door_state == OPENED || dock->door_state_step > 12) {
 	dock->red_button_press_flag = 1;
-	dock->post_anonyme = 0;
+	dock->post_anonyme = ((event->xkey.state & ShiftMask) ? 1:0);
       }
       break;
     default:

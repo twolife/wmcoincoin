@@ -7,6 +7,7 @@
 			  mais pas compatible avec les winsock ..
 			*/
 #else
+#include <sys/types.h>
 #include <cygwin/types.h>
 #endif
 #include <regex.h>

@@ -1,3 +1,10 @@
+2003-06-24  pouaite  <c0in@altern.org>
+
+	* navigation clavier possible quand le palmi est sorti (pour
+	pouvoir répondre à plusieurs messages avec ctrl-enter). Du coup le
+	post aninyme n'est plus ctrl-enter mais shift-enter.
+	fix compile pour cygwin (particulièrement pour ouinouin-ixpé)
+	
 --------------------------v2.4.5-a-----------------------------------------
 2003-06-21  pouaite  <c0in@altern.org>
 

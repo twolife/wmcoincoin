@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.29  2003/06/23 22:43:46  pouaite
+dnl   shift-enter pour le post anonyme + fix ouinouin
+dnl
 dnl   Revision 1.28  2003/06/22 12:17:17  pouaite
 dnl   2.4.5a a la piscine
 dnl
@@ -297,6 +300,7 @@ AC_CHECK_FUNCS(strdup strstr strcasecmp strncasecmp)
 AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
 AC_CHECK_FUNCS(uname)
 dnl les fonctions bidon pour cygouin
+dnl AC_CHECK_LIB(ws2_32, getaddrinfo, LIBS="-lws2_32 $LIBS")
 AC_CHECK_FUNCS(getaddrinfo freeaddrinfo gai_strerror getnameinfo inet_aton)
 
 AC_C_CONST
@@ -312,8 +316,12 @@ dnl those two tests were taken from openssh-3.5p1
 AC_CACHE_CHECK([for struct sockaddr_storage], ac_cv_have_struct_sockaddr_storage, [
 	AC_TRY_COMPILE(
 		[
+#ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
+#endif
 		],
 		[ struct sockaddr_storage s; ],
 		[ ac_cv_have_struct_sockaddr_storage="yes" ],
@@ -326,9 +334,13 @@ fi
 AC_CACHE_CHECK([for struct addrinfo], ac_cv_have_struct_addrinfo, [
 	AC_TRY_COMPILE(
 		[
+#ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#endif
 	],
 		[ struct addrinfo s; s.ai_flags = AI_PASSIVE; ],
 		[ ac_cv_have_struct_addrinfo="yes" ],
