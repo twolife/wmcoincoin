@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.10 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.11 2002/01/15 15:30:17 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.11  2002/01/15 15:30:17  pouaite
+  rien d'interessant
+
   Revision 1.10  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -2677,6 +2680,8 @@ main(int argc, char **argv)
 
   strncpy(dock->coin_coin_useragent, Prefs.user_agent, USERAGENT_MAX_LEN); 
   dock->coin_coin_useragent[USERAGENT_MAX_LEN] = 0;
+  strncpy(dock->real_coin_coin_useragent, Prefs.user_agent, USERAGENT_MAX_LEN); 
+  dock->real_coin_coin_useragent[USERAGENT_MAX_LEN] = 0;
   /* pour les http_get, on utilisera Prefs.user_agent, qui est non modifiable
      pour les http_post, on utilisera dock->coin_coin_useragent */
 

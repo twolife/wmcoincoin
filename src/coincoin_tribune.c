@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.12 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.13 2002/01/15 15:30:17 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.13  2002/01/15 15:30:17  pouaite
+  rien d'interessant
+
   Revision 1.12  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -403,6 +406,9 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
     it->is_my_message = !strcmp(Prefs.user_login, it->login);
   } else {
     it->is_my_message = !strcmp(it->useragent, my_useragent);
+    if (it->is_my_message) {
+      myprintf("my_message: '%<yel %s>' == '<grn %s>'\n", it->useragent, my_useragent);
+    }
   }
   trib->just_posted_anonymous = 0;
 
