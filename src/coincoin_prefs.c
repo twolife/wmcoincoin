@@ -21,7 +21,7 @@
  */
 
 
-//#include <getopt.h>
+#include <getopt.h>
 #include <sys/stat.h>
 #include <sys/utsname.h> /* pour la fonction uname */
 #include <errno.h>

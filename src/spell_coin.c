@@ -25,13 +25,17 @@
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
+
 #include "global.h"
 #include "coin_util.h"
 #include "myprintf.h"
 #include "spell_coin.h"
 
 /* c'est pas bien de foutre des variables globales au fichier ici mais... */
-int is_ispell_running = 0;
+int ispell_pid = -1; /* remplace is_ispell_running */
 int ispell_stdin, ispell_stdout;
 time_t ispell_time_last_used = 0;
 
@@ -86,15 +90,17 @@ char* convert4Spell(const unsigned char* str)
 }
 
 /*
-  bien sur, spell_cmd ne doit pas être "rm -rf *" mais plutot un truc du genre 'ispell -ddico -a'
+  Lance la commande 'spell_cmd -d spell_dict -a' avec des pipes 
+  d'entree/sortie associes
 */
 int
-launch_ispell(const char *spell_cmd)
+launch_ispell(const char *spell_cmd, const char* spell_dict)
 {
   int tube_stdin[2];
   int tube_stdout[2];
+  int spell_pid;
 
-  assert(is_ispell_running == 0);
+  assert(ispell_pid == -1);
   /* tout ceci a été pompée de mnière éhontée dans 'prog syst en c sous linux'..*/
   if (pipe(tube_stdin)) {
     return -1;
@@ -103,24 +109,38 @@ launch_ispell(const char *spell_cmd)
     close(tube_stdin[0]); close(tube_stdin[1]);
     return -1;
   }
-  switch (fork()) {
+  /* Attention je suis co**llu je suis un male ... je prends des risques
+     je fait un vfork (Vous les petits jeunes regardez pas ca c'est MAL(tm)
+  */
+  switch ( spell_pid = vfork() ) {
   case -1: /* arrrrg */
     {
-      fprintf(stderr, "échec du fork..(%s)\n", strerror(errno));
+      fprintf(stderr, "échec du vfork..(%s)\n", strerror(errno));
       close(tube_stdin[0]); close(tube_stdin[1]);
       close(tube_stdout[0]); close(tube_stdout[1]);	
       return -1;
     } break;
   case 0: /* fiston (ispell) */
     {
+      int retExec;
+
       close(tube_stdin[1]); /* bouchage des tuyau */
       close(tube_stdout[0]);
       dup2(tube_stdin[0], STDIN_FILENO);
       dup2(tube_stdout[1], STDOUT_FILENO);
 
-      /* a remplacer par exec !! (c'est pas beau, on voit 2 wmcoincoin + 1 ispell dans le top !!) */
-      system(spell_cmd);
-      exit(0);
+      /* Je suis toujours co**llu et je fait un execlp ... enfin la c'est
+	 petit joueur (le execle serait plus rapide ... on lui donne un
+	 env allege)mais j'ai peur de faire une couffe
+       */
+      retExec = execlp(spell_cmd, spell_cmd, "-d", spell_dict, "-a", NULL, 
+		       NULL);
+      if( retExec==-1 ) {
+	fprintf(stderr, "échec de l'exec..(%s)\n", strerror(errno));
+      }
+      close(tube_stdin[0]);
+      close(tube_stdout[1]);
+      exit(retExec);
     } break;
   default: /* pôpa (wmcc) */
     {
@@ -129,36 +149,38 @@ launch_ispell(const char *spell_cmd)
       ispell_stdin = tube_stdin[1];
       ispell_stdout = tube_stdout[0];
       ispell_time_last_used = time(NULL);
-      is_ispell_running = 1;
+      ispell_pid = spell_pid;
     } break;
   }
   return 0;
 }
 
 int
-is_ispell_ready(const char* spell_cmd)
+is_ispell_ready(const char* spell_cmd, const char* spell_dict)
 {
-  if (is_ispell_running) {
+  if (ispell_pid!=-1) {
     return 1;
   } else {
-    return (launch_ispell(spell_cmd) == 0 ? 1 : 0);
+    return (launch_ispell(spell_cmd, spell_dict) == 0 ? 1 : 0);
   }
 }
 
 void
 kill_ispell()
 {
-  is_ispell_running = 0;
-  printf("kill ispell\n");
+  int spell_pid = ispell_pid, ret;
+  ispell_pid = -1;
+  printf("kill ispell(%d)\n", spell_pid);
   close(ispell_stdin);
   close(ispell_stdout); /* et paf ! */
+  waitpid(spell_pid, &ret, 0); /* On attends la reponse ca elimine les zombies :) */
 }
 
 /* appelée régulièrement par X_loop */
 int
 check_if_should_kill_ispell() 
 {
-  if (is_ispell_running) {
+  if (ispell_pid!=-1) {
     if (difftime(time(NULL), ispell_time_last_used) > 10.0) { /* au bout de 10 secondes, on libère ispell.. */
       kill_ispell();
     }
@@ -173,7 +195,7 @@ ErrList spellString(const char* str, const char* spellCmd, const char* spellDict
   static unsigned char *old_spellStr = NULL;
   static ErrList old_ret = NULL;
   
-  unsigned char* spellStr = convert4Spell(str);
+  unsigned char* spellStr = convert4Spell(str); 
 
 
   if( old_spellStr && strcmp(spellStr, old_spellStr)==0 ) {
@@ -183,7 +205,7 @@ ErrList spellString(const char* str, const char* spellCmd, const char* spellDict
     free(spellStr);
     return old_ret;
   } else {
-    unsigned char* spellSh;
+/*    unsigned char* spellSh; */
     ErrList *end_of_ret = &old_ret;
     
     /* reinitailise le passe de cette fonction */
@@ -194,21 +216,23 @@ ErrList spellString(const char* str, const char* spellCmd, const char* spellDict
     old_ret = NULL;
 
     /* lancement de ispell */
-    spellSh = (char*)malloc(strlen(spellStr)+strlen(spellDict)+7);
+/*    spellSh = (char*)malloc(strlen(spellStr)+strlen(spellDict)+7);
     sprintf(spellSh, "%s -d%s -a", spellCmd, spellDict);
-
-    BLAHBLAH(1 ,myprintf("running %<RED %s>\n", spellSh));
+*/
+    BLAHBLAH(1 ,myprintf("running %<RED %s -d  %s -a>\n", 
+			 spellCmd, spellDict));
 
     //    if (is_ispell_running) kill_ispell();
 
-    if (!is_ispell_ready(spellSh)) {
-      free(spellSh); return NULL;
+    if (!is_ispell_ready(spellCmd, spellDict) ) {
+/*      free(spellSh);*/
+      return NULL;
     } else {
       char buff[1024];
       unsigned char *s;
       ErrList tmp;
 
-      free(spellSh);
+/*      free(spellSh);*/
 
       s = spellStr;
       /* envoie la chaine à ispell */
