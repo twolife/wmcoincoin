@@ -85,6 +85,7 @@ typedef struct _structPrefs{
      moins de 'news_max_nb_days' jours */
   int news_max_nb_days;
   int news_bgcolor, news_fgcolor; /* couleur d'affichage de la fenetre des news */
+  int news_titles_bgcolor, news_titles_fgcolor, news_emph_color;
   int news_xpos, news_ypos, news_width, news_height; /* dimensions,positions de cette fenetre */
 
   /* pour mise au point ... */
@@ -149,11 +150,18 @@ typedef struct _structPrefs{
 
   int use_fake_real_transparency;
 
+  BiColor sc_bg_color, sc_bg_light_color, sc_bg_dark_color, 
+    sc_arrow_normal_color, sc_arrow_emphasized_color,
+    sc_bar_color, sc_bar_light_color, sc_bar_dark_color;
+
   BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
-    pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
+    pp_login_color, pp_url_color, pp_emph_color, 
     pp_sel_bgcolor, pp_popup_fgcolor, pp_popup_bgcolor,
     pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, 
-    pp_keyword_color[NB_PP_KEYWORD_CATEG], pp_plopify_color;
+    pp_keyword_color[NB_PP_KEYWORD_CATEG], pp_plopify_color,
+    pp_buttonbar_bgcolor, pp_buttonbar_fgcolor,
+    pp_buttonbar_msgcnt_color, pp_buttonbar_updlcnt_color,
+    pp_buttonbar_progressbar_color, pp_strike_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;
@@ -178,6 +186,7 @@ typedef struct _structPrefs{
   KeyList *plopify_key_list; /* version plopesque du kill-file, même remarque qu'au dessus */
   char **plop_words;
   unsigned nb_plop_words;
+	int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */
 } structPrefs;
 
 

@@ -1,3 +1,34 @@
+2002-05-27  binny  <binny@baby-linux.net>
+
+	* option option -W et pinnipede.auto_open pour auto-ouvrir le
+	pinnipede quand on lance le coincoin.
+	
+2002-05-26  pouaite  <c0in@altern.org>
+
+	* ajout d'options inutiles
+		pinnipede.strike_color:            008000 000080
+		pinnipede.buttonbar.bgcolor:       cdcdcd cdcdcd
+		pinnipede.buttonbar_fgcolor:       000000 000000
+		pinnipede.buttonbar_msgcnt_color:  7070af 7070af
+		pinnipede.buttonbar_updlcnt_color: 7070af 7070af
+		pinnipede.buttonbar_progressbar_color: ff0000 ff0000
+		pinnipede.buttonbar.bg_color:      cdcdcd cdcdcd
+		pinnipede.buttonbar.fg_color:      000000 000000
+		scrollcoin.bg_color:               cdcdcd cdcdcd
+		scrollcoin.bg_light_color:         ffffff ffffff
+		scrollcoin.bg_dark_color:          626262 626262
+		scrollcoin.arrow_normal_color:     0000ff 00ff00
+		scrollcoin.arrow_emphasized_color: 9c99cd 99cd99
+		scrollcoin.bar_color:              9c99cd 99cd99
+		scrollcoin.bar_light_color:        cdceff ceffce
+		scrollcoin.bar_dark_color:         62659c 649c64
+	
+2002-05-25  pouaite  <c0in@altern.org>
+
+	* src/wmcoincoin.c: sauvegarde automatique des pos/dimensions du
+	pinni et de la fenetre de news (quand pinnipede.location et
+	news.location ne sont pas utilisées)
+
 2002-05-20  pouaite  <c0in@altern.org>
 
 	* nouveau raccourci du palmipède: Alt-F (F comme filtre) active le

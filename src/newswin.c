@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.10 2002/05/19 01:14:59 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.11 2002/05/27 18:39:14 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.11  2002/05/27 18:39:14  pouaite
+  trucs du week-end + patch de binny
+
   Revision 1.10  2002/05/19 01:14:59  pouaite
   bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
 
@@ -76,7 +79,7 @@ struct _Newswin {
   PicoHtml *ph_survol;
 
   unsigned long win_bgpixel, win_fgpixel;
-  unsigned long titles_bgpixel, titles_fgpixel;
+  unsigned long titles_bgpixel, titles_fgpixel, emph_pixel;
 
   struct struc_ztitles {
     int y, h, nid;
@@ -138,7 +141,7 @@ phview_draw(Dock *dock, Drawable d, PHView *phv, unsigned long bg_pixel, int tit
     y0 = MAX(0,nw->ztitle[nw->active_znum].y-phv->decal - 1);
     y1 = MIN(phv->h-1, nw->ztitle[nw->active_znum].y+nw->ztitle[nw->active_znum].h-1-phv->decal + 2);
     if (y1>=y0) {
-      XSetForeground(dock->display, nw->gc, WhitePixel(dock->display, dock->screennum));//dock->light_pixel);
+      XSetForeground(dock->display, nw->gc, nw->emph_pixel);//dock->light_pixel);
       XFillRectangle(dock->display, d, nw->gc, phv->x-4, phv->y + y0, phv->w+8, y1-y0 + 1);
     }
   }
@@ -228,7 +231,7 @@ newswin_adjust_scrollcoin(Dock *dock UNUSED, PHView *phv)
   } else {
     phv->sc = scrollcoin_create(0, MAX(10+phv->ph_h-phv->h,0), 0, 
 				phv->x+phv->w+6,
-				phv->y, phv->h);
+				phv->y, phv->h,0);
   }
 }
 
@@ -593,7 +596,7 @@ newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
       x = nw->win_width - w - 4;
       y = nw->win_height - h - 2;
 
-      XSetForeground(dock->display, nw->gc, WhitePixel(dock->display, dock->screennum));
+      XSetForeground(dock->display, nw->gc, nw->emph_pixel);
       XFillRectangle(dock->display, nw->window, nw->gc, x, y, nw->win_width-x, nw->win_height-y);
       XSetForeground(dock->display, nw->gc, BlackPixel(dock->display, dock->screennum));
       XDrawRectangle(dock->display, nw->window, nw->gc, x, y, nw->win_width-x, nw->win_height-y);
@@ -813,9 +816,9 @@ newswin_build(Dock *dock)
   ALLOC_OBJ(nw,Newswin);
   nw->win_bgpixel = IRGB2PIXEL(Prefs.news_bgcolor);
   nw->win_fgpixel = IRGB2PIXEL(Prefs.news_fgcolor);
-  nw->titles_bgpixel = IRGB2PIXEL(0xd0d0d0);
-  nw->titles_fgpixel = IRGB2PIXEL(0x000080);
-
+  nw->titles_bgpixel = IRGB2PIXEL(Prefs.news_titles_bgcolor);
+  nw->titles_fgpixel = IRGB2PIXEL(Prefs.news_titles_fgcolor);
+  nw->emph_pixel = IRGB2PIXEL(Prefs.news_emph_color);
   nw->phv_news.ph = picohtml_create(dock, Prefs.news_fn_family, Prefs.news_fn_size, 1);
   picohtml_set_default_pixel_color(nw->phv_news.ph, nw->win_fgpixel);
 
@@ -877,4 +880,43 @@ int
 newswin_get_ypos(const Dock *dock) {
   const Newswin *nw = dock->newswin;
   return nw->win_ypos;
+}
+
+/* sauvegarde de la position et des dimensions de la fenetre
+   (appelé par wmcc_save_state de wmcoincoin.c) 
+ */
+void
+newswin_save_state(Dock *dock, FILE *f) {
+  const Newswin *nw = dock->newswin;
+
+  fprintf(f, "%d %d %d %d %d\n", 
+	  nw->window == None ? 0 : 1,
+	  nw->win_xpos, nw->win_ypos, 
+	  nw->win_width, nw->win_height);
+}
+
+void
+newswin_restore_state(Dock *dock, FILE *f) {
+  Newswin *nw = dock->newswin;
+  int mapped, win_xpos, win_ypos, win_width, win_height;
+
+  if (fscanf(f, "%d %d %d %d %d\n", 
+	     &mapped,
+	     &win_xpos, &win_ypos, 
+	     &win_width, &win_height) == 5) {
+    /* on vérifie qu'on n'a pas spécifié de préferences dans le fichier d'options */
+    if (Prefs.news_xpos == -10000 && Prefs.news_ypos == -10000) {
+      if (win_xpos != -10000) {
+	nw->win_xpos = MAX(MIN(win_xpos,3000),-20);
+	nw->win_ypos = MAX(MIN(win_ypos,3000),-20);
+	nw->win_width = MAX(MIN(win_width,3000),50);
+	nw->win_height = MAX(MIN(win_height,3000),50);
+      }
+      /*
+	if (mapped) {
+	  newswin_show(dock, &dock->dlfp, -2);
+	}
+      */
+    }
+  }
 }

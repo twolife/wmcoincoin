@@ -4,15 +4,7 @@
 #include "coin_util.h"
 #include "coin_xutil.h"
 
-unsigned long scroll_bg_pixel;
-unsigned long scroll_bg_light_pixel;
-unsigned long scroll_bg_dark_pixel;
-unsigned long scroll_arrow_normal_pixel;
-unsigned long scroll_arrow_emphasized_pixel;
 
-unsigned long scroll_bar_pixel;
-unsigned long scroll_bar_light_pixel;
-unsigned long scroll_bar_dark_pixel;
 
 RGBAContext *xctx;
 
@@ -40,6 +32,16 @@ struct _ScrollCoin {
   Pixmap pix;
 
   enum { BT_UP, BT_DOWN, BT_BAR, BT_NONE} bt_state; 
+
+  unsigned long scroll_bg_pixel;
+  unsigned long scroll_bg_light_pixel;
+  unsigned long scroll_bg_dark_pixel;
+  unsigned long scroll_arrow_normal_pixel;
+  unsigned long scroll_arrow_emphasized_pixel;
+  
+  unsigned long scroll_bar_pixel;
+  unsigned long scroll_bar_light_pixel;
+  unsigned long scroll_bar_dark_pixel;
 };
 
 
@@ -51,18 +53,18 @@ scrollcoin_draw_btup(ScrollCoin *sc)
 
   y0 = 1; y1 = BT_H-1;
   if (sc->bt_state != BT_UP) {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_light_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_light_pixel);
     XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, y0);  
     XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, 1, y1);
   } else {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_dark_pixel);
     XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, BT_H-1);
   }
 
   if (sc->pos != sc->vmin) {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_arrow_normal_pixel);
   } else {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_emphasized_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_arrow_emphasized_pixel);
   }
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 4, y0+3, 5, y0+3);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 3, y0+4, 6, y0+4);
@@ -76,18 +78,18 @@ scrollcoin_draw_btdn(ScrollCoin *sc)
 
   y0 = sc->h - BT_H; y1 = sc->h-2;
   if (sc->bt_state != BT_DOWN) {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_light_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_light_pixel);
     XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, y0);
     XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, 1, y1);
   } else {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_dark_pixel);
     XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, BT_H-1);
   }
 
   if (sc->pos != sc->vmax) {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_arrow_normal_pixel);
   } else {
-    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_emphasized_pixel);
+    XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_arrow_emphasized_pixel);
   }
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 4, y1-3, 5, y1-3);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 3, y1-4, 6, y1-4);
@@ -103,26 +105,26 @@ scrollcoin_draw_bar(ScrollCoin *sc)
 
   by0 = sc->pixel_pos; by1 = by0 + sc->bar_sz -1;
 
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_dark_pixel);
   XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 0, 0, SC_W, sc->h);
 
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_pixel);
   XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 1, 1, SC_W-2, sc->h-2);
   
   /* lignes sombres au-dessus et en dessous des deux boutons */
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bg_dark_pixel);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, BT_H, SC_W-2, BT_H);  
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, sc->h - BT_H-1, SC_W-2, sc->h - BT_H-1);
 
 
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bar_dark_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bar_dark_pixel);
   XDrawRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 0, by0, SC_W, sc->bar_sz);
 
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bar_light_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bar_light_pixel);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, by0+1, SC_W-2, by0+1);  
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 1, by0+1, 1, by1);
 
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bar_pixel);
+  XSetForeground(xctx->dpy, xctx->copy_gc, sc->scroll_bar_pixel);
   XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 2, by0+2, SC_W-3, sc->bar_sz-2);
 }
 
@@ -197,19 +199,26 @@ void
 scrollcoin_build(RGBAContext *rgbactx)
 {
   xctx = rgbactx;
-  scroll_bg_pixel               = _IRGB2PIXEL(xctx, 0xcdcdcd);
-  scroll_bg_light_pixel         = _IRGB2PIXEL(xctx, 0xffffff);
-  scroll_bg_dark_pixel          = _IRGB2PIXEL(xctx, 0x626262);
-  scroll_arrow_normal_pixel     = _IRGB2PIXEL(xctx, 0x0000ff);
-  scroll_arrow_emphasized_pixel = _IRGB2PIXEL(xctx, 0x9c99cd);
-  
-  scroll_bar_pixel              = _IRGB2PIXEL(xctx, 0x9c99cd);
-  scroll_bar_light_pixel        = _IRGB2PIXEL(xctx, 0xcdceff);
-  scroll_bar_dark_pixel         = _IRGB2PIXEL(xctx, 0x62659c);
 }
 
+#define GET_BICOLOR(x) (opaque_color ? _IRGB2PIXEL(xctx, x.transp) : _IRGB2PIXEL(xctx, x.opaque))
+void
+scrollcoin_change_colors(ScrollCoin *sc, int opaque_color) {
+  sc->scroll_bg_pixel               = GET_BICOLOR(Prefs.sc_bg_color);
+  sc->scroll_bg_light_pixel         = GET_BICOLOR(Prefs.sc_bg_light_color);
+  sc->scroll_bg_dark_pixel          = GET_BICOLOR(Prefs.sc_bg_dark_color);
+  sc->scroll_arrow_normal_pixel     = GET_BICOLOR(Prefs.sc_arrow_normal_color);
+  sc->scroll_arrow_emphasized_pixel = GET_BICOLOR(Prefs.sc_arrow_emphasized_color);
+  
+  sc->scroll_bar_pixel              = GET_BICOLOR(Prefs.sc_bar_color);
+  sc->scroll_bar_light_pixel        = GET_BICOLOR(Prefs.sc_bar_light_color);
+  sc->scroll_bar_dark_pixel         = GET_BICOLOR(Prefs.sc_bar_dark_color);
+}
+
+
 ScrollCoin *
-scrollcoin_create(int vmin, int vmax, int pos, int x, int y, int h) {
+scrollcoin_create(int vmin, int vmax, int pos, 
+		  int x, int y, int h, int opaque_color) {
   ScrollCoin *sc;
 
   ALLOC_OBJ(sc, ScrollCoin);
@@ -223,6 +232,8 @@ scrollcoin_create(int vmin, int vmax, int pos, int x, int y, int h) {
 
   sc->pix = None;
   sc->requested_pos = sc->pos;
+
+  scrollcoin_change_colors(sc, opaque_color);
 
   scrollcoin_setbounds(sc, vmin, vmax);
   scrollcoin_setpos(sc, pos);

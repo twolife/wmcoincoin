@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.26 2002/05/12 22:06:27 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.27 2002/05/27 18:39:14 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.27  2002/05/27 18:39:14  pouaite
+#%  trucs du week-end + patch de binny
+#%
 #%  Revision 1.26  2002/05/12 22:06:27  pouaite
 #%  grosses modifs dans http.c
 #%
@@ -170,6 +173,10 @@
 #news.font_size: 12
 #news.bg_color: dae6e6
 #news.fg_color: 000000
+#news.titles.fg_color: 000080
+#news.titles.bg_color: d0d0d0
+#news.emph_color: ffffff
+
 ### position et dimensions de la fenêtre d'affichage des news
 #news.location: 100:200
 #news.dimensions: 600:300
@@ -276,11 +283,19 @@
 #pinnipede.login_color: ffff00 c0ffc0
 #pinnipede.url_color: 0000ff 80f0ff
 #pinnipede.trollscore_color: ff0000 ffff00
-#pinnipede.button_color: dae6e6 404040
+##############################pinnipede.button_color: dae6e6 404040 A VIRER !!!!!!!!!!!
 #pinnipede.emph_color: ffffff 505050
 #pinnipede.sel_bgcolor: ffd700 008080
+#pinnipede.strike_color: 800000
 #pinnipede.popup_fgcolor: 000050 000050
 #pinnipede.popup_bgcolor: c0d0d0 c0d0d0
+
+#pinnipede.buttonbar.bgcolor: cdcdcd cdcdcd
+#pinnipede.buttonbar_fgcolor: 000000 000000
+#pinnipede.buttonbar_msgcnt_color: 7070af 7070af
+#pinnipede.buttonbar_updlcnt_color: 7070af 7070af
+#pinnipede.buttonbar_progressbar_color: ff0000 ff0000
+
 #pinnipede.hilight.my_msg_color: f07000 f07000
 #pinnipede.hilight.answer_my_msg_color: e0b080 e0b080
 
@@ -298,6 +313,17 @@
 #pinnipede.fortune_fgcolor: 000000
 #pinnipede.fortune_font_family: helvetica
 #pinnipede.fortune_font_size: 9
+#pinnipede.buttonbar.bg_color: cdcdcd
+#pinnipede.buttonbar.fg_color: 000000
+
+#scrollcoin.bg_color:               cdcdcd cdcdcd
+#scrollcoin.bg_light_color:         ffffff ffffff
+#scrollcoin.bg_dark_color:          626262 626262
+#scrollcoin.arrow_normal_color:     0000ff 00ff00
+#scrollcoin.arrow_emphasized_color: 9c99cd 99cd99
+#scrollcoin.bar_color:              9c99cd 99cd99
+#scrollcoin.bar_light_color:        cdceff ceffce
+#scrollcoin.bar_dark_color:         62659c 649c64
 
 ### location du pinnipede (sous la forme 'xpos:ypos' )
 #pinnipede.location: 128:64
@@ -345,6 +371,9 @@
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #pinnipede.use_AM_PM: off
+
+### ouvre le pinnipede des le lancement du coincoin
+#pinnipede.auto_open: off
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker

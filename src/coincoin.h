@@ -598,9 +598,11 @@ DLFP_news *dlfp_find_news_id(DLFP *dlfp, int id);
 DLFP_news *dlfp_find_prev_news(DLFP *dlfp, int id);
 DLFP_news *dlfp_find_next_news(DLFP *dlfp, int id);
 int dlfp_count_news(DLFP *dlfp);
+void dlfp_yc_printf_comments(DLFP *dlfp);
 DLFP_comment *dlfp_yc_find_modified(DLFP *dlfp, DLFP_comment *prev);
 void dlfp_yc_clear_modified(DLFP *dlfp);
 void dlfp_yc_update_comments(DLFP *dlfp);
+void dlfp_msg_printf_messages(DLFP *dlfp);
 DLFP_message *dlfp_msg_find_unreaded(DLFP *dlfp);
 void dlfp_msg_update_messages(DLFP *dlfp);
 
@@ -617,6 +619,9 @@ int newswin_get_ypos(const Dock *dock);
 void newswin_draw(Dock *dock);
 void newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal);
 void newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my);
+void newswin_save_state(Dock *dock, FILE *f);
+void newswin_restore_state(Dock *dock, FILE *f);
+
 /* 
    renvoie l'id de la ieme news non encore lue
    (-1 si elle n'existe pas)
@@ -685,7 +690,8 @@ void pp_set_prefs_colors(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);
 void pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua);
 void pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word);
-
+void pp_save_state(Dock *dock, FILE *f);
+void pp_restore_state(Dock *dock, FILE *f);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

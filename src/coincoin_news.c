@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.27 2002/05/20 22:24:36 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.28 2002/05/27 18:39:14 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.28  2002/05/27 18:39:14  pouaite
+  trucs du week-end + patch de binny
+
   Revision 1.27  2002/05/20 22:24:36  pouaite
   10000ème bugfix de http.c.. quand je nettoie le code je rajoute des bugs, quand je bugfixe je cradouille le code
 
@@ -944,6 +947,23 @@ dlfp_updatenews(DLFP *dlfp)
 
 /* gestion des commentaire ... */
 
+void
+dlfp_yc_printf_comments(DLFP *dlfp) {
+  DLFP_comment *n;
+  int cnt;
+
+  myprintf("\n------ %<YEL liste des commentaires> -------\n"
+	   "num\tnews_id\tcid\tnrep\told\tmodified\n");
+  
+  n = dlfp->com;
+  cnt = 1;
+  while (n) {
+    printf("%d\t%d\t%d\t%d\t%d\t%d\n", cnt, n->news_id, n->com_id, 
+	   n->nb_answers, n->old, n->modified);
+    n = n->next; cnt++;
+  }
+}
+
 /*
   efface un commentaire (auqnd elle est trop vieille)
 */
@@ -1246,6 +1266,22 @@ dlfp_yc_update_comments(DLFP *dlfp)
 
 
 /* gestion des messages */
+void 
+dlfp_msg_printf_messages(DLFP *dlfp) {
+  DLFP_message *n;
+  int cnt;
+
+  myprintf("\n------ %<YEL liste des messages> -------\n"
+	   "num\tmsg_id\tunread\ttoo_old\n");
+  
+  n = dlfp->msg;
+  cnt = 1;
+  while (n) {
+    printf("%d\t%d\t%d\t%d\n", cnt, n->mid, n->unreaded, n->tooold); 
+    n = n->next; cnt++;
+  }
+}
+
 
 /*
   efface un message (par ex. quand il est trop vieux et ne figure plus dans linuxfr/messages)

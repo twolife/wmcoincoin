@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.13 2002/05/19 01:14:58 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.14 2002/05/27 18:39:14 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.14  2002/05/27 18:39:14  pouaite
+  trucs du week-end + patch de binny
+
   Revision 1.13  2002/05/19 01:14:58  pouaite
   bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
 
@@ -1107,6 +1110,13 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
 	 SI trolloscope clignote (detection de nouveau commentaire), on l'efface
       */
+
+
+      /* pour le debuggage, ça peut tj servir .. */
+      BLAHBLAH(1, dlfp_yc_printf_comments(dock->dlfp));
+      BLAHBLAH(1, dlfp_msg_printf_messages(dock->dlfp));
+
+
       if (flag_updating_comments == 0) {
 	DLFP_comment *com;
 	if ((com = dlfp_yc_find_modified(dock->dlfp,NULL))) {
@@ -1128,6 +1138,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	  dock->flamometre.tribune_answer_decnt = 1;
 	}
       }
+
       if (dock->tl_item_survol) {
 	dock->tl_item_clicked = 1;
 	dock->msginfo_defil = 1;

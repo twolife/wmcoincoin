@@ -22,7 +22,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     The_Prefs->use_iconwin = 0;
   }
 
-  while ((optc = getopt(argc, argv, "hd:D:f:F:u:m:v:p:b:g::P:A:wBHx:r:s:C:X:c:o:")) !=-1) {
+  while ((optc = getopt(argc, argv, "hd:D:f:F:u:m:v:p:b:g::P:A:wBHx:r:s:C:X:c:o:W")) !=-1) {
     switch (optc) {
     case 'h':
       {
@@ -69,6 +69,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 		 "\t\t tout à fait facultative\n");
 	myprintf(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
 		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n", options_file_name);
+	myprintf(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)");
 	exit(0);
       } break;
     case 'd': TEST_CMDLINE_OPT(OPT_tribune_delay); break;
@@ -114,6 +115,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	}
       } break;
     case 'C' : TEST_CMDLINE_OPT(OPT_http_cookie); break;
+		case 'W' : The_Prefs->pinnipede_open_on_start = 1; break; /* auto ouvre le pinnipede au lancement */
     case 'o': break; /* cette option est traitée dans init_default_prefs (cad AVANT la lecture du fichier d'options) */
     case ':':
     case '?':
@@ -329,6 +331,7 @@ wmcc_prefs_relecture(Dock *dock)
   structPrefs newPrefs;
   char *errmsg;
   char *options_full_file_name;
+  int scrollcoin_changed = 0;
 
   memset(&newPrefs, 0, sizeof(structPrefs));
   wmcc_prefs_set_default(&newPrefs);
@@ -401,10 +404,25 @@ wmcc_prefs_relecture(Dock *dock)
 
     /* à faire: plop_words */
 
+    if (BIC_OPT_COPY_IF_CHANGED(sc_bg_color) ||
+        BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) ||
+	BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) || 
+	BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) ||
+	BIC_OPT_COPY_IF_CHANGED(sc_arrow_emphasized_color) ||
+	BIC_OPT_COPY_IF_CHANGED(sc_bar_color) ||
+	BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) ||
+	BIC_OPT_COPY_IF_CHANGED(sc_bar_dark_color)) {
+      scrollcoin_changed = 1;
+    }
+
 
     /* modifs sur l'apparence de la fenêtre des news */
     if (STR_OPT_COPY_IF_CHANGED(news_fn_family) || INT_OPT_COPY_IF_CHANGED(news_fn_size) ||
-	INT_OPT_COPY_IF_CHANGED(news_bgcolor) || INT_OPT_COPY_IF_CHANGED(news_fgcolor)) {
+	INT_OPT_COPY_IF_CHANGED(news_bgcolor) || INT_OPT_COPY_IF_CHANGED(news_fgcolor) ||
+	INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) ||
+	INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) ||
+	INT_OPT_COPY_IF_CHANGED(news_emph_color) ||
+	scrollcoin_changed) {
       int showed = newswin_is_used(dock);
       newswin_destroy(dock); newswin_build(dock);
       if (showed) newswin_show(dock, dock->dlfp, -2);
@@ -454,7 +472,12 @@ wmcc_prefs_relecture(Dock *dock)
         BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_login_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_url_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_button_color) ||
+	BIC_OPT_COPY_IF_CHANGED(pp_strike_color) ||
+	BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_msgcnt_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_updlcnt_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_progressbar_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_emph_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) ||
         BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) ||

@@ -8,7 +8,8 @@
 typedef struct _ScrollCoin ScrollCoin;
 
 void scrollcoin_build(RGBAContext *rgbactx);
-ScrollCoin *scrollcoin_create(int vmin, int vmax, int pos, int x, int y, int h);
+void scrollcoin_change_colors(ScrollCoin *sc, int opaque_color);
+ScrollCoin *scrollcoin_create(int vmin, int vmax, int pos, int x, int y, int h, int opaque_color);
 void scrollcoin_destroy(ScrollCoin *sc);
 void scrollcoin_refresh(ScrollCoin *sc, Drawable d, int force);
 int scrollcoin_get_vmax(const ScrollCoin *sc);

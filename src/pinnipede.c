@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.60 2002/04/26 04:45:51 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.61 2002/05/27 18:39:14 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.61  2002/05/27 18:39:14  pouaite
+  trucs du week-end + patch de binny
+
   Revision 1.60  2002/04/26 04:45:51  pouaite
   reconnaissance des horloges suivies de 3 pts de suspension
 
@@ -266,9 +269,11 @@ struct _Pinnipede {
   Window win;
   unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
     emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
-    popup_fgpixel, popup_bgpixel, minib_pixel, minib_dark_pixel, sel_bgpixel,
+    popup_fgpixel, popup_bgpixel, sel_bgpixel,
     hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
-    plopify_pixel;
+    plopify_pixel, 
+    minib_pixel, minib_dark_pixel, minib_msgcnt_pixel, 
+    minib_updlcnt_pixel, minib_progress_bar_pixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
 
@@ -1383,7 +1388,7 @@ pp_minib_refresh(Dock *dock)
     } else {
       snprintf(s_filtre, 60, "FILTRE NON DEFINI");
     }
-    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
+    XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
     XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
   } else {
     
@@ -1435,7 +1440,7 @@ pp_minib_refresh(Dock *dock)
     w = MINIB_FN_W*strlen(s_nb_messages);
     if (strlen(s_nb_messages)) {
       if (x+w < x_minib) {
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x7070af));	
+	XSetForeground(dock->display, dock->NormalGC, pp->minib_msgcnt_pixel);	
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_nb_messages, strlen(s_nb_messages));
       }
     }
@@ -1443,7 +1448,7 @@ pp_minib_refresh(Dock *dock)
     w = MINIB_FN_W*strlen(s_http_stats);
     if (strlen(s_http_stats)) {
       if (x+w < x_minib) {
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x7070af));	
+	XSetForeground(dock->display, dock->NormalGC, pp->minib_updlcnt_pixel);
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_http_stats, strlen(s_http_stats));
       }
     }
@@ -1491,7 +1496,7 @@ pp_minib_refresh(Dock *dock)
 	s = "board";
 	if (pp->mb[i].clicked == 0) {
 	  int w, draw_bar = 0;
-	  unsigned long bar_pixel = IRGB2PIXEL(0xffffff);
+	  unsigned long bar_pixel = pp->minib_progress_bar_pixel;
 
 	  if (dock->wmcc_state_info == WMCC_SENDING_COINCOIN) { s = "post.."; draw_bar = 0; }
 	  else if (dock->wmcc_state_info == WMCC_UPDATING_BOARD) { s = "updating"; draw_bar = 0; }
@@ -1521,7 +1526,7 @@ pp_minib_refresh(Dock *dock)
 	s = "news/msg";
 	if (pp->mb[i].clicked == 0) {
 	  int w, draw_bar = 0;
-	  unsigned long bar_pixel = IRGB2PIXEL(0xffffff);
+	  unsigned long bar_pixel = pp->minib_progress_bar_pixel;
 	  
 	  if (dock->wmcc_state_info == WMCC_UPDATING_NEWS) { s = "dl news"; draw_bar = 0; }
 	  else if (dock->wmcc_state_info == WMCC_UPDATING_COMMENTS) { s = "dl com"; draw_bar = 0; }
@@ -1891,9 +1896,16 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
       }
 
       if (pw->attr & PWATTR_S) {	  
+	int x1;
 	pixel = pp->strike_pixel; XSetForeground(dock->display, dock->NormalGC, pixel); old_pixel = pixel;
-	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y - fn->ascent + 2, pw->xpos+pw->xwidth-1, y+fn->descent - 2);
-	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y + fn->descent - 2, pw->xpos+pw->xwidth-1, y-fn->ascent + 2);
+	/*	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y - fn->ascent + 2, pw->xpos+pw->xwidth-1, y+fn->descent - 2);
+	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y + fn->descent - 2, pw->xpos+pw->xwidth-1, y-fn->ascent + 2);*/
+	if (pw->next && pw->next->ligne == pw->ligne && (pw->next->attr & PWATTR_S)) {
+	  x1 = pw->next->xpos;
+	} else {
+	  x1 = pw->xpos+pw->xwidth-1;
+	}
+	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y-fn->ascent/2+fn->descent/2, x1, y-fn->ascent/2+fn->descent/2);
       }
       pw->attr &= ~PWATTR_TMP_EMPH;
       old_pos = pw->xpos + pw->xwidth;
@@ -2251,15 +2263,17 @@ pp_set_prefs_colors(Dock *dock)
 
   pp->timestamp_pixel = GET_BICOLOR(Prefs.pp_tstamp_color);
   pp->lnk_pixel = GET_BICOLOR(Prefs.pp_url_color);
-  pp->strike_pixel = RGB2PIXEL(128,0,0);
+  pp->strike_pixel = GET_BICOLOR(Prefs.pp_strike_color);
   pp->txt_pixel = GET_BICOLOR(Prefs.pp_fgcolor);
   pp->popup_fgpixel = GET_BICOLOR(Prefs.pp_popup_fgcolor);
   pp->popup_bgpixel = GET_BICOLOR(Prefs.pp_popup_bgcolor);
   pp->nick_pixel = GET_BICOLOR(Prefs.pp_useragent_color);
   pp->login_pixel = GET_BICOLOR(Prefs.pp_login_color);
-  pp->minib_pixel = IRGB2PIXEL(0xcdcdcd);
-  pp->minib_dark_pixel = IRGB2PIXEL(0x626262);
-
+  pp->minib_pixel = GET_BICOLOR(Prefs.pp_buttonbar_bgcolor);
+  pp->minib_dark_pixel = GET_BICOLOR(Prefs.pp_buttonbar_fgcolor);
+  pp->minib_msgcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color);
+  pp->minib_updlcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_updlcnt_color);
+  pp->minib_progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
   pp->sel_bgpixel = GET_BICOLOR(Prefs.pp_sel_bgcolor);
   pp->emph_pixel = GET_BICOLOR(Prefs.pp_emph_color);
   pp->trollscore_pixel = GET_BICOLOR(Prefs.pp_trollscore_color);
@@ -2269,6 +2283,10 @@ pp_set_prefs_colors(Dock *dock)
     pp->hilight_keyword_pixel[i] = GET_BICOLOR(Prefs.pp_keyword_color[i]);
   }
   pp->plopify_pixel = GET_BICOLOR(Prefs.pp_plopify_color);
+
+  if (pp->sc) {
+    scrollcoin_change_colors(pp->sc, pp->transparency_mode);
+  }
 }
 
 void
@@ -2527,7 +2545,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
   assert(pp->sc == NULL);
 
-  pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20);
+  pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20, pp->transparency_mode);
 
   //  XMoveWindow(dock->display, pp->win, 100, 100);
   pp->mapped = 1;
@@ -3035,7 +3053,8 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
     case SCROLLBAR:
       {
 	if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
-	else { pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20); }
+	else { pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, 
+					  pp->win_height-20, pp->transparency_mode); }
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, trib, pp->win, NULL);
@@ -4170,4 +4189,47 @@ void
 pp_set_tribune_updated(Dock *dock)
 {
   dock->pinnipede->flag_tribune_updated = 1;
+}
+
+/* sauvegarde de la position et des dimensions du pinni 
+   (appelé par wmcc_save_state de wmcoincoin.c) 
+ */
+void
+pp_save_state(Dock *dock, FILE *f) {
+  Pinnipede *pp = dock->pinnipede;
+
+  fprintf(f, "%d %d %d %d %d\n", 
+	  pp->mapped,
+	  pp->win_xpos, pp->win_ypos, 
+	  pp->win_width, pp->win_height);
+}
+
+
+void
+pp_restore_state(Dock *dock, FILE *f) {
+  Pinnipede *pp = dock->pinnipede;
+  int mapped, win_xpos, win_ypos, win_width, win_height;
+
+  if (fscanf(f, "%d %d %d %d %d\n", 
+	     &mapped,
+	     &win_xpos, &win_ypos, 
+	     &win_width, &win_height) == 5) {
+
+    /* on vérifie qu'on n'a pas spécifié de préferences dans le fichier d'options */
+    if (Prefs.pp_xpos == -10000 && Prefs.pp_ypos == -10000) {
+      if (win_xpos != -10000) {
+	pp->win_xpos = MAX(MIN(win_xpos,3000),-20);
+	pp->win_ypos = MAX(MIN(win_ypos,3000),-20);
+	pp->win_width = MAX(MIN(win_width,3000),50);
+	pp->win_height = MAX(MIN(win_height,3000),50);
+      }
+      if (pp->use_minibar)
+	pp_minib_initialize(pp);
+      /*
+      if (mapped) {
+	pp_show(dock, &dock->dlfp.tribune);
+      } 
+      */
+    }
+  }  
 }

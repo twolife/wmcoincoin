@@ -475,6 +475,9 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->news_fn_size = 12;
   p->news_bgcolor = 0xdae6e6;
   p->news_fgcolor = 0x000000;
+  p->news_titles_bgcolor = 0xd0d0d0;
+  p->news_titles_fgcolor = 0x000080;
+  p->news_emph_color = 0xffffff;
   p->news_xpos = -10000;
   p->news_ypos = -10000;
   p->news_width = 600;
@@ -533,7 +536,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   BICOLOR_SET(p->pp_login_color, 0xff0000, 0xc0ffc0);
   BICOLOR_SET(p->pp_url_color, 0x0000ff, 0x80f0ff);
   BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
-  BICOLOR_SET(p->pp_button_color, 0xdae6e6, 0x404040);
+  //  BICOLOR_SET(p->pp_button_color, 0xdae6e6, 0x404040);
   BICOLOR_SET(p->pp_emph_color, 0xffffff, 0x00a080);
   BICOLOR_SET(p->pp_sel_bgcolor, 0xffd700, 0x008080);
   BICOLOR_SET(p->pp_popup_fgcolor, 0x000050, 0x000050);
@@ -546,6 +549,21 @@ wmcc_prefs_set_default(structPrefs *p) {
   BICOLOR_SET(p->pp_keyword_color[3], 0x00ff80, 0x808000);
   BICOLOR_SET(p->pp_keyword_color[4], 0x008000, 0x808080);
   BICOLOR_SET(p->pp_plopify_color,0xa0a0a0, 0x808080);
+  BICOLOR_SET(p->pp_strike_color,0x800000,0x800000);
+  BICOLOR_SET(p->pp_buttonbar_bgcolor,0xcdcdcd,0xcdcdcd);
+  BICOLOR_SET(p->pp_buttonbar_fgcolor,0x606060,0x606060);
+  BICOLOR_SET(p->pp_buttonbar_msgcnt_color, 0x7070af, 0x7070af);
+  BICOLOR_SET(p->pp_buttonbar_updlcnt_color, 0x7070af, 0x7070af);
+  BICOLOR_SET(p->pp_buttonbar_progressbar_color, 0xffffff, 0xffffff);
+  
+  BICOLOR_SET(p->sc_bg_color, 0xcdcdcd, 0xcdcdcd);
+  BICOLOR_SET(p->sc_bg_light_color, 0xffffff, 0xffffff);
+  BICOLOR_SET(p->sc_bg_dark_color, 0x626262, 0x626262);
+  BICOLOR_SET(p->sc_arrow_normal_color, 0x0000ff, 0x00ff00);
+  BICOLOR_SET(p->sc_arrow_emphasized_color, 0x9c99cd, 0x99cd99);
+  BICOLOR_SET(p->sc_bar_color, 0x9c99cd, 0x99cd99);
+  BICOLOR_SET(p->sc_bar_light_color, 0xcdceff, 0xceffce);
+  BICOLOR_SET(p->sc_bar_dark_color, 0x62659c, 0x649c64);
 
   tribune_key_list_destroy(p->hilight_key_list); p->hilight_key_list = NULL;
   tribune_key_list_destroy(p->plopify_key_list); p->plopify_key_list = NULL;
@@ -581,6 +599,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   
   p->post_cmd = NULL;
   ASSIGN_STRING_VAL(p->tribune_scrinechote, "~/wmcc_tribune_shot.html");  
+  p->pinnipede_open_on_start = 0;
 }
 
 /* libere la mémoire allouée par les champs de la structure, *mais* pas la structure elle-même */
@@ -735,6 +754,15 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_news_fg_color: {
     CHECK_COLOR_ARG(p->news_fgcolor);
   } break; 
+  case OPT_news_titles_bg_color: {
+    CHECK_COLOR_ARG(p->news_titles_bgcolor);
+  } break; 
+  case OPT_news_titles_fg_color: {
+    CHECK_COLOR_ARG(p->news_titles_fgcolor);
+  } break; 
+  case OPT_news_emph_color: {
+    CHECK_COLOR_ARG(p->news_emph_color);
+  } break; 
   case OPT_news_location: {
     CHECK_XYPOS_ARG(p->news_xpos, p->news_ypos);
   } break; 
@@ -840,9 +868,12 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_trollscore_color: {
     CHECK_BICOLOR_ARG(p->pp_trollscore_color);
   } break; 
-  case OPT_pinnipede_button_color: {
-    CHECK_BICOLOR_ARG(p->pp_button_color);
+  case OPT_pinnipede_strike_color: {
+    CHECK_BICOLOR_ARG(p->pp_strike_color);
   } break; 
+  /*  case OPT_pinnipede_button_color: {
+    CHECK_BICOLOR_ARG(p->pp_button_color);
+    } break; */
   case OPT_pinnipede_emph_color: {
     CHECK_BICOLOR_ARG(p->pp_emph_color);
   } break; 
@@ -854,6 +885,21 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   } break; 
   case OPT_pinnipede_popup_fgcolor: {
     CHECK_BICOLOR_ARG(p->pp_popup_fgcolor);
+  } break; 
+  case OPT_pinnipede_buttonbar_bgcolor: {
+    CHECK_BICOLOR_ARG(p->pp_buttonbar_bgcolor);
+  } break; 
+  case OPT_pinnipede_buttonbar_fgcolor: {
+    CHECK_BICOLOR_ARG(p->pp_buttonbar_fgcolor);
+  } break; 
+  case OPT_pinnipede_buttonbar_msgcnt_color: {
+    CHECK_BICOLOR_ARG(p->pp_buttonbar_msgcnt_color);
+  } break; 
+  case OPT_pinnipede_buttonbar_updlcnt_color: {
+    CHECK_BICOLOR_ARG(p->pp_buttonbar_updlcnt_color);
+  } break; 
+  case OPT_pinnipede_buttonbar_progressbar_color: {
+    CHECK_BICOLOR_ARG(p->pp_buttonbar_progressbar_color);
   } break; 
   case OPT_pinnipede_hilight_my_msg_color: {
     CHECK_BICOLOR_ARG(p->pp_my_msg_color);
@@ -928,6 +974,33 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_use_AM_PM: {
     CHECK_BOOL_ARG(p->pp_use_AM_PM);
   } break; 
+  case OPT_scrollcoin_bg_color: {
+    CHECK_BICOLOR_ARG(p->sc_bg_color);
+  } break; 
+  case OPT_scrollcoin_bg_light_color:  {
+    CHECK_BICOLOR_ARG(p->sc_bg_light_color);
+  } break; 
+  case OPT_scrollcoin_bg_dark_color:  {
+    CHECK_BICOLOR_ARG(p->sc_bg_dark_color);
+  } break; 
+  case OPT_scrollcoin_arrow_normal_color: {
+    CHECK_BICOLOR_ARG(p->sc_arrow_normal_color);
+  } break; 
+  case OPT_scrollcoin_arrow_emphasized_color: {
+    CHECK_BICOLOR_ARG(p->sc_arrow_emphasized_color);
+  } break; 
+  case OPT_scrollcoin_bar_color:   {
+    CHECK_BICOLOR_ARG(p->sc_bar_color);
+  } break; 
+  case OPT_scrollcoin_bar_light_color: {
+    CHECK_BICOLOR_ARG(p->sc_bar_light_color);
+  } break; 
+  case OPT_scrollcoin_bar_dark_color: {
+    CHECK_BICOLOR_ARG(p->sc_bar_dark_color);
+  } break; 
+	case OPT_pinnipede_open: {
+		CHECK_BOOL_ARG(p->pinnipede_open_on_start);
+	} break;
   case OPT_spell_enable: {
     CHECK_BOOL_ARG(p->ew_do_spell);
   } break; 
