@@ -1,7 +1,7 @@
 #ifdef __CYGWIN__
 #  define __USE_W32_SOCKETS
 #  include "windows.h"
-
+#  include "ws2tcpip.h"
 #define __INSIDE_HTTP
 #include "global.h"
 #include "http.h"
@@ -49,11 +49,13 @@
 #  define LASTERR_EAGAIN (WSAGetLastError() == WSAEINPROGRESS)
 #  define SETERR_TIMEOUT WSASetLastError(WSAETIMEDOUT)
 #  define STR_LAST_ERROR (flag_cancel_task ? "donwload canceled" : strerror(WSAGetLastError()))
+#  define GAI_STRERROR(x) strerror(WSAGetLastError())
 #  define LASTERR_ESUCCESS (WSAGetLastError() == 0) /* à tester ... */
 #else
 #  define LASTERR_EINTR (errno==EINTR)
 #  define SETERR_TIMEOUT errno=ETIMEDOUT
 #  define STR_LAST_ERROR (flag_cancel_task ? "donwload canceled" : strerror(errno))
+#  define GAI_STRERROR(x) gai_strerror(x)
 #  define LASTERR_EAGAIN (errno==EAGAIN)
 #  define LASTERR_ESUCCESS (errno==0)
 #endif
@@ -479,7 +481,7 @@ get_host_ip_str(const char *hostname, int port) {
     }
     freeaddrinfo(res);
   } else {
-    myfprintf(stderr, "error from getaddrinfo: %s", gai_strerror(error));
+    myfprintf(stderr, "error from getaddrinfo: %s", GAI_STRERROR(error));
     freeaddrinfo(res);
   }
   return s;
@@ -584,7 +586,7 @@ http_try_connect_to_resolved_host(HostEntry *h) {
     else currenthost = strdup(hostnumstr);
     err = getaddrinfo(currenthost, portstr, &hints, &res);
     if (err) {
-      printf("erreur dans getaddrinfo(%s) : %s\n", currenthost, gai_strerror (err));
+      printf("erreur dans getaddrinfo(%s) : %s\n", currenthost, GAI_STRERROR (err));
       printf("comme a priori ça ne devrait pas arriver, ==> moment suicide <==\n");
       printf("si vous pensez que cette décision n'est pas justifiée, "
              "addressez-vous aux autorités compétetentes\n");

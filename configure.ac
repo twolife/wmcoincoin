@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.23  2003/03/06 20:24:08  pouaite
+dnl   cygwin remarche, ou pas
+dnl
 dnl   Revision 1.22  2003/03/02 17:56:25  pouaite
 dnl   wmcoincoin-2.4.4a.tar.gz is ready for distribution
 dnl
@@ -300,7 +303,7 @@ case "$host" in
 	  ;;
     *-cygwin*)
 	  echo -e "\n${YELLOW}cygwin detected !, may the force be with you, young mussel${RESET}\n"
-     	  AC_CHECK_LIB(wsock32,select)
+     	  AC_CHECK_LIB(ws2_32,select)
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
 	  LIBS="${LIBS} /lib/libregex.a -lm"        

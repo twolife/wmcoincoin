@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.14 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.15 2003/03/06 20:24:17 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.15  2003/03/06 20:24:17  pouaite
+  cygwin remarche, ou pas
+
   Revision 1.14  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -141,5 +144,5 @@ int http_close (SOCKET fd) {
 char *
 get_host_ip_str_nonbloq(const char *hostname, int port) {
   printf("todo: s'arranger pour faire marcher le gethostbyname non bloquant sous win \n(il suffit de foutre tout ça dans un fichier séparé de http.c, pour ne pas\n batailler avec le #include \"windows.h\"\n");
-  return gethostbyname_bloq(hostname, port);
+  return get_host_ip_str_bloq(hostname, port);
 }

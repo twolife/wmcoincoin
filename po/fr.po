@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2003-03-02 18:58+0100\n"
+"POT-Creation-Date: 2003-03-06 21:22+0100\n"
 "PO-Revision-Date: 2003-03-02 18:43+0100\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -291,26 +291,26 @@ msgstr "MESSAGE DE WMCOINCOIN"
 msgid "close msgbox\n"
 msgstr "fermer msgbox\n"
 
-#: src/http.c:184
+#: src/http.c:186
 msgid "<i>There hasn't been any http error yet</i>"
 msgstr "<i>Il n'y a pas encore eu d'erreur http</i>"
 
-#: src/http.c:189
+#: src/http.c:191
 #, c-format
 msgid "Last error occured at: <b>%02d:%02d:%02d</b>"
 msgstr "Dernière erreur à : <b>%02d:%02d:%02d</b>"
 
-#: src/http.c:194
+#: src/http.c:196
 #, c-format
 msgid "Error: <b><font color=#800000>%s</font></b><br>"
 msgstr "Erreur: <b><font color=#800000>%s</font></b><br>"
 
-#: src/http.c:197
+#: src/http.c:199
 #, c-format
 msgid "<br>The last error was: %s<br>for the URL:<tt>%s</tt><br>"
 msgstr "<br>La dernière erreur a été : %s<br>pour l'URL :<tt>%s</tt><br>"
 
-#: src/http.c:203
+#: src/http.c:205
 #, c-format
 msgid ""
 "%s<br>%s<br>%s: <tt>%s</tt><br>Host IP: <font color=#0000ff>%s</font><br>%s"
@@ -318,23 +318,23 @@ msgstr ""
 "%s<br>%s<br>%s : <tt>%s</tt><br>IP de l'hôte : <font color=#0000ff>%s</"
 "font><br>%s"
 
-#: src/http.c:204
+#: src/http.c:206
 msgid "<b>There has just been an error !!</b>"
 msgstr "<b>Il vient d'y avoir une erreur !!</b>"
 
-#: src/http.c:204
+#: src/http.c:206
 msgid "The last transfer went fine."
 msgstr "Le dernier transfert s'est bien passé"
 
-#: src/http.c:205
+#: src/http.c:207
 msgid "faulty URL"
 msgstr "URL fautive"
 
-#: src/http.c:205
+#: src/http.c:207
 msgid "We have just downloaded"
 msgstr "On vient de récupérer"
 
-#: src/http.c:208
+#: src/http.c:210
 #, c-format
 msgid ""
 "Download going on...<br>URL: <tt>%s</tt><br>IP: <font color=#0000ff>%s</"
@@ -343,30 +343,30 @@ msgstr ""
 "Un transfert est en cours...<br>URL : <tt>%s</tt><br>ip: <font color=#0000ff>"
 "%s</font><br>"
 
-#: src/http.c:210
+#: src/http.c:212
 #, c-format
 msgid "Resolving name '%s'...<br>"
 msgstr "Résolution du nom '%s' en cours...<br>"
 
-#: src/http.c:325
+#: src/http.c:327
 #, c-format
 msgid "timeout (t=%d milliseconds)..\n"
 msgstr "timeout (t=%d millisecondes)..\n"
 
-#: src/http.c:340
+#: src/http.c:342
 #, c-format
 msgid "http_iread: socket error, res=%d (%s)\n"
 msgstr "http_iread: erreur de chaussette, res=%d (%s)\n"
 
-#: src/http.c:344
+#: src/http.c:346
 msgid "http_iread: Timeout...\n"
 msgstr "http_iread: Timeout...\n"
 
-#: src/http.c:412
+#: src/http.c:414
 msgid "http_iwrite: Timeout...\n"
 msgstr "http_iwrite: Timeout...\n"
 
-#: src/http.c:491
+#: src/http.c:493
 #, fuzzy, c-format
 msgid ""
 "get_host_ip_str_bloq('%s') -> if the network lags, the coincoin can be "
@@ -374,41 +374,41 @@ msgid ""
 msgstr ""
 "gethostbyname('%s') -> si le réseau rame, le coincoin peut être bloqué ici\n"
 
-#: src/http.c:609
+#: src/http.c:611
 #, fuzzy, c-format
 msgid "Unable to create a socket ! (%s) [ip=%s]"
 msgstr "Impossible de créer une soquette ! (%s)"
 
-#: src/http.c:617
+#: src/http.c:619
 msgid "connecting...\n"
 msgstr "Connexion...\n"
 
-#: src/http.c:630
+#: src/http.c:632
 #, c-format
 msgid "connection failed: %s..\n"
 msgstr "connexion ratée: %s..\n"
 
-#: src/http.c:683
+#: src/http.c:685
 #, c-format
 msgid "Unable to resolve '%s'"
 msgstr "Impossible de résoudre le nom '%s'"
 
-#: src/http.c:773
+#: src/http.c:775
 msgid "[%<MAG %s>]: %<yel %s>"
 msgstr "[%<MAG %s>]: %<yel %s>"
 
-#: src/http.c:803
+#: src/http.c:805
 #, c-format
 msgid "http_skip_header has a socket issue ! (%s)"
 msgstr "http_skip_header a un problème de chaussette ! (%s)"
 
-#: src/http.c:824
+#: src/http.c:826
 #, c-format
 msgid "http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"
 msgstr ""
 "http_read: requête de longueur %d, pos = %ld, morceau=%d (taille %ld)\n"
 
-#: src/http.c:829
+#: src/http.c:831
 msgid ""
 "Damned, the chunk_encoding has gone down the tubes on the following "
 "request:\n"
@@ -416,67 +416,67 @@ msgstr ""
 "Damned, the chunk_encoding has gone down the tubes on the following "
 "request:\n"
 
-#: src/http.c:852
+#: src/http.c:854
 #, c-format
 msgid "error in chunk '%s'\n"
 msgstr "erreur dans le morceau '%s'\n"
 
-#: src/http.c:877
+#: src/http.c:879
 #, c-format
 msgid "http_read has encountered a socket problem, pos=%d, len=%d !(%s)"
 msgstr "http_read a eu un problème de chaussette, pos=%d, len=%d !(%s)"
 
-#: src/http.c:885
+#: src/http.c:887
 #, c-format
 msgid "http_read: length finally requested: %d, received: %d, new pos=%ld\n"
 msgstr "http_read: longueur finalement demandée: %d, reçue: %d, nouv pos=%ld\n"
 
-#: src/http.c:923
+#: src/http.c:925
 #, c-format
 msgid ""
 "http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"
 msgstr ""
 "http_get_line: bizarre, eu=0 en lisant %d/%d [r->error=%d, errmsg='%s']\n"
 
-#: src/http.c:929
+#: src/http.c:931
 #, c-format
 msgid "http_get_line messed up (got=%d): %s!"
 msgstr "http_get_line s'est vautré (got=%d): %s !"
 
-#: src/http.c:933
+#: src/http.c:935
 msgid "http_get_line sent (cnt=%d): '%<yel %s>'\n"
 msgstr "http_get_line envoyé (cnt=%d): '%<yel %s>'\n"
 
-#: src/http.c:978
+#: src/http.c:980
 #, c-format
 msgid "http_send_request/debug, unable to open '%s':%s\n"
 msgstr "http_send_request/debug, impossible d'ouvrir '%s':%s\n"
 
-#: src/http.c:1085
+#: src/http.c:1087
 #, c-format
 msgid "http_get couldn't send its request: %s"
 msgstr "http_get n'a pas pu envoyer sa requête : %s"
 
-#: src/http.c:1089
+#: src/http.c:1091
 #, fuzzy
 msgid "ok, request sent\n"
 msgstr "ok, envoyé\n"
 
-#: src/http.c:1144
+#: src/http.c:1146
 msgid "Quack ! Missed"
 msgstr "Plop ! c'est raté"
 
-#: src/http.c:1157
+#: src/http.c:1159
 #, c-format
 msgid "%s: too big (bsize=%d!), let's cut\n"
 msgstr "%s: trop gros (bsize=%d!), on coupe\n"
 
-#: src/http.c:1165
+#: src/http.c:1167
 #, c-format
 msgid "problem while reading %s: %s\n"
 msgstr "problème en lisant %s: %s\n"
 
-#: src/http.c:1171
+#: src/http.c:1173
 msgid "%s, read: %<mag %s>\n"
 msgstr "%s, lu: %<mag %s>\n"
 
@@ -2121,10 +2121,6 @@ msgid ""
 msgstr ""
 "Option '%s' invalide, commencer par préciser le type de transparence : FULL, "
 "SHADING ou TINTING"
-
-#: src/prefs.c:275
-msgid "site_root : %<YEL %s>\n"
-msgstr ""
 
 #: src/prefs.c:293
 msgid "Deactivating the proxy"
