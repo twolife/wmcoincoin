@@ -31,17 +31,24 @@ if test "$DIE" -eq 1; then
         exit 1
 fi
 
+rm -f ChangeLog~ ; rm -f configure.ac~; rm -f Makefile.am~
 echo "  gettextize --copy --force --intl"
 gettextize --copy --force --intl
+
+echo "cleaning the crap of gettextize.."
+[ -e ChangeLog~ ] && mv -f ChangeLog~ ChangeLog
+[ -e configure.ac~ ] && mv -f configure.ac~ configure.ac
+[ -e Makefile.am~ ] && mv -f Makefile.am~ Makefile.am
+
 #cp po/Makefile.in.in intl/Makefile.in.in
 echo "  aclocal -I m4 $ACLOCAL_FLAGS"
 aclocal -I m4 $ACLOCAL_FLAGS
 echo "  autoheader"
-autoheader
+autoheader || exit;
 echo "  automake --add-missing --gnu --include-deps"
 automake --add-missing --gnu --include-deps
 echo "  autoconf"
-autoconf
+autoconf || exit;
 
 if test -z "$*"; then
     echo "I am going to run ./configure with no arguments - if you wish "

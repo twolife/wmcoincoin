@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.16 2002/08/22 18:50:38 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.17 2002/08/22 20:04:09 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.17  2002/08/22 20:04:09  pouaite
+##   fin de la premiere manche contre gettextize
+##
 ##   Revision 1.16  2002/08/22 18:50:38  pouaite
 ##   et là ça compile ?
 ##
@@ -53,13 +56,13 @@ MAINT_CHARSET = latin1
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
 
-SUBDIRS = m4  po src doc intl
+SUBDIRS = intl  m4  po src doc intl
 EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
              ./wmcoincoin.spec ./wmpanpan \
-             ./options
+             ./options ./config.rpath
 
 rpm-dist: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz $(HOME)/rpm/SOURCES

@@ -2,7 +2,10 @@ dnl
 dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
-dnl   $Log: configure.in,v $
+dnl   $Log: configure.ac,v $
+dnl   Revision 1.1  2002/08/22 20:04:16  pouaite
+dnl   fin de la premiere manche contre gettextize
+dnl
 dnl   Revision 1.30  2002/08/18 19:00:27  pouaite
 dnl   plop
 dnl
@@ -88,9 +91,11 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(src/wmcoincoin.c)
+AC_INIT(wmcoincoin, 2.3.8kikoo, c0in@altern.org)
+AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8oulala)
+AC_PREREQ(2.52)
+AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
 dnl Checks for host/os name
@@ -106,9 +111,8 @@ esac
 dnl Checks for programs.
 dnl ===================
 AC_PROG_CC
-AC_PROG_GCC_TRADITIONAL
-AC_PROG_RANLIB
-AC_PROG_INSTALL
+AC_ISC_POSIX
+
 
 dnl don't want the -g flag
 CFLAGS=`echo "x $CFLAGS"|sed 's/^x //; s/\(^\| \)-g\($\| \)/ /g'`
@@ -148,7 +152,7 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-ALL_LINGUAS="fr"
+dnl internationalization macros
 AM_GNU_GETTEXT
 
 YELLOW="\\033\\1331;33m"
@@ -188,7 +192,7 @@ case "$host" in
          ;;
 esac
 
-
-
-AC_OUTPUT(Makefile src/Makefile doc/Makefile po/Makefile.in m4/Makefile  intl/Makefile ) 
+AC_CONFIG_FILES([Makefile doc/Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile])
+AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
+AC_OUTPUT
 
