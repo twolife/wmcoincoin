@@ -10,6 +10,7 @@
 #  include <signal.h>
 #  include <time.h>
 #  include "myprintf.h"
+#  include "coin_util.h"
 #else
 
 #  include <unistd.h>
@@ -58,6 +59,8 @@ static char http_last_url[HTTP_LAST_ERR_URL_SZ] = "";
 static char http_used_ip[20] = "xxx.xxx.xxx.xxx";
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+int http_close(SOCKET fd);
 
 #define VERBOSE_LVL 2
 
@@ -186,15 +189,6 @@ int base64_encode(const void *data, int size, char **str)
   *p=0;
   *str = s;
   return strlen(s);
-}
-
-static int http_close(SOCKET fd) {
-#ifdef __CYGWIN__
-  do { close (fd); } while (errno == EINTR);
-#else
-  do { close (fd); } while (errno == EINTR);
-#endif
-  return 0;
 }
 
 /* 
@@ -638,7 +632,7 @@ http_read(HttpRequest *r, char *buff, int len)
       BLAHBLAH(VERBOSE_LVL, printf("http_read: CHUNK %d, size = %ld ['0x%s']\n", r->chunk_num, r->chunk_size, s_chunk_size));
     }
 
-    len = MIN(len, r->chunk_size - r->chunk_pos);
+    if (len > r->chunk_size - r->chunk_pos) len = r->chunk_size - r->chunk_pos;
   } else if (r->content_length != -1) {
     /*
     if (r->content_length - r->chunk_pos < 200) {
@@ -646,7 +640,7 @@ http_read(HttpRequest *r, char *buff, int len)
 	     len, r->chunk_pos, r->content_length);
     }
     */
-    len = MIN(len, r->content_length - r->chunk_pos);
+    if (len > r->content_length - r->chunk_pos) len = r->content_length - r->chunk_pos;
   }
   
   if (len <= 0) return 0;
@@ -719,15 +713,17 @@ http_request_send(HttpRequest *r)
 {
   char *header = NULL;
 
-
+  /* corriger ce ifndef un de ces jours */
+#ifndef __CYGWIN__
   if (Prefs.debug & 2) {
     r->fd = open(r->host_path, O_RDONLY);
     if (r->fd < 0) {
       fprintf(stderr, "http_send_request/debug, impossible d'ouvrir '%s':%s\n", 
-	      r->host_path, strerror(errno));
+	      r->host_path, STR_LAST_ERROR);
     }
     return;
   }
+#endif
 
   flag_http_transfert++;
 
@@ -850,7 +846,7 @@ http_request_init(HttpRequest *r) {
 }
 
 void http_request_close (HttpRequest *r) {
-  assert(r->fd >= 0);
+  assert(r->fd != INVALID_SOCKET);
 
   if (r->host) free(r->host); r->host = NULL;
   if (r->host_path) free(r->host_path); r->host_path = NULL;

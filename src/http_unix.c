@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.9 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.10 2002/05/13 08:01:11 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.10  2002/05/13 08:01:11  pouaite
+  bugfix (à tester) compil sous cygwin
+
   Revision 1.9  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -128,3 +131,8 @@ void http_init() {
   global_http_upload_cnt = 0;
 }
 
+
+int http_close(SOCKET fd) {
+  do { close (fd); } while (errno == EINTR);
+  return 0;
+}

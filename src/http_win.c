@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.8 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.9 2002/05/13 08:01:11 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.9  2002/05/13 08:01:11  pouaite
+  bugfix (à tester) compil sous cygwin
+
   Revision 1.8  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -116,3 +119,6 @@ void http_init (void) {
   WSAStartup (MAKEWORD (2, 0), &wsaData);
 }
 
+int http_close (SOCKET fd) {     
+  return closesocket (fd);   
+}
