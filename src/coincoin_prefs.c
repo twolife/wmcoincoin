@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.11 2002/01/16 00:35:26 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.12 2002/01/16 10:34:21 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.12  2002/01/16 10:34:21  pouaite
+  ptit patch glandium
+
   Revision 1.11  2002/01/16 00:35:26  pouaite
   debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
 
@@ -155,8 +158,8 @@ option_set_max_refresh_delay (const char *optarg,
                              const char *optname,
                             structPrefs *The_Prefs) {
   The_Prefs->dlfp_max_refresh_delay = atoi(optarg);
-  if (The_Prefs->dlfp_max_refresh_delay <= 20 || The_Prefs->dlfp_max_refresh_delay>10000) {
-    fprintf(stderr, "valeur invalide pour l'option '%s': le temps au bout duquel on ne rafraîchit plus est exprime en minutes, et doit etre > 20\n", optname);
+  if (The_Prefs->dlfp_max_refresh_delay && (The_Prefs->dlfp_max_refresh_delay <= 20 || The_Prefs->dlfp_max_refresh_delay>10000)) {
+    fprintf(stderr, "valeur invalide pour l'option '%s': le temps au bout duquel on ne rafraîchit plus est exprime en minutes, et doit etre > 20 (ou nul pour désactiver cette fonctionnalité)\n", optname);
     exit(1);
     BLAHBLAH(1, myprintf("temps au bout duquel on ne rafraîchit plus les %<yel news> et la %<yel tribune> fixe a: %<YEL %d> minutes\n", The_Prefs->dlfp_max_refresh_delay));
   }

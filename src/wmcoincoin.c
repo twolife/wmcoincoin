@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.11 2002/01/15 15:30:17 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.12 2002/01/16 10:34:21 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.12  2002/01/16 10:34:21  pouaite
+  ptit patch glandium
+
   Revision 1.11  2002/01/15 15:30:17  pouaite
   rien d'interessant
 
@@ -2415,6 +2418,8 @@ static int faut_il_rafraichir(int count,int delay, int offset)
 {
   if(count<25*delay) // On a déjà rafraîchi récemment
     return 0;
+  if(Prefs.dlfp_max_refresh_delay == 0)
+    return 1;
   if(temps_depuis_dernier_event > 1500*Prefs.dlfp_max_refresh_delay) // minutes
     return 0;
   if(temps_depuis_dernier_event > 150*Prefs.dlfp_max_refresh_delay)
