@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-03-02 18:49+0100\n"
+"POT-Creation-Date: 2003-03-02 18:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1240,91 +1240,91 @@ msgstr ""
 msgid "new site added: '%s'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:353
+#: src/wmcoincoin.c:356
 #, c-format
 msgid ""
 "this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>You will have "
 "to launch it by hand (copy to the clipboard with a right click, etc.)"
 msgstr ""
 
-#: src/wmcoincoin.c:364
+#: src/wmcoincoin.c:367
 #, c-format
 msgid ""
 "You didn't define the external browser in ~/.wmcoincoin/options (%s), no "
 "need to click on the <b>[url]</b>..."
 msgstr ""
 
-#: src/wmcoincoin.c:430
+#: src/wmcoincoin.c:433
 msgid "Spawning \"%<YEL %s>\"\n"
 msgstr ""
 
-#: src/wmcoincoin.c:446
+#: src/wmcoincoin.c:449
 msgid "Can't get window attributes.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:563
+#: src/wmcoincoin.c:566
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%"
 "s<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:565
+#: src/wmcoincoin.c:568
 msgid "Check your cookies !"
 msgstr ""
 
-#: src/wmcoincoin.c:567 src/wmcoincoin.c:578
+#: src/wmcoincoin.c:570 src/wmcoincoin.c:581
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:596
+#: src/wmcoincoin.c:599
 msgid "message posted: '%<YEL %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:597
+#: src/wmcoincoin.c:600
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:642
+#: src/wmcoincoin.c:645
 #, c-format
 msgid "[%s] Damned ! There has been an error<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:678
+#: src/wmcoincoin.c:681
 #, c-format
 msgid ""
 "Fork failed...(%s)..\n"
 " you sux\n"
 msgstr ""
 
-#: src/wmcoincoin.c:689
+#: src/wmcoincoin.c:692
 #, c-format
 msgid ""
 "Exec of wmccc failed...(%s)..\n"
 " you sux (wmccc not in path?)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:721
+#: src/wmcoincoin.c:724
 #, c-format
 msgid "Unable to open '%s' for %s the state of the beast [%s]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:721
+#: src/wmcoincoin.c:724
 msgid "reading"
 msgstr ""
 
-#: src/wmcoincoin.c:721
+#: src/wmcoincoin.c:724
 msgid "writing"
 msgstr ""
 
-#: src/wmcoincoin.c:740
+#: src/wmcoincoin.c:743
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr ""
 
-#: src/wmcoincoin.c:778
+#: src/wmcoincoin.c:781
 msgid ""
 "<p align=center><b>Titles of the news</b></p><font color=blue><tt>Left "
 "Click</tt></font><tab>: display the article currently scrolling<br><font "
@@ -1333,7 +1333,7 @@ msgid ""
 "news window<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:785
+#: src/wmcoincoin.c:788
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1349,7 +1349,7 @@ msgid ""
 "green blinking shows a change in the value of your XP"
 msgstr ""
 
-#: src/wmcoincoin.c:795
+#: src/wmcoincoin.c:798
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1357,7 +1357,7 @@ msgid ""
 "error message<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:799
+#: src/wmcoincoin.c:802
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1369,14 +1369,14 @@ msgid ""
 "resolution"
 msgstr ""
 
-#: src/wmcoincoin.c:806
+#: src/wmcoincoin.c:809
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
 "color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"
 msgstr ""
 
-#: src/wmcoincoin.c:810
+#: src/wmcoincoin.c:813
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1385,7 +1385,7 @@ msgid ""
 "tt></font>: cancel all new messages"
 msgstr ""
 
-#: src/wmcoincoin.c:815
+#: src/wmcoincoin.c:818
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1396,7 +1396,7 @@ msgid ""
 "read the <tt>~/.wmcoincoin/options</tt> file"
 msgstr ""
 
-#: src/wmcoincoin.c:820
+#: src/wmcoincoin.c:823
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1404,88 +1404,88 @@ msgid ""
 "tt></font>: show/hide the <b>pinnipede teletype</b>"
 msgstr ""
 
-#: src/wmcoincoin.c:826
+#: src/wmcoincoin.c:829
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr ""
 
-#: src/wmcoincoin.c:959
+#: src/wmcoincoin.c:962
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:972
+#: src/wmcoincoin.c:975
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1385
+#: src/wmcoincoin.c:1388
 msgid "Creating the windows icon. Just tell me if it makes your WM crash.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1517
+#: src/wmcoincoin.c:1520
 msgid "Couldn't create window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1529
+#: src/wmcoincoin.c:1532
 msgid "Couldn't create icon window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1542
+#: src/wmcoincoin.c:1545
 #, c-format
 msgid "Bad dimensions for the pixmap skin (expected 64x320, found %dx%d)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1545
+#: src/wmcoincoin.c:1548
 msgid "Unable to load the pixmap '%<grn %s>'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1622
+#: src/wmcoincoin.c:1625
 msgid "Couldn't create text property\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1636
+#: src/wmcoincoin.c:1639
 msgid "Couldn't create graphics context\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1726 src/wmcoincoin.c:1731 src/wmcoincoin.c:1736
-#: src/wmcoincoin.c:1742 src/wmcoincoin.c:1749 src/wmcoincoin.c:1756
+#: src/wmcoincoin.c:1729 src/wmcoincoin.c:1734 src/wmcoincoin.c:1739
+#: src/wmcoincoin.c:1745 src/wmcoincoin.c:1752 src/wmcoincoin.c:1759
 #, c-format
 msgid ""
 "sigaction: erreur %d (%s)\n"
 " essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1820
+#: src/wmcoincoin.c:1823
 msgid "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1831
+#: src/wmcoincoin.c:1834
 #, c-format
 msgid "locale used: %s\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1857
+#: src/wmcoincoin.c:1860
 msgid "%<YEL tags not encoded  >"
 msgstr ""
 
-#: src/wmcoincoin.c:1858
+#: src/wmcoincoin.c:1861
 msgid "%<YEL tags encoded      >"
 msgstr ""
 
-#: src/wmcoincoin.c:1859
+#: src/wmcoincoin.c:1862
 msgid "%<YEL without underpants>"
 msgstr ""
 
-#: src/wmcoincoin.c:1860
+#: src/wmcoincoin.c:1863
 msgid "%<YEL prrrrrrt          >"
 msgstr ""
 
-#: src/wmcoincoin.c:1957
+#: src/wmcoincoin.c:1960
 #, c-format
 msgid "Unable to load font %s , trying iso8859-1\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1961
+#: src/wmcoincoin.c:1964
 #, c-format
 msgid "Unable to load font %s, aborting\n"
 msgstr ""

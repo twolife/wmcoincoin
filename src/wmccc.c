@@ -120,7 +120,8 @@ GtkWidget *xpm_label_box( GtkWidget *parent,
     style = gtk_widget_get_style(parent);
 
     /* Now on to the xpm stuff */
-    pixmap = gdk_pixmap_create_from_xpm (parent->window, &mask,
+    //    if (parent->window)
+    pixmap = gdk_pixmap_create_from_xpm (glob.main_win->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
                                          xpm_filename);
     
@@ -288,9 +289,10 @@ void  link_color_button(GtkWidget *main, gchar *bt_name, int *icol)
   gtk_signal_connect_after (GTK_OBJECT (bt), "draw",
                             GTK_SIGNAL_FUNC (on_bt_color_draw),
                             NULL);
-   gtk_signal_connect_after (GTK_OBJECT (bt), "expose_event", 
-                             GTK_SIGNAL_FUNC (on_bt_color_expose_event), 
-                             NULL);
+  gtk_signal_connect_after (GTK_OBJECT (bt), "expose_event", 
+                            GTK_SIGNAL_FUNC (on_bt_color_expose_event), 
+                            NULL);
+  on_bt_color_expose_event(bt, NULL, NULL);
 }
 
 
@@ -298,6 +300,7 @@ void  link_pixmap_button(GtkWidget *main, gchar *bt_name, char **pfname, int wid
 {
   GtkWidget *bt;
   bt = lookup_widget(main, bt_name); g_assert(bt);
+  //  if (!bt->window) return;
   if (!update_widget_bgpixmap(bt, *pfname) && *pfname) {
     g_free(*pfname); *pfname = NULL;
   }
@@ -399,11 +402,11 @@ site_notebook_update_labels(GeneralPrefs *p) {
       gtk_widget_show (label);
       gtk_notebook_set_tab_label(tabs, gtk_notebook_get_nth_page(tabs, pnum), label);
 
-      g_print("+ tab %d <- '%s'\n", pnum, p->site[pnum]->all_names[0]);
+      //g_print("+ tab %d <- '%s'\n", pnum, p->site[pnum]->all_names[0]);
       tab = gtk_notebook_get_nth_page(tabs, pnum);
       g_assert(tab);
     } else {
-      g_print(". tab %d <- '%s'\n", pnum, p->site[pnum]->all_names[0]);
+      //g_print(". tab %d <- '%s'\n", pnum, p->site[pnum]->all_names[0]);
       gtk_notebook_set_tab_label (tabs, tab, label);
     }
   }
@@ -836,7 +839,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     case SHADING: fprintf(f, "shading %d %d\n", 
 			  p->pp_transparency.shade.luminosite,
 			  p->pp_transparency.shade.assombrissement); break;
-    case TINTING: fprintf(f, "tinting %06x %06x", 
+    case TINTING: fprintf(f, "tinting %06x %06x\n", 
 			  p->pp_transparency.tint.black,
 			  p->pp_transparency.tint.white); break;
     default: g_assert(0); break;
@@ -1143,10 +1146,6 @@ main (int argc, char *argv[])
 
   gtk_widget_show (glob.main_win);
 
-
-  site_notebook_update(Prefs);
-  global_panels_update(Prefs);
-  
   gtk_main (); 
 
   wmcc_prefs_destroy(Prefs);

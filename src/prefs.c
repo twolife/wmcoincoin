@@ -272,7 +272,7 @@ option_site_root (const char  *optarg,
   /*  myprintf(_("site_root : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n"), 
 	   prefs->site_root, prefs->site_port, prefs->site_path,strlen(prefs->site_path) ? "/" : "");
   */
-  myprintf(_("site_root : %<YEL %s>\n"), nice_url);
+  //myprintf(_("site_root : %<YEL %s>\n"), nice_url);
   if (verbatim) {
     free(prefs->site_root);
     prefs->site_root = nice_url;

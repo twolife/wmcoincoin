@@ -65,6 +65,7 @@ void
 on_bt_color_draw(GtkWidget *widget, GdkRectangle *area UNUSED, gpointer user_data UNUSED)
 {
   int *col_ptr = gtk_object_get_data(GTK_OBJECT(widget), ColorPtrKey); 
+  if (widget->window == NULL) return;
   if (col_ptr) {
     GdkColor color, color2;
   
@@ -219,6 +220,7 @@ on_entry_sitename_changed(GtkEditable *editable, gpointer user_data) {
 gboolean
 on_main_win_delete_event(GtkWidget *widget UNUSED, GdkEvent *event UNUSED, 
 			 gpointer user_data UNUSED) {
+  glob.updating_labels = 1; /* pour virer les 10000 warnings dans on_notebook_sites_switch_page */
   gtk_main_quit();
   return FALSE;
 }
@@ -479,6 +481,7 @@ on_bt_apply_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
 
 void
 on_bt_cancel_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
+  glob.updating_labels = 1; /* pour virer les 10000 warnings dans on_notebook_sites_switch_page */
   gtk_main_quit();  
 }
 
@@ -892,3 +895,12 @@ on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
 
 
+
+void
+on_main_win_creation                   (GtkWidget       *widget,
+                                        gpointer         user_data)
+{
+  site_notebook_update(Prefs);
+  global_panels_update(Prefs);
+
+}

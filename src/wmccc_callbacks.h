@@ -426,3 +426,11 @@ on_togglebutton_pp_login_style_bold_toggled
 void
 on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
                                         gpointer         user_data);
+
+void
+on_main_win_creation                   (GtkWidget       *widget,
+                                        gpointer         user_data);
+
+void
+on_main_win_creation                   (GtkWidget       *widget,
+                                        gpointer         user_data);

@@ -179,7 +179,14 @@ ccqueue_doing_what()
 
 void ccqueue_loop(Dock *dock) {
   int save_state_cnt = 0;
-  strcpy(dock->newstitles, _("Transfer in progress..."));
+  int nb_news_site = 0;
+  Site *s;
+  for (s = dock->sites->list; s; s = s->next) {
+    if (s->prefs->check_news) nb_news_site++;
+  }
+  if (nb_news_site)
+    strcpy(dock->newstitles, _("Transfer in progress..."));
+  else strcpy(dock->newstitles, "coin!");
 
   while (1) {
     while (queue.first) {

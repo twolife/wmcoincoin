@@ -4713,6 +4713,9 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (main_win), "delete_event",
                       GTK_SIGNAL_FUNC (on_main_win_delete_event),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (main_win), "map",
+                      GTK_SIGNAL_FUNC (on_main_win_creation),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (bt_dock_skinpixmap), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_pixmap_clicked),
                       NULL);
