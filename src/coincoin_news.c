@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.10 2002/01/13 17:14:34 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.10  2002/01/13 17:14:34  pouaite
+  préparation pour dacode 1.4
+
   Revision 1.9  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -987,7 +990,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
 			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL);
   } else {
-    snprintf(path, 2048, "%s/wmcoincoin/test/myposts.php3", getenv("HOME"));
+    snprintf(path, 2048, "%s/wmcoincoin/test/posts.php3", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
     fd = open(path, O_RDONLY);
   }
@@ -996,7 +999,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
     int err;
 
     BLAHBLAH(2,printf("le transfert de '%s' semble ok\n", Prefs.path_myposts));
-    err = 2;
+    err = 0;
 
     /* on lit tout en un coup */
     s = gros_read(fd, Prefs.path_myposts);
@@ -1018,10 +1021,10 @@ dlfp_yc_update_comments(DLFP *dlfp)
     if (p) {
       p += 20;
       while (*p && *p != '>') p++;
-      if (*p == 0) goto fortune_erreur;
+      if (*p == 0) {err = 2; goto fortune_erreur;}
       p++;
       p2 = strstr(p, "</td>");
-      if (p2 == NULL) goto fortune_erreur;
+      if (p2 == NULL) {err = 3; goto fortune_erreur;}
       *p2 = 0; /* on tronque brutalement, ça ne va pas gener la suite puisqu'on est tout à la fin de la page */
       if (p2-p > 10000) { p[10000] = 0; } /* les fortune de 10ko, non merci */
 
@@ -1038,7 +1041,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       BLAHBLAH(1, myprintf("fortune: \"%<yel %s>\"\n", dlfp->fortune));
     } else {
     fortune_erreur:
-      BLAHBLAH(0,myprintf("la structure de '%s' a été modifiée ?... je ne trouve pas la fortune\n", Prefs.path_myposts));
+      BLAHBLAH(0,myprintf("la structure de '%s' a été modifiée ?... je ne trouve pas la fortune (err=%d)\n", Prefs.path_myposts, err));
     }
 
     /* si on est dans un cas de 'force_fortune_retrieval', on se barre maintenant */
@@ -1065,19 +1068,22 @@ dlfp_yc_update_comments(DLFP *dlfp)
       printf("mmmh, bizarre la page '%s' ... pas de champ 'loginfo' ..\n", Prefs.path_myposts);
     }
 
-    p = strstr(s,"?order=news_id"); // on se positionne bien...
+    //modif DACODE 1.4
+    //p = strstr(s,"?order=news_id"); // on se positionne bien...
+    p = strstr(s,"/comments/thread.php"); // on se positionne bien...
     if (p == NULL) {
       if (strstr(s, "Vous n'avez encore rien posté ???") != NULL)
 	goto ouups1;
-      myprintf("'%s': ouuups, le cookie est-il encore valide ??\n", Prefs.path_myposts);
+      myprintf("'%s': ouuups, soit (a) le cookie n'est plus valide, soit (b) la structure de la page a changé, soit (c) obiwan kenobi\n", Prefs.path_myposts);
       err = 2; goto ouups1;
     }
     
-    err = 3;
+    //modif DACODE 1.4
+    /* err = 3;
     p = strstr(p, "<tr>"); // debut du tableau
     if (p == NULL) goto ouups1;
-
     err++;
+    */
 
     flag_updating_comments = 1;
 
@@ -1101,25 +1107,27 @@ dlfp_yc_update_comments(DLFP *dlfp)
       if (p == NULL) break; /* fin des commentaires */
       nid = atoi(p+8);
       p = strstr(p, "com_id=");
-      if (p == NULL) goto ouups2;
+      if (p == NULL) {err = 4; goto ouups2;}
       cid = atoi(p+7);
       // maintenant on saute les trois colonnes suivantes
       p = strstr(p, "<td class=\"boxtext\">");
-      if (p == NULL) goto ouups2;
+      if (p == NULL) {err = 5; goto ouups2;}
       p = strstr(p+1, "<td class=\"boxtext\">");
-      if (p == NULL) goto ouups2;
+      if (p == NULL) {err = 6; goto ouups2;}
       p = strstr(p+1, "<td class=\"boxtext\">");
-      if (p == NULL) goto ouups2;
+      if (p == NULL) {err = 7; goto ouups2;}
 
       p2 = strstr(p, "</td>"); // on repere la fin de la colonne
-      if (p2 == NULL) goto ouups2;
+      if (p2 == NULL) {err = 8; goto ouups2;}
+      //p3 = p2; while (p3 > p && *p3 != '>') p3--; /* on remonte au tag fermant precedant */
       p3 = strstr(p, "after=1\">");
       if (p3 == NULL || p3 > p2) {
-	nbcom = 0;
+      	nbcom = 0;
       } else {
 	nbcom = atoi(p3+9);
-	BLAHBLAH(1,printf("NBCOM: '%.20s'->%d\n",p3+9,nbcom));
       }
+      BLAHBLAH(1,myprintf("NBCOM: '%.20s'->%<YEL %d>\n",p3+9,nbcom));
+      //      }
       p = p2;
 
       /* test du commentaire */
@@ -1297,7 +1305,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
     int err;
 
     BLAHBLAH(2,printf("le transfert de '%s' semble ok\n", Prefs.path_messages));
-    err = 2;
+    err = 0;
 
     s = gros_read(fd, Prefs.path_messages);
     http_close(fd);
