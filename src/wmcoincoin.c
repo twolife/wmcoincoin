@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.3 2001/12/02 18:07:03 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.4 2001/12/06 22:41:11 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.4  2001/12/06 22:41:11  pouaite
+  patch de glandium (bugfix du mode asclock)
+
   Revision 1.3  2001/12/02 18:07:03  pouaite
   amélioration du support de ispell avec un vilain hack + correction(..pas sur..) d'un bug de clignotement du flammometre
 
@@ -1052,10 +1055,10 @@ dock_refresh_horloge_mode(Dock *dock)
   XCopyArea(dock->display, dock->month, dock->coinpix, dock->NormalGC, 0, 6 * tm.tm_mon, 22, 6, 18, 48);
   XCopyArea(dock->display, dock->weekday, dock->coinpix, dock->NormalGC, 0, 6 * ((tm.tm_wday +6) % 7), 20, 6, 21, 24);
   if (tm.tm_mday > 9) {
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday / 10), 0, 8, 13, 22, 33);
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday % 10), 0, 8, 13, 31, 33);
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday / 10), 0, 9, 13, 22, 33);
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday % 10), 0, 9, 13, 31, 33);
   } else {
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * tm.tm_mday, 0, 8, 13, 26, 33);
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * tm.tm_mday, 0, 9, 13, 26, 33);
   }
 //  w = XTextWidth(dock->fixed_font, s, strlen(s));
 //  XDrawString(dock->display, dock->coinpix, dock->NormalGC, 32-w/2, 32, s, strlen(s));
