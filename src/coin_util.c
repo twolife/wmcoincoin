@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.20 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.21 2002/04/10 18:13:33 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.21  2002/04/10 18:13:33  pouaite
+  bugfix ppc
+
   Revision 1.20  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -505,12 +508,13 @@ str_printf(const char *fmt, ...)
   char *s;
   int s_sz;
 
-  va_start(ap, fmt);
   s_sz = 10; /* a reaugmenter des que la fonction est validee : */
   s = malloc(s_sz); assert(s);
   while (1) {
     int ret;
+    va_start(ap, fmt);
     ret = vsnprintf(s, s_sz, fmt, ap);
+    va_end(ap);
     if (ret == -1 || ret >= s_sz-1) {
       s_sz *= 2;
       assert(s_sz < 100000);
