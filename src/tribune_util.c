@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.11 2002/03/09 00:25:12 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.12 2002/03/27 20:45:06 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.12  2002/03/27 20:45:06  pouaite
+  deuxième vague de bugfix
+
   Revision 1.11  2002/03/09 00:25:12  pouaite
   coin coin
 
@@ -248,6 +251,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       const unsigned char *s1 = "\t<a href=\"http://";
       const unsigned char *s2 = "\t<a href=\"ftp://";
       const unsigned char *s3 = "\t<a href=\"https://";
+      const unsigned char *s4 = "\t<a href=\"..";
       /* puis les <a href> (c'est un peu particulier */
 
       /* c'est un peu facho, d'autant que c'est reverifié au niveau de open_url, mais
@@ -256,6 +260,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       if (strncasecmp(start, s1, strlen(s1)) == 0) is_href = 1; 
       if (strncasecmp(start, s2, strlen(s2)) == 0) is_href = 1; 
       if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
+      if (strncasecmp(start, s4, strlen(s4)) == 0) is_href = 1; 
       if (is_href) {
 	//	printf("get_tok: '");
 	end = start+1;

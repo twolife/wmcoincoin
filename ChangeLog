@@ -1,3 +1,8 @@
+2002-03-27  pouaite  <c0in@altern.org>
+
+	* very ugly very quick very hack very pas beau bricolage pour que ça marchouille
+	avec le nouveau backend
+
 2002-03-25  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (pp_tribuneshot_kikoooo): patch de lordOric,

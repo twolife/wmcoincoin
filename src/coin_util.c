@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.15 2002/03/27 19:02:04 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.16 2002/03/27 20:45:06 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.16  2002/03/27 20:45:06  pouaite
+  deuxième vague de bugfix
+
   Revision 1.15  2002/03/27 19:02:04  pouaite
   bugfix pour le nouveau format du backend
 
@@ -429,13 +432,15 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
       /* y'a un bug dans remopte.php, on trouve des trucs du genre '&amp;quot;' au lieu de '&quot' 
 	 en fait c'est pas un bug, mais je gère ça comme un puerco
        */
-      if (with_bug_amp) {
+      /* inutile desormais: A VIRER 
+     if (with_bug_amp) {
 	if (strncmp(src+is, "&amp;", 5) == 0) {
 	  is_bug = 1; is += 4;
 	}
       }
-
       i = (special_encode_ltgt && is_bug == 0) ? 0 : 2; found = -1;
+      */
+      i = 0;
       while (tab[i].sign) {
 	if (strncmp(tab[i].sign, src+is+1, strlen(tab[i].sign))==0) {
 	  is += strlen(tab[i].sign)+1;
@@ -462,8 +467,9 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
       dest[id++] = '¤';
       is++;
     } else if (src[is] == '<' || src[is] == '>') {
-      dest[id++] = '\t';
-      dest[id++] = src[is++];
+      if (id < dest_sz) dest[id++] = '\t';
+      if (id < dest_sz) dest[id++] = src[is];
+      is++;
     } else {
       dest[id] = src[is];
       id++; is++;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.39 2002/03/24 23:26:38 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.40 2002/03/27 20:45:06 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.40  2002/03/27 20:45:06  pouaite
+  deuxième vague de bugfix
+
   Revision 1.39  2002/03/24 23:26:38  pouaite
   patch de lordoric + bricoles à deux francs
 
@@ -785,11 +788,20 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 	attr &= (~PWATTR_S);
       } else if (strncasecmp(s,"\t<a href=\"", 10)==0) {
 	int i;
+	char *url;
 	attr |= PWATTR_LNK;
 	i = strlen(s)-1; assert(i>0);
 	while (s[i] != '\"' && i > 0) i--;
 	s[i] = 0;
-	strncpy(attr_s, s+10, PVTP_SZ); 
+	url = s+10;
+	if (url[0] == '.') { /* chemin relatif :-/ */
+	  if (url[1] == '.') url+=2;
+	  /* quick & ugly fix, ne marche pas quand le site n'est pas lesite/board mais
+	     lesite/blah/blah/board .. pff */
+	  snprintf(attr_s, PVTP_SZ, "http://%s%s", Prefs.site_root, url);
+	} else {
+	  strncpy(attr_s, url, PVTP_SZ); 
+	}
       } else if (strcasecmp(s,"\t</a\t>")==0) {
 	attr &= (~PWATTR_LNK);
       } else {
