@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.3 2002/01/10 09:03:06 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.4 2002/01/20 00:37:06 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.4  2002/01/20 00:37:06  pouaite
+  bugfix qui permet d'utiliser l'option 'http.proxy_use_nocache:' sur les horribles proxy transparents
+
   Revision 1.3  2002/01/10 09:03:06  pouaite
   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
 
@@ -462,7 +465,7 @@ http_skip_header(int fd, char *last_modified)
 	  }
 	} else if (last_modified) {
 	  if (strncmp(buff,"Last-Modified: ",15) == 0) {
-	    strncpy(last_modified, buff + 15, 512);
+	    strncpy(last_modified, buff + 15, 512); /* oula pas tres joli le strncpy on connait pas la taille de last_modified.. */
 	  }
 	}
 	lnum++;
@@ -554,6 +557,9 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   }
 
   pnocache = Prefs.proxy_nocache ? "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF : "";
+  
+  printf("Prefs.proxy_nocache=%d, '%s'\n", Prefs.proxy_nocache, pnocache);
+
   if (proxy) {
     sockfd = http_connect(proxy, proxy_port);
   } else {
@@ -567,9 +573,9 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 	       "Host: %s" CRLF
 	       "%s"
 	       "User-Agent: %s" CRLF
-	       "%s"
+	       "%s%s"
 	       "Accept: */*" CRLF CRLF,
-	       host_path, host_name, cookie_s, user_agent, last_modified_s);
+	       host_path, host_name, cookie_s, user_agent, last_modified_s, pnocache);
     } else {
       snprintf(buff, BSIZE, "GET http://%s%s HTTP/1.1" CRLF
 	       "Host: %s" CRLF
@@ -597,7 +603,7 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 	     host_name, host_port, host_path, host_name, host_port, cookie_s,user_agent, last_modified_s, auth, pnocache);
     free(auth);
   }
-  BLAHBLAH(2,printf("sending:\n%s", buff));
+  BLAHBLAH(0,printf("sending:\n%s", buff));
   if (http_iwrite(sockfd, buff, strlen(buff)) == -1) {
     snprintf(http_errmsg, HTTP_ERRSZ, "http_get: %s", strerror(errno));
     goto error;

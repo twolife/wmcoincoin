@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.3 2002/01/10 09:03:06 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.4 2002/01/20 00:37:06 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.4  2002/01/20 00:37:06  pouaite
+  bugfix qui permet d'utiliser l'option 'http.proxy_use_nocache:' sur les horribles proxy transparents
+
   Revision 1.3  2002/01/10 09:03:06  pouaite
   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
 
@@ -498,9 +501,9 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 	       "Host: %s" CRLF
 	       "%s"
 	       "User-Agent: %s" CRLF
-	       "%s"
+	       "%s%s"
 	       "Accept: */*" CRLF CRLF,
-	       host_path, host_name, cookie_s, user_agent, last_modified_s);
+	       host_path, host_name, cookie_s, user_agent, last_modified_s, pnocache);
     } else {
       snprintf(buff, BSIZE, "GET http://%s%s HTTP/1.1" CRLF
 	       "Host: %s" CRLF
