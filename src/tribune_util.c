@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.10 2002/03/08 23:53:40 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.11 2002/03/09 00:25:12 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.11  2002/03/09 00:25:12  pouaite
+  coin coin
+
   Revision 1.10  2002/03/08 23:53:40  pouaite
   derniers bugfixes pour la v2.3.6
 
@@ -668,6 +671,7 @@ tribune_key_list_type_name(KeyListType t)
 {
   switch (t) {
   case HK_UA: return "useragent"; 
+  case HK_UA_NOLOGIN: return "useragent w/o login";
   case HK_LOGIN: return "login";
   case HK_WORD: return "mot";
   case HK_ID: return "message_id";

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.13 2002/03/08 23:53:40 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.14 2002/03/09 00:25:12 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.14  2002/03/09 00:25:12  pouaite
+  coin coin
+
   Revision 1.13  2002/03/08 23:53:40  pouaite
   derniers bugfixes pour la v2.3.6
 
@@ -1591,7 +1594,7 @@ editw_balise(EditW *ew, const char *bstart, const char *bend) {
   editw_get_sel_bounds(ew, &i0, &i1); i0=MAX(i0,0); i1=MAX(i1,0);
   s = malloc(i1-i0+lstart+lend+1); 
   strcpy(s, bstart); strncpy(s+lstart, ew->buff+i0, i1-i0); strcpy(s+lstart+i1-i0, bend);
-  i = editw_insert_string(ew, s); if (i<lend && i1!=i0) editw_move_cursor_rel(ew,-lend+i);
+  i = editw_insert_string(ew, s); if (i<lend && i1==i0) editw_move_cursor_rel(ew,-lend+i);
   free(s);
 }
 

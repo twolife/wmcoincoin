@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.31 2002/03/08 23:53:40 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.32 2002/03/09 00:25:12 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.32  2002/03/09 00:25:12  pouaite
+  coin coin
+
   Revision 1.31  2002/03/08 23:53:40  pouaite
   derniers bugfixes pour la v2.3.6
 
@@ -549,7 +552,7 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
   static unsigned *not_plop_hached = NULL;
 
   unsigned i;
-  unsigned hache_s;
+  unsigned hache_s = 0;
   unsigned src_pos, dest_pos, s_len;
 
   const char *s_bizarre = "'\",;:/!+=)]@^_\\-|([{}#~?.*$³²¹";
