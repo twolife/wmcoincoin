@@ -240,6 +240,61 @@ transp_copy_if_changed(TransparencyInfo *a, TransparencyInfo b) {
   return different;
 }
 
+static int
+key_list_copy_if_changed(KeyList **a, KeyList *b)
+{
+  KeyList *hk;
+  int changed = 0;
+
+  hk = b;
+  /* ajoute les nouvelle */
+  while (hk) {
+    KeyList *hka;
+    if ((hka=tribune_key_list_find(*a, hk->key, hk->type)) == NULL) {
+      changed = 1;
+      *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
+    }
+    hk = hk->next;
+  }
+  hk = *a;
+  /* vire les anciennes */
+  while (hk) {
+    KeyList *hkb;
+    if (hk->from_prefs) {
+      if ((hkb = tribune_key_list_find(b, hk->key, hk->type)) == NULL) {
+	changed = 1;
+	*a = tribune_key_list_remove(*a, hk->key, hk->type);
+	hk = *a; continue;
+      }
+    }
+    hk = hk->next;
+  }
+  printf("key_list changed: %d\n", changed);
+  return changed;
+}
+
+
+static int
+string_list_copy_if_changed(char ***a, int *na, char * const *b, const int nb)
+{
+  int changed = 0, i;
+  
+  if (*na != nb) changed = 1;
+  else {
+    for (i=0; i < *na; i++) {
+      if (strcasecmp((*a)[i], b[i]) != 0) { changed = 1; break; }
+    }
+  }
+  if (changed) {
+    free(*a);
+    *a = calloc(nb, sizeof(char*));
+    for (i=0; i < nb; i++) {
+      (*a)[i] = strdup(b[i]);
+    }
+  }
+  return changed;
+}
+
 #define INT_OPT_CHANGED(_x) (Prefs._x != (int)newPrefs._x)
 #define STR_OPT_CHANGED(_x) ((Prefs._x == NULL && newPrefs._x) || \
                              (Prefs._x && newPrefs._x == NULL) || \
@@ -255,6 +310,11 @@ transp_copy_if_changed(TransparencyInfo *a, TransparencyInfo b) {
 #define BIC_OPT_COPY_IF_CHANGED(_x) (bic_copy_if_changed(&Prefs._x, newPrefs._x))
 
 #define TRANSP_OPT_COPY_IF_CHANGED(_x) (transp_copy_if_changed(&Prefs._x, newPrefs._x))
+
+#define KEY_LIST_COPY_IF_CHANGED(_x) (key_list_copy_if_changed(&Prefs._x, newPrefs._x))
+
+#define STRING_LIST_COPY_IF_CHANGED(_x,_nb) (string_list_copy_if_changed(&Prefs._x, &Prefs._nb, \
+   newPrefs._x, newPrefs._nb))
 
 
 /* c'est un peu bourrin comme approche mais ça devrait marcher..*/
@@ -391,14 +451,17 @@ wmcc_prefs_relecture(Dock *dock)
         BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_keyword_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
-	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency))
+	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
+	KEY_LIST_COPY_IF_CHANGED(plopify_key_list) ||
+	KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
+	STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words))
       {
       if (pp_ismapped(dock)) {
 	pp_unmap(dock);
 	pp_set_prefs_colors(dock);
 	pp_show(dock, &dock->dlfp->tribune);
       }
-    }
+      }
   }
   wmcc_prefs_destroy(&newPrefs);
   free(options_full_file_name);

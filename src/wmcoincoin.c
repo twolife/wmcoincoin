@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.36 2002/04/03 20:15:11 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.37 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.37  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.36  2002/04/03 20:15:11  pouaite
   plop
 
@@ -1403,7 +1406,17 @@ main(int argc, char **argv)
   srand(time(NULL));
   ALLOC_OBJ(dock, Dock);
 
-  myprintf("%<GRN wmc2> v.%<WHT " VERSION "> patch level " PATCH_LEVEL " [ compile le " __DATE__ " ]\n");
+  myprintf("%<GRN wmc2> v.%<WHT " VERSION "> [ compile le " __DATE__ " ]\n");
+
+  /* contruit un useragent qui ignore la partie terminale du numero de version
+     ( '2.3.6f' --> '2.3.6') */
+  {
+    int i;
+    app_useragent = strdup("wmcoincoin/" VERSION);
+    i = strlen(app_useragent)-1;
+    while (app_useragent[i] < '0' || app_useragent[i] > '9') app_useragent[i--] = 0;
+  }
+    
   
   memset(&Prefs, 0, sizeof(structPrefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);

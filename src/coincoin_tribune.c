@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.28 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.29 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.29  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.28  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -363,6 +366,69 @@ nettoie_message_tags(const char *inmsg)
   return outmsg;
 }
 
+char *
+wiki_url_encode(const unsigned char *w)
+{
+  const char *keys[] = {" ", "+"};
+  const char *subs[] = {"+", "%2B"};
+  unsigned char *w2, *ret;
+  w2 = str_multi_substitute(w, keys, subs, 2);
+  ret = str_printf("\t<a href=\"%s%s\"\t>[%s]\t</a\t>", Prefs.tribune_wiki_emulation, w2, w);
+  free(w2); 
+  return ret;
+}
+
+int
+do_wiki_emulation(const char *inmsg, char *dest) 
+{
+  int j;
+  const char *s;
+
+  int in_a_href = 0;
+  s = inmsg; j = 0;
+  while (*s) {
+    if (*s == '\t') {
+      if (strncasecmp(s, "\t<a href", 8) == 0 && in_a_href==0) {
+	in_a_href = 1;
+      } else if (strncasecmp(s, "\t</a", 4) == 0 && in_a_href) {
+	in_a_href = 0;
+      }
+ 
+   }
+    if (*s == '[') {
+      char *pfin;
+      
+      pfin = strchr(s+1, ']');
+      
+      if (pfin && in_a_href == 0) {
+	char *ptag, *pautre;
+	ptag = strchr(s+1, '\t');
+	pautre = strchr(s+1, '[');
+	if ((pautre == NULL || pautre > pfin) &&
+	    (ptag == NULL || ptag > pfin)) {
+	  char *wiki_word, *wiki_url, *p;
+
+	  wiki_word = malloc(pfin-s); assert(wiki_word);
+	  strncpy(wiki_word, s+1, pfin-s-1); wiki_word[pfin-s-1] = 0;
+	  wiki_url = wiki_url_encode(wiki_word); free(wiki_word);
+	  p = wiki_url;
+	  while (*p) { 
+	    if (dest) dest[j] = *p; 
+	    j++; p++;
+	  }
+	  s = pfin+1;
+	  continue;
+	}
+      }
+    }
+    if(dest) dest[j] = *s; 
+    j++; s++;
+  }
+  if (dest) dest[j] = 0;
+  j++;
+  return j;
+}
+
 /*
   enregistre un nouveau message
 */
@@ -373,6 +439,15 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   char *message = NULL;
 
   message = nettoie_message_tags(_message);
+
+  /* emulation du wiki (en insérant les bons tags dans le message) */
+  if (Prefs.tribune_wiki_emulation) {
+    char *tmp = message;
+    int sz;
+    sz = do_wiki_emulation(tmp, NULL); message = malloc(sz); do_wiki_emulation(tmp, message);
+    free(tmp);
+  }
+
   BLAHBLAH(4, printf("message logué: '%s'\n", message));
   nit = trib->msg;
   pit = NULL;
@@ -531,8 +606,8 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     snprintf(strollscore, 20, "%d", it->troll_score);
     if (it->is_my_message) stypemessage = "1";
     else if (it->is_answer_to_me) stypemessage = "2";
-    else if (tribune_key_list_test_mi(trib, it, trib->hilight_key_list)) stypemessage = "3";
-    else if (tribune_key_list_test_mi(trib, it, trib->plopify_key_list)) stypemessage = "4";
+    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) stypemessage = "3";
+    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) stypemessage = "4";
     else stypemessage = "0";
 
     subs[0] = qlogin;
@@ -671,7 +746,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
   snprintf(s, 16384, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   if ((Prefs.debug & 2) == 0) {
     fd = http_get(Prefs.site_root, Prefs.site_port, s, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified, 512);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, tribune_last_modified, 512);
   } else {
     snprintf(s, 16384, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);

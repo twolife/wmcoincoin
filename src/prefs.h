@@ -29,6 +29,25 @@ typedef struct {
   unsigned transp;
 } BiColor;
 
+/* petite structure pour stocker la liste des mots-clefs qui déclenche la mise en
+   valeur du post dans le pinnipede
+   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) 
+
+   attention à ne pas abuser des appels à tribune_key_list_test_mi avec des HK_THREAD par milliers ! ça *pourrait*
+   commencer à faire mouliner coincoin (a voir..)
+*/
+typedef struct _KeyList KeyList;
+typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_UA_NOLOGIN,HK_ALL} KeyListType;
+struct _KeyList {
+  unsigned char *key;
+  short num;          /* indicateur de niveau (optionnel), pour les mots plops, indique le
+			 niveau de plopification (0 -> normal, 1->forte, 2->kickette) */
+  unsigned char from_prefs; /* non nul si le mot provient d'une liste definie dans le
+			       fichier d'options */
+  KeyListType type;
+  KeyList *next;
+};
+
 /* les preferences sont stockees dans cette structure */
 
 typedef struct _structPrefs{
@@ -53,6 +72,9 @@ typedef struct _structPrefs{
 			   2: les tags sont du type '&lt;b;&gt'
 			   3: le backend est en vrac, on a les deux types de tags :-/ 
 			*/
+
+  char *tribune_wiki_emulation; /* non nul => émulation des wiki-urls */
+
   /* fonte utilisee pour l'affichages des news */
   char *news_fn_family;
   int news_fn_size;
@@ -141,8 +163,12 @@ typedef struct _structPrefs{
   /* Nom du fichier de scrinechote */
   char* tribune_scrinechote;
 
-  char **plop_words; /* un tableau de string pour ranger les mots-plop (patch estian)*/
-  unsigned  nb_plop_words;
+  KeyList *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
+				attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
+			     */
+  KeyList *plopify_key_list; /* version plopesque du kill-file, même remarque qu'au dessus */
+  char **plop_words;
+  unsigned nb_plop_words;
 } structPrefs;
 
 
@@ -159,4 +185,13 @@ void wmcc_prefs_destroy(structPrefs *p);
 char *wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned char *arg);
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
 char *wmcc_prefs_read_options(structPrefs *p, const char *filename);
+
+/* ça c'est mal, ces fonctions sont définies dans tribune_util.c ... à déplacer */
+KeyList* tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num, int from_prefs);
+KeyList* tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type);
+KeyList* tribune_key_list_find(KeyList *hk, const char *s, KeyListType t);
+const char* tribune_key_list_type_name(KeyListType t);
+KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t);
+void tribune_key_list_destroy(KeyList *first);
+KeyList *tribune_key_list_clear_from_prefs(KeyList *first);
 #endif

@@ -1,3 +1,8 @@
+2002-04-09  pouaite  <c0in@altern.org>
+
+	* ajout de l'option 'tribune.wiki_emulation', pour émuler le wiki
+	quand celui n'est pas géré par le backend.
+
 2002-04-02  pouaite  <c0in@altern.org>
 
 	* src/coin_xutil.c src/prefs.[ch] etc.. : pas mal de boulot sur la

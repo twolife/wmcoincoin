@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.14 2002/04/03 20:15:11 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.15 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.15  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.14  2002/04/03 20:15:11  pouaite
   plop
 
@@ -280,7 +283,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 	start++;
 	end=start+1;
 	p = start;
-	printf("get_tok pas reconnu: (len=%d)'", strlen(p));
+	printf("get_tok pas reconnu: (len=%d)'", (int)strlen(p));
 	while (*p) { printf("%c", *p); p++;}
 	printf("\n");
       }
@@ -517,6 +520,21 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
   }
 }
 
+KeyList *
+tribune_key_list_clear_from_prefs(KeyList *first)
+{
+  KeyList *hk;
+  hk = first;
+  while (hk) {
+    if (hk->from_prefs) {
+      first = tribune_key_list_remove(first, hk->key, hk->type);
+      hk = first;
+    }
+    if (hk) hk = hk->next;
+  }
+  return first;
+}
+
 /* supprime les keylist faisant ref à des messages detruits */
 KeyList *
 tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first)
@@ -536,14 +554,27 @@ tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first)
   return first;
 }
 
+void
+tribune_key_list_destroy(KeyList *first)
+{
+  KeyList *hk, *n;
+  hk = first;
+  while (hk) {
+    n = hk->next;
+    free(hk->key); free(hk); hk = n;
+  }
+}
+
 KeyList *
-tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type)
+tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num, int from_prefs)
 {
   KeyList *hk, *last;
 
   ALLOC_OBJ(hk, KeyList);
   hk->key = strdup(key);
   hk->type = type;
+  hk->num = num;
+  hk->from_prefs = from_prefs;
   hk->next = NULL;
   
   BLAHBLAH(1, myprintf("ajout du motclef: '%<CYA %s>'\n", key));
@@ -678,7 +709,7 @@ tribune_key_list_swap(KeyList *first, const char *s, KeyListType t)
 {
   /* verifie si le mot est déjà dans la liste */
   if (tribune_key_list_find(first, s, t) == NULL) {
-    return tribune_key_list_add(first, s, t);
+    return tribune_key_list_add(first, s, t, 0, 1);
   } else {
     return tribune_key_list_remove(first, s, t);
   }

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.9 2002/04/04 20:42:51 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.10 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.10  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.9  2002/04/04 20:42:51  pouaite
   replop
 
@@ -869,7 +872,7 @@ dock_show_tribune_frequentation(Dock *dock)
   }
   
   snprintf(s, 2048, 
-	   "vous utilisez wmc² v.<font color=blue>" VERSION " pl " PATCH_LEVEL "</font> [ compilé le " __DATE__ " ]<p>"
+	   "vous utilisez wmc² v.<font color=blue>" VERSION "</font> [ compilé le " __DATE__ " ]<p>"
 	   "%s"
 	   "<p align=center><b>Fréquentation de la Tribune</b><br>"
 	   "<i>(estimation basée sur les useragents et les logins)</i></p><br>"

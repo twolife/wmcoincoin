@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.19 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: global.h,v 1.20 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.20  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.19  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -166,6 +169,7 @@ DECL_GLOB_INIT(int flag_changed_http_params, 0); /* positionné à 1 quand les pre
 						    d'être relues, et que l'adresse du site
 						    a été changée (ou le proxy) -> pour
 						    forcer le gethostbyname */
+DECL_GLOB_INIT(char *app_useragent, NULL);
 
 #endif
 

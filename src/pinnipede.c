@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.45 2002/04/03 20:15:11 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.46 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.46  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.45  2002/04/03 20:15:11  pouaite
   plop
 
@@ -701,8 +704,8 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->is_answer_to_me = mi->is_answer_to_me;
 
   pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
-  pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list) == NULL ? 0 : 1;
-  pv->is_plopified = (tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL) ? 0 : (disable_plopify ? 1 : 2);
+  pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list) == NULL ? 0 : 1;
+  pv->is_plopified = (tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list) == NULL) ? 0 : (disable_plopify ? 1 : 2);
 
   /*
   printf("pv = %p\n", pv);
@@ -846,7 +849,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 	if (pv->is_plopified >1) {
 	  int i;
 	  for (i=0; s[i]; i++) { if (s[i] >= 'A' && s[i] <= 'Z') s[i] = s[i]+'a'-'A'; }
-	  if (strlen(s) >= 3) {
+	  if (strlen(s) >= 3 && Prefs.nb_plop_words > 0) {
 	    plopify_word(s, PVTP_SZ,  (char*)p - (char*)mi->msg);
 	  }
 	}
@@ -2556,7 +2559,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       if (mi->is_answer_to_me && blah_sz>30) {
 	snprintf(s, blah_sz, "\n[ce message répond à l'un des votres]"); blah_sz -= strlen(s); s += strlen(s);
       }
-      hk = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list);
+      hk = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list);
       if (hk && blah_sz > 60) {
 	snprintf(s, blah_sz, "\nmessage 'encadré' car: "); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
@@ -2565,7 +2568,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
 	  hk = tribune_key_list_test_mi(trib, mi, hk->next);
 	}
       }
-      hk = tribune_key_list_test_mi(trib, mi, trib->plopify_key_list);
+      hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
       if (hk && blah_sz > 60) {
 	snprintf(s, blah_sz, "\nmessage plopifié  car: "); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
@@ -3269,8 +3272,8 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	tribune_msg_info *mi;
 	KeyList *hk;
 	mi = tribune_find_id(trib, pw->parent->id);
-	if (mi && (hk = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list))) {
-	  trib->hilight_key_list = tribune_key_list_remove(trib->hilight_key_list, hk->key, hk->type);
+	if (mi && (hk = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list))) {
+	  Prefs.hilight_key_list = tribune_key_list_remove(Prefs.hilight_key_list, hk->key, hk->type);
 	}
       } else changed = 0;
       if (changed) {
@@ -3407,7 +3410,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
     //printf("scroll down: id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button1) {
     if (event->state & ShiftMask) {
-      pp_handle_shift_clic(dock, trib, &trib->hilight_key_list, mx, my, 0);
+      pp_handle_shift_clic(dock, trib, &Prefs.hilight_key_list, mx, my, 0);
     } else if (event->state & ControlMask) {
       pp_handle_control_left_clic(dock, trib, mx, my);
     } else {
@@ -3439,7 +3442,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
     }
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {
-      pp_handle_shift_clic(dock, trib, &trib->plopify_key_list, mx, my, 1);
+      pp_handle_shift_clic(dock, trib, &Prefs.plopify_key_list, mx, my, 1);
     } else {
       PostWord *pw;
       

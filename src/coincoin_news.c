@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.21 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.22 2002/04/09 00:28:19 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.22  2002/04/09 00:28:19  pouaite
+  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
+
   Revision 1.21  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -161,9 +164,6 @@ dlfp_create()
   dlfp->tribune.local_time_last_check = time(NULL);
 
   dlfp->tribune.just_posted_anonymous = 0;
-  dlfp->tribune.hilight_key_list = NULL;
-  dlfp->tribune.plopify_key_list = NULL;
-
   dlfp->com = NULL;
   dlfp->xp_old = -1000;
   dlfp->xp = -1000;
@@ -427,7 +427,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     snprintf(URL, 512, "%s%s",n->url, Prefs.path_end_news_url);
     BLAHBLAH(1,printf("get %s\n",URL));
     fd = http_get(Prefs.site_root, Prefs.site_port, URL, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,NULL,0);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, NULL,0);
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", getenv("HOME"), n->id);
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", URL);
@@ -532,10 +532,10 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     if (date) {
       p = strstr(date, "à");
       if (p) {
-	while (!isdigit(*p) && *p) p++;
+	while (!isdigit((unsigned)*p) && *p) p++;
 	n->heure = atoi(p) * 60;
 	p += 2;
-	while (!isdigit(*p) && *p) p++;      
+	while (!isdigit((unsigned)*p) && *p) p++;      
 	n->heure += atoi(p);     
       }
       BLAHBLAH(2,myprintf("date: '%<BLU %s>' => heure: %d\n", date, n->heure));
@@ -721,7 +721,7 @@ dlfp_updatenews(DLFP *dlfp)
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
     fd =  http_get(Prefs.site_root, Prefs.site_port, path, 
-		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,news_last_modified, 512);
+		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent,news_last_modified, 512);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
@@ -1025,7 +1025,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL, 0);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/posts.php3", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
@@ -1333,7 +1333,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL, 0);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);

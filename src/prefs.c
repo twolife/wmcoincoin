@@ -13,10 +13,10 @@ coincoin_default_useragent(char *s, int sz)
   struct utsname utsn;
   
   if (uname(&utsn) != -1) {
-    snprintf(s, sz, "wmCoinCoin/" VERSION "-" PATCH_LEVEL " (palmipede; %s %s %s)",
+    snprintf(s, sz, "wmCoinCoin/" VERSION " (palmipede; %s %s %s)",
 	     utsn.sysname, utsn.release, utsn.machine);
   } else {
-    snprintf(s, sz, "wmCoinCoin/" VERSION "-" PATCH_LEVEL " (palmipede; ?)");
+    snprintf(s, sz, "wmCoinCoin/" VERSION " (palmipede; ?)");
   }
 }
 
@@ -287,6 +287,7 @@ option_browser(const char *optarg,const char *optname,
 }
 
 /* stocke une liste de mots-plops séparés par une virgule */
+/*
 static void
 option_plop_words(const char *optarg, structPrefs *p)
 {
@@ -295,10 +296,10 @@ option_plop_words(const char *optarg, structPrefs *p)
   char *prov;
   int i;
 
-  s = strdup(optarg); assert(s); /* pour ne pas planter le strtok, il faut s'assurer que la chaine
-				    est modifiable */
+  s = strdup(optarg); assert(s);
 
-  /* libération de la mémoire précedemment allouée */
+
+
   if (p->plop_words) {
     for (i=0; p->plop_words[i]; i++) {
       free(p->plop_words[i]);
@@ -306,7 +307,7 @@ option_plop_words(const char *optarg, structPrefs *p)
     free(p->plop_words); p->plop_words = NULL;
   }
 
-  /* comptage des mots */
+
   p->nb_plop_words = 0;
   for (i=0; s[i]; i++) { if (s[i]==*sep) p->nb_plop_words++; }
 
@@ -323,18 +324,18 @@ option_plop_words(const char *optarg, structPrefs *p)
     } else {
       prov = strtok(NULL,sep);
     }
-    assert(prov); /* sinon y'a un truc bizarre */
+    assert(prov); 
     p->plop_words[i]=strdup(prov);
   }
   p->plop_words[i] = NULL;
   
   free(s);
 }
+*/
 
-/*
 char*
-option_get_string_list(char *optarg, char ***list, int *nb_elt)
-{
+option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *nb_elt)
+{ 
   int pass, cnt;
   char mot[1024];
 
@@ -344,6 +345,7 @@ option_get_string_list(char *optarg, char ***list, int *nb_elt)
     s = optarg;
     cnt = 0;
     do {
+      int i;
       if (s != optarg) {
 	if (*s != ',') goto erreur;
 	s++;
@@ -353,7 +355,7 @@ option_get_string_list(char *optarg, char ***list, int *nb_elt)
       s++;
       i = 0;
       while (*s && i < 1023) {
-	if (*s != '\\' && *(s+1) != '"') {
+	if (*s == '\\' && *(s+1) != '"') {
 	  s++;
 	} else if (*s == '"') {
 	  break;
@@ -362,9 +364,10 @@ option_get_string_list(char *optarg, char ***list, int *nb_elt)
       }
       mot[i++] = 0;
       if (*s != '"') goto erreur;
+      s++;
       while (*s && *s <= ' ') s++;
 
-      if (pass == 0) {
+      if (pass == 1) {
 	(*list)[cnt] = strdup(mot);
       }
       cnt++;
@@ -378,8 +381,74 @@ option_get_string_list(char *optarg, char ***list, int *nb_elt)
       }
     }
   }
+
+  return NULL;
+ erreur:
+  return str_printf("erreur pour l'option '%s', on attend une liste de mots entre guillements, séparés par des virgules", optname);
 }
-*/
+
+
+char*
+option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst)
+{
+  int cnt;
+  char mot[1024];
+  unsigned char *s;
+
+  KeyList *first = *pfirst;
+
+  first = tribune_key_list_clear_from_prefs(first);
+  s = optarg;
+  cnt = 0;
+  do {
+    KeyListType t;
+    int i,num;
+    if (s != optarg) {
+      if (*s != ',') goto erreur;
+      s++;
+    }
+    while (*s && *s <= ' ') s++;
+    
+    t = HK_WORD;
+    if (strncasecmp(s, "ua:", 3) == 0) { t = HK_UA; s+= 3; }
+    if (strncasecmp(s, "login:", 6) == 0) { t = HK_LOGIN; s+= 6; }
+    if (strncasecmp(s, "word:", 5) == 0) { t = HK_WORD; s+=5; }
+    if (strncasecmp(s, "id:", 3) == 0) { t = HK_ID; s+= 3; }
+    if (strncasecmp(s, "thread:", 7) == 0) { t = HK_THREAD; s+= 7; }
+
+    num = 0;
+    if (*s >= '0' && *s <= '9') { 
+      num = atoi(s); while (*s >= '0' && *s <= '9') s++; if (*s != ':') goto erreur; s++;
+      
+    }
+
+    if (*s != '"') goto erreur;
+    s++;
+    i = 0;
+    while (*s && i < 1023) {
+      if (*s == '\\' && *(s+1) != '"') {
+	s++;
+      } else if (*s == '"') {
+	break;
+      }
+      mot[i++] = *s; s++;
+    }
+    mot[i++] = 0;
+    if (*s != '"') goto erreur;
+    s++;
+    while (*s && *s <= ' ') s++;
+
+    
+    first = tribune_key_list_add(first, mot, t, num, 1);
+    cnt++;
+  } while (*s);
+  *pfirst = first;
+  return NULL;
+  
+ erreur:
+  return str_printf("argument invalide pour l'option '%s', mot %d, (rappel: il faut spécifier une liste de [UA|LOGIN|ID|etc]:[NUM:]\"unmot\" séparés par des virgules, cf le fichier d'options)\n", optname, cnt);
+}
+
 
 /* remplit la structure avec les valeurs par défaut des preferences */
 void
@@ -394,7 +463,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->debug = 0;
   p->verbosity = 0;
   p->tribune_backend_type = 3;
-
+  p->tribune_wiki_emulation = NULL;
   ASSIGN_STRING_VAL(p->font_encoding, "iso8859-1");
   p->news_max_nb_days = 1;
   ASSIGN_STRING_VAL(p->news_fn_family, "helvetica");
@@ -466,9 +535,13 @@ wmcc_prefs_set_default(structPrefs *p) {
   BICOLOR_SET(p->pp_keyword_color, 0x008080, 0x00ffff);
   BICOLOR_SET(p->pp_plopify_color,0xa0a0a0, 0x808080);
 
-  p->plop_words = NULL;
-  option_plop_words("plop,grouik,gruiiik,glop,buurp,miaou,sluurpe,côôoot,pika,pikaaaa,ka-pika,"
-		    "chuuu,prout,uuuurg,blob,ploop,pl0p,c0in,pouet,coin!,flebelebelblbll,blop,gloup", p);
+  tribune_key_list_destroy(p->hilight_key_list); p->hilight_key_list = NULL;
+  tribune_key_list_destroy(p->plopify_key_list); p->plopify_key_list = NULL;
+  option_get_string_list("\"plop\",\"grouik\",\"gruiiik\",\"glop\",\"buurp\","
+			 "\"miaou\",\"sluurpe\",\"côôoot\",\"pika\",\"pikaaaa\",\"ka-pika\","
+			 "\"chuuu\",\"prout\",\"uuuurg\",\"blob\",\"ploop\",\"pl0p\",\"c0in\","
+			 "\"pouet\",\"coin!\",\"flebelebelblbll\",\"blop\",\"gloup\"",
+			 "", &p->plop_words, &p->nb_plop_words);
   p->pp_xpos = -10000;
   p->pp_ypos = -10000;
   p->pp_width = 300;
@@ -504,6 +577,7 @@ wmcc_prefs_destroy(structPrefs *p)
   FREE_STRING(p->font_encoding);
   FREE_STRING(p->news_fn_family);
   FREE_STRING(p->user_agent);
+  FREE_STRING(p->tribune_wiki_emulation);
   FREE_STRING(p->coin_coin_message);
   FREE_STRING(p->balloon_fn_family);
   FREE_STRING(p->dock_bgpixmap);
@@ -523,6 +597,8 @@ wmcc_prefs_destroy(structPrefs *p)
   FREE_STRING(p->browser_cmd);
   FREE_STRING(p->browser2_cmd);
   FREE_STRING(p->pp_fn_family);
+  tribune_key_list_destroy(p->hilight_key_list); p->hilight_key_list = NULL;
+  tribune_key_list_destroy(p->plopify_key_list); p->plopify_key_list = NULL;
   for (i=0; i < (int)p->nb_plop_words; i++) FREE_STRING(p->plop_words[i]);
   FREE_STRING(p->plop_words);
   FREE_STRING(p->pp_fortune_fn_family);
@@ -546,6 +622,8 @@ wmcc_prefs_destroy(structPrefs *p)
 #define CHECK_BICOLOR_ARG(x) { if (sscanf(arg, "%x %x", &x.opaque, &x.transp)<1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB (suivie optionnellement d'une deuxième couleur utilisée pour le mode transparent)", opt_name); }
 
 #define CHECK_TRANSP_ARG(x) { char *err=option_get_transp_val(arg,opt_name,&x); if (err) return err; }
+
+#define CHECK_KEY_LIST(x) { char *err=option_get_key_list(arg,opt_name,&x); if (err) return err; }
 
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
@@ -575,6 +653,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   } break;
   case OPT_tribune_post_cmd: {
     ASSIGN_STRING_VAL(p->post_cmd, arg);
+  } break; 
+  case OPT_tribune_wiki_emulation: {
+    ASSIGN_STRING_VAL(p->tribune_wiki_emulation, arg);
   } break; 
   case OPT_tribune_archive: {
     ASSIGN_STRING_VAL(p->tribune_scrinechote, arg);
@@ -786,8 +867,15 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_show_fortune: {
     CHECK_BOOL_ARG(p->pp_fortune_mode);
   } break; 
+  case OPT_pinnipede_plop_keywords: {
+    CHECK_KEY_LIST(p->plopify_key_list);
+  } break; 
+  case OPT_pinnipede_hilight_keywords: {
+    CHECK_KEY_LIST(p->hilight_key_list);
+  } break; 
   case OPT_pinnipede_plop_words: {
-    option_plop_words(arg, p);
+    char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);
+    if (err) return err;
   } break; 
   case OPT_spell_enable: {
     CHECK_BOOL_ARG(p->ew_do_spell);

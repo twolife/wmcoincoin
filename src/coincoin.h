@@ -26,7 +26,7 @@ void usleep(unsigned long usec);
 #endif
 
 #define APPNAME "wmcoincoin"
-#define APP_USERAGENT "wmCoinCoin/" VERSION
+//#define APP_USERAGENT "wmCoinCoin/" VERSION
 
 typedef struct _PicoHtmlItem PicoHtmlItem;
 typedef struct _PicoHtml PicoHtml;
@@ -141,21 +141,6 @@ struct _tribune_msg_info {
   tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 };
 
-/* petite structure pour stockés la liste des mots-clefs qui déclenche la mise en
-   valeur du post dans le pinnipede
-   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) 
-
-   attention à ne pas abuser des appels à tribune_key_list_test_mi avec des HK_THREAD par milliers ! ça *pourrait*
-   commencer à faire mouliner coincoin (a voir..)
-*/
-typedef struct _KeyList KeyList;
-typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_UA_NOLOGIN,HK_ALL} KeyListType;
-struct _KeyList {
-  unsigned char *key;
-  KeyListType type;
-  KeyList *next;
-};
-
 
 typedef struct _DLFP_tribune {
   unsigned char last_post_time[5];
@@ -182,10 +167,6 @@ typedef struct _DLFP_tribune {
   int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
 				(pour aider la reconnaissance de nos messages) */
 
-  KeyList *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
-				attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
-			     */
-  KeyList *plopify_key_list; /* version plopesque du kill-file, même remarque qu'au dessus */
 } DLFP_tribune;
 
 typedef struct _DLFP_comment {
@@ -595,13 +576,9 @@ tribune_msg_info *check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
 int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, 
 				int *ref_m, int *ref_s, int *ref_num);
 void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
-KeyList* tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type);
-KeyList* tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type);
 KeyList* tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first);
 KeyList* tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist);
-KeyList* tribune_key_list_find(KeyList *hk, const char *s, KeyListType t);
-const char* tribune_key_list_type_name(KeyListType t);
-KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t);
+
 
 /* coincoin_tribune.c */
 void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
