@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.26  2003/05/07 18:44:55  pouaite
+dnl   bugfix divers+solaris7
+dnl
 dnl   Revision 1.25  2003/03/12 21:09:35  pouaite
 dnl   mega patch de gle + micro fix du referer
 dnl
@@ -163,7 +166,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.4c, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.4-enlarged, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -290,6 +293,7 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+dnl AC_CHECK_TYPE(uint32_t,  AC_DEFINE(HAVE_U_INT32_T, 1, [dummy]))
 
 dnl those two tests were taken from openssh-3.5p1
 AC_CACHE_CHECK([for struct sockaddr_storage], ac_cv_have_struct_sockaddr_storage, [
@@ -331,7 +335,7 @@ case "$host" in
           echo -e "\n${YELLOW}you are using GNU/linux, it's Good(c)(tm) !${RESET}\n"
           ;;
     *-solaris*)
-          echo -e "\n${YELLOW}oh oh !! wmcc runs quite well on solaris, good luck !${RESET}\n"
+          echo -e "\noh oh !! wmcc runs quite well on solaris (even solaris 7 which stinks from the back), good luck !\n"
           ;;
     *bsd*)
           echo -e "\nbsd detected!\n"

@@ -930,7 +930,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   
   p->post_cmd = NULL;
   ASSIGN_STRING_VAL(p->board_scrinechote, "~/wmcc_board_shot.html");  
-  p->pinnipede_open_on_start = 0;
+  p->pinnipede_open_on_start = 1;
   
   p->miniuarules.first = NULL;
   p->url_repl.first = NULL;

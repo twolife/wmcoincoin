@@ -571,7 +571,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
   GtkWidget *active_item;
   SitePrefs *sp;
   
-  enum { NONE, DLFP, WOOF, MDKFR, LORDORIC, CAVERNE, DAE, DALENTBOUCHOT, GLANDIUM, MANTICORE, DAIQUE, DAPORTATIVEBOUCHOT, HOUPLA} item_index;
+  enum { NONE, DLFP, WOOF, MDKFR, LORDORIC, CAVERNE, DAE, DALENTBOUCHOT, GLANDIUM, MANTICORE, DAIQUE, XOF, OLO, DAPORTATIVEBOUCHOT, HOUPLA} item_index;
 
   active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
   item_index = g_list_index(menu_shell->children, active_item);
@@ -688,6 +688,23 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
       sp->all_names[0] = strdup("daique");
       sp->path_board_add = strdup("board/add.php");
+      sp->board_post = strdup("message=%s");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      break;
+    case XOF:
+      sp->site_root = strdup("xof.dyndns.org/");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      sp->all_names[0] = strdup("xof");
+      sp->path_board_add = strdup("board/add.php");
+      sp->board_post = strdup("message=%s");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      break;
+    case OLO:
+      sp->site_root = strdup("board.olivierl.org/");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      sp->all_names[0] = strdup("olo");
+      sp->path_board_backend = strdup("remote.xml");
+      sp->path_board_add = strdup("add.php3");
       sp->board_post = strdup("message=%s");
       sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
       break;
@@ -897,8 +914,8 @@ on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
 
 void
-on_main_win_creation                   (GtkWidget       *widget,
-                                        gpointer         user_data)
+on_main_win_creation                   (GtkWidget       *widget UNUSED,
+                                        gpointer         user_data UNUSED)
 {
   site_notebook_update(Prefs);
   global_panels_update(Prefs);

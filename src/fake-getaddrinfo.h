@@ -27,6 +27,25 @@
 # define NI_NUMERICSERV    8
 #endif
 
+#ifndef AF_INET6            // vilain solaris 7
+  #define AF_INET6 666      // satan l'habite
+#endif
+#ifndef AI_NUMERICHOST 
+  #define AI_NUMERICHOST 4  // n'importe quelle valeur fait l'affaire
+#endif
+
+/* stolen from openssh.. */
+#ifndef HAVE_STRUCT_SOCKADDR_STORAGE
+# define        _SS_MAXSIZE     128     /* Implementation specific max size */
+# define       _SS_PADSIZE     (_SS_MAXSIZE - sizeof (struct sockaddr))
+
+struct sockaddr_storage {
+        struct  sockaddr ss_sa;
+        char            __ss_pad2[_SS_PADSIZE];
+};
+# define ss_family ss_sa.sa_family
+#endif /* !HAVE_STRUCT_SOCKADDR_STORAGE */
+
 #ifndef HAVE_STRUCT_ADDRINFO
 struct addrinfo {
 	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME */

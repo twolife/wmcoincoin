@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.16 2003/02/28 19:08:43 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.17 2003/05/07 18:44:57 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.17  2003/05/07 18:44:57  pouaite
+  bugfix divers+solaris7
+
   Revision 1.16  2003/02/28 19:08:43  pouaite
   trucs divers
 
@@ -56,6 +59,12 @@
 #include "coincoin.h"
 #include "coin_util.h"
 #include "myprintf.h"
+
+/*
+
+                                              "Abandon All Hope, Ye Who Enter Here"
+
+*/
 
 
 #define MI_MAX_LEN 512  /* lg max du message prise en compte */

@@ -463,7 +463,7 @@ http_error() {
 static char * 
 get_host_ip_str(const char *hostname, int port) {
   int error;
-  struct addrinfo hints, *res;
+  struct addrinfo hints, *res=0;
   char service_name[256];
   char *s = NULL;
 
@@ -492,7 +492,7 @@ get_host_ip_str(const char *hostname, int port) {
     freeaddrinfo(res);
   } else {
     myfprintf(stderr, "error from getaddrinfo: %s", GAI_STRERROR(error));
-    freeaddrinfo(res);
+    if (res) freeaddrinfo(res);
   }
   return s;
 }
@@ -1039,7 +1039,7 @@ http_request_send(HttpRequest *r)
   }
 
   if (r->pragma_nocache) {
-    header = str_cat_printf(header, "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF);
+    header = str_cat_printf(header, "Pragma: no-cache" CRLF "Cache-Control: no-cache" CRLF);
   }
 
   /* on ne gère que le schema d'authentification basique [base64(USER:PASS)]

@@ -891,6 +891,12 @@ create_main_win (void)
   glade_menuitem = gtk_menu_item_new_with_label ("daique");
   gtk_widget_show (glade_menuitem);
   gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
+  glade_menuitem = gtk_menu_item_new_with_label ("xof");
+  gtk_widget_show (glade_menuitem);
+  gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
+  glade_menuitem = gtk_menu_item_new_with_label ("olo");
+  gtk_widget_show (glade_menuitem);
+  gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
   glade_menuitem = gtk_menu_item_new_with_label ("daportativebouchot");
   gtk_widget_show (glade_menuitem);
   gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
@@ -5213,6 +5219,12 @@ create_main_win (void)
                       NULL);
   gtk_signal_connect (GTK_OBJECT (spinbutton_proxy_port), "changed",
                       GTK_SIGNAL_FUNC (on_spinbutton_changed),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (entry_proxy_user), "changed",
+                      GTK_SIGNAL_FUNC (on_editable_changed),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (entry_proxy_pass), "changed",
+                      GTK_SIGNAL_FUNC (on_editable_changed),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_proxy_no_cache), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),

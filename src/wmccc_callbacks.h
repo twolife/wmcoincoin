@@ -434,3 +434,7 @@ on_main_win_creation                   (GtkWidget       *widget,
 void
 on_main_win_creation                   (GtkWidget       *widget,
                                         gpointer         user_data);
+
+void
+on_editable_changed                    (GtkEditable     *editable,
+                                        gpointer         user_data);

@@ -971,7 +971,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
       if (sp->proxy_auth_user && strlen(sp->proxy_auth_user) &&
 	  sp->proxy_auth_pass && strlen(sp->proxy_auth_pass)) {
 	fprintf(f, ".%s: %s:%s\n", DOTIFY(OPTSG_http_proxy_auth), sp->proxy_auth_user, sp->proxy_auth_pass);
-      }
+      } 
     }
     SP_SAVEBOOL(OPTSG_http_proxy_use_nocache, proxy_nocache);
     SP_SAVEBOOL(OPTSG_http_use_if_modified_since, use_if_modified_since);

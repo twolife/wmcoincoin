@@ -867,6 +867,8 @@ dalentbouchot (anonymous only)
 old.glandium (anonymous only)
 manticore
 daique
+xof
+olo
 daportativebouchot
 houpla
 </items>
@@ -8863,6 +8865,11 @@ dillo %s &amp;
 		      <name>entry_proxy_user</name>
 		      <tooltip>wmcc only performs the so-called 'basic proxy authentification'</tooltip>
 		      <can_focus>True</can_focus>
+		      <signal>
+			<name>changed</name>
+			<handler>on_editable_changed</handler>
+			<last_modification_time>Mon, 28 Apr 2003 18:29:04 GMT</last_modification_time>
+		      </signal>
 		      <editable>True</editable>
 		      <text_visible>True</text_visible>
 		      <text_max_length>0</text_max_length>
@@ -8896,6 +8903,11 @@ dillo %s &amp;
 		      <name>entry_proxy_pass</name>
 		      <width>80</width>
 		      <can_focus>True</can_focus>
+		      <signal>
+			<name>changed</name>
+			<handler>on_editable_changed</handler>
+			<last_modification_time>Mon, 28 Apr 2003 18:29:26 GMT</last_modification_time>
+		      </signal>
 		      <editable>True</editable>
 		      <text_visible>True</text_visible>
 		      <text_max_length>0</text_max_length>
