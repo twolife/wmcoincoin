@@ -4,7 +4,9 @@
 	* src/http_unix.c: forcément y'avait un truc qui n'allait pas dans
 	le gethostbyname non bloquant (quand le dns ne marchait pas, le
 	coincoin entrait dans une boucle infinie, en bouffant 100% du cpu
-	au passage). C'est corrigé.
+	au passage). C'est corrigé. J'en ai profité pour que la led de
+	transferts http indique quand un gethostbyname est en cours
+	(couleur verte).
 
 --------------------------v2.3.8-a-----------------------------------------
 2002-05-31  pouaite  <c0in@altern.org>

@@ -148,7 +148,11 @@ http_complete_error_info()
 	     flag_http_error ? "<b>il vient d'y avoir une erreur !!</b>" : "le dernier transfert s'est bien passé",
 	     s_heure, flag_http_error ? "url fautive" : "on vient de récuperer", http_last_url, http_used_ip, s_err);
   } else {
-    snprintf(s, 2048, "un transfert est en cours...<br>url: <tt>%s</tt><br>ip: <font color=#0000ff>%s</font><br>", http_last_url, http_used_ip);
+    if (flag_gethostbyname == 0) {
+      snprintf(s, 2048, "un transfert est en cours...<br>url: <tt>%s</tt><br>ip: <font color=#0000ff>%s</font><br>", http_last_url, http_used_ip);
+    } else {
+      snprintf(s, 2048, "résolution du nom '%s' en cours..<br>", http_last_url);
+    }
   }
   return strdup(s);
 }
@@ -392,6 +396,9 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
 
   memset(addr, 0, 65);
   BLAHBLAH(1, printf("gethostbyname('%s') -> si le reseau rame, on risque de bloquer le coincoin ici\n", hostname));
+
+  ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
+				  jour la led indiquant 'gethostbyname' */
   ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
   phost = gethostbyname(hostname); /* rahhh comme c'est lent :-( */
   ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
@@ -438,7 +445,7 @@ http_connect(const char *host_name, int port)
   */
 
   
-    flag_changed_http_params = 1;
+  //flag_changed_http_params = 1;
 
   for (num_try = 0; num_try < 2; num_try++) 
     {
@@ -447,11 +454,14 @@ http_connect(const char *host_name, int port)
       if (num_try == 1 || addr[0] == 0 || flag_changed_http_params)
 	{
 	  flag_changed_http_params = 0;
+	  
+	  flag_gethostbyname = 1;
 #ifndef DONOTFORK_GETHOSTBYNAME	  
 	  gethostbyname_nonbloq(host_name, addr);
 #else
 	  gethostbyname_bloq(host_name, addr);
 #endif
+	  flag_gethostbyname = 0;
 	  if (addr[0]) {
 	    snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
 		     (unsigned char)addr[1],

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.15 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.16 2002/06/02 13:31:37 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.16  2002/06/02 13:31:37  pouaite
+  bon, _maintenant_ c'est parti pour la 2.3.8b
+
   Revision 1.15  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -670,7 +673,9 @@ dock_leds_set_state(Dock *dock)
 {
   int trollo_hrate;
 
-  if (flag_troll_braining) {
+  if (flag_gethostbyname) {
+    led_color(&dock->leds.led[0], GREEN,GREEN,GREEN);
+  } else if (flag_troll_braining) {
     led_color(&dock->leds.led[0], VIOLET, VIOLET, VIOLET);
   } else if (flag_http_transfert) {
     led_color(&dock->leds.led[0], BLUE, BLUE, BLUE);

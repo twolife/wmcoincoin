@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.20 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: global.h,v 1.21 2002/06/02 13:31:37 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.21  2002/06/02 13:31:37  pouaite
+  bon, _maintenant_ c'est parti pour la 2.3.8b
+
   Revision 1.20  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -154,6 +157,7 @@ DECL_GLOB_INIT(volatile int flag_updating_tribune, 0);
 DECL_GLOB_INIT(volatile int flag_tribune_answer_to_me, 0); /* clignotement bleu du flamometre quand une reponse à un de nos posts sur la tribune vient d'arriver */
 DECL_GLOB_INIT(volatile int flag_sending_coin_coin, 0); /* utilisé pour savoir si on est en train de poster un message */
 DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led si on est dans 'troll_detector' */
+DECL_GLOB_INIT(volatile int flag_gethostbyname,0); /* pour savoir si le coincoin est en plein gethostbyname */
 DECL_GLOB_INIT(volatile int flag_tribune_updated, 0);
 DECL_GLOB_INIT(volatile int flag_http_transfert, 0);
 DECL_GLOB_INIT(volatile int flag_http_error, 0);
