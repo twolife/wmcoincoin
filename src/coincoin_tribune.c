@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.11 2002/01/13 20:06:14 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.12 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.12  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.11  2002/01/13 20:06:14  pouaite
   decidement je fais rien que des conneries
 
@@ -98,9 +101,12 @@ tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
 }
 
 
+/*
+  statistique à la noix sur le nombre de personnes sur la tribune
+*/
 #define TF_HASH_SZ 2048
 void
-tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt) {
+tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt) {
   unsigned short hash_cnt[TF_HASH_SZ];
   unsigned hash_val;
   const unsigned c2 = 31117, c1 = 11279; 
@@ -115,6 +121,7 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
 
   *ua_cnt = 0;
   *msg_cnt = 0;
+  *my_msg_cnt = 0;
 
   it = tribune_find_id(trib, trib->last_post_id);
   if (it == NULL) return;
@@ -125,14 +132,21 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
   it = trib->msg; 
   while (it) {
     if (difftime(t_last, it->timestamp) < nb_minutes*60) {
+      const char *s;
+      if (it->login[0] == 0) {
+	s = it->useragent;
+      } else {
+	s = it->login;
+      }
       /* au pifometre... faudra ptet verifier qu'on hache correctement */
       hash_val = 1;
-      for (i=0; it->useragent[i]; i++) {
-	hash_val = ((hash_val*((unsigned char)it->useragent[i] + c1)) + 1) % c2;
+      for (i=0; s[i]; i++) {
+	hash_val = ((hash_val*((unsigned char)s[i] + c1)) + 1) % c2;
       }
       hash_val = hash_val % TF_HASH_SZ;
       hash_cnt[hash_val]++;
       (*msg_cnt)++;
+      if (it->is_my_message) (*my_msg_cnt)++;
     }
 
     it = it->next;
@@ -142,8 +156,12 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
   }
 }
 
-/* essaye d'identifier le user agent selon
-   les regle (regular expression) definies dans trib->rules */
+/* 
+   essaye d'identifier le user agent selon
+   les regle (regular expression) definies dans trib->rules 
+
+   ce système est tout vieux (depuis la v1.0beta!) et tout moche
+*/
 void
 tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
 {
@@ -175,7 +193,9 @@ tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
 
 }
 
-/* renvoie l'age du message, en secondes */
+/* 
+   renvoie l'age du message, en secondes 
+*/
 time_t
 tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it)
 {
@@ -192,6 +212,9 @@ tribune_get_time_now(const DLFP_tribune *trib)
   return (trib->last_post_timestamp + trib->nbsec_since_last_msg);
 }
 
+/*
+  c'est triste, mais il faut bien que quelqu'un se charge d'éliminer les messages trop vieux
+*/
 static void
 tribune_remove_old_msg(DLFP_tribune *trib)
 {
@@ -236,6 +259,9 @@ tribune_remove_old_msg(DLFP_tribune *trib)
 
 }
 
+/*
+  prout
+*/
 time_t
 timestamp_str_to_time_t(char *sts) 
 {
@@ -280,6 +306,9 @@ update_secondes_flag(DLFP_tribune *trib)
   }
 }
 
+/*
+  enleve les commentaires xml (qui sont inseres autour des lien du wiki etc)
+*/
 static char *
 nettoie_message_tags(const char *inmsg) 
 {
@@ -305,8 +334,11 @@ nettoie_message_tags(const char *inmsg)
   return outmsg;
 }
 
+/*
+  enregistre un nouveau message
+*/
 static tribune_msg_info *
-tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, char *_message, int id)
+tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
 {
   tribune_msg_info *nit, *pit, *it;
   char *message = NULL;
@@ -366,6 +398,14 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   /* remise a jour du flag d'affichage des secondes */
   update_secondes_flag(trib);
 
+  /* essaye de detecter si vous étez l'auteur du message */
+  if (Prefs.user_login && Prefs.user_login[0] && trib->just_posted_anonymous == 0) {
+    it->is_my_message = !strcmp(Prefs.user_login, it->login);
+  } else {
+    it->is_my_message = !strcmp(it->useragent, my_useragent);
+  }
+  trib->just_posted_anonymous = 0;
+
   /* essaye d'identifier le user agent */
   tribune_tatouage(trib, it);
 
@@ -411,6 +451,8 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
 
 /*
   merci shift pour ce patch !
+
+  appelle le programme externe (dans l'ordre des id) pour chaque nouveau message reçu
 */
 void
 dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
@@ -463,12 +505,19 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
 
     //----</ Code >
     it = it->next;
+
+    ALLOW_X_LOOP;
   }
 }
 
+/*
+  lecture des nouveaux messages reçus
 
+  my_useragent: useragent dernièrement utilisé, sert à reconnaitre si on est 
+  l'auteur d'un post, ou non
+*/
 void
-dlfp_updatetribune(DLFP *dlfp)
+dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 {
   time_t now;
   char s[8192];
@@ -575,7 +624,7 @@ dlfp_updatetribune(DLFP *dlfp)
 	//	printf("login = '%s'\n", login);
 
 	flag_updating_tribune++;
-	tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id);
+	tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
 	flag_updating_tribune--;
 	    
 	BLAHBLAH(1, printf("dlfp_updatetribune: last_post_time=%5s - last_post_id=%d\n",

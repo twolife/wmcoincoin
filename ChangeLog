@@ -1,3 +1,13 @@
+2002-01-15  pouaite  <jul@dr.com>
+
+	* nouvelles options 'palmipede.userlogin: <votre login dlfp>' et
+	'pinnipede.my_msg_bgcolor: couleurRGB' ces deux options ont pour
+	pour d'aider à la detection et la mise en valeur de vos posts
+	parmi la marée quotidienne des trolls qui se déversent sur la
+	tribune. Si userlogin n'est pas rempli (ou si vous postez
+	systématiquement en anonyme), alors la reconnaissance se basera
+	sur le useragent (eh oui, c'est pas très fiable).
+
 2002-01-13  pouaite  <c0in@altern.org>
 
 	* yé fais le ménage un peu partout
@@ -57,17 +67,17 @@
 --------------------------v2.3.2--------------------------------------------
 	
 
-2001-12-17  pouaite  <jul@dr.com>
+2001-12-17  pouaite  <c0in@altern.org>
 
 	* src/coincoin_news.c (dlfp_updatenews): changement dans l'urgence
 	du backend des news (c'est /backend.rdf maintenant)
 
-2001-12-16  pouaite  <jul@dr.com>
+2001-12-16  pouaite  <c0in@altern.org>
 
 	* src/editwin.c: ajout des suggestions proposées par Amaury.
 	Clippy joins C0IN C0IN !
 
-2001-12-16  pouaite <jul@dr.com>
+2001-12-16  pouaite <c0in@altern.org>
 
 	* src/pinnipede.c (filter_msg_info): ajout du filtrage des
 	messages, et meilleure gestion des posts multiples (attention,
@@ -85,12 +95,12 @@
 
 --------------------------v2.3.1--------------------------------------------
 	
-2001-12-06  pouaite  <jul@dr.com>
+2001-12-06  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (dock_refresh_horloge_mode): patch de glandium
 	pour un bugfix du mode horloge
 
-2001-12-02  pouaite  <jul@dr.com>
+2001-12-02  pouaite  <c0in@altern.org>
 
 	* options, useragents: ajout de ces deux fichiers dans les
 	sources, quelques modifs sur configure.in, makefiles (et http.c
@@ -106,7 +116,7 @@
 	spell_check en background (sinon ça ralentissait trop) -> attention c'est pas 
 	joli-joli
 
-2001-12-01  pouaite  <jul@dr.com>
+2001-12-01  pouaite  <c0in@altern.org>
 
 	* src/coin_util.c (convert_to_ascii): divers bricolages, modif des
 	regex des news, gestion bancale du char MSEURO (0x80). wmcc devrait
@@ -135,7 +145,7 @@
 	* src/wmcoincoin.c: j'avais mal pompé le code d'asclock et la date
 	s'affichait mal, c'est réglé
 
-2001-11-23  Pouaite  <jul@dr.com>
+2001-11-23  Pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c: miniretouche du patch de glandium pour que
 	l'horloge (qui roulaize) s'affiche correctement à la reception de SIGUSR1
@@ -152,7 +162,7 @@
 	l'horloge.
 	* src/wmcoincoin.c (initx): initialisation des pixmaps pour l'horloge.
 
-2001-11-18  pouaite  <jul@dr.com>
+2001-11-18  pouaite  <c0in@altern.org>
 
 	* src/coincoin_prefs.c (init_default_prefs): ajout d'option pour
 	specifier le chemin des differents backends etc.. + option '-o'
@@ -162,7 +172,7 @@
 
 	* src/picohtml.c (picohtml_parse): gestion du tag bizarre <br />
 
-2001-11-11  pouaite  <jul@dr.com>
+2001-11-11  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (X_loop), src/newswin.c,
 	src/msgbox.c,src/pinnipede.c: suppression des appels à
@@ -180,7 +190,7 @@
 	* src/coincoin_prefs.c (option_set_useragent): patch pour la
 	substitution des $v $r $m dans le useragent
 
-2001-10-27  pouaite  <jul@dr.com>
+2001-10-27  pouaite  <c0in@altern.org>
 
 	* src/coincoin_news.c (dlfp_msg_update_messages): ajout de la
 	messagerie + modifs des regexp de kilobug
@@ -194,18 +204,18 @@
 
 	* src/wmcoincoin_news.c: hotfix pour la nouvelle version de DaCode
 	
-2001-10-28  pouaite  <jul@dr.com>
+2001-10-28  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (install_sighandlers): gestion des signaux
 	SIGUSR1 et SIGUSR2 pour cacher/restaurer rapidement les fenetres
 	du coincoin. La v2.2beta est prete.
 
-2001-10-27  pouaite  <jul@dr.com>
+2001-10-27  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (prepare_pixmap_porte): petits amenagements sur
 	le pixmap de fond
 
-2001-10-26  pouaite  <jul@dr.com>
+2001-10-26  pouaite  <c0in@altern.org>
 
 	* src/picohtml.c (picohtml_parse): encore du travail sur picohtml
 	qui interprete mieux les &eacute et cie.
@@ -213,17 +223,17 @@
 	* src/pinnipede.c, src/coincoin_news.c: on recupere la charge cpu
 	et un fortune sur myposts.php3 !
 
-2001-10-25  pouaite  <jul@dr.com>
+2001-10-25  pouaite  <c0in@altern.org>
 
 	* src/http_unix.c (net_tcp_connect_with_timeout): wmcc fonctionne
 	dorénavant sous openbsd 2.9 !!
 
-2001-10-25  pouaite  <jul@dr.com>
+2001-10-25  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (prepare_pixmap_porte): integration du patch de
 	kadreg (bg_pixmap)
 
-2001-10-21  pouaite  <jul@dr.com>
+2001-10-21  pouaite  <c0in@altern.org>
 
 	* src/picohtml.c: amélioration du parse de l'html (reconnaissance
 	des urls, un nouveau tag pourri pour la newswin, etc...).
@@ -240,13 +250,13 @@
 	* newswin.c: nouveau nom de l'ex-txtwin.c, entierement rebricolé
 	pour un affichage des news plus convivial.
 
-2001-10-15  pouaite  <jul@dr.com>
+2001-10-15  pouaite  <c0in@altern.org>
 
 	* src/raster.[ch]: et hop, la libwraster s'est pris un coup de
 	pied au cul, on se contente désormais de raster.c et coin_util.c
 	(le source reste néanmoins dégueulasse)
 
-2001-10-12  pouaite  <jul@dr.com>
+2001-10-12  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (pp_show): petite modif du positionnement
 	initial du pinnipede pour que ça marche avec pwm.
@@ -254,7 +264,7 @@
 	* src/http_win.c (http_get_with_cookie) src/http_unix.c (http_get_with_cookie): 
 	changement de 'Authrozation:' par 'Proxy-Authorization:'
 
-2001-10-11  pouaite  <jul@dr.com>
+2001-10-11  pouaite  <c0in@altern.org>
 
 	* src/http_unix.c (http_get_with_cookie) src/http_win.c
 	(http_get_with_cookie): ajout de l'option proxy_use_nocache pour
@@ -281,13 +291,13 @@
 	(pp_handle_button_release): ajout de l'option
 	'palmipede.autoprompt'
 
-2001-09-30  pouaite  <jul@dr.com>
+2001-09-30  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c (main): remplacement de l'appel signal() par
 	sigaction(), plus portable. ça devrait fixer le problème de la
 	non-réinstallage du gestionnaire de signal sous solaris.
 
-2001-09-29  pouaite  <jul@dr.com>
+2001-09-29  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (pp_show): oh mon dieu ! j'avais fait une fote d'ortografe dans le titre de la fenetre
 
@@ -296,7 +306,7 @@
 	au poil :), j'espere ne pas avoir nické le fonctionnimeent des
 	qwerty
 
-2001-09-28  pouaite  <jul@dr.com>
+2001-09-28  pouaite  <c0in@altern.org>
 
 	* src/coincoin_tribune.c (dlfp_updatetribune): les '&eacute;' et
 	compagnie présent dans les useragents sont maintenant correctement
@@ -313,22 +323,22 @@
 	ballon d'aide du pinnipede -- ajout de l'option
 	'pinnipede.buttons' -- amélioration du rendu du pinnipède
 
-2001-09-27  pouaite  <jul@dr.com>
+2001-09-27  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c: bugfix sécurite + mémorisation de la position
 	du pinnipede -- ajout de l'option 'pinnipede.location' soulignage
 	des post faisant références au timestamp survolé (les antiref..)
 
-2001-09-18  pouaite  <jul@dr.com>
+2001-09-18  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c: ajout du pinnipede teletype
 
-2001-08-16  pouaite  <jul@dr.com>
+2001-08-16  pouaite  <c0in@altern.org>
 
 	* src/*: sauvegarde des news lues d'une session a l'autre, et
 	flamophone.
 
-2001-08-14  pouaite  <jul@dr.com>
+2001-08-14  pouaite  <c0in@altern.org>
 
 	* src/coincoin_tribune.c
 	* src/coincoin_news.c
@@ -336,27 +346,27 @@
 	-r pour fonctionner avec l'ensemble des sites sous dacode , et de
 	l'option -s pour modifier la vitesse initiale du trolloscope
 
-2001-07-17  pouaite  <jul@dr.com>
+2001-07-17  pouaite  <c0in@altern.org>
 
 	* src/coincoin_tribune.c: décidément... c'est le format des news
 	(pour le style 7) qui a changé..-> rerebugfix
 
-2001-07-12  pouaite  <jul@dr.com>
+2001-07-12  pouaite  <c0in@altern.org>
 
 	* src/coincoin_tribune.c (dlfp_updatetribune): remodif de
 	trib_sign suite au rechangement de linuxfr.org/board... maintenant
 	ca devrait toujours marcher
 
-2001-07-04  pouaite  <jul@dr.com>
+2001-07-04  pouaite  <c0in@altern.org>
 
 	* src/coincoin_tribune.c (dlfp_updatetribune): changement
 	trib_sign apres la modif de dacode
 
-2001-06-19  pouaite  <jul@dr.com>
+2001-06-19  pouaite  <c0in@altern.org>
 
 	* src/http.c (http_get): implement du timeout dans connect()
 
-2001-06-12  pouaite  <jul@dr.com>
+2001-06-12  pouaite  <c0in@altern.org>
 
 	* configure.in: ça devrait marcher correctement avec la
 	libwraster-0.65 de debian qui est liee a la lib hermes
@@ -364,18 +374,18 @@
 	par defaut, remplacement balise <strong> par <b>, correction d'un
 	petit bug
 
-2001-06-06  pouaite  <jul@dr.com>
+2001-06-06  pouaite  <c0in@altern.org>
 
 	* src/coincoin_news: recuperation des news en format 'printable'
 	ce qui evite de se coltiner les commentaire sur les news un peu
 	grosses
 
-2001-05-25  pouaite  <jul@dr.com>
+2001-05-25  pouaite  <c0in@altern.org>
 
 	* src/coincoin.h: passage de certains flags en volatile, c'est plus adequat
 	* src/coincoin_tribune.c: flag_updating_tribune un peu plus ciblé
 
-2001-05-24  pouaite  <pommier@localhost.localdomain>
+2001-05-24  pouaite  <c0in@altern.org>
 
 	* src/balloon.c: creation (ballons d'aide du style de ceux de windowmaker)
 	* src/msgbox.c: creation (affichage de petits messages)
@@ -386,24 +396,24 @@
 	ballon,msgbox et txtwin * src/divers modifs: integration des
 	fichiers precedents, compatibilite KDE
 
-2001-03-10  ned flanders  <pommier@darkstar>
+2001-03-10  ned flanders  <c0in@altern.org>
 
 	* tout: grosses grosses modifs .. la 1.0beta est prête.
 
-2001-02-21  ned flanders  <pommier@darkstar>
+2001-02-21  ned flanders  <c0in@altern.org>
 
 	* wmcoincoin.c: fix de l'affichage de l'option -h (merci Amaury!)
 
-2001-02-21  ned flanders  <jul@dr.com>
+2001-02-21  ned flanders  <c0in@altern.org>
 
 	* README: qqes modifs: la version min. de wmaker EST la 0.62
 
-2001-02-21  ned flanders  <pommier@darkstar>
+2001-02-21  ned flanders  <c0in@altern.org>
 
 	* threads virees, ca marchait bien mais c'etait vraiment pas judicieux.
 	maintenant on utilise un bon vieux SIGALRM.
 
-2001-02-19  ned flanders  <jul@dr.com>
+2001-02-19  ned flanders  <c0in@altern.org>
 
 	* initial release, comme on dit chez les pros.
 

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.6 2002/01/13 20:02:51 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.7 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.7  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.6  2002/01/13 20:02:51  pouaite
   j'ai honte
 
@@ -524,4 +527,27 @@ shell_quote(const char *src)
   dest[i] = 0;
   assert(i == dest_sz-1); /* kapeaute à beugue */
   return dest;
+}
+
+/* 
+   fonction de hachage à la con (vraiment!) 
+*/
+
+int
+str_hache(const unsigned char *s, int max_len)
+{
+  unsigned char v[4];
+  const unsigned char *p;
+  int i, j;
+
+  assert(s);
+  v[0] = 0xAB; v[1] = 0x13; v[2] = 0x9A; v[3] = 0x12;
+  p = s;
+  for (i=0, j=0; i < max_len; i++) {
+    unsigned char c;
+    c = ((p[i])<<j) + ((p[i]) >> (8-j));
+    v[j] ^= c;
+    j++; if (j == 4) j = 0;
+  }
+  return CVINT(v[0],v[1],v[2],v[3]);
 }

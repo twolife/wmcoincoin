@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.7 2002/01/13 15:19:00 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.8 2002/01/14 23:54:06 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.8  2002/01/14 23:54:06  pouaite
+#%  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+#%
 #%  Revision 1.7  2002/01/13 15:19:00  pouaite
 #%  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 #%
@@ -89,6 +92,11 @@
 
 ### ce nom apparaitra au début de tous vos posts
 #palmipede.username: plop
+
+### spécifier le userlogin permet de mieux reconnaitre vos posts (si vous avez l'habitude 
+### de poster en authentifié (sinon la reconnaissance est moins fiable)
+#palmipede.userlogin: C0mPuT0r
+
 ### si il y a une occurenre de '$u', '$v', '$s', '$r' et/ou '$m', elles seront
 ###  remplacés par les valeurs suivantes:
 ###  $u -> votre username
@@ -156,6 +164,7 @@
 #pinnipede.trollscore_color:
 #pinnipede.button_color: dae6e6
 #pinnipede.emph_color: ffffff
+#pinnipede.my_msg_bgcolor: dae6ff
 #pinnipede.fortune_bgcolor: b0b0b0
 #pinnipede.fortune_fgcolor: 000000
 #pinnipede.fortune_font_family: helvetica

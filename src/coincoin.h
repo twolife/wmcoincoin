@@ -113,6 +113,7 @@ typedef struct _tribune_msg_info {
   */
   DLFP_trib_load_rule *tatouage;
   short troll_score; /* le niveau de trollitude du post (cf troll_detector.c) */
+  char is_my_message;
 } tribune_msg_info;
 
 
@@ -138,6 +139,9 @@ typedef struct _DLFP_tribune {
   /* regles de reconnaissance des useragent (par regex)
      ce qui permet de leur assigner des couleurs/formes differentes */
   DLFP_trib_load_rule *rules;
+
+  int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
+				(pour aider la reconnaissance de nos messages) */
 } DLFP_tribune;
 
 typedef struct _DLFP_comment {
@@ -170,6 +174,7 @@ typedef struct _DLFP {
   char *fortune; /* la fortune recuperee sur myposts.php3 */
   float CPU;     /* la charge cpu recuperee sur myposts.php3 */
   int votes_max, votes_cur;
+
 } DLFP;
 
 typedef enum {OFF=0, BLUE=1, GREENLIGHT=2, YELLOW=3, VIOLET=4, CYAN=5, RED=6, GREEN=7,BIGREDLIGHT=7, BIGRED=8} LedColor;
@@ -479,9 +484,9 @@ void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
 time_t tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it);
 /* renvoie l'estimation de l'heure actuelle sur la tribune -- en MINUTES */
 time_t tribune_get_time_now(const DLFP_tribune *trib);
-void tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt);
+void tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt);
 void dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trate, float *tscore);
-void dlfp_updatetribune(DLFP *dlfp);
+void dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent);
 
 /* coincoin_news.c */
 void dlfp_updatenews(DLFP *dlfp);

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.10 2002/01/13 17:14:34 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.11 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.11  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.10  2002/01/13 17:14:34  pouaite
   préparation pour dacode 1.4
 
@@ -123,6 +126,8 @@ dlfp_create()
   dlfp->tribune.last_post_timestamp = 0;
   dlfp->tribune.nbsec_since_last_msg = 0;
   dlfp->tribune.local_time_last_check = time(NULL);
+
+  dlfp->tribune.just_posted_anonymous = 0;
 
   dlfp->com = NULL;
   dlfp->xp_old = -1000;

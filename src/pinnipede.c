@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.10 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.11 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.11  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.10  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -84,6 +87,7 @@ struct _PostVisual {
   PostWord *first; /* la liste des mots */
   int nblig; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt; // compteur de references
+  char is_my_message;
   struct _PostVisual *next;
 };
 
@@ -99,8 +103,9 @@ struct _PinnipedeFilter {
 
 struct _Pinnipede {
   Window win;
-  unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, emph_pixel, trollscore_pixel,
-    lnk_pixel, txt_pixel, strike_pixel, popup_fgpixel, popup_bgpixel, minib_pixel;
+  unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
+    emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
+    popup_fgpixel, popup_bgpixel, minib_pixel, my_msg_bgpixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
 
@@ -577,6 +582,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
   pv->sub_tstamp = mi->sub_timestamp;
+  pv->is_my_message = mi->is_my_message;
 
   pw = NULL;
 
@@ -1469,6 +1475,9 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     bgpixel = pp->win_bgpixel;
     if (pw) {
       int i;
+
+      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;
+
       if (ref_mi) {
 	if (ref_num == -1) {
 	  if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
@@ -1651,6 +1660,7 @@ pp_build(Dock *dock)
   pp->minib_pixel = IRGB2PIXEL(Prefs.pp_button_color);
   pp->emph_pixel = IRGB2PIXEL(Prefs.pp_emph_color);
   pp->trollscore_pixel = IRGB2PIXEL(Prefs.pp_trollscore_color);
+  pp->my_msg_bgpixel = IRGB2PIXEL(Prefs.pp_my_msg_bgcolor);
 
   pp->id_base = -1; pp->decal_base = 0;
 

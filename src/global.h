@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.7 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: global.h,v 1.8 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.8  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.7  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -121,13 +124,15 @@ typedef struct _structPrefs{
 
   int default_trollo_speed; /* vitesse du trolloscope par defaut */
   char *user_cookie;
+  char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
 
   char *browser_cmd; /* commande pour afficher une url dans un browser (le %s sera remplace par l'url) */
   char *browser2_cmd; /* le browser alternative (lancé par un clic milieu au lieu d'un clic gauche) */
   char *pp_fn_family; /* defaut : 'helvetica' */
   int pp_fn_size;
-  unsigned pp_bgcolor, pp_fgcolor, pp_tstamp_color, pp_useragent_color, pp_login_color,
-    pp_url_color, pp_button_color, pp_emph_color, pp_trollscore_color;
+  unsigned pp_bgcolor, pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
+    pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
+    pp_trollscore_color, pp_my_msg_bgcolor;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;

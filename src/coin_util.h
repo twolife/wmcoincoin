@@ -48,6 +48,9 @@
                          dock->rgba_context->gtable[(rgb>> 8) & 0xff] + \
                          dock->rgba_context->btable[(rgb    ) & 0xff])
 
+/* macro pour troll_data.h et str_hache */
+#define CVINT(a,b,c,d) (a + (b<<8) + (c<<16) + (d<<24))
+
 RGBAImage * rimage_create_from_raw(int w, int h, int bpp, const unsigned char *data);
 Pixmap pixmap_create_from_raw(RGBAContext *rc, int w, int h, int bpp, const unsigned char *data);
 RGBAImage * rimage_create_from_raw_with_tint(int w, int h, int bpp, const unsigned char *data, int rgb);
@@ -61,4 +64,5 @@ void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int 
 int convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp);
 char *str_substitute(const char *src, const char *key, const char *substitution);
 char *shell_quote(const char *src);
+int str_hache(const unsigned char *s, int max_len);
 #endif

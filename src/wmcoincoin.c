@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.9 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.10 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.10  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.9  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -1134,6 +1137,9 @@ exec_coin_coin(Dock *dock)
     }
     http_close(fd);
 
+    /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
+    if (dock->post_anonyme) { dock->dlfp->tribune.just_posted_anonymous = 1; }
+
   } else {
     snprintf(s, 2048, "Erreur pendant l'envoi du message: <p><b>%s</b>\n", http_error());
     msgbox_show(dock, s);
@@ -1141,6 +1147,7 @@ exec_coin_coin(Dock *dock)
   flag_sending_coin_coin = 0;
 }
 
+/* met le curseur en forme de croix que il survole le trolloscope */
 static void
 check_cursor_shape(Dock *dock, int x, int y)
 {
@@ -1172,52 +1179,52 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
   if (dock->door_state == CLOSED) {
     /* 
        survol de la tribune_load ? 
-	*/
-	if (x >= TRIBUNE_LOAD_X && x < TRIBUNE_LOAD_X+TRIBUNE_LOAD_WIDTH &&
-	    y >= TRIBUNE_LOAD_Y && y < TRIBUNE_LOAD_Y+TRIBUNE_LOAD_HEIGHT) {
-	  int i,j;
-	  
-
-	  j = (TRIBUNE_LOAD_WIDTH + TRIBUNE_LOAD_X - 1 - x) / tribune_resolution;
-	  i = (TRIBUNE_LOAD_HEIGHT + TRIBUNE_LOAD_Y - 1 - y) / tribune_resolution;
-
-	  //	  printf("\r%d, %d %d %d", event->xmotion.x, event->xmotion.y, i, j); fflush(stdout);
-	  
-	  if (tribune_load[i][j].id > 0) {
-	    dock->tl_item_survol = &tribune_load[i][j];
-	    if (tribune_load[i][j].id != oldid) {
-	      dock->tl_item_clicked = 0;
-	      dock->msginfo_defil = 0;
-	    }
-	    dock->view_id_in_newstitles = dock->tl_item_survol->id;
-	    dock->view_id_timer_cnt = 0;
-	    //	    myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, tribune_load[i][j].id,tribune_load[i][j].tatouage->name);
-	  } else {
-	    dock->tl_item_clicked = 0;
-	    dock->msginfo_defil = 0;
-	    dock->view_id_in_newstitles = 0;
-	  }
-	} else {
+    */
+    if (x >= TRIBUNE_LOAD_X && x < TRIBUNE_LOAD_X+TRIBUNE_LOAD_WIDTH &&
+	y >= TRIBUNE_LOAD_Y && y < TRIBUNE_LOAD_Y+TRIBUNE_LOAD_HEIGHT) {
+      int i,j;
+      
+      
+      j = (TRIBUNE_LOAD_WIDTH + TRIBUNE_LOAD_X - 1 - x) / tribune_resolution;
+      i = (TRIBUNE_LOAD_HEIGHT + TRIBUNE_LOAD_Y - 1 - y) / tribune_resolution;
+      
+      //	  printf("\r%d, %d %d %d", event->xmotion.x, event->xmotion.y, i, j); fflush(stdout);
+      
+      if (tribune_load[i][j].id > 0) {
+	dock->tl_item_survol = &tribune_load[i][j];
+	if (tribune_load[i][j].id != oldid) {
 	  dock->tl_item_clicked = 0;
 	  dock->msginfo_defil = 0;
-	  dock->view_id_in_newstitles = 0;
 	}
-	if (IS_INSIDE(x,y,50,18,60,22)) {
-	  /* survol du trollometre */
-	  dock->flag_survol_trollo = 1;
-	} else {
-	  dock->flag_survol_trollo = 0;
-	}
-	if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
-		      dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
-	  /* survol de la led 1 */
-	  //	  printf("survol led1\n");
-	  dock->flag_survol_led1 = 1;
-	} else {
-	  dock->flag_survol_led1 = 0;
-	}
+	dock->view_id_in_newstitles = dock->tl_item_survol->id;
+	dock->view_id_timer_cnt = 0;
+	//	    myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, tribune_load[i][j].id,tribune_load[i][j].tatouage->name);
+      } else {
+	dock->tl_item_clicked = 0;
+	dock->msginfo_defil = 0;
+	dock->view_id_in_newstitles = 0;
       }
-      //      printf("DEBUG MOTION: item survol %p)\n", dock->tl_item_survol);
+    } else {
+      dock->tl_item_clicked = 0;
+      dock->msginfo_defil = 0;
+      dock->view_id_in_newstitles = 0;
+    }
+    if (IS_INSIDE(x,y,50,18,60,22)) {
+      /* survol du trollometre */
+      dock->flag_survol_trollo = 1;
+    } else {
+      dock->flag_survol_trollo = 0;
+    }
+    if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
+		  dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
+      /* survol de la led 1 */
+      //	  printf("survol led1\n");
+      dock->flag_survol_led1 = 1;
+    } else {
+      dock->flag_survol_led1 = 0;
+    }
+  }
+  //      printf("DEBUG MOTION: item survol %p)\n", dock->tl_item_survol);
 }
 
 /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
@@ -1228,36 +1235,37 @@ dock_red_button_check(Dock *dock) {
     if (dock->red_button_press_state == 5) {
       BLAHBLAH(1,printf("Coin !\n"));
 
-      /* On utilise real_coin_coin_message pour éviter un bug si on modifier
-       le message entre l'appuie du bouton rouge et exec_coin_coin */
-      strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
-	      MESSAGE_MAX_LEN);
-      strncpy(dock->real_coin_coin_useragent, dock->coin_coin_useragent, 
-	      USERAGENT_MAX_LEN);
+      if (flag_sending_coin_coin == 0) { /* petite precaution */
+	/* On utilise real_coin_coin_message pour éviter un bug si on modifier
+	   le message entre l'appuie du bouton rouge et exec_coin_coin */
+	strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
+		MESSAGE_MAX_LEN);
+	strncpy(dock->real_coin_coin_useragent, dock->coin_coin_useragent, 
+		USERAGENT_MAX_LEN);
       
-      dock->coin_coin_request = 1;
-      //	  exec_coin_coin();
+	dock->coin_coin_request = 1;
+      }
     }
     
     dock->red_button_press_flag = -1;
-    
-    //    if (dock->door_state != CLOSED) dock->door_state = CLOSING;
   }
   return dock->coin_coin_request;
 }
 
+/* statistique à la noix */
 void
 dock_show_tribune_frequentation(Dock *dock)
 {
   char s[2048], s_xp[512], sv_xp[10], sv_xp_old[50];
   int ua_cnt1, ua_cnt2, ua_cnt3, ua_cnt4;
   int msg_cnt1, msg_cnt2, msg_cnt3, msg_cnt4;
+  int my_msg_cnt1, my_msg_cnt2, my_msg_cnt3, my_msg_cnt4;
 
 
-  tribune_frequentation(&dock->dlfp->tribune, 10, &ua_cnt1, &msg_cnt1);
-  tribune_frequentation(&dock->dlfp->tribune, 30, &ua_cnt2, &msg_cnt2);
-  tribune_frequentation(&dock->dlfp->tribune, 120, &ua_cnt3, &msg_cnt3);
-  tribune_frequentation(&dock->dlfp->tribune, 8*60, &ua_cnt4, &msg_cnt4);
+  tribune_frequentation(&dock->dlfp->tribune, 10, &ua_cnt1, &msg_cnt1, &my_msg_cnt1);
+  tribune_frequentation(&dock->dlfp->tribune, 30, &ua_cnt2, &msg_cnt2, &my_msg_cnt2);
+  tribune_frequentation(&dock->dlfp->tribune, 120, &ua_cnt3, &msg_cnt3, &my_msg_cnt3);
+  tribune_frequentation(&dock->dlfp->tribune, 8*60, &ua_cnt4, &msg_cnt4, &my_msg_cnt4);
 
   if (Prefs.user_cookie) {
     if (dock->dlfp->xp > -1000) {
@@ -1272,19 +1280,21 @@ dock_show_tribune_frequentation(Dock *dock)
 	     sv_xp, sv_xp_old, dock->dlfp->votes_cur, dock->dlfp->votes_max);
   } else {
     s_xp[0] = 0;
-    //    snprintf(s_xp, 512, "<p align=center>(vous n'etes pas loggé)<br>");
   }
   
   snprintf(s, 2048, 
 	   "%s"
 	   "<p align=center><b>Fréquentation de la Tribune</b><br>"
-	   "<i>(estimation basée sur les useragents)</i></p><br>"
+	   "<i>(estimation basée sur les useragents et les logins)</i></p><br>"
 	   "depuis:<br>"
-	   ".<tab><i>10 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages<br>"
-	   ".<tab><i>30 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages<br>"
-	   ".<tab><i> 2 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages<br>"
-	   ".<tab><i> 8 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages<br>",
-	   s_xp, ua_cnt1, msg_cnt1, ua_cnt2, msg_cnt2, ua_cnt3, msg_cnt3, ua_cnt4, msg_cnt4);
+	   ".<tab><i>10 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
+	   ".<tab><i>30 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
+	   ".<tab><i> 2 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
+	   ".<tab><i> 8 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>",
+	   s_xp, ua_cnt1, msg_cnt1, my_msg_cnt1, 
+	   ua_cnt2, msg_cnt2, my_msg_cnt2, 
+	   ua_cnt3, msg_cnt3, my_msg_cnt3,
+	   ua_cnt4, msg_cnt4, my_msg_cnt4);
 
   msgbox_show(dock, s);
 }
@@ -1311,6 +1321,9 @@ dock_unset_horloge_mode(Dock *dock) {
   dock->horloge_mode = 0;  
 }
 
+/*
+  bouse
+*/
 void
 dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 {
@@ -1789,7 +1802,7 @@ void check_balloons(Dock *dock)
 		     "<font color=blue><tt>Click Droit</tt></font>: montrer/cacher le <b>pinnipède teletype</b>");
 
       } else if (dock->door_state == OPENED && dock->horloge_mode == 0) {
-	balloon_test(dock,x,y,iconx,icony,4000,31,30,16,16,
+	balloon_test(dock,x,y,iconx,icony,2000,31,30,16,16,
 		 "<b><i>DON'T PANIC</i></b>");
       }
     } else if (newswin_is_used(dock) && dock->mouse_win == newswin_get_window(dock)) {
@@ -2454,7 +2467,7 @@ void *Network_Thread (void *arg) {
       compteur_tribune=0;
       if (dock->tribune_updatable) {
 	//	printf("update\n");
-	dlfp_updatetribune(dock->dlfp); 
+	dlfp_tribune_update(dock->dlfp, dock->real_coin_coin_useragent); 
 	//if (flag_tribune_updated) pp_set_tribune_updated(dock); -> deplace dans checkout_tribune
 	ALLOW_X_LOOP;
 	dock->tribune_update_request = 0;

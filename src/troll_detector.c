@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.3 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.3  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -27,7 +30,6 @@ struct troll_data {
   unsigned char bonuscat2;
 };
 
-#define CVINT(a,b,c,d) (a + (b<<8) + (c<<16) + (d<<24))
 #include "troll_data.h"
 
 typedef struct _Word {
@@ -54,24 +56,6 @@ typedef struct _Word {
 int cnt_anti_blocage; /* anti recursions qui se comportent en O(n!) (genre avec 30 coins..)*/
 #define MAX_CNT_ANTI_BLOCAGE 400000
 
-static unsigned int
-hache(const unsigned char *s, int max_len)
-{
-  unsigned char v[4];
-  const unsigned char *p;
-  int i, j;
-
-  assert(s);
-  v[0] = 0xAB; v[1] = 0x13; v[2] = 0x9A; v[3] = 0x12;
-  p = s;
-  for (i=0, j=0; i < max_len; i++) {
-    unsigned char c;
-    c = ((p[i])<<j) + ((p[i]) >> (8-j));
-    v[j] ^= c;
-    j++; if (j == 4) j = 0;
-  }
-  return CVINT(v[0],v[1],v[2],v[3]);
-}
 
 static Word*
 wordlist_merge(Word *w1, Word *w2)
@@ -497,7 +481,7 @@ troll_detector(tribune_msg_info *mi) {
 
       /* calcul du hash code pour differentes longueurs */
       for (i = 2; i < MAX_WLEN; i++) {
-	hash_codes[i] = hache(s, MIN(i, w->len));
+	hash_codes[i] = str_hache(s, MIN(i, w->len));
       }
       
       /* trouve-t-on un mot troll correspondant ? */
@@ -517,7 +501,7 @@ troll_detector(tribune_msg_info *mi) {
 	}
 	s[j] = 0;
 	for (i = 2; i < MAX_WLEN; i++) {
-	  hash_codes[i] = hache(s, MIN(i, (int)strlen(s)));
+	  hash_codes[i] = str_hache(s, MIN(i, (int)strlen(s)));
 	}
 	w->nb_td_idx = tdata_lookup(hash_codes, strlen(s), &w->td_idx);
       }

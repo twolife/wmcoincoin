@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.10 2002/01/14 23:54:06 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.10  2002/01/14 23:54:06  pouaite
+  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
+
   Revision 1.9  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -268,6 +271,15 @@ option_set_user_name(const char  *optarg,
   if (The_Prefs->user_name) free(The_Prefs->user_name);
   if (optarg == NULL) The_Prefs->user_name = strdup("");
   The_Prefs->user_name = strdup(optarg);
+}
+
+static void
+option_set_user_login(const char  *optarg,
+		      structPrefs *The_Prefs)
+{
+  if (The_Prefs->user_login) free(The_Prefs->user_login);
+  if (optarg == NULL) The_Prefs->user_login = strdup("");
+  The_Prefs->user_login = strdup(optarg);
 }
 
 static void
@@ -858,8 +870,8 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("palmipede.username:", 1) {
 	option_set_user_name(optarg, The_Prefs); ok++;
       }
-      TEST_OPTION("palmipede.autoprompt:", 1) { /* pour compatibilité avec les ver < 2.23 */
-	option_set_user_name(optarg, The_Prefs); ok++;
+      TEST_OPTION("palmipede.userlogin:", 1) {
+	option_set_user_login(optarg, The_Prefs); ok++;
       }
       TEST_OPTION("dock.bg_color:", 1) {
 	option_set_bgcolor(optarg,The_Prefs); ok++;
@@ -963,6 +975,9 @@ read_coincoin_options (structPrefs *The_Prefs)
       }
       TEST_OPTION("pinnipede.emph_color:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_emph_color); ok++;
+      }
+      TEST_OPTION("pinnipede.my_msg_bgcolor:", 1) {
+	sscanf(optarg, "%x", &The_Prefs->pp_my_msg_bgcolor); ok++;
       }
       TEST_OPTION("pinnipede.fortune_bgcolor:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_fortune_bgcolor); ok++;
@@ -1137,6 +1152,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->path_messages = strdup("messages/");
   The_Prefs->default_trollo_speed = 2;
   The_Prefs->user_cookie = NULL; 
+  The_Prefs->user_login = NULL;
   The_Prefs->force_fortune_retrieval = 0;
   The_Prefs->browser_cmd = NULL;
   The_Prefs->browser2_cmd = NULL;
@@ -1152,6 +1168,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_trollscore_color = 0xff0000;
   The_Prefs->pp_button_color = 0xdae6e6;
   The_Prefs->pp_emph_color = 0xffffff;
+  The_Prefs->pp_my_msg_bgcolor = 0xdae6ff;
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;
   The_Prefs->pp_width = 300;
