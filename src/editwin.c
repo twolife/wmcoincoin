@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.5 2001/12/18 12:43:37 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.5  2001/12/18 12:43:37  pouaite
+  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
+
   Revision 1.4  2001/12/16 20:28:45  pouaite
   bugfixes divers
 
@@ -2074,11 +2077,11 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
 	   "mmmh, j'ai l'impression que vous ne savez pas quoi dire, alors si je puis me permettre, "
 	   "je vous suggère <font color=blue>%s</font>", suggestion[i]);
   if (ew->buff_num == 0) {
-    balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 15000,
+    balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 8000,
 			    EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
 			    txt, ew->clippy_pixmap, ew->clippy_w+8, ew->clippy_h);
   } else {
-    balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 15000,
+    balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 10000,
 		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
 		 "Entrez le useragent");
   }

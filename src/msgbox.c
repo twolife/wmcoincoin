@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.3 2001/12/18 12:43:37 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.3  2001/12/18 12:43:37  pouaite
+  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -113,7 +116,7 @@ msgbox_show(Dock *dock, char *text)
 
   
   assert(m->ph == NULL);
-  m->ph = picohtml_create(dock, "helvetica", 10, 0);
+  m->ph = picohtml_create(dock, Prefs.balloon_fn_family, Prefs.balloon_fn_size, 0);
   picohtml_set_parag_skip(m->ph, 1.0);
   picohtml_set_line_skip(m->ph, 1.0);
   picohtml_set_parag_indent(m->ph, 0);

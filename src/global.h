@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.3 2001/12/16 01:43:33 pouaite Exp $
+  rcsid=$Id: global.h,v 1.4 2001/12/18 12:43:37 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.4  2001/12/18 12:43:37  pouaite
+  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
+
   Revision 1.3  2001/12/16 01:43:33  pouaite
   filtrage des posts, meilleure gestion des posts multiples
 
@@ -77,6 +80,8 @@ typedef struct _structPrefs{
      WMaker, KDE..) ou si wmcoincoin doit dessiner lui meme sa bordure */
   int draw_border;
   int no_balloons;
+  char *balloon_fn_family;
+  int balloon_fn_size;
   int dock_xpos, dock_ypos;
   int bgcolor, fgcolor;
   char *bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */

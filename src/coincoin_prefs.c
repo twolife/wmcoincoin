@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.5 2001/12/17 00:26:32 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.6 2001/12/18 12:43:37 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.6  2001/12/18 12:43:37  pouaite
+  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
+
   Revision 1.5  2001/12/17 00:26:32  pouaite
   ultimes bugfixes avant la v2.3.2
 
@@ -871,6 +874,13 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("dock.use_balloons:", 0) {
 	option_use_balloons(optarg,The_Prefs); ok++;
       }
+      TEST_OPTION("dock.balloons.font_family:", 0) {
+	if (The_Prefs->balloon_fn_family) free(The_Prefs->balloon_fn_family);
+	The_Prefs->balloon_fn_family = strdup(optarg); ok++;
+      }
+      TEST_OPTION("dock.balloons.font_size:", 0) {
+	The_Prefs->balloon_fn_size = atoi(optarg); ok++;
+      }
       TEST_OPTION("dock.pos:",1) {
 	option_dock_xpos(optarg, optname, The_Prefs); ok++;
       }
@@ -1089,6 +1099,8 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   The_Prefs->proxy_nocache = 0;
   The_Prefs->no_balloons = 0;
+  The_Prefs->balloon_fn_family = strdup("helvetica");
+  The_Prefs->balloon_fn_size = 10;
   The_Prefs->use_iconwin = 1; /* style windowmaker par defaut */
   The_Prefs->draw_border = 0; /* idem */
   The_Prefs->dock_xpos = The_Prefs->dock_ypos = 0;
@@ -1148,7 +1160,8 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
     for (i=1; i < argc-1; i++) {
       if (strcmp(argv[i], "-o") == 0) {
 	assert(argv[i+1]);
-	strcpy(The_Prefs->options_file_name, argv[i+1]); 
+	free(The_Prefs->options_file_name);
+	The_Prefs->options_file_name = strdup(argv[i+1]); 
 	myprintf("utilisation du fichier d'options '%<yel %s>'\n", argv[i+1]);
 	break;
       }

@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.3 2001/12/16 16:46:12 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.4 2001/12/18 12:43:37 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.4  2001/12/18 12:43:37  pouaite
+  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
+
   Revision 1.3  2001/12/16 16:46:12  pouaite
   Clippouille joins C0IN C0IN
 
@@ -94,7 +97,7 @@ balloon_build(Dock *dock)
   b->scr_width = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
   b->scr_height = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
 
-  b->ph = picohtml_create(dock, "helvetica", 10, 0);
+  b->ph = picohtml_create(dock, Prefs.balloon_fn_family, Prefs.balloon_fn_size, 0);
   picohtml_set_parag_skip(b->ph, 1.0);
   picohtml_set_line_skip(b->ph, 1.0);
   picohtml_set_parag_indent(b->ph, 0);

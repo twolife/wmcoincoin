@@ -1,4 +1,4 @@
-fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.4 2001/12/17 00:26:32 pouaite Exp $\n");
+fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.5 2001/12/18 12:43:37 pouaite Exp $\n");
 fprintf(f,"\n");
 fprintf(f,"###vous pouvez décommenter des options et changer leur valeurs\n");
 fprintf(f,"\n");
@@ -26,6 +26,10 @@ fprintf(f,"#dock.iconwin: True\n");
 fprintf(f,"\n");
 fprintf(f,"### ces petits ballons d'aide peuvent être casse-couilles\n");
 fprintf(f,"#dock.use_balloons: True\n");
+fprintf(f,"\n");
+fprintf(f,"###\n");
+fprintf(f,"dock.balloons.font_family: helvetica\n");
+fprintf(f,"dock.balloons.font_size: 10\n");
 fprintf(f,"\n");
 fprintf(f,"### quand draw_border est activée, cette option permet de position la fenetre (format 'xpos:ypos')\n");
 fprintf(f,"### (equivalent de l'option '-x'\n");
