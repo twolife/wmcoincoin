@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "wmccc.h"
 #include "options_list.h"
 #include "coin_util.h"
@@ -99,6 +100,30 @@ prefs_savefontstyle(FILE *f, const char *o, int with_dot, FontStyle *fs, FontSty
 #define SP_SAVECOL(o,_c) if (sp->_c != default_sp->_c) { fprintf(f, "."); SAVECOL(DOTIFY(o),_c, sp); }
 #define SP_SAVEBICOL(o, _bic) if (sp->_bic.opaque != default_sp->_bic.opaque || sp->_bic.transp != default_sp->_bic.transp) { fprintf(f, "."); SAVEBICOL(DOTIFY(o), _bic, sp); }
 #define SP_SAVEFONTSTYLE(o, _fs) prefs_savefontstyle(f, DOTIFY(o), 1, &(sp->_fs), &(default_sp->_fs))
+void
+auth_prefs_write_to_file(GeneralPrefs *p, FILE *f) {
+  int site_num;
+  for (site_num = 0; site_num < p->nb_sites; site_num++) {
+    SitePrefs *sp = p->site[site_num];
+    char *s = sp->user_cookie;
+    while (s && *s) {
+      char *ck, *s2;
+      s2 = strchr(s, '\n');
+      if (s2 == NULL) {
+        ck = strdup(s);
+      } else ck = g_strndup(s, s2-s);	
+      g_assert(ck);
+      if (*ck) {
+        fprintf(f, "\"%s\" cookie: \"%s\"\n", sp->all_names[0], sp->user_cookie);
+      }
+      g_free(ck);
+      s = s2 ? s2+1 : NULL;
+    }
+    if (sp->backend_type == BACKEND_TYPE_POP && !str_is_empty(sp->pop3_user)) {
+      fprintf(f, "\"%s\" user: \"%s\" pass:\"%s\"\n", sp->all_names[0], sp->pop3_user, sp->pop3_pass);
+    }
+  }
+}
 
 void
 prefs_write_to_file(GeneralPrefs *p, FILE *f) {
@@ -233,36 +258,29 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVESTR(OPT_spell_cmd,ew_spell_cmd);
   G_SAVESTR(OPT_spell_dict,ew_spell_dict);
 
-  g_print("nb_sites = %d\n", Prefs->nb_sites);
+  //g_print("nb_sites = %d\n", Prefs->nb_sites);
   for (site_num = 0; site_num < Prefs->nb_sites; site_num++) {
     SitePrefs *sp = Prefs->site[site_num];
     int i;
-    g_print("site = %s\n", sp->all_names[0]);
-    fprintf(f, "%s: ", wmcc_options_strings[OPT_site]);
+    //g_print("site = %s\n", sp->all_names[0]);
+    switch (sp->backend_type) {
+    case BACKEND_TYPE_BOARD:
+      fprintf(f, "%s: ", wmcc_options_strings[OPT_board_site]); break;
+    case BACKEND_TYPE_RSS:
+      fprintf(f, "%s: ", wmcc_options_strings[OPT_rss_site]); break;
+    case BACKEND_TYPE_POP:
+      fprintf(f, "%s: ", wmcc_options_strings[OPT_pop_site]); break;
+    default: assert(0);
+    }
     for (i=0; i < MAX(4,sp->nb_names); i++) if (sp->all_names[i] && strlen(sp->all_names[i])) { fprintf(f, "%s \"%s\" ", i==0?"":",",sp->all_names[i]); }
     fprintf(f,"\n");
     
-    {
-      char *s = sp->user_cookie;
-      while (s && *s) {
-	char *ck, *s2;
-	s2 = strchr(s, '\n');
-	if (s2 == NULL) {
-	  ck = strdup(s);
-	} else ck = g_strndup(s, s2-s);	
-	g_assert(ck);
-	if (*ck) {
-	  fprintf(f, "%s: %s\n", wmcc_options_strings[OPTS_http_cookie], ck);
-	}
-	g_free(ck);
-	s = s2 ? s2+1 : NULL;
-      }
-    }
     SP_SAVEBOOL(OPTS_check_board, check_board);
-    fprintf(f, ".%s: %s\n", DOTIFY(OPTSG_locale), sp->locale == locFR ? "fr" : "en");
+    if (sp->locale != default_sp->locale) 
+      fprintf(f, ".%s: %s\n", DOTIFY(OPTSG_locale), sp->locale == locFR ? "fr" : "en");
     SP_SAVEINT(OPTSG_tribune_delay, board_check_delay);
     SP_SAVEINT(OPTSG_tribune_max_messages, board_max_msg);
-    SP_SAVEINT(OPTSG_backend_type, backend_type);
+    SP_SAVEINT(OPTSG_backend_flavour, backend_flavour);
     SP_SAVESTR(OPTSG_tribune_wiki_emulation, board_wiki_emulation);
     SP_SAVESTR(OPTSG_palmipede_username, user_name);
     SP_SAVESTR(OPTSG_palmipede_userlogin, user_login);
@@ -271,15 +289,9 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     }
     SP_SAVEINT(OPTSG_palmipede_msg_max_length, palmi_msg_max_len);
     SP_SAVEINT(OPTSG_palmipede_useragent_max_length, palmi_ua_max_len);
-    SP_SAVESTR(OPTSG_http_site_url, site_root);
-    /*    {
-      fprintf(f, ".%s: %s%s%s\n", DOTIFY(OPTSG_http_site_url),
-	      sp->site_root, strlen(sp->site_path) ? "/" : "", sp->site_path);
-	      }*/
-    //SP_SAVESTR(OPTSG_http_site_url, site_root);
-    SP_SAVESTR(OPTSG_http_path_tribune_backend, path_board_backend);
-    SP_SAVESTR(OPTSG_http_path_tribune_add, path_board_add);
-    SP_SAVESTR(OPTSG_http_board_post, board_post);
+    SP_SAVESTR(OPTSG_backend_url, backend_url);
+    SP_SAVESTR(OPTSG_post_url, post_url);
+    SP_SAVESTR(OPTSG_post_template, post_template);
     if (sp->proxy_name && strlen(sp->proxy_name)) {
       fprintf(f, ".%s: %s:%d\n", DOTIFY(OPTSG_http_proxy), sp->proxy_name, sp->proxy_port);
       if (sp->proxy_auth_user && strlen(sp->proxy_auth_user) &&
@@ -308,34 +320,50 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
 }
 
 int
-save_prefs(gchar *filename, int do_backup) {
-  FILE *f;
-  char *tmpfname;
+save_prefs_as(gchar *filename, int do_backup) {
+  FILE *f, *f_auth;
+  char *tmpfname, *tmpfname_auth;
+  char *filename_auth = g_strdup_printf("%s.auth", filename);
   if (do_backup) {
     tmpfname = g_strdup_printf("%s_wmccc_tmp", filename);
+    tmpfname_auth = g_strdup_printf("%s_wmccc_tmp.auth", filename);
   } else {
     tmpfname = strdup(filename);
+    tmpfname_auth = strdup(filename_auth);
   }
 
 
-  f = open_wfile(tmpfname);
+  f = open_wfile(tmpfname);f_auth = open_wfile(tmpfname_auth);
   if (f == NULL) {
     char *errmsg = g_strdup_printf("Can't save '%s' : %s", tmpfname, strerror(errno));
     quick_message(errmsg);
     g_free(errmsg);
+    return -1;
+  } else if (f_auth == NULL) {
+    char *errmsg = g_strdup_printf("Can't save '%s' : %s", tmpfname_auth, strerror(errno));
+    quick_message(errmsg);
+    g_free(errmsg);
+    return -1;
   } else {
-    char *backup[4];
+    char *backup[4], *backup_auth[4];
     int i;
     fprintf(f, "### -*- mode: wmccoptions -*-\n### edited by wmccc -- look for *.wmccc.*.bak for backups\n");
     prefs_write_to_file(Prefs, f);
     fclose(f);
+    fprintf(f_auth, "### -*- mode: wmccoptions -*-\n#\n");
+    auth_prefs_write_to_file(Prefs, f_auth);
+    fclose(f_auth);
     if (do_backup) {
-      backup[0] = filename;
+      backup[0] = filename; backup_auth[0] = filename_auth;
       backup[1] = g_strdup_printf("%s.wmccc.bak", filename);
       backup[2] = g_strdup_printf("%s.wmccc.2.bak", filename);
       backup[3] = g_strdup_printf("%s.wmccc.3.bak", filename);
+      backup_auth[1] = g_strdup_printf("%s.wmccc.auth.bak", filename);
+      backup_auth[2] = g_strdup_printf("%s.wmccc.auth.2.bak", filename);
+      backup_auth[3] = g_strdup_printf("%s.wmccc.auth.3.bak", filename);
       for (i=3; i >= 1; i--) {
 	rename(backup[i-1], backup[i]);
+	rename(backup_auth[i-1], backup_auth[i]);
       }
     
       if (rename(tmpfname, filename) == -1) {
@@ -344,11 +372,34 @@ save_prefs(gchar *filename, int do_backup) {
 	g_free(errmsg);
 	rename(backup[1], backup[0]);
       }
+      if (rename(tmpfname_auth, filename_auth) == -1) {
+	char *errmsg = g_strdup_printf("Couldn't rename '%s' to '%s' : %s", tmpfname_auth, filename_auth, strerror(errno));
+	quick_message(errmsg);
+	g_free(errmsg);
+	rename(backup_auth[1], backup_auth[0]);
+      }
       for (i=1; i < 4; i++) {
 	g_free(backup[i]);
+	g_free(backup_auth[i]);
       }
     }
   }
   g_free(tmpfname);
+  g_free(tmpfname_auth);
+  g_free(filename_auth);
   return 0;
 }
+
+int apply_prefs() {
+  if (save_prefs_as(glob.tmp_options_file, 0) == 0) {
+    g_assert(glob.wmcc_pid > 0);
+    kill(glob.wmcc_pid, SIGUSR2);
+    return 0;
+  } else g_assert(0);
+  return 1;
+}
+
+int save_prefs() {
+  return save_prefs_as(glob.options_file,1);
+}
+

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.101 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.102 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -700,7 +700,7 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
       }
 
       if (Prefs.board_enable_hfr_pictures &&
-          s[0] == '[' && s[1] == ':' && strlen(s) > 5 && s[strlen(s)-1] == ']') { /* totoz ? */
+          s[0] == '[' && s[1] == ':' && strlen(s) > 4 && s[strlen(s)-1] == ']') { /* totoz ? */
         const char *st = "bug...";
         int z = pp_totoz_img_status(pp,s);
         switch (z) {
@@ -1056,11 +1056,9 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
     }
   }
   pp_pv_garbage_collect(pp); // rhooooo
-  if (pp->sc) {
-    if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock); }
-/*     else { pp_scrollcoin_move_resize(dock); } */
-     scrollcoin_setpos(pp->sc, get_id_count_filtered(boards, &pp->filter, pp->id_base));
-  } 
+  if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock); }
+  if (pp->sc)
+    scrollcoin_setpos(pp->sc, get_id_count_filtered(boards, &pp->filter, pp->id_base));
 }
 
 
@@ -1680,9 +1678,8 @@ pp_check_board_updated(Dock *dock)
 	}
       }
 
-      if (pp->sc) { 
-	pp_scrollcoin_update_bounds(dock); 
-      }      
+      pp_scrollcoin_update_bounds(dock); 
+
       last_id = get_last_id_filtered(boards, &pp->filter);
       if ((!id_type_eq(last_id, pp->last_post_id)) && 
 	  pp->colle_en_bas) { // && pp->decal_base == 0) {
@@ -1857,7 +1854,6 @@ pp_load_fonts(Pinnipede *pp, char *fn_family, int fn_size)
   if (pp->fn_mono == (CCFontId)(-1)) pp->fn_mono = ccfont_incref(pp->fn_base);
 
   pp->fn_base_space_w = ccfont_text_width8(pp->fn_base, "  ", 2);
-  printf("fn_base_space_w = %d\n", pp->fn_base_space_w);
   pp->fn_h = ccfont_height(pp->fn_base)+1;
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_it));
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_bd));
@@ -1896,11 +1892,13 @@ pp_free_fonts(Pinnipede *pp)
 enum { INIT_COLORS, RELEASE_COLORS, RESET_COLORS };
 #define INIT_OR_RESET_OR_FREE_COLOR(a,b) { if (mode == INIT_COLORS) a = cccolor_get(b); \
   else if (mode == RELEASE_COLORS) cccolor_release(&a); else cccolor_reset(&a,b); }
+
+#define S_INIT_OR_RESET_OR_FREE_COLOR(a,b) { INIT_OR_RESET_OR_FREE_COLOR(a, (Prefs.site[i]) ? (b) : 0x000000) }
 static void
 pp_set_prefs_colors(Pinnipede *pp, int mode) 
 {
   int i;
-  
+
   INIT_OR_RESET_OR_FREE_COLOR(pp->ccc_black, 0);
   INIT_OR_RESET_OR_FREE_COLOR(pp->popup_fgcolor, GET_BICOLOR(Prefs.pp_popup_fgcolor));
   INIT_OR_RESET_OR_FREE_COLOR(pp->plopify_color, GET_BICOLOR(Prefs.pp_plopify_color));
@@ -1910,16 +1908,16 @@ pp_set_prefs_colors(Pinnipede *pp, int mode)
   INIT_OR_RESET_OR_FREE_COLOR(pp->minib_dark_color, GET_BICOLOR(Prefs.pp_buttonbar_fgcolor));
 
   for (i=0; i <MAX_SITES; i++) {
-    if (Prefs.site[i] == NULL) continue;
-    INIT_OR_RESET_OR_FREE_COLOR(pp->win_bgcolor[i], Prefs.site[i]->pp_bgcolor);
-    //INIT_OR_RESET_OR_FREE_COLOR(pp->strike_color[i], GET_BICOLOR(Prefs.site[i]->pp_strike_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->timestamp_color[i], GET_BICOLOR(Prefs.site[i]->pp_tstamp_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->useragent_color[i], GET_BICOLOR(Prefs.site[i]->pp_useragent_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->login_color[i], GET_BICOLOR(Prefs.site[i]->pp_login_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_url_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->visited_lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_visited_url_color));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->txt_color[i], GET_BICOLOR(Prefs.site[i]->pp_fgcolor));
-    INIT_OR_RESET_OR_FREE_COLOR(pp->trollscore_color[i], GET_BICOLOR(Prefs.site[i]->pp_trollscore_color));
+    //if (Prefs.site[i] == NULL) continue;
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->win_bgcolor[i], Prefs.site[i]->pp_bgcolor);
+    //S_INIT_OR_RESET_OR_FREE_COLOR(pp->strike_color[i], GET_BICOLOR(Prefs.site[i]->pp_strike_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->timestamp_color[i], GET_BICOLOR(Prefs.site[i]->pp_tstamp_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->useragent_color[i], GET_BICOLOR(Prefs.site[i]->pp_useragent_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->login_color[i], GET_BICOLOR(Prefs.site[i]->pp_login_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_url_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->visited_lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_visited_url_color));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->txt_color[i], GET_BICOLOR(Prefs.site[i]->pp_fgcolor));
+    S_INIT_OR_RESET_OR_FREE_COLOR(pp->trollscore_color[i], GET_BICOLOR(Prefs.site[i]->pp_trollscore_color));
   }
   INIT_OR_RESET_OR_FREE_COLOR(pp->popup_bgcolor, GET_BICOLOR(Prefs.pp_popup_bgcolor));
   INIT_OR_RESET_OR_FREE_COLOR(pp->minib_color, GET_BICOLOR(Prefs.pp_buttonbar_bgcolor));
@@ -2018,7 +2016,7 @@ pp_build(Dock *dock)
   //pp->fn_minib = dock->fixed_font;
 
   pp_totoz_build(dock);
-  pp_rebuild(dock);
+  pp_rebuild(dock,1);
 
   pp->flag_board_updated = 0;
 }
@@ -2038,7 +2036,7 @@ pp_destroy(Dock *dock)
 }
 
 void
-pp_rebuild(Dock *dock)
+pp_rebuild(Dock *dock, int destroy_tabs)
 {
   Pinnipede *pp = dock->pinnipede;
   pp_pv_destroy(pp);
@@ -2056,8 +2054,10 @@ pp_rebuild(Dock *dock)
     pp_update_bg_pixmap(dock);
     pp_scrollcoin_set(dock,1);
   }
-  pp_tabs_destroy(pp);
-  pp_tabs_build(dock);
+  if (destroy_tabs) {
+    pp_tabs_destroy(pp);
+    pp_tabs_build(dock);
+  }
   pp_widgets_set_pos(dock);  
   if (pp_ismapped(dock)) {
     pp_update_content(dock, pp->colle_en_bas ? 
@@ -2421,11 +2421,11 @@ pp_check_survol(Dock *dock, PostWord *pw, int force_refresh)
       } else {
         snprintf(snrep, 1024, _("%d %s (and %d plop%s from the boitakon)"),nrep-nrep_bak, (nrep-nrep_bak > 1) ? _("answers") : _("answer"), nrep_bak, nrep_bak > 1 ? "s" : "");
       }
-      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%s%s", 
+      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%s%s\ntimestamp=%lu (%s)", 
 	       Prefs.site[pw->parent->id.sid]->site_name,
 	       pw->parent->id.lid, 
 	       (mi ? mi->useragent : ""), 
-	       snrep, blah);
+	       snrep, blah, mi->timestamp, asctime(localtime(&mi->timestamp)));
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
       is_a_ref = 1;
@@ -2716,17 +2716,22 @@ pp_set_anything_filter(Dock *dock, char *word)
 
 
 static void
-gogole_search(Dock *dock, int mx, int my, char *w)
+gogole_search(Dock *dock, int mx, int my, char *w, int quote_all)
 {
   Pinnipede *pp = dock->pinnipede;
 
   if (Prefs.gogole_search_url == NULL) return;
   if (w) {
-    char *s;
-    char *ww;
-    ww = str_preencode_for_http(w);
+    char *s, *s0;
+    char *ww, *ww0;
+    ww0 = str_preencode_for_http(w);
+    if (quote_all) {
+      ww = str_printf("%%22%s%%22",ww0); free(ww0);
+    } else ww = ww0;
     if (strlen(ww)>512) ww[512] = 0; /* faut pas pousser grand mère */
-    s = str_substitute(Prefs.gogole_search_url, "%s", ww);
+    s0 = str_substitute(Prefs.gogole_search_url, "%22%s%22", ww);
+    s = str_substitute(s0, "%s", ww);
+    free(s0);
     open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 1);
     free(s); free(ww); 
   }
@@ -2764,7 +2769,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
 	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
          PUP_DO_TOTOZ, PUP_DO_TOTOZ_BOOKMARK, PUP_DO_TOTOZ_UNBOOKMARK, 
-	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
+	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_SITE_CONFIG, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
 	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
 	 };
   char s_thread[20]; /* 'txt' peut pointer dessus */
@@ -2903,6 +2908,10 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 		   _("hide the button bar / tabs bar") : 
 		   _("show the button bar / tabs bar"), PUP_TOGGLE_MINIB);
 
+  if (mi) {
+    plopup_pushentry(dock, _("Change colors for this site"), PUP_SITE_CONFIG);
+  }
+
   if (Prefs.post_cmd[0]) {
     if (!Prefs.post_cmd_enabled[0]) {
       plopup_pushentry(dock, _("<b>enable</b> the bigornophone"), PUP_TOGGLE_BIGORNO1);
@@ -2954,7 +2963,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     }
   } break;
   case PUP_GOGOLE: {
-    gogole_search(dock, mx, my, txt);
+    gogole_search(dock, mx, my, txt, 1);
   } break;
   case PUP_COPY_URL: {
     assert(pw);
@@ -2984,6 +2993,9 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     } else {
       pp_minib_hide(dock);
     }
+  } break;
+  case PUP_SITE_CONFIG: {
+    launch_wmccc(dock, "-site-colors", "-site", Prefs.site[id_type_sid(mi->id)]->site_name,NULL);
   } break;
   case PUP_TOGGLE_BIGORNO1: {
     Prefs.post_cmd_enabled[0] = 1-Prefs.post_cmd_enabled[0];
@@ -3024,7 +3036,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 }
 
 static void
-pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int bnum) {
+pp_open_login_home_in_browser(Dock *dock, int sid UNUSED, int mx, int my, char *w, int bnum UNUSED) {
   /*Pinnipede *pp = dock->pinnipede;
   char *s;
   assert(w);
@@ -3035,7 +3047,12 @@ pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int 
 		 Prefs.site[sid]->site_path, w);
   open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, bnum);
   free(s);*/
-  gogole_search(dock,mx,my,w);
+  char *url = Prefs.site[sid]->backend_url;
+  SplittedURL su; 
+  if (url && split_url(url,&su) == 0) {
+    char s[500]; snprintf(s, 500, "\"%s\" site:%s", w, su.host);
+    gogole_search(dock, mx, my, s, 0);
+  } else gogole_search(dock,mx,my,w, 1);
 }
 
 

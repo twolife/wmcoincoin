@@ -174,6 +174,10 @@ struct _Pinnipede {
   int flag_pp_update_request; /* si non nul, on fait pp_pv_destroy + pp_update_content(last_id_filtered) + pp_refresh
                                  des que possible */
 
+  int non_filtered_message_count; /* ~= count_all_id_filtered(boards, &pp->filter)
+                                     maj par pp_scrollcoin_update_bounds (meme qd le scrollcoin est caché),
+                                     ça n'est pas un truc fiable a 100% */
+
   id_type kbnav_current_id;
   int kbnav_current_tstamp; /* navigation au clavier : indique le message actuellement selectionné, et le numéro de l'horloge dans ce message qui est actuellement activée */
 

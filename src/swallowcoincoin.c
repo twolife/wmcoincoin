@@ -27,7 +27,7 @@ SwallowedApp * sw_swallow_win_id(Dock *dock, Window wid) {
   dock->swallow->apps = sa;
   dock->swallow->nb_swallowed++;
   if (wid == DOCK_WIN(dock)) dock->swallow->self = sa;
-  printf("swallowed win %8x dimensions %dx%d\n", (int)wid, sa->winw, sa->winh);
+  BLAHBLAH(1,printf("swallowed win %8x dimensions %dx%d\n", (int)wid, sa->winw, sa->winh));
   dock->swallow->layout_dirty = 1;
   return sa;
 }
@@ -48,17 +48,19 @@ void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1) {
     if (count) {
       yspacing = (y1-y0+1) / ((y - y0) * count);
       
-      y = y1;
+      y = y0 + MIN((x1-x0-64)/2, (y1-y0-64)/2);
+      //y = y1;
       for (sa = sw->apps; sa; sa = sa->next) {
         sa->framex = x0;
-        sa->framey = y - yspacing - sa->winh;
+        sa->framey = y; //- yspacing - sa->winh;
         sa->framew = x1 - x0 + 1;
         sa->frameh = sa->winh + yspacing;
         sa->winx = x0 + (sa->framew - sa->winw)/2;
         sa->winy = sa->framey + yspacing/2;
-        printf("move %8x to %d, %d\n", (int)sa->win, sa->winx, sa->winy);
+        //printf("move %8x to %d, %d\n", (int)sa->win, sa->winx, sa->winy);
         XMoveWindow(dock->display, sa->win, sa->winx, sa->winy);
-        y -= sa->frameh;
+        //y -= sa->frameh;
+        y += sa->frameh;
       }
     }
   }

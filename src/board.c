@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.26 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: board.c,v 1.27 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.27  2004/04/18 15:37:28  pouaite
+  un deux un deux
+
   Revision 1.26  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -309,7 +312,7 @@ int board_can_post_messages(Board *b) {
   if (b->site->prefs->post_url && strlen(b->site->prefs->post_url) &&
       b->site->prefs->post_template && strlen(b->site->prefs->post_template)) {
     if (str_startswith(b->site->prefs->post_url, "fucking_broken")) {
-      myprintf("\n\n%<RED BROKEN POST_URL DETECTED>: %s FIX THAT\n\n", b->site->prefs->post_url);
+      myprintf("\n\n%<RED BROKEN POST_URL DETECTED>: %s FIX THAT (update your options file and use the new '.post.url:' and '.post.template:' ones\n\n", b->site->prefs->post_url);
       return 0;
     }
     return 1;
@@ -349,8 +352,8 @@ void board_restore_state(FILE *f, Board *board) {
     board->time_shift_max = tmax;
     board->time_shift = t;
   }
-  fscanf(f, "last_viewed_id=%d", &board->last_viewed_id);    
-  if (board_is_rss_feed(board) || board_is_pop3) {
+  fscanf(f, "last_viewed_id=%d", &board->last_viewed_id);
+  if (board_is_rss_feed(board) || board_is_pop3(board)) {
     board->last_viewed_id = -1; /* on dispose d'une liste de md5 */
     release_md5_array(board);
     board->oldmd5 = load_md5_array(f);
@@ -1402,6 +1405,9 @@ void
 board_check_my_messages(Board *board, int old_last_post_id) { 
   if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     board_msg_info *it;
+    /* truc batard ci-dessous... il faudrait faire mieux */
+    char *callme = NULL;
+    if (!str_is_empty(board->site->prefs->user_login)) callme = str_printf("%s<", board->site->prefs->user_login);
 
     /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
      */
@@ -1419,15 +1425,18 @@ board_check_my_messages(Board *board, int old_last_post_id) {
 					       boitakon */
       flag_updating_board--;
 
-      if (board_msg_is_ref_to_me(board->boards, it) && !it->in_boitakon) {
-	flag_updating_board++;
-	it->is_answer_to_me = 1;
-	flag_updating_board--;
-	if (old_last_post_id != -1 && !it->is_my_message) board->flag_answer_to_me = 1;
+      if (!it->in_boitakon) {
+        if (board_msg_is_ref_to_me(board->boards, it) ||
+            (callme && str_case_str(it->msg, callme))) {
+          flag_updating_board++;
+          it->is_answer_to_me = 1;
+          flag_updating_board--;
+          if (old_last_post_id != -1 && !it->is_my_message) board->flag_answer_to_me = 1;
+        }
       }
-
       it = it->next;
     }
+    FREE_STRING(callme);
   }
 }
 
@@ -1442,7 +1451,7 @@ cctime(const time_t* t, char *s)
 */
 static void
 board_update_time_shift(Board *board, int old_last_post_id) { 
-  if (board_is_rss_feed(board)) {
+  if (!board_is_regular_board(board)) {
     board->time_shift_min = board->time_shift_max = 0; // fait chier sinon
   } else if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     char s1[15],s2[15];
@@ -1579,7 +1588,8 @@ regular_board_update(Board *board, char *path) {
   char s[16384]; /* must be large enough to handle very long lines
 		    (especially with broken backends, yes it happens sometimes) */
 
-  const char *board_sign_posttime = "<post time=";
+  const char *board_sign_post = "<post";
+  const char *board_sign_time = "time=";
   const char *board_sign_info = "<info>";
   const char *board_sign_msg = "<message>";
   const char *board_sign_login = "<login>";
@@ -1603,7 +1613,7 @@ regular_board_update(Board *board, char *path) {
         if (str_case_startswith(a->name, "encoding")) {
           if (board->encoding) free(board->encoding);
           board->encoding = str_ndup(a->value,a->value_len);
-          printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding);
+          BLAHBLAH(1,printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding));
           break;
         }
       }
@@ -1615,7 +1625,7 @@ regular_board_update(Board *board, char *path) {
   if (http_is_ok(&r)) {
     int roll_back_cnt = 0;
     while (http_get_line_and_convert(&r, s, 16384,board->encoding) > 0 && http_is_ok(&r)) {
-      if (strncasecmp(s,board_sign_posttime, strlen(board_sign_info)) == 0) {
+      if (strncasecmp(s,board_sign_post, strlen(board_sign_post)) == 0 && strstr(s, board_sign_time)) {
         md5_byte_t md5[16]; md5_state_t md5_state;
 	char stimestamp[15];
 	char ua[BOARD_UA_MAX_LEN];
@@ -1626,20 +1636,20 @@ regular_board_update(Board *board, char *path) {
 
 
         md5_init(&md5_state);
-	p = s + strlen(board_sign_posttime) + 1;
+	p = strstr(s, board_sign_time) + strlen(board_sign_time);
+        while (*p && (isspace(*p) || *p == '"')) ++p;
 	strncpy(stimestamp, p, 14); stimestamp[14] = 0;
         md5_append(&md5_state,stimestamp,14);
-
         /* de nombreux coincoins sont morts sur le champ d'honneur, ci-dessous un petit bugfix à leur mémoire.
            Qu'ils reposent en paix */
         if (strlen(stimestamp) < 14) { fprintf(stderr,"timestamp POURRI: '%s'\n",stimestamp); errmsg = "slip woof?"; goto err; }
-	p += 14;
-	p = strstr(p, "id=");
+	p = strstr(s, "id=");
 	if (p == NULL) { errmsg = "id="; goto err; }
 	id = atoi(p+4);
 	if (id < 0) { errmsg="id sgn"; goto err; }
 
-	//	printf("id=%d , last=%d\n",id,board->last_post_id);
+        //printf("id=%d , last=%d\n",id,board->last_post_id);
+
 	if (board_find_id(board,id) && roll_back_cnt == 0) {
 	  /*	  break;
             Rollback bugfix
@@ -1750,7 +1760,6 @@ regular_board_update(Board *board, char *path) {
 	  if (!board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent)->in_boitakon) {
             board->nb_msg_at_last_check++;
             if (id > board->last_viewed_id) {
-              //printf("last_viewed_id = %d, id=%d\n", board->last_viewed_id, id);
               board->nb_msg_since_last_viewed++;
             }
           }

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.18 2004/03/03 23:00:39 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.19 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.19  2004/04/18 15:37:28  pouaite
+  un deux un deux
+
   Revision 1.18  2004/03/03 23:00:39  pouaite
   commit du soir
 
@@ -733,7 +736,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
           const unsigned char *s = end+2;
           int i;
           for (i=0; i < 100 && s[i]; ++i) {
-            if (s[i] == ']' && i > 2) { end = s+i+1; ok_totoz = 1; break; }
+            if (s[i] == ']' && i >= 2) { end = s+i+1; ok_totoz = 1; break; }
             if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-') break;
           }
         }

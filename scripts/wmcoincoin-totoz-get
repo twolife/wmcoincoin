@@ -4,11 +4,12 @@
 imgrep="$HOME/.wmcoincoin/totoz"
 mkdir -p "$imgrep" && cd "$imgrep"
 
-# Recupere le proxy (micropatch de dae)
+# Get the proxy
 option_file="$HOME/.wmcoincoin/options"
 proxy=$(sed -ne 's/\(^.http.proxy: \)\(.*$\)/\2/p' $option_file | head -1)
+proxy_auth=$(sed -ne 's/\(^.http.proxy_auth: \)\(.*$\)/\2/p' $option_file | head -1)
 if [ -n "$proxy" ]; then
-  proxy_option="-x "$proxy
+  proxy_option="-x "$proxy" -U "$proxy_auth
 fi
 
 siteroot="http://forum.hardware.fr/images/perso/"

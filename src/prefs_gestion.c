@@ -208,7 +208,8 @@ check_install_data_file(char *data_file_name, char *dot_wmcc_file_name)
   int use_data = 0;
 
 
-  dot_name = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), dot_wmcc_file_name); 
+  dot_name = (dot_wmcc_file_name[0] != '/' && dot_wmcc_file_name[0] != '.') ?
+    str_printf("%s/.wmcoincoin/%s", getenv("HOME"), dot_wmcc_file_name) : strdup(dot_wmcc_file_name);
   data_name = str_printf(WMCCDATADIR "/%s", data_file_name);
 
   if (stat(dot_name, &stbuf)) {
@@ -374,7 +375,7 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
     }
     hk = hk->next;
   }
-  printf(_("key_list changed: %d\n"), changed);
+  //printf(_("key_list changed: %d\n"), changed);
   return changed;
 }
 
@@ -453,7 +454,10 @@ char *get_wmcc_tmp_options_filename() {
 }
 
 char *get_wmcc_options_filename() {
-  return str_printf("%s/.wmcoincoin/%s", getenv("HOME"), options_file_name);
+  
+  return (options_file_name[0] != '/' && options_file_name[0] != '.') ? 
+    str_printf("%s/.wmcoincoin/%s", getenv("HOME"), options_file_name) : 
+    strdup(options_file_name);  
 }
 
 /* c'est un peu bourrin comme approche mais ça devrait marcher..*/
@@ -625,6 +629,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(post_url);
       SP_STR_OPT_COPY(post_template);
       SP_STR_OPT_COPY(user_cookie);
+      SP_STR_OPT_COPY(pop3_user);
+      SP_STR_OPT_COPY(pop3_pass);
       SP_STR_OPT_COPY(user_login);
       //SP_INT_OPT_COPY(board_auto_refresh);
 
@@ -753,10 +759,10 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     if (rebuild_pinni) {
       // int showed = pp_ismapped(dock);
       //      pp_destroy(dock);
-      pp_rebuild(dock);
+      pp_rebuild(dock,1);
       //      if (showed) pp_show(dock);
     } if (redraw_pinni) {
-      pp_rebuild(dock);
+      pp_rebuild(dock,0);
       //pp_set_prefs_colors(dock);
       /*
       if (pp_ismapped(dock)) {

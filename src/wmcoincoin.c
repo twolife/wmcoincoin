@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.90 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.91 2004/04/18 15:37:29 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.91  2004/04/18 15:37:29  pouaite
+  un deux un deux
+
   Revision 1.90  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -308,7 +311,7 @@
 #include <langinfo.h>
 #include <libintl.h>
 #define _(String) gettext (String)
-
+#include <stdarg.h>
 #include "coincoin.h"
 #include "spell_coin.h"
 #include "scrollcoin.h"
@@ -697,10 +700,10 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
   http_request_send(&r);
   BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.telnet.error, flag_cancel_task));
   wmcc_log_http_request(site, &r);
-  if (!http_is_ok(&r)) {
+  if (http_is_ok(&r)) {
     unsigned char *reponse; 
 
-		reponse = http_read_all(&r, site->prefs->site_name);
+    reponse = http_read_all(&r, site->prefs->site_name);
     if ( *reponse != 0 ) {
 			char *s;
       s = formate_erreur( site->prefs->site_name, reponse ); 
@@ -743,10 +746,23 @@ flush_expose(Window w) {
 */
 
 int
-launch_wmccc(Dock *dock)
+launch_wmccc(Dock *dock,...)
 {
+  va_list ap;
   char *spid = str_printf("%u", (unsigned)getpid());
   char *stmpopt = get_wmcc_tmp_options_filename();
+  char *args[100]; int nb_args = 0;
+  args[0] = "wmccc";
+  args[1] = "-wmccpid";
+  args[2] = spid;
+  args[3] = get_wmcc_options_filename();
+  args[4] = stmpopt;  
+  nb_args = 5;
+  va_start(ap,dock);
+  do {
+    args[nb_args++] = va_arg(ap, char*);    
+  } while (args[nb_args-1]);
+
   if (dock->wmccc_pid < 1) {
     switch ( dock->wmccc_pid = fork() ) {
     case -1: /* arrrrg */
@@ -758,9 +774,11 @@ launch_wmccc(Dock *dock)
     case 0: /* fiston (wmccc) */
       {
 	int retExec;      
-	retExec = execlp("wmccc", "wmccc", "-wmccpid", spid, 
+	/*retExec = execlp("wmccc", "wmccc", "-wmccpid", spid, 
 			 get_wmcc_options_filename(), stmpopt, 
-			 NULL);
+			 NULL);*/
+        //myprintf("\n\n%<YEL CHANGER LE PATH DU%>%<MAG WMCCC>!!!!\n\n");
+        retExec = execvp("wmccc", args);
 	if( retExec==-1 ) {
 	  fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux (wmccc not in path?)\n"), strerror(errno));
 	}
@@ -768,9 +786,13 @@ launch_wmccc(Dock *dock)
       } break;
     default: /* pôpa (wmcc) */
       {
+        printf("forked wmccc, pid=%d\n", dock->wmccc_pid);
       } break;
     }
+  } else {
+    printf("wmccc is already running .. pid = %d\n", dock->wmccc_pid);
   }
+  va_end(ap);
   free(spid);
   free(stmpopt);
   return 0;
@@ -1900,7 +1922,7 @@ block_sigalrm(int bloque)
 #endif
 }
 
-/*
+#ifdef TESTTIME
 void test_time_functions() {
   time_t time1, time2, time3;
  char *theLocalTime;
@@ -1914,7 +1936,7 @@ void test_time_functions() {
  printf("Local time zone name is %s %s, ", tzname[0], tzname[1]);
  printf("%ld seconds from UTC time. daylight=%d\n", (long int)timezone, daylight);
 
- time1 = 0; //time( NULL );
+ time1 = time( NULL );
  theLocalTime = asctime( localtime( &time1 ));
  printf("Local time is %s", theLocalTime);
 
@@ -1927,26 +1949,32 @@ void test_time_functions() {
   
 
  str_to_time_t("2004-02-22T03:02-08:00", &time3);
- printf("convert to lmocatime time: %s\n", asctime( localtime( &time3 )));
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
  
  str_to_time_t("Sun, 22 Feb 2004 01:35:06 GMT", &time3);
- printf("convert to lmocatime time: %s\n", asctime( localtime( &time3 )));
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
 
  str_to_time_t("20040222132310", &time3);
- printf("convert to lmocatime time: %s\n", asctime( localtime( &time3 )));
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
 
  str_to_time_t("Sat, 21 Feb 2004 15:26:02 PDT", &time3);
- printf("convert to lmocatime time: %s\n", asctime( localtime( &time3 )));
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
+
+ str_to_time_t("Sun, 7 Mar 2004 14:27:52 -0800", &time3);
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
+ 
+ str_to_time_t("Tue, 09 Mar 2004 00:34:39 +0100", &time3); // heure locale == 00:34:39
+ printf("convert to locatime time: %s\n", asctime( localtime( &time3 )));
+ char tstamp[15];
+ time_t_to_tstamp(time3, tstamp);
+ printf("tstamp: %s\n", tstamp);
  exit(0);
 }
-*/
+#endif
 
 int main(int argc, char **argv)
 {
   Dock *dock;
-
-  //test_time_functions();
-
 #ifdef __CYGWIN__
   pthread_t timer_thread;
 #endif
@@ -1972,7 +2000,12 @@ int main(int argc, char **argv)
 
   textdomain (PACKAGE);
 
-  srand(time(NULL));
+  tzset();
+
+
+#ifdef TESTTIME
+  test_time_functions();
+#endif
 
   /* la structure de base */
   ALLOC_OBJ(dock, Dock); dock->sites = NULL;

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.24 2004/03/07 13:51:12 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.25 2004/04/18 15:37:28 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.25  2004/04/18 15:37:28  pouaite
+##   un deux un deux
+##
 ##   Revision 1.24  2004/03/07 13:51:12  pouaite
 ##   commit du dimanche
 ##
@@ -85,7 +88,7 @@ EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c fake-getaddrinfo.c fake-getnam
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
 wmcoincoin_SOURCES = cc_queue.c plopup.c \
-	md5.c md5.h \
+	md5.c md5.h base64.c base64.h \
         board_util.c board_util.h \
 	xmlcoincoin.c xmlcoincoin.h \
 	regexp.h regexp.c general.h \
@@ -121,7 +124,7 @@ wmccc_CFLAGS = \
 	@GTK_CFLAGS@
 
 wmccc_SOURCES = \
-	wmccc.c wmccc.h \
+	wmccc.c wmccc.h wmccc_dialogs.c \
 	wmccc_support.c wmccc_support.h \
 	wmccc_interface.c wmccc_interface.h \
 	wmccc_callbacks.c wmccc_callbacks.h \

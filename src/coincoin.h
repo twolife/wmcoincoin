@@ -530,7 +530,7 @@ void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_log_http_request(Site *s, HttpRequest *r);
 void block_sigalrm(int bloque);
-int launch_wmccc(Dock *dock);
+int launch_wmccc(Dock *dock,...);
 void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);
 void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 
@@ -631,7 +631,7 @@ void plopup_dispatch_event(Dock *dock, XEvent *event);
 
 /* pinnipede.c */
 void pp_build(Dock *dock);
-void pp_rebuild(Dock *dock);
+void pp_rebuild(Dock *dock, int destroy_tabs);
 void pp_destroy(Dock *dock);
 void pp_show(Dock *dock);
 void pp_unmap(Dock *dock);

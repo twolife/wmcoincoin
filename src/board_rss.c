@@ -24,7 +24,7 @@ char* rss_nettoie_la_soupe_de_tags(char *src) {
             skip = 1;
           } else if (strncasecmp(p, "img", 3)==0 && p2 - p == 3) {            
             char *ps, *pe;
-            printf("img tag here : %.50s\n", p);
+            //printf("img tag here : %.50s\n", p);
             ps = str_case_str(p, "src=");
             pe = strstr(p, "\t>");
             if (ps && pe && ps < pe) {
@@ -35,7 +35,7 @@ char* rss_nettoie_la_soupe_de_tags(char *src) {
                 while (*ps && *ps != '"' && *ps != '\'' && *ps != '\t' && !isspace(*ps)) 
                   strbuf_putc(&sb,*ps++);
                 strbuf_cat(&sb, "\"\t><img>\t</a\t>");
-                printf("sbuff = %s\n", sb.str);
+                //printf("sbuff = %s\n", sb.str);
               }
             }
             ++p; skip = 1;
@@ -121,6 +121,79 @@ rss_find_from_id(Boards *boards, id_type id) {
   return NULL;
 }
 
+/*
+  ce qui suit sert à stocker temporairement les nouveau messages et a les 
+  trier en fonction de la date (il ne sont jamais dans le bon ordre sinon, et en 
+  plus ils n'ont pas d'id)
+  quand ils sont tous connus, on peut leur filer un id et les logger pour de bon
+*/
+typedef struct prelog_msg {
+  char *ua, *login, *msg;
+  time_t tstamp;
+  char *link;
+  int viewed;
+  md5_byte_t md5[16];  
+  struct prelog_msg *next;
+} prelog_msg;
+
+static struct prelog_msg *prelog = NULL;
+
+void
+prelog_clear() {
+  prelog_msg *pl = prelog, *n;
+  while (pl) {
+    n = pl->next;
+    FREE_STRING(pl->ua); FREE_STRING(pl->login); FREE_STRING(pl->msg); FREE_STRING(pl->link);
+    free(pl); pl = n;
+  }
+  prelog = NULL;
+}
+
+void prelog_add(char *ua, char *login, time_t tstamp, char *message, char *link, md5_byte_t md5[16], int viewed) {
+  prelog_msg *pl, *p, *pp;
+  ALLOC_OBJ(pl, prelog_msg);
+  pl->ua = strdup(ua); pl->login = strdup(login); 
+  pl->msg = strdup(message); 
+  pl->link = link ? strdup(link) : NULL;
+  pl->tstamp = tstamp;
+  pl->viewed = viewed;
+  memcpy(pl->md5, md5, 16);
+
+  pp = NULL; p = prelog;
+  while (p && p->tstamp < tstamp) {
+    pp = p;
+    p = p->next;
+  }
+  if (pp) {
+    pl->next = pp->next;
+    pp->next = pl;
+  } else {  
+    pl->next = prelog;
+    prelog = pl;
+  }
+}
+
+void prelog_commit(Board *board) {
+  prelog_msg *pl = prelog;
+  board_msg_info *mi;
+  id_type id;
+  int count = board->last_post_id+1;
+  char stimestamp[15];
+  while (pl) {
+    id_type_set_lid(&id, count);
+    id_type_set_sid(&id, board->site->site_id);
+    assert(board_find_id(board,id_type_lid(id)) == NULL);
+    time_t_to_tstamp(pl->tstamp, stimestamp);
+    flag_updating_board++;
+    BLAHBLAH(4,printf("prelog_commit(%s) %p id=%d, ts=%s, login=%s\n", board->site->prefs->site_name, pl, count, stimestamp, pl->login));
+    mi = board_log_msg(board, pl->ua, pl->login, stimestamp, pl->msg, id_type_lid(id), NULL);
+    mi->ri = rss_register(board->boards, pl->md5, pl->link, mi);
+    flag_updating_board--;
+    if (pl->viewed) board_set_viewed(board,count); //->last_viewed_id = MAX(board->last_viewed_id, count);
+    pl = pl->next; ++count;
+  }
+  prelog_clear();
+}
 
 int
 rss_board_update(Board *board, char *path) {
@@ -130,8 +203,10 @@ rss_board_update(Board *board, char *path) {
   char *rsstxt = NULL, *p;
   char *rss_title = NULL;
   XMLBlock xmlb;
-  int pos, count, count_dir, refresh_request = -1, cest_bon_je_connais_la_suite = 0;
+  int pos, refresh_request = -1, cest_bon_je_connais_la_suite = 0;
   time_t temps_debut = time(NULL), temps_last_modified;
+
+  prelog_clear();
   clear_XMLBlock(&xmlb);
   wmcc_init_http_request(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
@@ -152,7 +227,7 @@ rss_board_update(Board *board, char *path) {
       if (str_case_startswith(a->name, "encoding")) {
         if (board->encoding) { free(board->encoding); board->encoding = NULL; }
         board->encoding = str_ndup(a->value,a->value_len);
-        printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding);
+        BLAHBLAH(1,printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding));
         convert_to_iso8859(board->encoding, &rsstxt);
         break;
       }
@@ -188,18 +263,11 @@ rss_board_update(Board *board, char *path) {
   }
 
   p = rsstxt;
-  
-  if (board->last_post_id == -1) {
-    count = 1000; count_dir = -1;
-  } else {
-    count = board->last_post_id+1;
-    count_dir = +1;
-  }
 
   temps_last_modified = temps_debut;
   if (board->last_modified) {
     str_to_time_t(board->last_modified, &temps_last_modified);
-    printf("last_modified='%s' -> time_t = %ld\n", board->last_modified, temps_last_modified);
+    //printf("last_modified='%s' -> time_t = %ld\n", board->last_modified, temps_last_modified);
   }
   do {
     int pos_next_item;
@@ -262,7 +330,7 @@ rss_board_update(Board *board, char *path) {
 
       /* c'est trop la merde avec les decalages horaires.. */
       if (pubdate) {
-          if (str_to_time_t(pubdate, &timestamp)) {
+        if (str_to_time_t(pubdate, &timestamp)) {
           time_t_to_tstamp(timestamp, stimestamp);
           myprintf("converted %<YEL %s> to %<YEL %s> !\n", pubdate, stimestamp);
         } else BLAHBLAH(0, printf("could not convert '%s' to a valid date..\n", pubdate));
@@ -300,30 +368,22 @@ rss_board_update(Board *board, char *path) {
           md5_and_time *m = find_md5_in_md5_array(md5,board->oldmd5);
           if (m && strlen(m->tstamp) == 14) {
             was_already_viewed = m->viewed;
-            strcpy(stimestamp, m->tstamp);
-            BLAHBLAH(0, myprintf("the news '%<GRN %s>' was found in the cache!\n", title));
+            strcpy(stimestamp, m->tstamp); str_to_time_t(stimestamp, &timestamp);
+            BLAHBLAH(1, myprintf("the news '%<GRN %s>' was found in the cache!\n", title));
           }
         }
 
         /* cherche dans la liste des news dejà lues (après le premier dl) */
         if (board_find_md5(board, md5)) {
-          myprintf("the news %<MAG %s>/%<CYA %s> is already known\n", rss_title, md5txt(md5));
+          BLAHBLAH(1,myprintf("the news %<MAG %s>/%<CYA %s> is already known\n", rss_title, md5txt(md5)));
           //cest_bon_je_connais_la_suite = 1; // si on suppose que les rss se remplissent toujours par le haut..
         } else {
-          board_msg_info *mi;
-          id_type id;
-          id_type_set_lid(&id, count);
-          id_type_set_sid(&id, board->site->site_id);
-          //board_decode_message(board, msgd, msg);
-
-
           /* nettoyage des codes < 32 dans le message */
           {
             int i; 
             for (i=0; i < BOARD_MSG_MAX_LEN && msg[i]; ++i)
               if ((unsigned char)msg[i] < ' ') msg[i] = ' ';
-          }
-          
+          }          
           fake_ua = str_printf("%s", rss_title ? rss_title : "?");
           if (pubdate) { fake_ua = str_cat_printf(fake_ua, " pubDate: %s", pubdate); }
 
@@ -334,18 +394,14 @@ rss_board_update(Board *board, char *path) {
             char *soupe = rss_nettoie_la_soupe_de_tags(msgd);
             strncpy(msgd, soupe, sizeof msgd); free(soupe); msgd[(sizeof msgd) - 1] = 0;
           }
-          assert(board_find_id(board,id_type_lid(id)) == NULL);
-          flag_updating_board++;
           if (author && strlen(author)) {
             author = str_cat_printf(author, "@%s", rss_title);
-            mi = board_log_msg(board, fake_ua, author, stimestamp, msgd, id_type_lid(id), NULL);
-          } else 
-            mi = board_log_msg(board, fake_ua, rss_title, stimestamp, msgd, id_type_lid(id), NULL);
+          } else {
+            FREE_STRING(author); author = strdup(rss_title);
+          }
+          prelog_add(fake_ua, author, timestamp, msgd, link, md5, was_already_viewed);
           board->nb_msg_at_last_check++;
           if (!was_already_viewed) board->nb_msg_since_last_viewed++;
-          mi->ri = rss_register(board->boards, md5, link, mi);
-          flag_updating_board--;
-          count += count_dir;
         }
       }
       FREE_STRING(title); FREE_STRING(link); FREE_STRING(description); FREE_STRING(author); 
@@ -363,11 +419,13 @@ rss_board_update(Board *board, char *path) {
   destroy_XMLBlock(&xmlb);
   FREE_STRING(rss_title);
   FREE_STRING(rsstxt); 
+  prelog_commit(board);
   return 0;
  ratai:
   if (board->oldmd5 && board->last_post_id > 0) release_md5_array(board);
   destroy_XMLBlock(&xmlb);
   FREE_STRING(rss_title);
   FREE_STRING(rsstxt);
+  prelog_commit(board);
   return 1;
 }

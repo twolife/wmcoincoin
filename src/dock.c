@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.41 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.42 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.42  2004/04/18 15:37:28  pouaite
+  un deux un deux
+
   Revision 1.41  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -242,7 +245,7 @@ dock_update_pix_trolloscope(Dock *dock)
 {
   Boards *boards = dock->sites->boards;
   board_msg_info *it;
-  int tnow;
+  int tnow_minutes;
   int i,j;
   RGBAImage *img;
   int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb;
@@ -282,6 +285,7 @@ dock_update_pix_trolloscope(Dock *dock)
     }
   }
   
+  tnow_minutes = (time(NULL) + col_nb_sec - 1)/col_nb_sec;
   for (it = boards->first; it; it = it->g_next) {
     Site *site;
     int age;
@@ -290,13 +294,13 @@ dock_update_pix_trolloscope(Dock *dock)
     assert(site);
     assert(site->prefs->check_board);
     assert(site->board);
-    tnow = (time(NULL) + col_nb_sec - 1)/col_nb_sec;
 
     /* age = board_get_msg_age(trib, it) / 60 / col_nb_min; */
-    age = MAX(tnow - (it->timestamp + site->board->time_shift + col_nb_sec - 1)/col_nb_sec,0);
+    //printf("time_shift = %ld, timestamp=%ld, col_nb_sec=%d ", site->board->time_shift, it->timestamp, col_nb_sec);
+    age = (long)(tnow_minutes - (it->timestamp + site->board->time_shift + col_nb_sec - 1)/col_nb_sec);
     
     // + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
-    BLAHBLAH(4, myprintf("sid=%d/id=%<YEL %5d>, age=%<RED %5d> ts=%02d:%02d:%02d, col_nb_sec=%4d, tnow=%8d\n", id_type_sid(it->id), id_type_lid(it->id), age,(it->timestamp/3600)%24, (it->timestamp/60)%60, it->timestamp%60,col_nb_sec,tnow));
+    BLAHBLAH(4, myprintf("sid=%15s/id=%<YEL %5d>, age=%<RED %5d> ts=%02d:%02d:%02d, col_nb_sec=%4d, tnow_minutes=%8d\n", Prefs.site[id_type_sid(it->id)]->site_name, id_type_lid(it->id), age,(it->timestamp/3600)%24, (it->timestamp/60)%60, it->timestamp%60,col_nb_sec,tnow_minutes));
     if (age < 0) age = 0; /* avec les fluctuations du time_shift .. */
     if (age < trib_ncol) {
       /* on empile les message sur la pile d'age 'age' (je suis clair?)*/
@@ -422,8 +426,9 @@ refresh_docktxt_bottom(Dock *dock, int x, int y, int w)
   } 
   else if (id_type_is_invalid(dock->view_id_in_newstitles)) {
     time_t t=time(NULL);
+    struct tm *tm = localtime(&t);
     char s[20];
-    snprintf(s,20, "%02d:%02d:%02d", (int)((t/3600)%24),(int)((t/60)%60),(int)(t%60));
+    snprintf(s,20, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
     XDrawString(dock->display, dock->coinpix, dock->NormalGC, x + (56-strlen(s)*DOCK_FIXED_FONT_W)/2, 
                 y+dock->fixed_font->ascent+1, s, strlen(s));
 #if 0

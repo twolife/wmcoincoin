@@ -193,6 +193,9 @@ pp_tabs_check_active(Pinnipede *pp) {
         if (pp->tabs[i].selected) {
           pp->active_tab = pp->tabs+i; break; 
         }
+    if (pp->active_tab == NULL && pp->nb_tabs > 0) {
+      pp->active_tab = &pp->tabs[0]; pp->tabs[0].selected = 1;
+    }
     assert(pp->active_tab);
   }
 }
@@ -413,7 +416,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
     XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(r,g,b));
     XFillRectangle(dock->display, drawable, dock->NormalGC, 
 		   d_x, d_y+1, w-1, h-1);
-  } else if (Prefs.pp_use_colored_tabs) {
+  } else { //if (Prefs.pp_use_colored_tabs) {
     XSetForeground(dock->display, dock->NormalGC, bgpixel);    
     XFillRectangle(dock->display, drawable, dock->NormalGC, 
                    d_x, d_y+1, w-1, h-1);
@@ -587,7 +590,7 @@ pp_tabs_refresh(Dock *dock)
     /* efface toute la ligne */
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_color));
     XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
-		   0, 0, pp->tabs[0].w, pp->tabs[0].h);
+                   0, 0, pp->tabs[0].w, pp->tabs[0].h);
     for (i=0; i < pp->nb_tabs; i++) {
       PinnipedeTab *pt = &pp->tabs[i];
       PinnipedeTab *npt = (i<pp->nb_tabs-1) ? &pp->tabs[i+1] : NULL;
@@ -719,13 +722,13 @@ void pp_tabs_switch_all_selected(Pinnipede *pp) {
 /* effectue la rotation bizarre 1 tabs actif/tous les tabs/etc */
 void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt, ppt_survol_actions survol_part) {
   int i, nb_selected = pp_tabs_nb_selected(pp);
-  printf("cliquouille %d, selected = %d, nb_sel=%d, part=%d\n", pt - pp->tabs, pt->selected, nb_selected, survol_part);
+  //printf("cliquouille %d, selected = %d, nb_sel=%d, part=%d\n", pt - pp->tabs, pt->selected, nb_selected, survol_part);
   if (survol_part == PPT_MAY_UNSELECT_TAB) {
     if (pt->selected && nb_selected > 1) { pt->selected = 0; pp_tabs_save_selected(pp); }
     else if (nb_selected == 1) pp_tabs_swap_selected(pp);
     else { pt->selected = 1; pp_tabs_save_selected(pp); }
   } else if (survol_part == PPT_MAY_SET_MAIN_TAB) {
-    if (pt == pp->active_tab && nb_selected == 1) { printf("restore\n"); pp_tabs_restore_selected(pp); }
+    if (pt == pp->active_tab && nb_selected == 1) { pp_tabs_restore_selected(pp); }
     else { 
       //if (nb_selected > 1 || !pt->selected) pp_tabs_save_selected(pp);
       for (i=0; i < pp->nb_tabs; i++) {
@@ -795,15 +798,7 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
 	editw_show(dock, pt->site->prefs, 0);
       } else editw_change_current_site(dock, pt->site->site_id);
     }
-
-    pp_tabs_set_visible_sites(pp);
-
-    pp->flag_pp_update_request = 1;
-    /*pp_pv_destroy(pp);
-    //    pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
-    pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
-    pp_refresh(dock, pp->win, NULL);
-    */
+    pp_tabs_changed(dock);
     ret = 1;
   }
   for (i=0; i < pp->nb_tabs; i++) {
@@ -820,27 +815,20 @@ void pp_tabs_changed(Dock *dock) {
   if (pp->active_tab) {
     pp_tabs_set_visible_sites(pp);
     pp->flag_pp_update_request = 1;
-    /*
-    if (!flag_updating_board) {
-      pp_pv_destroy(pp);
-      pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
-      pp_refresh(dock, pp->win, NULL);    
-    }
-    */
+    if (pp_tabs_nb_selected(pp) == 1)
+      board_set_viewed(pp->active_tab->site->board, pp->active_tab->site->board->last_post_id);
   }  
 }
 
 void
 pp_change_active_tab(Dock *dock, int dir) {
   Pinnipede *pp = dock->pinnipede;
-  int i;
   if (pp->active_tab) {
     pp->active_tab+=dir;
     if (pp->active_tab >= pp->tabs + pp->nb_tabs) pp->active_tab = pp->tabs;    
     else if (pp->active_tab < pp->tabs) pp->active_tab = pp->tabs + pp->nb_tabs -1;
   } else pp->active_tab = pp->tabs;
-  for (i=0; i < pp->nb_tabs; i++) 
-    pp->tabs[i].selected = (pp->tabs+i == pp->active_tab);
+  pp_tabs_select_only_one(pp, pp->active_tab);
   pp_tabs_changed(dock);
 }
 
@@ -927,26 +915,24 @@ pp_minib_refresh(Dock *dock)
   } else {
     /* affichage d'infos diverses */
 
-    char s_site[20], s_what[50], s_http_stats[40];
+    char s_site[20], s_what[60], s_http_stats[40], s_msg_cnt[30];
     int x, w;
-    s_site[0] = 0; s_what[0] = 0; 
-    if (dl_info_site) snprintf(s_site, 20, "[%s]", dl_info_site);
-    if (dl_info_what) snprintf(s_what, 50, "[%s]", dl_info_what);
-    snprintf(s_http_stats, 40, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);
+    s_site[0] = 0; s_what[0] = 0; s_msg_cnt[0] = 0;
+    if (dl_info_site) snprintf(s_site, sizeof s_site, "[%s]", dl_info_site);
+    if (dl_info_what) snprintf(s_what, sizeof s_what, "[%s] (ESC to cancel)", dl_info_what);
+
+    snprintf(s_http_stats, sizeof s_http_stats, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);
+    snprintf(s_msg_cnt, sizeof s_msg_cnt, "%d msg", pp->non_filtered_message_count);
     
     x = 5+pp->mb_x0;
     w = ccfont_text_width8(pp->fn_minib, s_site, -1); //w = MINIB_FN_W*strlen(s_site);
     if (x+w < x_minib && w) {
-      //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x3030ff)); 
-      //XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_site, strlen(s_site));
       ccfont_draw_string8(pp->fn_minib, dock->blue_color, pp->lpix, x, (ccfont_ascent(pp->fn_minib)), s_site, strlen(s_site));
       x += w + 6;
     }
 
     w = ccfont_text_width8(pp->fn_minib, s_what, -1); //MINIB_FN_W*strlen(s_what);
     if (x+w < x_minib && w) {
-      //XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x6060ff)); /* COUL */
-      //XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_what, strlen(s_what));
       ccfont_draw_string8(pp->fn_minib, dock->blue_color, pp->lpix, x, (ccfont_ascent(pp->fn_minib)), s_what, strlen(s_what));
       x += w + 6;
     }
@@ -956,12 +942,16 @@ pp_minib_refresh(Dock *dock)
     if (strlen(s_http_stats)) {
       w = ccfont_text_width8(pp->fn_minib, s_http_stats, -1);
       if (x+w < x_minib) {
-	//XSetForeground(dock->display, dock->NormalGC, pp->minib_updlcnt_pixel); /* COUL */
-	//XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_http_stats, strlen(s_http_stats));
         ccfont_draw_string8(pp->fn_minib, pp->minib_dark_color, pp->lpix, x, (ccfont_ascent(pp->fn_minib)), s_http_stats, strlen(s_http_stats));
+        x += w + 6;
       }
     }
-
+    if (strlen(s_msg_cnt)) {
+      w = ccfont_text_width8(pp->fn_minib, s_msg_cnt, -1);
+      if (x+w < x_minib) {
+        ccfont_draw_string8(pp->fn_minib, pp->minib_dark_color, pp->lpix, x, (ccfont_ascent(pp->fn_minib)), s_msg_cnt, strlen(s_msg_cnt));
+      }
+    }
   }
 
   /* dessin des boutons */
@@ -1331,7 +1321,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
       } break;
     case PREFS:
       {
-	launch_wmccc(dock);
+	launch_wmccc(dock, NULL);
       } break;
     case CANCEL:
       {
@@ -1587,10 +1577,12 @@ pp_scrollcoin_update_bounds(Dock *dock)
   int vmin, vmax;
   board_msg_info *mi;
 
+  vmax = count_all_id_filtered(boards, &pp->filter);
+  pp->non_filtered_message_count = vmax;
+
   if (pp->sc == NULL) return;
   
   //  myprintf("%<YEL pp_scrollcoin_update_bounds>\n");
-  vmax = count_all_id_filtered(boards, &pp->filter);
   vmin = 0;
   lcnt = 0;
 

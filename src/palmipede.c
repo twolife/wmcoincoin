@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.21 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.22 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.22  2004/04/18 15:37:28  pouaite
+  un deux un deux
+
   Revision 1.21  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -2013,34 +2016,42 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     editw_insert_char(ew, (unsigned char)'¤');
   } else if (event->xkey.state & Mod1Mask) {
     switch (ksym) {
-    case 'I':
-    case 'i': editw_balise(ew,"<i>", "</i>"); break;
-    case 'B':
-    case 'b': editw_balise(ew, "<b>", "</b>"); break;
-    case 'U':
-    case 'u': editw_balise(ew, "<u>", "</u>"); break;
-    case 'S':
-    case 's': editw_balise(ew, "<s>", "</s>"); break;
-    case 'M':
-    case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
-    case 'G':
-    case 'g': editw_insert_string(ew, "Ta gueule pwet"); break;
-    case 'Z':
-    case 'z': editw_insert_string(ew, "La SuSE sa pue, sai pas libre"); break;
-    case 'F':
-    case 'f': editw_set_pinnipede_filter(dock); break;
-    case XK_KP_Left:
-    case XK_Left:
-      editw_next_site(dock, -1); break;
-    case XK_KP_Right:
-    case XK_Right:
-      editw_next_site(dock, +1); break;
-      /*
-    case 'T':
-    case 't': editw_balise_tt(ew); break;
-      */
-    default:
-      FORWARD_KEY; break;
+      case 'I':
+      case 'i': editw_balise(ew,"<i>", "</i>"); break;
+      case 'B':
+      case 'b': editw_balise(ew, "<b>", "</b>"); break;
+      case 'U':
+      case 'u': editw_balise(ew, "<u>", "</u>"); break;
+      case 'S':
+      case 's': editw_balise(ew, "<s>", "</s>"); break;
+      case 'M':
+      case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
+      case 'O':
+      case 'o': editw_insert_string(ew, _("_o/* <b>BLAM</b>!")); break;
+      case 'P':
+      case 'p': editw_insert_string(ew, _("_o/* <b>paf</b>!")); break;
+      case 'C':
+      case 'c': editw_insert_string(ew, _("sale chauve")); break;
+      case 'N':
+      case 'n': editw_insert_string(ew, "ounet"); break;
+      case 'G':
+      case 'g': editw_insert_string(ew, "Ta gueule pwet"); break;
+      case 'Z':
+      case 'z': editw_insert_string(ew, "La SuSE sa sent bon, sai libre"); break;
+      case 'F':
+      case 'f': editw_set_pinnipede_filter(dock); break;
+      case XK_KP_Left:
+      case XK_Left:
+        editw_next_site(dock, -1); break;
+      case XK_KP_Right:
+      case XK_Right:
+        editw_next_site(dock, +1); break;
+        /*
+          case 'T':
+          case 't': editw_balise_tt(ew); break;
+        */
+      default:
+        FORWARD_KEY; break;
     }
   } else if (event->xkey.state & ControlMask) {
     switch (ksym) {
@@ -2508,7 +2519,6 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de poster un lien sur un forum externe (hard-war, aufeminin...)",
     "d'arrêter de mouler sur la tribune",
     "de lancer un débat sur pbpg",
-    "de demander pourquoi wmcoincoin n'affiche pas la tribune",
     "de demander à la cantonnade \"qu'est ce qu'une moule ?\"",
     "de dire que la tribune hard-war est revenue",
     "de donner la météo",
@@ -2517,7 +2527,6 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de vous renseigner sur la façon d'avoir le meilleur rendu graphique pour votre site web en flash",
     "de lancer un sondage sur la quantité de sel dans une motte de beurre",
     "d'aller vous promener dans la forêt",
-    "de vous lamenter sur la triste loi de la nature, appliquée aux oryx et aux requins",
     "de prendre une photo",
     "de demander aux moules ce qu'elles utilisent comme langage de programmation",
     "<i>le COBOL, c'est de la merde !<i>",
@@ -2535,6 +2544,11 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de poster un script permettant de voter en continu pour un sondage en ligne à la con",
     "\\o/ Nartaaaaaaa !",
     "un moment Village People: \\o/ ^o^ o[ /o\\",
+    "de lancer une discussion sur les qualités et inconvénient de l'énergie éolienne comparée à l'energie nucléaire",
+    "de donner votre avis sur les motivations de José Bové",
+    "de rappeler que les 4x4 c'est gros, laid et ça pollue",
+    "d'insulter bruyamment tous les fonctionnaires de France Telecom qui sont tous des faineants et des incapables",
+    "de donner votre avis sur tuxfamily",
     NULL
   };
   char txt[512];

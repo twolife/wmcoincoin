@@ -1,8 +1,15 @@
+2004-04-*  pouaite  <c0in@altern.org>
+	* wmccc: bon, le nouveau wmccc en gtk2 commence a planter un peu
+	moins, ça n'a pas été une mince affaire, et c'est surtout très
+	chiant à faire.
+	
 2004-02-*  pouaite  <c0in@altern.org>
 	
 	* src/board_pop3.c: ajout extremement goret de la surveillance des
 	mailbox pop3. On peut enfin profiter des 3nlarge Y0ur pEn!s en
-	direct dans le pinnipede.
+	direct dans le pinnipede, ou des gros trolls sur debian-legal,
+	tout ça avec une lisibilité maximale grace au dequoteur à
+	coulisse.
 
 	Degruikerie des options en conséquence: maintenant il y
 	a trois type de sites: "board_site:", "rss_site:", "pop_site:"

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.40 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.41 2004/04/18 15:37:28 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.41  2004/04/18 15:37:28  pouaite
+  un deux un deux
+
   Revision 1.40  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -422,6 +425,12 @@ str_is_empty(const char *s) {
   }
 }
 
+int xstrcmp(const char *a, const char *b) {
+  if (str_is_empty(a) && str_is_empty(b)) return 0;
+  else if (str_is_empty(a)) return -1;
+  else if (str_is_empty(b)) return +1;
+  else return strcmp(a,b);
+}
 
 /* recherche la première occurence d'une des chaines 'keys' dans 'src' et renvoie un pointeur vers
    cette occurence, ainsi que le numéro de la 'keys' trouvée
@@ -797,8 +806,7 @@ str_trim(unsigned char *s) {
 
 void
 str_rtrim_lf(unsigned char *s) {
-  int i,j;
-
+  int j;
   if (s == NULL) return;
   j = strlen(s)-1;
   while (j>=0 && s[j] < ' ') s[j--] = 0;
@@ -877,20 +885,42 @@ str_ncat(char *s1, const char *s2, int n)
 
 void
 str_trunc_nice(char *s, int approx_max_len) {
-  if (s && strlen(s) > approx_max_len - 20) {
+  if (s && (int)strlen(s) > approx_max_len - 20) {
     int i=approx_max_len - 20; 
     while (s[i] && !isspace(s[i]) && i < approx_max_len+30) ++i;
     if (s[i] && i < (int)(strlen(s) - 10)) { s[i] = 0; strcat(s, "(...)"); }
   }
 }
 
+/* la feinte: extern timezone n'est:
+     - pas portable sur bsd
+     - ne prend pas en compte le daylight saving, i.e. en été en france, ça chie
+   -> pour chopper le vrai decalage par rapport au gmt, il faut utiliser localtime, 
+   mettre tm_isdst à zero et reappeller mktime
+*/ 
+time_t get_timezone() {
+  static int isinit = 0;
+  static time_t t;
+  if (!isinit) {
+    isinit = 1;
+    time_t t0 = time(NULL);
+    struct tm *tt;
+    tt = gmtime(&t0); tt->tm_isdst = 0;
+    t = mktime(tt);
+    tt = localtime(&t0); tt->tm_isdst = 0;
+    t -= mktime(tt);
+  }
+  return t;
+}
+
 /* une fonction qui n'en veut */
 int
 str_to_time_t(const char *s, time_t *tt) {
-  char sday[10], smon[10], stz[20];
+  char sday[10], smon[10], stz[20], *stzdg = NULL;
   float fracsec = 0;
   int apply_tzshift = 1;
-  int tzshift_h = 0, tzshift_m = 0;
+  int tzshift_h = 0, tzshift_m = 0, tz_sgn = +1;
+  int confidence = 0; /* pour les dates qui ne contiennent pas les hh:mm:ss, on ajoute systematiquement 24 h */
   struct tm t;
   int ok = 0;
 
@@ -904,7 +934,9 @@ str_to_time_t(const char *s, time_t *tt) {
   if (!ok && (sscanf(s,"%10s %d %10s %d %d:%d:%d %s", 
                      sday, &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, &t.tm_sec, stz) >= 7 ||
               sscanf(s,"%10s %d %10s %d %d:%d %s", 
-                     sday, &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, stz) >= 6)) {
+                     sday, &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, stz) >= 6 ||
+              sscanf(s,"%d %10s %d %d:%d:%d %s", /* format trouvé dans certains mails */
+                     &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, &t.tm_sec, stz) >= 6)) {
     /*
       date-time   =  [ day "," ] date time        ; dd mm yy
                                                  ;  hh:mm:ss zzz
@@ -945,7 +977,12 @@ str_to_time_t(const char *s, time_t *tt) {
         ok = 1; break;
       }
     
-    if (sscanf(stz, "%2d%2d", &tzshift_h, &tzshift_m) == 2) { /* plop */ } 
+    str_trim(stz); stzdg = stz; tz_sgn = +1;
+    if (stz[0] == '+') { stzdg++; }
+    else if (stz[0] == '-') { stzdg++; tz_sgn = -1; }    
+    if (sscanf(stzdg, "%2d%2d", &tzshift_h, &tzshift_m) == 2) { /* plop */ 
+      //printf("stz = '%s', tzshift_h=%d, tzshift_m=%d\n", stz, tzshift_h, tzshift_m);
+    } 
     else if (strcasecmp(stz, "EST")==0) { tzshift_h = -5; }
     else if (strcasecmp(stz, "EDT")==0) { tzshift_h = -4; }
     else if (strcasecmp(stz, "CST")==0) { tzshift_h = -6; }
@@ -978,6 +1015,11 @@ str_to_time_t(const char *s, time_t *tt) {
     t.tm_sec = (int)fracsec;
     ok = 1;
   }
+  if (!ok && sscanf(s, "%4d-%2d-%2d", &t.tm_year, &t.tm_mon, &t.tm_mday) == 3) {
+    confidence = 24*60*60; t.tm_hour = t.tm_min = t.tm_sec = 0;
+    ok = 1;
+    apply_tzshift = 0;
+  }
   if (ok && t.tm_year >= 0 && t.tm_year < 3000 && t.tm_mon > 0 && t.tm_mon <= 12 && t.tm_mday > 0 && t.tm_mday < 32 && 
       t.tm_hour >= 0 && t.tm_hour < 24 && t.tm_min >= 0 && t.tm_min < 60 && t.tm_sec >= 0 && t.tm_sec < 60) {
     if (t.tm_year < 50) t.tm_year += 100; else if (t.tm_year > 1900) t.tm_year -= 1900;
@@ -985,8 +1027,27 @@ str_to_time_t(const char *s, time_t *tt) {
     t.tm_isdst = -1;
     /*printf("str_to_time_t(%s): %04d %02d %02d %02d:%02d:%02d%+02d:%02d\n", s, 
       t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, tzshift_h,tzshift_m);*/
-    *tt = mktime(&t);    
-    *tt -= (tzshift_h*60+(tzshift_h < 0 ? -1 : 1)*tzshift_m)*60;
+    *tt = mktime(&t);
+    if (apply_tzshift) {
+      if (tzshift_h < 0) { tzshift_h = -tzshift_h; tz_sgn = -tz_sgn; }
+      *tt -= (tzshift_h*60+tzshift_m)*60*tz_sgn; 
+#if 0
+      /* A CORRIGER 
+       update: maintenant ça doit etre ok, je le garde sous le coude a tout hasard*/
+#ifdef FREEBSD
+      int timezone_h = -(tm_now->tm_gmtoff/3600);
+      int timezone_m = abs(tm_now->tm_gmtoff/60)%60;
+#else
+      int timezone_h = -(timezone/3600);
+      int timezone_m = abs(timezone/60)%60;
+#endif
+#endif
+      *tt -= get_timezone(); //(timezone_h*60+timezone_m)*60;
+    }
+    *tt += confidence;
+    if (confidence) {
+      printf("s=%s time = %ld %s\n", s, *tt, asctime(localtime(tt)));
+    }
   }
   return ok;
 }
@@ -1114,7 +1175,7 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
       } else {
         int i;
         myprintf("wmcc_iconv('%<YEL %s>' -> '%<YEL %s>'): invalid %s sequence here: %<RED %.30s> [", 
-                 src_encoding, dest_encoding, srce, *srce);
+                 src_encoding, dest_encoding, src_encoding, srce);
         for (i=0; i < 16 && srce[i]; ++i) printf("%02x ", srce[i]); printf("]\n");
         iconv(cv, NULL, NULL, NULL, NULL);
         free(out); return NULL;
@@ -1244,4 +1305,16 @@ int split_url(const char *url, SplittedURL *d) {
     }
   }
   return 0;
+}
+
+char *shorten_path(const char *s_) {
+  char *home = getenv("HOME");
+  char *s = strdup(s_);
+  if (home && strlen(home) > 1) {
+    if (str_startswith(s, home)) {
+      s[0] = '~';
+      strcpy(s+1, s_ + strlen(home));
+    }
+  }
+  return s;
 }

@@ -27,63 +27,6 @@
   g_object_set_data (G_OBJECT (component), name, widget)
 
 GtkWidget*
-create_main_win (void)
-{
-  GtkWidget *main_win;
-  GtkWidget *vbox1;
-  GtkWidget *hbox3;
-  GtkWidget *vbox2;
-  GtkWidget *scrolledwindow1;
-  GtkWidget *sites_treeview;
-  GtkWidget *image1;
-  GtkWidget *statusbar1;
-
-  main_win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title (GTK_WINDOW (main_win), _("window1"));
-
-  vbox1 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox1);
-  gtk_container_add (GTK_CONTAINER (main_win), vbox1);
-
-  hbox3 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox3);
-  gtk_box_pack_start (GTK_BOX (vbox1), hbox3, TRUE, TRUE, 0);
-
-  vbox2 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox2);
-  gtk_box_pack_start (GTK_BOX (hbox3), vbox2, TRUE, TRUE, 0);
-
-  scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow1);
-  gtk_box_pack_start (GTK_BOX (vbox2), scrolledwindow1, TRUE, TRUE, 0);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-
-  sites_treeview = gtk_tree_view_new ();
-  gtk_widget_show (sites_treeview);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow1), sites_treeview);
-
-  image1 = create_pixmap (main_win, "logo.xpm");
-  gtk_widget_show (image1);
-  gtk_box_pack_end (GTK_BOX (hbox3), image1, FALSE, FALSE, 0);
-
-  statusbar1 = gtk_statusbar_new ();
-  gtk_widget_show (statusbar1);
-  gtk_box_pack_start (GTK_BOX (vbox1), statusbar1, FALSE, FALSE, 0);
-
-  /* Store pointers to all widgets, for use by lookup_widget(). */
-  GLADE_HOOKUP_OBJECT_NO_REF (main_win, main_win, "main_win");
-  GLADE_HOOKUP_OBJECT (main_win, vbox1, "vbox1");
-  GLADE_HOOKUP_OBJECT (main_win, hbox3, "hbox3");
-  GLADE_HOOKUP_OBJECT (main_win, vbox2, "vbox2");
-  GLADE_HOOKUP_OBJECT (main_win, scrolledwindow1, "scrolledwindow1");
-  GLADE_HOOKUP_OBJECT (main_win, sites_treeview, "sites_treeview");
-  GLADE_HOOKUP_OBJECT (main_win, image1, "image1");
-  GLADE_HOOKUP_OBJECT (main_win, statusbar1, "statusbar1");
-
-  return main_win;
-}
-
-GtkWidget*
 create_messagebox_dialog (void)
 {
   GtkWidget *messagebox_dialog;
@@ -140,14 +83,14 @@ create_messagebox_dialog (void)
 }
 
 GtkWidget*
-create_new_board_dialog (void)
+create_new_rss_dialog (void)
 {
-  GtkWidget *new_board_dialog;
+  GtkWidget *new_rss_dialog;
   GtkWidget *dialog_vbox2;
   GtkWidget *vbox3;
   GtkWidget *hbox13;
   GtkWidget *image4;
-  GtkWidget *edit_bt;
+  GtkWidget *edit_options_bt;
   GtkWidget *alignment3;
   GtkWidget *hbox14;
   GtkWidget *image3;
@@ -157,9 +100,9 @@ create_new_board_dialog (void)
   GtkWidget *alignment2;
   GtkWidget *hbox4;
   GtkWidget *label37;
-  GtkWidget *name;
+  GtkWidget *all_names_0_;
   GtkWidget *label36;
-  GtkWidget *pp_bgcolor_bt;
+  GtkWidget *pp_bgcolor;
   GtkWidget *label6;
   GtkWidget *frame2;
   GtkWidget *table1;
@@ -172,21 +115,9 @@ create_new_board_dialog (void)
   GtkWidget *backend_type_2;
   GtkWidget *backend_type_3;
   GtkWidget *label10;
-  GtkWidget *hscale_board_check_delay;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
   GtkWidget *label7;
-  GtkWidget *frame3;
-  GtkWidget *alignment1;
-  GtkWidget *table2;
-  GtkWidget *label12;
-  GtkWidget *path_board_add;
-  GtkWidget *label13;
-  GtkWidget *board_post;
-  GtkWidget *scrolledwindow2;
-  GtkWidget *viewport1;
-  GtkWidget *cookies;
-  GtkWidget *button1;
-  GtkWidget *label14;
-  GtkWidget *label11;
   GtkWidget *dialog_action_area2;
   GtkWidget *cancel_bt;
   GtkWidget *apply_bt;
@@ -195,10 +126,10 @@ create_new_board_dialog (void)
 
   tooltips = gtk_tooltips_new ();
 
-  new_board_dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (new_board_dialog), _("New board"));
+  new_rss_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (new_rss_dialog), _("New RSS Feed"));
 
-  dialog_vbox2 = GTK_DIALOG (new_board_dialog)->vbox;
+  dialog_vbox2 = GTK_DIALOG (new_rss_dialog)->vbox;
   gtk_widget_show (dialog_vbox2);
 
   vbox3 = gtk_vbox_new (FALSE, 0);
@@ -209,18 +140,18 @@ create_new_board_dialog (void)
   gtk_widget_show (hbox13);
   gtk_box_pack_start (GTK_BOX (vbox3), hbox13, FALSE, FALSE, 0);
 
-  image4 = create_pixmap (new_board_dialog, "logoh.png");
+  image4 = create_pixmap (new_rss_dialog, "logoh.png");
   gtk_widget_show (image4);
   gtk_box_pack_start (GTK_BOX (hbox13), image4, FALSE, TRUE, 0);
   gtk_misc_set_alignment (GTK_MISC (image4), 0, 0.5);
 
-  edit_bt = gtk_button_new ();
-  gtk_widget_show (edit_bt);
-  gtk_box_pack_start (GTK_BOX (hbox13), edit_bt, TRUE, TRUE, 0);
+  edit_options_bt = gtk_button_new ();
+  gtk_widget_show (edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (hbox13), edit_options_bt, TRUE, TRUE, 0);
 
   alignment3 = gtk_alignment_new (0.5, 0.5, 0, 0);
   gtk_widget_show (alignment3);
-  gtk_container_add (GTK_CONTAINER (edit_bt), alignment3);
+  gtk_container_add (GTK_CONTAINER (edit_options_bt), alignment3);
 
   hbox14 = gtk_hbox_new (FALSE, 2);
   gtk_widget_show (hbox14);
@@ -251,15 +182,15 @@ create_new_board_dialog (void)
   gtk_container_add (GTK_CONTAINER (alignment2), hbox4);
   gtk_container_set_border_width (GTK_CONTAINER (hbox4), 2);
 
-  label37 = gtk_label_new (_("Give a (short) name for the board:"));
+  label37 = gtk_label_new (_("Give a (short) name for the RSS feed:"));
   gtk_widget_show (label37);
   gtk_box_pack_start (GTK_BOX (hbox4), label37, FALSE, FALSE, 0);
 
-  name = gtk_entry_new ();
-  gtk_widget_show (name);
-  gtk_box_pack_start (GTK_BOX (hbox4), name, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (tooltips, name, _("Try to be short"), NULL);
-  gtk_entry_set_text (GTK_ENTRY (name), _("dlfp"));
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox4), all_names_0_, TRUE, TRUE, 0);
+  gtk_tooltips_set_tip (tooltips, all_names_0_, _("Try to be short"), NULL);
+  gtk_entry_set_text (GTK_ENTRY (all_names_0_), _("dlfp"));
 
   label36 = gtk_label_new (_("Background color: "));
   gtk_widget_show (label36);
@@ -267,10 +198,10 @@ create_new_board_dialog (void)
   gtk_label_set_justify (GTK_LABEL (label36), GTK_JUSTIFY_RIGHT);
   gtk_misc_set_alignment (GTK_MISC (label36), 1, 0.5);
 
-  pp_bgcolor_bt = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
-  gtk_widget_show (pp_bgcolor_bt);
-  gtk_box_pack_start (GTK_BOX (hbox4), pp_bgcolor_bt, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, pp_bgcolor_bt, _("You can customize the background color of the messages for this new site"), NULL);
+  pp_bgcolor = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
+  gtk_widget_show (pp_bgcolor);
+  gtk_box_pack_start (GTK_BOX (hbox4), pp_bgcolor, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, pp_bgcolor, _("You can customize the background color of the messages for this new site"), NULL);
 
   label6 = gtk_label_new (_("Basic settings"));
   gtk_widget_show (label6);
@@ -300,7 +231,7 @@ create_new_board_dialog (void)
   gtk_widget_set_size_request (backend_url, 500, -1);
   gtk_entry_set_text (GTK_ENTRY (backend_url), _("http://linuxfr.org/board/backend.xml"));
 
-  label9 = gtk_label_new (_("Backend type:"));
+  label9 = gtk_label_new (_("Backend flavour:"));
   gtk_widget_show (label9);
   gtk_table_attach (GTK_TABLE (table1), label9, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
@@ -336,12 +267,286 @@ create_new_board_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label10), 0, 0.5);
 
-  hscale_board_check_delay = gtk_hscale_new (GTK_ADJUSTMENT (gtk_adjustment_new (50.3, 10, 300, 1, 1, 0)));
-  gtk_widget_show (hscale_board_check_delay);
-  gtk_table_attach (GTK_TABLE (table1), hscale_board_check_delay, 1, 2, 2, 3,
+  board_check_delay_adj = gtk_adjustment_new (10, 10, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_table_attach (GTK_TABLE (table1), board_check_delay, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label7 = gtk_label_new (_("RSS Backend information"));
+  gtk_widget_show (label7);
+  gtk_frame_set_label_widget (GTK_FRAME (frame2), label7);
+
+  dialog_action_area2 = GTK_DIALOG (new_rss_dialog)->action_area;
+  gtk_widget_show (dialog_action_area2);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
+
+  cancel_bt = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancel_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_rss_dialog), cancel_bt, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancel_bt, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_rss_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  ok_bt = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (ok_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_rss_dialog), ok_bt, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (ok_bt, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (new_rss_dialog, new_rss_dialog, "new_rss_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_rss_dialog, dialog_vbox2, "dialog_vbox2");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, vbox3, "vbox3");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, hbox13, "hbox13");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, image4, "image4");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, edit_options_bt, "edit_options_bt");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, alignment3, "alignment3");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, hbox14, "hbox14");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, image3, "image3");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label39, "label39");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, vbox4, "vbox4");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, frame1, "frame1");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, alignment2, "alignment2");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, hbox4, "hbox4");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label37, "label37");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, all_names_0_, "all_names_0_");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label36, "label36");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, pp_bgcolor, "pp_bgcolor");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label6, "label6");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, frame2, "frame2");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, table1, "table1");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label8, "label8");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_url, "backend_url");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label9, "label9");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_type, "backend_type");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, menu1, "menu1");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_type_1, "backend_type_1");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_type_2, "backend_type_2");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_type_3, "backend_type_3");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label10, "label10");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, label7, "label7");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_rss_dialog, dialog_action_area2, "dialog_action_area2");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, cancel_bt, "cancel_bt");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, ok_bt, "ok_bt");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_rss_dialog, tooltips, "tooltips");
+
+  return new_rss_dialog;
+}
+
+GtkWidget*
+create_new_board_dialog (void)
+{
+  GtkWidget *new_board_dialog;
+  GtkWidget *dialog_vbox2;
+  GtkWidget *vbox3;
+  GtkWidget *hbox13;
+  GtkWidget *image4;
+  GtkWidget *edit_options_bt;
+  GtkWidget *alignment3;
+  GtkWidget *hbox14;
+  GtkWidget *image3;
+  GtkWidget *label39;
+  GtkWidget *vbox4;
+  GtkWidget *frame1;
+  GtkWidget *alignment2;
+  GtkWidget *hbox4;
+  GtkWidget *label37;
+  GtkWidget *all_names_0_;
+  GtkWidget *label36;
+  GtkWidget *pp_bgcolor;
+  GtkWidget *label6;
+  GtkWidget *frame2;
+  GtkWidget *table1;
+  GtkWidget *label8;
+  GtkWidget *backend_url;
+  GtkWidget *label9;
+  GtkWidget *backend_type;
+  GtkWidget *menu1;
+  GtkWidget *backend_type_1;
+  GtkWidget *backend_type_2;
+  GtkWidget *backend_type_3;
+  GtkWidget *label10;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
+  GtkWidget *label7;
+  GtkWidget *frame3;
+  GtkWidget *alignment1;
+  GtkWidget *table2;
+  GtkWidget *label12;
+  GtkWidget *post_url;
+  GtkWidget *label13;
+  GtkWidget *post_template;
+  GtkWidget *scrolledwindow2;
+  GtkWidget *viewport1;
+  GtkWidget *user_cookie;
+  GtkWidget *grab_cookie_bt;
+  GtkWidget *alignment9;
+  GtkWidget *hbox29;
+  GtkWidget *image12;
+  GtkWidget *label78;
+  GtkWidget *label14;
+  GtkWidget *label11;
+  GtkWidget *dialog_action_area2;
+  GtkWidget *cancel_bt;
+  GtkWidget *apply_bt;
+  GtkWidget *ok_bt;
+  GtkTooltips *tooltips;
+
+  tooltips = gtk_tooltips_new ();
+
+  new_board_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (new_board_dialog), _("New Board"));
+
+  dialog_vbox2 = GTK_DIALOG (new_board_dialog)->vbox;
+  gtk_widget_show (dialog_vbox2);
+
+  vbox3 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox3);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox2), vbox3, TRUE, TRUE, 0);
+
+  hbox13 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox13);
+  gtk_box_pack_start (GTK_BOX (vbox3), hbox13, FALSE, FALSE, 0);
+
+  image4 = create_pixmap (new_board_dialog, "logoh.png");
+  gtk_widget_show (image4);
+  gtk_box_pack_start (GTK_BOX (hbox13), image4, FALSE, TRUE, 0);
+  gtk_misc_set_alignment (GTK_MISC (image4), 0, 0.5);
+
+  edit_options_bt = gtk_button_new ();
+  gtk_widget_show (edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (hbox13), edit_options_bt, TRUE, TRUE, 0);
+
+  alignment3 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment3);
+  gtk_container_add (GTK_CONTAINER (edit_options_bt), alignment3);
+
+  hbox14 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox14);
+  gtk_container_add (GTK_CONTAINER (alignment3), hbox14);
+
+  image3 = gtk_image_new_from_stock ("gtk-convert", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image3);
+  gtk_box_pack_start (GTK_BOX (hbox14), image3, FALSE, FALSE, 0);
+
+  label39 = gtk_label_new_with_mnemonic (_("Click here to edit the options file"));
+  gtk_widget_show (label39);
+  gtk_box_pack_start (GTK_BOX (hbox14), label39, FALSE, FALSE, 0);
+
+  vbox4 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox4);
+  gtk_box_pack_start (GTK_BOX (vbox3), vbox4, TRUE, TRUE, 0);
+
+  frame1 = gtk_frame_new (NULL);
+  gtk_widget_show (frame1);
+  gtk_box_pack_start (GTK_BOX (vbox4), frame1, TRUE, TRUE, 2);
+
+  alignment2 = gtk_alignment_new (0.5, 0.5, 1, 1);
+  gtk_widget_show (alignment2);
+  gtk_container_add (GTK_CONTAINER (frame1), alignment2);
+
+  hbox4 = gtk_hbox_new (FALSE, 4);
+  gtk_widget_show (hbox4);
+  gtk_container_add (GTK_CONTAINER (alignment2), hbox4);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox4), 2);
+
+  label37 = gtk_label_new (_("Give a (short) name for the board:"));
+  gtk_widget_show (label37);
+  gtk_box_pack_start (GTK_BOX (hbox4), label37, FALSE, FALSE, 0);
+
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox4), all_names_0_, TRUE, TRUE, 0);
+  gtk_tooltips_set_tip (tooltips, all_names_0_, _("Try to be short"), NULL);
+  gtk_entry_set_text (GTK_ENTRY (all_names_0_), _("dlfp"));
+
+  label36 = gtk_label_new (_("Background color: "));
+  gtk_widget_show (label36);
+  gtk_box_pack_start (GTK_BOX (hbox4), label36, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label36), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (label36), 1, 0.5);
+
+  pp_bgcolor = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
+  gtk_widget_show (pp_bgcolor);
+  gtk_box_pack_start (GTK_BOX (hbox4), pp_bgcolor, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, pp_bgcolor, _("You can customize the background color of the messages for this new site"), NULL);
+
+  label6 = gtk_label_new (_("Basic settings"));
+  gtk_widget_show (label6);
+  gtk_frame_set_label_widget (GTK_FRAME (frame1), label6);
+
+  frame2 = gtk_frame_new (NULL);
+  gtk_widget_show (frame2);
+  gtk_box_pack_start (GTK_BOX (vbox4), frame2, TRUE, TRUE, 2);
+
+  table1 = gtk_table_new (3, 2, FALSE);
+  gtk_widget_show (table1);
+  gtk_container_add (GTK_CONTAINER (frame2), table1);
+  gtk_container_set_border_width (GTK_CONTAINER (table1), 2);
+
+  label8 = gtk_label_new (_("Backend URL:"));
+  gtk_widget_show (label8);
+  gtk_table_attach (GTK_TABLE (table1), label8, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (GTK_FILL), 0, 0);
-  gtk_range_set_update_policy (GTK_RANGE (hscale_board_check_delay), GTK_UPDATE_DISCONTINUOUS);
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label8), 0, 0.5);
+
+  backend_url = gtk_entry_new ();
+  gtk_widget_show (backend_url);
+  gtk_table_attach (GTK_TABLE (table1), backend_url, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_size_request (backend_url, 500, -1);
+  gtk_entry_set_text (GTK_ENTRY (backend_url), _("http://linuxfr.org/board/backend.xml"));
+
+  label9 = gtk_label_new (_("Backend flavour:"));
+  gtk_widget_show (label9);
+  gtk_table_attach (GTK_TABLE (table1), label9, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label9), 0, 0.5);
+
+  backend_type = gtk_option_menu_new ();
+  gtk_widget_show (backend_type);
+  gtk_table_attach (GTK_TABLE (table1), backend_type, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  menu1 = gtk_menu_new ();
+
+  backend_type_1 = gtk_menu_item_new_with_mnemonic (_("message tags are \"htmlentitised\""));
+  gtk_widget_show (backend_type_1);
+  gtk_container_add (GTK_CONTAINER (menu1), backend_type_1);
+
+  backend_type_2 = gtk_menu_item_new_with_mnemonic (_("message tags are raw"));
+  gtk_widget_show (backend_type_2);
+  gtk_container_add (GTK_CONTAINER (menu1), backend_type_2);
+
+  backend_type_3 = gtk_menu_item_new_with_mnemonic (_("the backend has no pants"));
+  gtk_widget_show (backend_type_3);
+  gtk_container_add (GTK_CONTAINER (menu1), backend_type_3);
+
+  gtk_option_menu_set_menu (GTK_OPTION_MENU (backend_type), menu1);
+
+  label10 = gtk_label_new (_("Refresh frequency\n (seconds): "));
+  gtk_widget_show (label10);
+  gtk_table_attach (GTK_TABLE (table1), label10, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label10), 0, 0.5);
+
+  board_check_delay_adj = gtk_adjustment_new (10, 10, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_table_attach (GTK_TABLE (table1), board_check_delay, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
 
   label7 = gtk_label_new (_("XML Backend information"));
   gtk_widget_show (label7);
@@ -367,22 +572,22 @@ create_new_board_dialog (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label12), 0, 0.5);
 
-  path_board_add = gtk_entry_new ();
-  gtk_widget_show (path_board_add);
-  gtk_table_attach (GTK_TABLE (table2), path_board_add, 2, 3, 0, 1,
+  post_url = gtk_entry_new ();
+  gtk_widget_show (post_url);
+  gtk_table_attach (GTK_TABLE (table2), post_url, 2, 3, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  label13 = gtk_label_new (_("Specific:"));
+  label13 = gtk_label_new (_("Post Template:"));
   gtk_widget_show (label13);
   gtk_table_attach (GTK_TABLE (table2), label13, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label13), 0, 0.5);
 
-  board_post = gtk_entry_new ();
-  gtk_widget_show (board_post);
-  gtk_table_attach (GTK_TABLE (table2), board_post, 2, 3, 1, 2,
+  post_template = gtk_entry_new ();
+  gtk_widget_show (post_template);
+  gtk_table_attach (GTK_TABLE (table2), post_template, 2, 3, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -397,18 +602,34 @@ create_new_board_dialog (void)
   gtk_widget_show (viewport1);
   gtk_container_add (GTK_CONTAINER (scrolledwindow2), viewport1);
 
-  cookies = gtk_entry_new ();
-  gtk_widget_show (cookies);
-  gtk_container_add (GTK_CONTAINER (viewport1), cookies);
+  user_cookie = gtk_entry_new ();
+  gtk_widget_show (user_cookie);
+  gtk_container_add (GTK_CONTAINER (viewport1), user_cookie);
 
-  button1 = gtk_button_new_with_mnemonic (_("(grab cookie)"));
-  gtk_widget_show (button1);
-  gtk_table_attach (GTK_TABLE (table2), button1, 1, 2, 2, 3,
+  grab_cookie_bt = gtk_button_new ();
+  gtk_widget_show (grab_cookie_bt);
+  gtk_table_attach (GTK_TABLE (table2), grab_cookie_bt, 1, 2, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, button1, _("attempt to get the cookie from the cookies stored in your browsers"), NULL);
+  gtk_tooltips_set_tip (tooltips, grab_cookie_bt, _("attempt to get the cookie from the cookies stored in your browsers"), NULL);
 
-  label14 = gtk_label_new (_("Cookie"));
+  alignment9 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment9);
+  gtk_container_add (GTK_CONTAINER (grab_cookie_bt), alignment9);
+
+  hbox29 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox29);
+  gtk_container_add (GTK_CONTAINER (alignment9), hbox29);
+
+  image12 = gtk_image_new_from_stock ("gtk-find", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image12);
+  gtk_box_pack_start (GTK_BOX (hbox29), image12, FALSE, FALSE, 0);
+
+  label78 = gtk_label_new_with_mnemonic (_("(grab cookie)"));
+  gtk_widget_show (label78);
+  gtk_box_pack_start (GTK_BOX (hbox29), label78, FALSE, FALSE, 0);
+
+  label14 = gtk_label_new (_("Cookie(s)"));
   gtk_widget_show (label14);
   gtk_table_attach (GTK_TABLE (table2), label14, 0, 1, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
@@ -438,29 +659,13 @@ create_new_board_dialog (void)
   gtk_dialog_add_action_widget (GTK_DIALOG (new_board_dialog), ok_bt, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (ok_bt, GTK_CAN_DEFAULT);
 
-  g_signal_connect ((gpointer) edit_bt, "clicked",
-                    G_CALLBACK (edit_bt_clicked),
-                    NULL);
-  g_signal_connect ((gpointer) backend_type_1, "activate",
-                    G_CALLBACK (on_message_tags_are__htmlentitised_1_activate),
-                    NULL);
-  g_signal_connect ((gpointer) backend_type_2, "activate",
-                    G_CALLBACK (on_message_tags_are_raw1_activate),
-                    NULL);
-  g_signal_connect ((gpointer) backend_type_3, "activate",
-                    G_CALLBACK (on_the_backend_has_no_pants1_activate),
-                    NULL);
-  g_signal_connect_swapped ((gpointer) cancel_bt, "clicked",
-                            G_CALLBACK (gtk_widget_hide),
-                            GTK_OBJECT (new_board_dialog));
-
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (new_board_dialog, new_board_dialog, "new_board_dialog");
   GLADE_HOOKUP_OBJECT_NO_REF (new_board_dialog, dialog_vbox2, "dialog_vbox2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, vbox3, "vbox3");
   GLADE_HOOKUP_OBJECT (new_board_dialog, hbox13, "hbox13");
   GLADE_HOOKUP_OBJECT (new_board_dialog, image4, "image4");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, edit_bt, "edit_bt");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, edit_options_bt, "edit_options_bt");
   GLADE_HOOKUP_OBJECT (new_board_dialog, alignment3, "alignment3");
   GLADE_HOOKUP_OBJECT (new_board_dialog, hbox14, "hbox14");
   GLADE_HOOKUP_OBJECT (new_board_dialog, image3, "image3");
@@ -470,9 +675,9 @@ create_new_board_dialog (void)
   GLADE_HOOKUP_OBJECT (new_board_dialog, alignment2, "alignment2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, hbox4, "hbox4");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label37, "label37");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, name, "name");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, all_names_0_, "all_names_0_");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label36, "label36");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, pp_bgcolor_bt, "pp_bgcolor_bt");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, pp_bgcolor, "pp_bgcolor");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label6, "label6");
   GLADE_HOOKUP_OBJECT (new_board_dialog, frame2, "frame2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, table1, "table1");
@@ -485,19 +690,23 @@ create_new_board_dialog (void)
   GLADE_HOOKUP_OBJECT (new_board_dialog, backend_type_2, "backend_type_2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, backend_type_3, "backend_type_3");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label10, "label10");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, hscale_board_check_delay, "hscale_board_check_delay");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, board_check_delay, "board_check_delay");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label7, "label7");
   GLADE_HOOKUP_OBJECT (new_board_dialog, frame3, "frame3");
   GLADE_HOOKUP_OBJECT (new_board_dialog, alignment1, "alignment1");
   GLADE_HOOKUP_OBJECT (new_board_dialog, table2, "table2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label12, "label12");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, path_board_add, "path_board_add");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, post_url, "post_url");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label13, "label13");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, board_post, "board_post");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, post_template, "post_template");
   GLADE_HOOKUP_OBJECT (new_board_dialog, scrolledwindow2, "scrolledwindow2");
   GLADE_HOOKUP_OBJECT (new_board_dialog, viewport1, "viewport1");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, cookies, "cookies");
-  GLADE_HOOKUP_OBJECT (new_board_dialog, button1, "button1");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, user_cookie, "user_cookie");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, grab_cookie_bt, "grab_cookie_bt");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, alignment9, "alignment9");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, hbox29, "hbox29");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, image12, "image12");
+  GLADE_HOOKUP_OBJECT (new_board_dialog, label78, "label78");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label14, "label14");
   GLADE_HOOKUP_OBJECT (new_board_dialog, label11, "label11");
   GLADE_HOOKUP_OBJECT_NO_REF (new_board_dialog, dialog_action_area2, "dialog_action_area2");
@@ -507,6 +716,257 @@ create_new_board_dialog (void)
   GLADE_HOOKUP_OBJECT_NO_REF (new_board_dialog, tooltips, "tooltips");
 
   return new_board_dialog;
+}
+
+GtkWidget*
+create_new_pop_dialog (void)
+{
+  GtkWidget *new_pop_dialog;
+  GtkWidget *dialog_vbox2;
+  GtkWidget *vbox3;
+  GtkWidget *hbox13;
+  GtkWidget *image4;
+  GtkWidget *edit_options_bt;
+  GtkWidget *alignment3;
+  GtkWidget *hbox14;
+  GtkWidget *image3;
+  GtkWidget *label39;
+  GtkWidget *vbox4;
+  GtkWidget *frame1;
+  GtkWidget *alignment2;
+  GtkWidget *hbox4;
+  GtkWidget *label37;
+  GtkWidget *all_names_0_;
+  GtkWidget *label36;
+  GtkWidget *pp_bgcolor;
+  GtkWidget *label6;
+  GtkWidget *frame2;
+  GtkWidget *table1;
+  GtkWidget *label8;
+  GtkWidget *backend_url;
+  GtkWidget *label10;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
+  GtkWidget *label62;
+  GtkWidget *pop3_user;
+  GtkWidget *label63;
+  GtkWidget *pop3_pass;
+  GtkWidget *label7;
+  GtkWidget *dialog_action_area2;
+  GtkWidget *cancel_bt;
+  GtkWidget *apply_bt;
+  GtkWidget *ok_bt;
+  GtkTooltips *tooltips;
+
+  tooltips = gtk_tooltips_new ();
+
+  new_pop_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (new_pop_dialog), _("New POP"));
+
+  dialog_vbox2 = GTK_DIALOG (new_pop_dialog)->vbox;
+  gtk_widget_show (dialog_vbox2);
+
+  vbox3 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox3);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox2), vbox3, TRUE, TRUE, 0);
+
+  hbox13 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox13);
+  gtk_box_pack_start (GTK_BOX (vbox3), hbox13, FALSE, FALSE, 0);
+
+  image4 = create_pixmap (new_pop_dialog, "logoh.png");
+  gtk_widget_show (image4);
+  gtk_box_pack_start (GTK_BOX (hbox13), image4, FALSE, TRUE, 0);
+  gtk_misc_set_alignment (GTK_MISC (image4), 0, 0.5);
+
+  edit_options_bt = gtk_button_new ();
+  gtk_widget_show (edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (hbox13), edit_options_bt, TRUE, TRUE, 0);
+
+  alignment3 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment3);
+  gtk_container_add (GTK_CONTAINER (edit_options_bt), alignment3);
+
+  hbox14 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox14);
+  gtk_container_add (GTK_CONTAINER (alignment3), hbox14);
+
+  image3 = gtk_image_new_from_stock ("gtk-convert", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image3);
+  gtk_box_pack_start (GTK_BOX (hbox14), image3, FALSE, FALSE, 0);
+
+  label39 = gtk_label_new_with_mnemonic (_("Click here to edit the options file"));
+  gtk_widget_show (label39);
+  gtk_box_pack_start (GTK_BOX (hbox14), label39, FALSE, FALSE, 0);
+
+  vbox4 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox4);
+  gtk_box_pack_start (GTK_BOX (vbox3), vbox4, TRUE, TRUE, 0);
+
+  frame1 = gtk_frame_new (NULL);
+  gtk_widget_show (frame1);
+  gtk_box_pack_start (GTK_BOX (vbox4), frame1, TRUE, TRUE, 2);
+
+  alignment2 = gtk_alignment_new (0.5, 0.5, 1, 1);
+  gtk_widget_show (alignment2);
+  gtk_container_add (GTK_CONTAINER (frame1), alignment2);
+
+  hbox4 = gtk_hbox_new (FALSE, 4);
+  gtk_widget_show (hbox4);
+  gtk_container_add (GTK_CONTAINER (alignment2), hbox4);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox4), 2);
+
+  label37 = gtk_label_new (_("Give a (short) name for the board:"));
+  gtk_widget_show (label37);
+  gtk_box_pack_start (GTK_BOX (hbox4), label37, FALSE, FALSE, 0);
+
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox4), all_names_0_, TRUE, TRUE, 0);
+  gtk_tooltips_set_tip (tooltips, all_names_0_, _("Try to be short"), NULL);
+  gtk_entry_set_text (GTK_ENTRY (all_names_0_), _("altern"));
+
+  label36 = gtk_label_new (_("Background color: "));
+  gtk_widget_show (label36);
+  gtk_box_pack_start (GTK_BOX (hbox4), label36, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label36), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (label36), 1, 0.5);
+
+  pp_bgcolor = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
+  gtk_widget_show (pp_bgcolor);
+  gtk_box_pack_start (GTK_BOX (hbox4), pp_bgcolor, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, pp_bgcolor, _("You can customize the background color of the messages for this new site"), NULL);
+
+  label6 = gtk_label_new (_("Basic settings"));
+  gtk_widget_show (label6);
+  gtk_frame_set_label_widget (GTK_FRAME (frame1), label6);
+
+  frame2 = gtk_frame_new (NULL);
+  gtk_widget_show (frame2);
+  gtk_box_pack_start (GTK_BOX (vbox4), frame2, TRUE, TRUE, 2);
+
+  table1 = gtk_table_new (4, 2, FALSE);
+  gtk_widget_show (table1);
+  gtk_container_add (GTK_CONTAINER (frame2), table1);
+  gtk_container_set_border_width (GTK_CONTAINER (table1), 2);
+
+  label8 = gtk_label_new (_("POP3 URL:"));
+  gtk_widget_show (label8);
+  gtk_table_attach (GTK_TABLE (table1), label8, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label8), 0, 0.5);
+
+  backend_url = gtk_entry_new ();
+  gtk_widget_show (backend_url);
+  gtk_table_attach (GTK_TABLE (table1), backend_url, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_size_request (backend_url, 500, -1);
+  gtk_entry_set_text (GTK_ENTRY (backend_url), _("pop3://"));
+
+  label10 = gtk_label_new (_("Refresh frequency\n (seconds): "));
+  gtk_widget_show (label10);
+  gtk_table_attach (GTK_TABLE (table1), label10, 0, 1, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label10), 0, 0.5);
+
+  board_check_delay_adj = gtk_adjustment_new (300, 10, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_table_attach (GTK_TABLE (table1), board_check_delay, 1, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label62 = gtk_label_new (_("Login"));
+  gtk_widget_show (label62);
+  gtk_table_attach (GTK_TABLE (table1), label62, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label62), 0, 0.5);
+
+  pop3_user = gtk_entry_new ();
+  gtk_widget_show (pop3_user);
+  gtk_table_attach (GTK_TABLE (table1), pop3_user, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label63 = gtk_label_new (_("Password"));
+  gtk_widget_show (label63);
+  gtk_table_attach (GTK_TABLE (table1), label63, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label63), 0, 0.5);
+
+  pop3_pass = gtk_entry_new ();
+  gtk_widget_show (pop3_pass);
+  gtk_table_attach (GTK_TABLE (table1), pop3_pass, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_entry_set_visibility (GTK_ENTRY (pop3_pass), FALSE);
+
+  label7 = gtk_label_new (_("Mail account information"));
+  gtk_widget_show (label7);
+  gtk_frame_set_label_widget (GTK_FRAME (frame2), label7);
+
+  dialog_action_area2 = GTK_DIALOG (new_pop_dialog)->action_area;
+  gtk_widget_show (dialog_action_area2);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area2), GTK_BUTTONBOX_END);
+
+  cancel_bt = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancel_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_pop_dialog), cancel_bt, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancel_bt, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_pop_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  ok_bt = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (ok_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_pop_dialog), ok_bt, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (ok_bt, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (new_pop_dialog, new_pop_dialog, "new_pop_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_pop_dialog, dialog_vbox2, "dialog_vbox2");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, vbox3, "vbox3");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, hbox13, "hbox13");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, image4, "image4");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, edit_options_bt, "edit_options_bt");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, alignment3, "alignment3");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, hbox14, "hbox14");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, image3, "image3");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label39, "label39");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, vbox4, "vbox4");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, frame1, "frame1");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, alignment2, "alignment2");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, hbox4, "hbox4");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label37, "label37");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, all_names_0_, "all_names_0_");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label36, "label36");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, pp_bgcolor, "pp_bgcolor");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label6, "label6");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, frame2, "frame2");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, table1, "table1");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label8, "label8");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, backend_url, "backend_url");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label10, "label10");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label62, "label62");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, pop3_user, "pop3_user");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label63, "label63");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, pop3_pass, "pop3_pass");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, label7, "label7");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_pop_dialog, dialog_action_area2, "dialog_action_area2");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, cancel_bt, "cancel_bt");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (new_pop_dialog, ok_bt, "ok_bt");
+  GLADE_HOOKUP_OBJECT_NO_REF (new_pop_dialog, tooltips, "tooltips");
+
+  return new_pop_dialog;
 }
 
 GtkWidget*
@@ -548,9 +1008,9 @@ create_colorselection_dialog (void)
 }
 
 GtkWidget*
-create_pinnipede_dialog (void)
+create_global_pinnipede_options_dialog (void)
 {
-  GtkWidget *pinnipede_dialog;
+  GtkWidget *global_pinnipede_options_dialog;
   GtkWidget *dialog_vbox3;
   GtkWidget *vbox5;
   GtkWidget *label15;
@@ -561,14 +1021,14 @@ create_pinnipede_dialog (void)
   GtkWidget *label19;
   GtkWidget *combo1;
   GList *combo1_items = NULL;
-  GtkWidget *fnfamily_comboentry;
+  GtkWidget *pp_fn_family;
   GtkWidget *label20;
-  GtkObject *fnsize_spinbutton_adj;
-  GtkWidget *fnsize_spinbutton;
+  GtkObject *pp_fn_size_adj;
+  GtkWidget *pp_fn_size;
   GtkWidget *label18;
   GtkWidget *hbox9;
-  GtkWidget *pp_auto_open;
-  GtkWidget *pp_auto_open_fb;
+  GtkWidget *pinnipede_open_on_start;
+  GtkWidget *pinnipede_open_on_start_fb;
   GtkWidget *hbox10;
   GtkWidget *pp_use_classical_tabs;
   GtkWidget *pp_use_classical_tabs_fb;
@@ -576,37 +1036,30 @@ create_pinnipede_dialog (void)
   GtkWidget *pp_use_colored_tabs;
   GtkWidget *pp_use_colored_tabs_fb;
   GtkWidget *hbox12;
-  GtkWidget *pp_hungry_boitakon;
-  GtkWidget *pp_hungry_boitakon_fb;
+  GtkWidget *hungry_boitakon;
+  GtkWidget *hungry_boitakon_fb;
   GtkWidget *hbox18;
-  GtkWidget *disable_aa;
-  GtkWidget *disable_aa_fb;
+  GtkWidget *disable_xft_antialiasing;
+  GtkWidget *disable_xft_antialiasing_fb;
+  GtkWidget *hbox23;
+  GtkWidget *auto_swallow;
+  GtkWidget *auto_swallow_fb;
   GtkWidget *label16;
-  GtkWidget *frame5;
-  GtkWidget *vbox7;
-  GtkWidget *hboxlkjjkl;
-  GtkWidget *mark_id_gaps_checkbutton;
-  GtkWidget *mark_id_gaps_checkbutton_fb;
-  GtkWidget *frame7;
-  GtkWidget *table3;
-  GtkWidget *bt_pp_bgcolor_fb;
-  GtkWidget *pp_bgcolor_bt;
-  GtkWidget *label25;
-  GtkWidget *label26;
-  GtkWidget *label27;
-  GtkWidget *label28;
-  GtkWidget *label29;
-  GtkWidget *label30;
-  GtkWidget *label31;
-  GtkWidget *pp_fgcolor_bt;
-  GtkWidget *pp_trollscore_color_bt;
-  GtkWidget *pp_login_color_bt;
-  GtkWidget *pp_useragent_color_bt;
-  GtkWidget *pp_tstamp_color_bt;
-  GtkWidget *pp_url_color_bt;
-  GtkWidget *pp_visited_url_color_bt;
-  GtkWidget *label23;
-  GtkWidget *label17;
+  GtkWidget *frame10;
+  GtkWidget *vbox17;
+  GtkWidget *table6;
+  GtkWidget *label81;
+  GtkWidget *label82;
+  GtkWidget *combo2;
+  GList *combo2_items = NULL;
+  GtkWidget *browser_cmd;
+  GtkWidget *combo3;
+  GList *combo3_items = NULL;
+  GtkWidget *browser2_cmd;
+  GtkWidget *browser_cmd_fb;
+  GtkWidget *browser2_cmd_fb;
+  GtkWidget *label85;
+  GtkWidget *label80;
   GtkWidget *dialog_action_area3;
   GtkWidget *cancel_bt;
   GtkWidget *apply_bt;
@@ -615,10 +1068,10 @@ create_pinnipede_dialog (void)
 
   tooltips = gtk_tooltips_new ();
 
-  pinnipede_dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (pinnipede_dialog), _("Change pinnipede settings"));
+  global_pinnipede_options_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (global_pinnipede_options_dialog), _("Change pinnipede settings"));
 
-  dialog_vbox3 = GTK_DIALOG (pinnipede_dialog)->vbox;
+  dialog_vbox3 = GTK_DIALOG (global_pinnipede_options_dialog)->vbox;
   gtk_widget_show (dialog_vbox3);
 
   vbox5 = gtk_vbox_new (FALSE, 2);
@@ -655,25 +1108,22 @@ create_pinnipede_dialog (void)
                      "GladeParentKey", combo1);
   gtk_widget_show (combo1);
   gtk_box_pack_start (GTK_BOX (hbox6), combo1, TRUE, TRUE, 0);
-  combo1_items = g_list_append (combo1_items, (gpointer) _("helvetica"));
+  combo1_items = g_list_append (combo1_items, (gpointer) _("sans"));
   combo1_items = g_list_append (combo1_items, (gpointer) _("verdana"));
-  combo1_items = g_list_append (combo1_items, (gpointer) _("courier"));
-  combo1_items = g_list_append (combo1_items, (gpointer) _("fixed"));
-  combo1_items = g_list_append (combo1_items, (gpointer) _("arial"));
   gtk_combo_set_popdown_strings (GTK_COMBO (combo1), combo1_items);
   g_list_free (combo1_items);
 
-  fnfamily_comboentry = GTK_COMBO (combo1)->entry;
-  gtk_widget_show (fnfamily_comboentry);
+  pp_fn_family = GTK_COMBO (combo1)->entry;
+  gtk_widget_show (pp_fn_family);
 
   label20 = gtk_label_new (_("Font size"));
   gtk_widget_show (label20);
   gtk_box_pack_start (GTK_BOX (hbox6), label20, FALSE, FALSE, 0);
 
-  fnsize_spinbutton_adj = gtk_adjustment_new (2, 0, 100, 1, 10, 10);
-  fnsize_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (fnsize_spinbutton_adj), 1, 0);
-  gtk_widget_show (fnsize_spinbutton);
-  gtk_box_pack_start (GTK_BOX (hbox6), fnsize_spinbutton, TRUE, TRUE, 0);
+  pp_fn_size_adj = gtk_adjustment_new (2, 0, 100, 1, 10, 10);
+  pp_fn_size = gtk_spin_button_new (GTK_ADJUSTMENT (pp_fn_size_adj), 1, 0);
+  gtk_widget_show (pp_fn_size);
+  gtk_box_pack_start (GTK_BOX (hbox6), pp_fn_size, TRUE, TRUE, 0);
 
   label18 = gtk_label_new (_("Font"));
   gtk_widget_show (label18);
@@ -683,14 +1133,14 @@ create_pinnipede_dialog (void)
   gtk_widget_show (hbox9);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox9, FALSE, FALSE, 0);
 
-  pp_auto_open = gtk_check_button_new_with_mnemonic (_("Auto-open on startup"));
-  gtk_widget_show (pp_auto_open);
-  gtk_box_pack_start (GTK_BOX (hbox9), pp_auto_open, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, pp_auto_open, _("The pinnipede window will show up as soon as wmcoincoin is started"), NULL);
+  pinnipede_open_on_start = gtk_check_button_new_with_mnemonic (_("Auto-open on startup"));
+  gtk_widget_show (pinnipede_open_on_start);
+  gtk_box_pack_start (GTK_BOX (hbox9), pinnipede_open_on_start, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, pinnipede_open_on_start, _("The pinnipede window will show up as soon as wmcoincoin is started"), NULL);
 
-  pp_auto_open_fb = gtk_label_new (_("label32"));
-  gtk_widget_show (pp_auto_open_fb);
-  gtk_box_pack_start (GTK_BOX (hbox9), pp_auto_open_fb, FALSE, FALSE, 0);
+  pinnipede_open_on_start_fb = gtk_label_new (_("label32"));
+  gtk_widget_show (pinnipede_open_on_start_fb);
+  gtk_box_pack_start (GTK_BOX (hbox9), pinnipede_open_on_start_fb, FALSE, FALSE, 0);
 
   hbox10 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox10);
@@ -722,266 +1172,222 @@ create_pinnipede_dialog (void)
   gtk_widget_show (hbox12);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox12, TRUE, TRUE, 0);
 
-  pp_hungry_boitakon = gtk_check_button_new_with_mnemonic (_("Very Hungry boitakon"));
-  gtk_widget_show (pp_hungry_boitakon);
-  gtk_box_pack_start (GTK_BOX (hbox12), pp_hungry_boitakon, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, pp_hungry_boitakon, _("If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled"), NULL);
+  hungry_boitakon = gtk_check_button_new_with_mnemonic (_("Very Hungry boitakon"));
+  gtk_widget_show (hungry_boitakon);
+  gtk_box_pack_start (GTK_BOX (hbox12), hungry_boitakon, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, hungry_boitakon, _("If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled"), NULL);
 
-  pp_hungry_boitakon_fb = gtk_label_new (_("label32"));
-  gtk_widget_show (pp_hungry_boitakon_fb);
-  gtk_box_pack_start (GTK_BOX (hbox12), pp_hungry_boitakon_fb, FALSE, FALSE, 0);
+  hungry_boitakon_fb = gtk_label_new (_("label32"));
+  gtk_widget_show (hungry_boitakon_fb);
+  gtk_box_pack_start (GTK_BOX (hbox12), hungry_boitakon_fb, FALSE, FALSE, 0);
 
   hbox18 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox18);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox18, TRUE, TRUE, 0);
 
-  disable_aa = gtk_check_button_new_with_mnemonic (_("Disable antialiasing"));
-  gtk_widget_show (disable_aa);
-  gtk_box_pack_start (GTK_BOX (hbox18), disable_aa, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, disable_aa, _("If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled"), NULL);
+  disable_xft_antialiasing = gtk_check_button_new_with_mnemonic (_("Disable antialiasing"));
+  gtk_widget_show (disable_xft_antialiasing);
+  gtk_box_pack_start (GTK_BOX (hbox18), disable_xft_antialiasing, FALSE, FALSE, 0);
 
-  disable_aa_fb = gtk_label_new (_("label32"));
-  gtk_widget_show (disable_aa_fb);
-  gtk_box_pack_start (GTK_BOX (hbox18), disable_aa_fb, FALSE, FALSE, 0);
+  disable_xft_antialiasing_fb = gtk_label_new (_("label32"));
+  gtk_widget_show (disable_xft_antialiasing_fb);
+  gtk_box_pack_start (GTK_BOX (hbox18), disable_xft_antialiasing_fb, FALSE, FALSE, 0);
 
-  label16 = gtk_label_new (_("Global settings"));
+  hbox23 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox23);
+  gtk_box_pack_start (GTK_BOX (vbox6), hbox23, TRUE, TRUE, 0);
+
+  auto_swallow = gtk_check_button_new_with_mnemonic (_("Auto-swallow"));
+  gtk_widget_show (auto_swallow);
+  gtk_box_pack_start (GTK_BOX (hbox23), auto_swallow, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, auto_swallow, _("When enabled, the 64x64 dockapp will be embedded into the pinnipede"), NULL);
+
+  auto_swallow_fb = gtk_label_new (_("label32"));
+  gtk_widget_show (auto_swallow_fb);
+  gtk_box_pack_start (GTK_BOX (hbox23), auto_swallow_fb, FALSE, FALSE, 0);
+
+  label16 = gtk_label_new (_("<b>Global settings</b>"));
   gtk_widget_show (label16);
   gtk_frame_set_label_widget (GTK_FRAME (frame4), label16);
+  gtk_label_set_use_markup (GTK_LABEL (label16), TRUE);
 
-  frame5 = gtk_frame_new (NULL);
-  gtk_widget_show (frame5);
-  gtk_box_pack_start (GTK_BOX (vbox5), frame5, TRUE, TRUE, 0);
+  frame10 = gtk_frame_new (NULL);
+  gtk_widget_show (frame10);
+  gtk_box_pack_start (GTK_BOX (vbox5), frame10, TRUE, TRUE, 0);
 
-  vbox7 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox7);
-  gtk_container_add (GTK_CONTAINER (frame5), vbox7);
+  vbox17 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox17);
+  gtk_container_add (GTK_CONTAINER (frame10), vbox17);
 
-  hboxlkjjkl = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hboxlkjjkl);
-  gtk_box_pack_start (GTK_BOX (vbox7), hboxlkjjkl, FALSE, FALSE, 0);
+  table6 = gtk_table_new (2, 3, FALSE);
+  gtk_widget_show (table6);
+  gtk_box_pack_start (GTK_BOX (vbox17), table6, FALSE, TRUE, 0);
 
-  mark_id_gaps_checkbutton = gtk_check_button_new_with_mnemonic (_("View id gaps (red dotted line)"));
-  gtk_widget_show (mark_id_gaps_checkbutton);
-  gtk_box_pack_start (GTK_BOX (hboxlkjjkl), mark_id_gaps_checkbutton, FALSE, FALSE, 0);
-
-  mark_id_gaps_checkbutton_fb = gtk_label_new (_("xx"));
-  gtk_widget_show (mark_id_gaps_checkbutton_fb);
-  gtk_box_pack_start (GTK_BOX (hboxlkjjkl), mark_id_gaps_checkbutton_fb, FALSE, FALSE, 0);
-
-  frame7 = gtk_frame_new (NULL);
-  gtk_widget_show (frame7);
-  gtk_box_pack_start (GTK_BOX (vbox7), frame7, TRUE, TRUE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (frame7), 2);
-
-  table3 = gtk_table_new (3, 6, FALSE);
-  gtk_widget_show (table3);
-  gtk_container_add (GTK_CONTAINER (frame7), table3);
-  gtk_table_set_col_spacings (GTK_TABLE (table3), 5);
-
-  bt_pp_bgcolor_fb = gtk_label_new (_("Background color"));
-  gtk_widget_show (bt_pp_bgcolor_fb);
-  gtk_table_attach (GTK_TABLE (table3), bt_pp_bgcolor_fb, 0, 1, 0, 1,
+  label81 = gtk_label_new (_("Main Browser"));
+  gtk_widget_show (label81);
+  gtk_table_attach (GTK_TABLE (table6), label81, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (bt_pp_bgcolor_fb), 0, 0.5);
+  gtk_misc_set_alignment (GTK_MISC (label81), 0, 0.5);
 
-  pp_bgcolor_bt = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
-  gtk_widget_show (pp_bgcolor_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_bgcolor_bt, 1, 2, 0, 1,
+  label82 = gtk_label_new (_("Secondary Browser"));
+  gtk_widget_show (label82);
+  gtk_table_attach (GTK_TABLE (table6), label82, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label82), 0, 0.5);
 
-  label25 = gtk_label_new (_("Text foreground"));
-  gtk_widget_show (label25);
-  gtk_table_attach (GTK_TABLE (table3), label25, 0, 1, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
+  combo2 = gtk_combo_new ();
+  g_object_set_data (G_OBJECT (GTK_COMBO (combo2)->popwin),
+                     "GladeParentKey", combo2);
+  gtk_widget_show (combo2);
+  gtk_table_attach (GTK_TABLE (table6), combo2, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label25), 0, 0.5);
+  combo2_items = g_list_append (combo2_items, (gpointer) _("galeon -n %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("konqueror %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("netscape -remote openurl\\(%s\\) &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla -remote openurl\\(%s,new-tab\\) &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("opera %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("xterm -fn 6x10 -bg white -fg black -geometry 120x70 -e w3m %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("links -g %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("dillo %s &"));
+  gtk_combo_set_popdown_strings (GTK_COMBO (combo2), combo2_items);
+  g_list_free (combo2_items);
 
-  label26 = gtk_label_new (_("Logins"));
-  gtk_widget_show (label26);
-  gtk_table_attach (GTK_TABLE (table3), label26, 2, 3, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
+  browser_cmd = GTK_COMBO (combo2)->entry;
+  gtk_widget_show (browser_cmd);
+  gtk_widget_set_size_request (browser_cmd, 500, -1);
+  gtk_entry_set_text (GTK_ENTRY (browser_cmd), _("galeon -n %s &"));
+
+  combo3 = gtk_combo_new ();
+  g_object_set_data (G_OBJECT (GTK_COMBO (combo3)->popwin),
+                     "GladeParentKey", combo3);
+  gtk_widget_show (combo3);
+  gtk_table_attach (GTK_TABLE (table6), combo3, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label26), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (label26), 0, 0.5);
+  combo3_items = g_list_append (combo3_items, (gpointer) _("galeon -n %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("konqueror %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("netscape -remote openurl\\(%s\\) &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("mozilla %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("mozilla -remote openurl\\(%s,new-tab\\) &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("opera %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("xterm -fn 6x10 -bg white -fg black -geometry 120x70 -e w3m %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("links -g %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("dillo %s &"));
+  gtk_combo_set_popdown_strings (GTK_COMBO (combo3), combo3_items);
+  g_list_free (combo3_items);
 
-  label27 = gtk_label_new (_("Useragents"));
-  gtk_widget_show (label27);
-  gtk_table_attach (GTK_TABLE (table3), label27, 2, 3, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label27), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (label27), 0, 0.5);
+  browser2_cmd = GTK_COMBO (combo3)->entry;
+  gtk_widget_show (browser2_cmd);
+  gtk_entry_set_text (GTK_ENTRY (browser2_cmd), _("galeon -n %s &"));
 
-  label28 = gtk_label_new (_("Urls"));
-  gtk_widget_show (label28);
-  gtk_table_attach (GTK_TABLE (table3), label28, 4, 5, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label28), 0, 0.5);
+  browser_cmd_fb = gtk_label_new (_("label83"));
+  gtk_widget_show (browser_cmd_fb);
+  gtk_table_attach (GTK_TABLE (table6), browser_cmd_fb, 2, 3, 0, 1,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 1, 0);
+  gtk_widget_set_size_request (browser_cmd_fb, 80, -1);
+  gtk_label_set_justify (GTK_LABEL (browser_cmd_fb), GTK_JUSTIFY_CENTER);
+  gtk_misc_set_alignment (GTK_MISC (browser_cmd_fb), 0, 0.5);
 
-  label29 = gtk_label_new (_("Visited Urls"));
-  gtk_widget_show (label29);
-  gtk_table_attach (GTK_TABLE (table3), label29, 4, 5, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label29), 0, 0.5);
+  browser2_cmd_fb = gtk_label_new (_("label84"));
+  gtk_widget_show (browser2_cmd_fb);
+  gtk_table_attach (GTK_TABLE (table6), browser2_cmd_fb, 2, 3, 1, 2,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 1, 0);
+  gtk_widget_set_size_request (browser2_cmd_fb, 80, -1);
+  gtk_label_set_justify (GTK_LABEL (browser2_cmd_fb), GTK_JUSTIFY_CENTER);
+  gtk_misc_set_alignment (GTK_MISC (browser2_cmd_fb), 0, 0.5);
 
-  label30 = gtk_label_new (_("Clocks"));
-  gtk_widget_show (label30);
-  gtk_table_attach (GTK_TABLE (table3), label30, 2, 3, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_label_set_justify (GTK_LABEL (label30), GTK_JUSTIFY_RIGHT);
-  gtk_misc_set_alignment (GTK_MISC (label30), 0, 0.5);
+  label85 = gtk_label_new (_("<span size=\"x-small\">These options allows you to launch an external browser from wmcoincoin, this is used for reading the news, the comments detected by the flamophone, the personnal messages, the [url]s of the pinnipede teletype.\n<b>be careful</b>: this kind of 'external' command might be a great source of vulnerability since the urls can contain ANY caracter (think of 'http://plop.org; reboot' ..\nFor this reason, dangerous caracter are carefully escapped by wmcc before calling the external browser\nBy default, no browser is selected. \nIn the command, the <b>%s</b> is remplaced by the <b>escaped URL</b>. <u>Do not quote it</u>, or your browser will have problems to read urls containg character such as '&amp;', '$' etc. Do not forget to put an '&amp;' at the end of the command line or wmcc will freeze until the browser is closed.</span>"));
+  gtk_widget_show (label85);
+  gtk_box_pack_start (GTK_BOX (vbox17), label85, FALSE, FALSE, 0);
+  gtk_label_set_use_markup (GTK_LABEL (label85), TRUE);
+  gtk_label_set_line_wrap (GTK_LABEL (label85), TRUE);
 
-  label31 = gtk_label_new (_("Troll score"));
-  gtk_widget_show (label31);
-  gtk_table_attach (GTK_TABLE (table3), label31, 0, 1, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label31), 0, 0.5);
+  label80 = gtk_label_new (_("<b>Browser Interaction</b>"));
+  gtk_widget_show (label80);
+  gtk_frame_set_label_widget (GTK_FRAME (frame10), label80);
+  gtk_label_set_use_markup (GTK_LABEL (label80), TRUE);
 
-  pp_fgcolor_bt = gtk_button_new_with_mnemonic (_("button4"));
-  gtk_widget_show (pp_fgcolor_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_fgcolor_bt, 1, 2, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_trollscore_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_trollscore_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_trollscore_color_bt, 1, 2, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_login_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_login_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_login_color_bt, 3, 4, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_useragent_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_useragent_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_useragent_color_bt, 3, 4, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_tstamp_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_tstamp_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_tstamp_color_bt, 3, 4, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_url_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_url_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_url_color_bt, 5, 6, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  pp_visited_url_color_bt = gtk_button_new_with_mnemonic (_("button5"));
-  gtk_widget_show (pp_visited_url_color_bt);
-  gtk_table_attach (GTK_TABLE (table3), pp_visited_url_color_bt, 5, 6, 1, 2,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-  label23 = gtk_label_new (_("Various colors"));
-  gtk_widget_show (label23);
-  gtk_frame_set_label_widget (GTK_FRAME (frame7), label23);
-
-  label17 = gtk_label_new (_("Settings applied to sites"));
-  gtk_widget_show (label17);
-  gtk_frame_set_label_widget (GTK_FRAME (frame5), label17);
-
-  dialog_action_area3 = GTK_DIALOG (pinnipede_dialog)->action_area;
+  dialog_action_area3 = GTK_DIALOG (global_pinnipede_options_dialog)->action_area;
   gtk_widget_show (dialog_action_area3);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
 
   cancel_bt = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancel_bt);
-  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_dialog), cancel_bt, GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_action_widget (GTK_DIALOG (global_pinnipede_options_dialog), cancel_bt, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancel_bt, GTK_CAN_DEFAULT);
 
   apply_bt = gtk_button_new_from_stock ("gtk-apply");
   gtk_widget_show (apply_bt);
-  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  gtk_dialog_add_action_widget (GTK_DIALOG (global_pinnipede_options_dialog), apply_bt, GTK_RESPONSE_APPLY);
   GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
 
   ok_bt = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (ok_bt);
-  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_dialog), ok_bt, GTK_RESPONSE_OK);
+  gtk_dialog_add_action_widget (GTK_DIALOG (global_pinnipede_options_dialog), ok_bt, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (ok_bt, GTK_CAN_DEFAULT);
 
-  g_signal_connect ((gpointer) mark_id_gaps_checkbutton, "toggled",
-                    G_CALLBACK (on_mark_id_gaps_checkbutton_toggled),
-                    NULL);
-  g_signal_connect_swapped ((gpointer) cancel_bt, "clicked",
-                            G_CALLBACK (gtk_widget_hide),
-                            GTK_OBJECT (pinnipede_dialog));
-
   /* Store pointers to all widgets, for use by lookup_widget(). */
-  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_dialog, pinnipede_dialog, "pinnipede_dialog");
-  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_dialog, dialog_vbox3, "dialog_vbox3");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, vbox5, "vbox5");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label15, "label15");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, frame4, "frame4");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, vbox6, "vbox6");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, frame6, "frame6");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox6, "hbox6");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label19, "label19");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, combo1, "combo1");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, fnfamily_comboentry, "fnfamily_comboentry");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label20, "label20");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, fnsize_spinbutton, "fnsize_spinbutton");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label18, "label18");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox9, "hbox9");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_auto_open, "pp_auto_open");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_auto_open_fb, "pp_auto_open_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox10, "hbox10");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_use_classical_tabs, "pp_use_classical_tabs");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_use_classical_tabs_fb, "pp_use_classical_tabs_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox11, "hbox11");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_use_colored_tabs, "pp_use_colored_tabs");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_use_colored_tabs_fb, "pp_use_colored_tabs_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox12, "hbox12");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_hungry_boitakon, "pp_hungry_boitakon");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_hungry_boitakon_fb, "pp_hungry_boitakon_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox18, "hbox18");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, disable_aa, "disable_aa");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, disable_aa_fb, "disable_aa_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label16, "label16");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, frame5, "frame5");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, vbox7, "vbox7");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hboxlkjjkl, "hboxlkjjkl");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, mark_id_gaps_checkbutton, "mark_id_gaps_checkbutton");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, mark_id_gaps_checkbutton_fb, "mark_id_gaps_checkbutton_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, frame7, "frame7");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, table3, "table3");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, bt_pp_bgcolor_fb, "bt_pp_bgcolor_fb");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_bgcolor_bt, "pp_bgcolor_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label25, "label25");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label26, "label26");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label27, "label27");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label28, "label28");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label29, "label29");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label30, "label30");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label31, "label31");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_fgcolor_bt, "pp_fgcolor_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_trollscore_color_bt, "pp_trollscore_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_login_color_bt, "pp_login_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_useragent_color_bt, "pp_useragent_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_tstamp_color_bt, "pp_tstamp_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_url_color_bt, "pp_url_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_visited_url_color_bt, "pp_visited_url_color_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label23, "label23");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, label17, "label17");
-  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_dialog, dialog_action_area3, "dialog_action_area3");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, cancel_bt, "cancel_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, apply_bt, "apply_bt");
-  GLADE_HOOKUP_OBJECT (pinnipede_dialog, ok_bt, "ok_bt");
-  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_dialog, tooltips, "tooltips");
+  GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, global_pinnipede_options_dialog, "global_pinnipede_options_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, dialog_vbox3, "dialog_vbox3");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox5, "vbox5");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label15, "label15");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, frame4, "frame4");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox6, "vbox6");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, frame6, "frame6");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox6, "hbox6");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label19, "label19");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, combo1, "combo1");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_fn_family, "pp_fn_family");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label20, "label20");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_fn_size, "pp_fn_size");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label18, "label18");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox9, "hbox9");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pinnipede_open_on_start, "pinnipede_open_on_start");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pinnipede_open_on_start_fb, "pinnipede_open_on_start_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox10, "hbox10");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_use_classical_tabs, "pp_use_classical_tabs");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_use_classical_tabs_fb, "pp_use_classical_tabs_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox11, "hbox11");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_use_colored_tabs, "pp_use_colored_tabs");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_use_colored_tabs_fb, "pp_use_colored_tabs_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox12, "hbox12");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hungry_boitakon, "hungry_boitakon");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hungry_boitakon_fb, "hungry_boitakon_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox18, "hbox18");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, disable_xft_antialiasing, "disable_xft_antialiasing");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, disable_xft_antialiasing_fb, "disable_xft_antialiasing_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox23, "hbox23");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, auto_swallow, "auto_swallow");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, auto_swallow_fb, "auto_swallow_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label16, "label16");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, frame10, "frame10");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox17, "vbox17");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, table6, "table6");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label81, "label81");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label82, "label82");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, combo2, "combo2");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser_cmd, "browser_cmd");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, combo3, "combo3");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser2_cmd, "browser2_cmd");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser_cmd_fb, "browser_cmd_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser2_cmd_fb, "browser2_cmd_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label85, "label85");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label80, "label80");
+  GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, dialog_action_area3, "dialog_action_area3");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, cancel_bt, "cancel_bt");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, ok_bt, "ok_bt");
+  GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, tooltips, "tooltips");
 
-  return pinnipede_dialog;
+  return global_pinnipede_options_dialog;
 }
 
 GtkWidget*
@@ -997,6 +1403,9 @@ create_edit_dialog (void)
   GtkWidget *cancel_bt;
   GtkWidget *apply_bt;
   GtkWidget *ok_bt;
+  GtkTooltips *tooltips;
+
+  tooltips = gtk_tooltips_new ();
 
   edit_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (edit_dialog), _("Options edit"));
@@ -1036,11 +1445,13 @@ create_edit_dialog (void)
   gtk_widget_show (apply_bt);
   gtk_dialog_add_action_widget (GTK_DIALOG (edit_dialog), apply_bt, GTK_RESPONSE_APPLY);
   GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+  gtk_tooltips_set_tip (tooltips, apply_bt, _("Apply changes to wmcoincoin but do not save them"), NULL);
 
-  ok_bt = gtk_button_new_from_stock ("gtk-ok");
+  ok_bt = gtk_button_new_from_stock ("gtk-save");
   gtk_widget_show (ok_bt);
   gtk_dialog_add_action_widget (GTK_DIALOG (edit_dialog), ok_bt, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (ok_bt, GTK_CAN_DEFAULT);
+  gtk_tooltips_set_tip (tooltips, ok_bt, _("Save changes to the options file, but do not apply them"), NULL);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (edit_dialog, edit_dialog, "edit_dialog");
@@ -1053,6 +1464,7 @@ create_edit_dialog (void)
   GLADE_HOOKUP_OBJECT (edit_dialog, cancel_bt, "cancel_bt");
   GLADE_HOOKUP_OBJECT (edit_dialog, apply_bt, "apply_bt");
   GLADE_HOOKUP_OBJECT (edit_dialog, ok_bt, "ok_bt");
+  GLADE_HOOKUP_OBJECT_NO_REF (edit_dialog, tooltips, "tooltips");
 
   return edit_dialog;
 }
@@ -1071,8 +1483,25 @@ create_bronson_wizard (void)
   GtkWidget *label41;
   GtkWidget *vbox11;
   GtkWidget *wizard_new_board_bt;
+  GtkWidget *alignment8;
+  GtkWidget *hbox28;
+  GtkWidget *image11;
+  GtkWidget *label77;
   GtkWidget *wizard_new_feed_bt;
-  GtkWidget *wizard_edit_options_bt;
+  GtkWidget *alignment7;
+  GtkWidget *hbox27;
+  GtkWidget *image10;
+  GtkWidget *label76;
+  GtkWidget *wizard_new_pop_bt;
+  GtkWidget *alignment6;
+  GtkWidget *hbox26;
+  GtkWidget *image9;
+  GtkWidget *label75;
+  GtkWidget *edit_options_bt;
+  GtkWidget *alignment5;
+  GtkWidget *hbox25;
+  GtkWidget *image8;
+  GtkWidget *label74;
   GtkWidget *dialog_action_area5;
   GtkWidget *button2;
 
@@ -1115,30 +1544,94 @@ create_bronson_wizard (void)
   gtk_widget_show (vbox11);
   gtk_box_pack_start (GTK_BOX (hbox16), vbox11, FALSE, FALSE, 23);
 
-  wizard_new_board_bt = gtk_button_new_with_mnemonic (_("I want to add a new board"));
+  wizard_new_board_bt = gtk_button_new ();
   gtk_widget_show (wizard_new_board_bt);
   gtk_box_pack_start (GTK_BOX (vbox11), wizard_new_board_bt, FALSE, FALSE, 0);
 
-  wizard_new_feed_bt = gtk_button_new_with_mnemonic (_("I want to add a new RSS feed"));
+  alignment8 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment8);
+  gtk_container_add (GTK_CONTAINER (wizard_new_board_bt), alignment8);
+
+  hbox28 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox28);
+  gtk_container_add (GTK_CONTAINER (alignment8), hbox28);
+
+  image11 = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image11);
+  gtk_box_pack_start (GTK_BOX (hbox28), image11, FALSE, FALSE, 0);
+
+  label77 = gtk_label_new_with_mnemonic (_("I want to add a new board"));
+  gtk_widget_show (label77);
+  gtk_box_pack_start (GTK_BOX (hbox28), label77, FALSE, FALSE, 0);
+
+  wizard_new_feed_bt = gtk_button_new ();
   gtk_widget_show (wizard_new_feed_bt);
   gtk_box_pack_start (GTK_BOX (vbox11), wizard_new_feed_bt, FALSE, FALSE, 0);
 
-  wizard_edit_options_bt = gtk_button_new_with_mnemonic (_("I want to edit the options"));
-  gtk_widget_show (wizard_edit_options_bt);
-  gtk_box_pack_start (GTK_BOX (vbox11), wizard_edit_options_bt, FALSE, FALSE, 0);
+  alignment7 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment7);
+  gtk_container_add (GTK_CONTAINER (wizard_new_feed_bt), alignment7);
+
+  hbox27 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox27);
+  gtk_container_add (GTK_CONTAINER (alignment7), hbox27);
+
+  image10 = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image10);
+  gtk_box_pack_start (GTK_BOX (hbox27), image10, FALSE, FALSE, 0);
+
+  label76 = gtk_label_new_with_mnemonic (_("I want to add a new RSS feed"));
+  gtk_widget_show (label76);
+  gtk_box_pack_start (GTK_BOX (hbox27), label76, FALSE, FALSE, 0);
+
+  wizard_new_pop_bt = gtk_button_new ();
+  gtk_widget_show (wizard_new_pop_bt);
+  gtk_box_pack_start (GTK_BOX (vbox11), wizard_new_pop_bt, FALSE, FALSE, 0);
+
+  alignment6 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment6);
+  gtk_container_add (GTK_CONTAINER (wizard_new_pop_bt), alignment6);
+
+  hbox26 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox26);
+  gtk_container_add (GTK_CONTAINER (alignment6), hbox26);
+
+  image9 = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image9);
+  gtk_box_pack_start (GTK_BOX (hbox26), image9, FALSE, FALSE, 0);
+
+  label75 = gtk_label_new_with_mnemonic (_("I want to add a new POP3 account"));
+  gtk_widget_show (label75);
+  gtk_box_pack_start (GTK_BOX (hbox26), label75, FALSE, FALSE, 0);
+
+  edit_options_bt = gtk_button_new ();
+  gtk_widget_show (edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (vbox11), edit_options_bt, FALSE, FALSE, 0);
+
+  alignment5 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment5);
+  gtk_container_add (GTK_CONTAINER (edit_options_bt), alignment5);
+
+  hbox25 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox25);
+  gtk_container_add (GTK_CONTAINER (alignment5), hbox25);
+
+  image8 = gtk_image_new_from_stock ("gtk-convert", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image8);
+  gtk_box_pack_start (GTK_BOX (hbox25), image8, FALSE, FALSE, 0);
+
+  label74 = gtk_label_new_with_mnemonic (_("I want to edit the options"));
+  gtk_widget_show (label74);
+  gtk_box_pack_start (GTK_BOX (hbox25), label74, FALSE, FALSE, 0);
 
   dialog_action_area5 = GTK_DIALOG (bronson_wizard)->action_area;
   gtk_widget_show (dialog_action_area5);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area5), GTK_BUTTONBOX_END);
 
-  button2 = gtk_button_new_from_stock ("gtk-quit");
+  button2 = gtk_button_new_from_stock ("gtk-close");
   gtk_widget_show (button2);
-  gtk_dialog_add_action_widget (GTK_DIALOG (bronson_wizard), button2, 0);
+  gtk_dialog_add_action_widget (GTK_DIALOG (bronson_wizard), button2, GTK_RESPONSE_CLOSE);
   GTK_WIDGET_SET_FLAGS (button2, GTK_CAN_DEFAULT);
-
-  g_signal_connect ((gpointer) button2, "clicked",
-                    G_CALLBACK (gtk_main_quit),
-                    NULL);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (bronson_wizard, bronson_wizard, "bronson_wizard");
@@ -1152,26 +1645,29 @@ create_bronson_wizard (void)
   GLADE_HOOKUP_OBJECT (bronson_wizard, label41, "label41");
   GLADE_HOOKUP_OBJECT (bronson_wizard, vbox11, "vbox11");
   GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_new_board_bt, "wizard_new_board_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, alignment8, "alignment8");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, hbox28, "hbox28");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, image11, "image11");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, label77, "label77");
   GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_new_feed_bt, "wizard_new_feed_bt");
-  GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_edit_options_bt, "wizard_edit_options_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, alignment7, "alignment7");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, hbox27, "hbox27");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, image10, "image10");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, label76, "label76");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, wizard_new_pop_bt, "wizard_new_pop_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, alignment6, "alignment6");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, hbox26, "hbox26");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, image9, "image9");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, label75, "label75");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, edit_options_bt, "edit_options_bt");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, alignment5, "alignment5");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, hbox25, "hbox25");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, image8, "image8");
+  GLADE_HOOKUP_OBJECT (bronson_wizard, label74, "label74");
   GLADE_HOOKUP_OBJECT_NO_REF (bronson_wizard, dialog_action_area5, "dialog_action_area5");
   GLADE_HOOKUP_OBJECT (bronson_wizard, button2, "button2");
 
   return bronson_wizard;
-}
-
-GtkWidget*
-create_window1 (void)
-{
-  GtkWidget *window1;
-
-  window1 = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title (GTK_WINDOW (window1), _("window1"));
-
-  /* Store pointers to all widgets, for use by lookup_widget(). */
-  GLADE_HOOKUP_OBJECT_NO_REF (window1, window1, "window1");
-
-  return window1;
 }
 
 GtkWidget*
@@ -1181,6 +1677,8 @@ create_sitelist_dialog (void)
   GtkWidget *dialog_vbox7;
   GtkWidget *vbox12;
   GtkWidget *hseparator2;
+  GtkWidget *title_lbl;
+  GtkWidget *label71;
   GtkWidget *hbox17;
   GtkWidget *vseparator2;
   GtkWidget *scrolledwindow4;
@@ -1188,14 +1686,25 @@ create_sitelist_dialog (void)
   GtkWidget *vseparator1;
   GtkWidget *vbox13;
   GtkWidget *edit_bt;
+  GtkWidget *colors_bt;
   GtkWidget *remove_bt;
-  GtkWidget *button8;
+  GtkWidget *image6;
+  GtkWidget *new_site_bt;
+  GtkWidget *pinnipede_settings_bt;
+  GtkWidget *edit_options_bt;
+  GtkWidget *alignment4;
+  GtkWidget *hbox24;
+  GtkWidget *image7;
+  GtkWidget *label73;
   GtkWidget *hseparator3;
   GtkWidget *dialog_action_area7;
-  GtkWidget *closebutton1;
+  GtkWidget *cancel_bt;
+  GtkWidget *apply_bt;
+  GtkWidget *save_bt;
 
   sitelist_dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (sitelist_dialog), _("dialog2"));
+  gtk_window_set_title (GTK_WINDOW (sitelist_dialog), _("WMCCC"));
+  gtk_window_set_position (GTK_WINDOW (sitelist_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_default_size (GTK_WINDOW (sitelist_dialog), 640, 460);
 
   dialog_vbox7 = GTK_DIALOG (sitelist_dialog)->vbox;
@@ -1209,6 +1718,16 @@ create_sitelist_dialog (void)
   gtk_widget_show (hseparator2);
   gtk_box_pack_start (GTK_BOX (vbox12), hseparator2, FALSE, FALSE, 0);
 
+  title_lbl = gtk_label_new (_("Editing options file:"));
+  gtk_widget_show (title_lbl);
+  gtk_box_pack_start (GTK_BOX (vbox12), title_lbl, FALSE, FALSE, 0);
+  gtk_label_set_use_markup (GTK_LABEL (title_lbl), TRUE);
+
+  label71 = gtk_label_new (_("<span size=\"small\"><b>PLEASE DO A SAUVEGARDE OF YOUR OPTIONS IT IS TOUT A FAIT POSSIBLE \nTHAT THE NEW WMCCC FUCK YOUR OPTIONS,\nYOU HAVE BEEN WARNED</b></span>"));
+  gtk_widget_show (label71);
+  gtk_box_pack_start (GTK_BOX (vbox12), label71, FALSE, FALSE, 0);
+  gtk_label_set_use_markup (GTK_LABEL (label71), TRUE);
+
   hbox17 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox17);
   gtk_box_pack_start (GTK_BOX (vbox12), hbox17, TRUE, TRUE, 0);
@@ -1220,7 +1739,7 @@ create_sitelist_dialog (void)
   scrolledwindow4 = gtk_scrolled_window_new (NULL, NULL);
   gtk_widget_show (scrolledwindow4);
   gtk_box_pack_start (GTK_BOX (hbox17), scrolledwindow4, TRUE, TRUE, 0);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow4), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow4), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
   treeview = gtk_tree_view_new ();
   gtk_widget_show (treeview);
@@ -1234,17 +1753,49 @@ create_sitelist_dialog (void)
   gtk_widget_show (vbox13);
   gtk_box_pack_start (GTK_BOX (hbox17), vbox13, FALSE, FALSE, 0);
 
-  edit_bt = gtk_button_new_with_mnemonic (_("edit the selected sites"));
+  edit_bt = gtk_button_new_with_mnemonic (_("Edit the \nselected sites"));
   gtk_widget_show (edit_bt);
   gtk_box_pack_start (GTK_BOX (vbox13), edit_bt, FALSE, FALSE, 0);
 
-  remove_bt = gtk_button_new_with_mnemonic (_("remove the selected sites"));
+  colors_bt = gtk_button_new_with_mnemonic (_("Change colors for\n selected sites"));
+  gtk_widget_show (colors_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), colors_bt, FALSE, FALSE, 0);
+
+  remove_bt = gtk_button_new_with_mnemonic (_("Remove the\n selected sites"));
   gtk_widget_show (remove_bt);
   gtk_box_pack_start (GTK_BOX (vbox13), remove_bt, FALSE, FALSE, 0);
 
-  button8 = gtk_button_new_with_mnemonic (_("New site"));
-  gtk_widget_show (button8);
-  gtk_box_pack_start (GTK_BOX (vbox13), button8, FALSE, FALSE, 0);
+  image6 = create_pixmap (sitelist_dialog, "logo.xpm");
+  gtk_widget_show (image6);
+  gtk_box_pack_start (GTK_BOX (vbox13), image6, TRUE, TRUE, 0);
+
+  new_site_bt = gtk_button_new_with_mnemonic (_("Insert a new site"));
+  gtk_widget_show (new_site_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), new_site_bt, FALSE, FALSE, 0);
+
+  pinnipede_settings_bt = gtk_button_new_with_mnemonic (_("Pinnipede Settings"));
+  gtk_widget_show (pinnipede_settings_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), pinnipede_settings_bt, FALSE, FALSE, 0);
+
+  edit_options_bt = gtk_button_new ();
+  gtk_widget_show (edit_options_bt);
+  gtk_box_pack_start (GTK_BOX (vbox13), edit_options_bt, FALSE, FALSE, 0);
+
+  alignment4 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment4);
+  gtk_container_add (GTK_CONTAINER (edit_options_bt), alignment4);
+
+  hbox24 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox24);
+  gtk_container_add (GTK_CONTAINER (alignment4), hbox24);
+
+  image7 = gtk_image_new_from_stock ("gtk-convert", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image7);
+  gtk_box_pack_start (GTK_BOX (hbox24), image7, FALSE, FALSE, 0);
+
+  label73 = gtk_label_new_with_mnemonic (_("Do It Yourself"));
+  gtk_widget_show (label73);
+  gtk_box_pack_start (GTK_BOX (hbox24), label73, FALSE, FALSE, 0);
 
   hseparator3 = gtk_hseparator_new ();
   gtk_widget_show (hseparator3);
@@ -1254,16 +1805,28 @@ create_sitelist_dialog (void)
   gtk_widget_show (dialog_action_area7);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area7), GTK_BUTTONBOX_END);
 
-  closebutton1 = gtk_button_new_from_stock ("gtk-close");
-  gtk_widget_show (closebutton1);
-  gtk_dialog_add_action_widget (GTK_DIALOG (sitelist_dialog), closebutton1, GTK_RESPONSE_CLOSE);
-  GTK_WIDGET_SET_FLAGS (closebutton1, GTK_CAN_DEFAULT);
+  cancel_bt = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancel_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (sitelist_dialog), cancel_bt, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancel_bt, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (sitelist_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  save_bt = gtk_button_new_from_stock ("gtk-save");
+  gtk_widget_show (save_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (sitelist_dialog), save_bt, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (save_bt, GTK_CAN_DEFAULT);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, sitelist_dialog, "sitelist_dialog");
   GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, dialog_vbox7, "dialog_vbox7");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, vbox12, "vbox12");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, hseparator2, "hseparator2");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, title_lbl, "title_lbl");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, label71, "label71");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, hbox17, "hbox17");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, vseparator2, "vseparator2");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, scrolledwindow4, "scrolledwindow4");
@@ -1271,12 +1834,1085 @@ create_sitelist_dialog (void)
   GLADE_HOOKUP_OBJECT (sitelist_dialog, vseparator1, "vseparator1");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, vbox13, "vbox13");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, edit_bt, "edit_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, colors_bt, "colors_bt");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, remove_bt, "remove_bt");
-  GLADE_HOOKUP_OBJECT (sitelist_dialog, button8, "button8");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, image6, "image6");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, new_site_bt, "new_site_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, pinnipede_settings_bt, "pinnipede_settings_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, edit_options_bt, "edit_options_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, alignment4, "alignment4");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, hbox24, "hbox24");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, image7, "image7");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, label73, "label73");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, hseparator3, "hseparator3");
   GLADE_HOOKUP_OBJECT_NO_REF (sitelist_dialog, dialog_action_area7, "dialog_action_area7");
-  GLADE_HOOKUP_OBJECT (sitelist_dialog, closebutton1, "closebutton1");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, cancel_bt, "cancel_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, save_bt, "save_bt");
 
   return sitelist_dialog;
+}
+
+GtkWidget*
+create_pinnipede_site_colors_dialog (void)
+{
+  GtkWidget *pinnipede_site_colors_dialog;
+  GtkWidget *dialog_vbox9;
+  GtkWidget *frame8;
+  GtkWidget *vbox14;
+  GtkWidget *blah;
+  GtkWidget *mark_id_gaps;
+  GtkWidget *mark_id_gaps_fb;
+  GtkWidget *frame9;
+  GtkWidget *table4;
+  GtkWidget *label43;
+  GtkWidget *pp_bgcolor;
+  GtkWidget *label44;
+  GtkWidget *label45;
+  GtkWidget *label46;
+  GtkWidget *label47;
+  GtkWidget *label48;
+  GtkWidget *label49;
+  GtkWidget *label50;
+  GtkWidget *pp_fgcolor_opaque;
+  GtkWidget *pp_trollscore_color_opaque;
+  GtkWidget *pp_login_color_opaque;
+  GtkWidget *pp_useragent_color_opaque;
+  GtkWidget *pp_tstamp_color_opaque;
+  GtkWidget *pp_url_color_opaque;
+  GtkWidget *pp_visited_url_color_opaque;
+  GtkWidget *pp_trollscore_color_transp;
+  GtkWidget *pp_useragent_color_transp;
+  GtkWidget *pp_tstamp_color_transp;
+  GtkWidget *pp_url_color_transp;
+  GtkWidget *pp_visited_url_color_transp;
+  GtkWidget *pp_login_color_transp;
+  GtkWidget *pp_fgcolor_transp;
+  GtkWidget *label51;
+  GtkWidget *label52;
+  GtkWidget *dialog_action_area9;
+  GtkWidget *cancelbutton2;
+  GtkWidget *apply_bt;
+  GtkWidget *okbutton2;
+
+  pinnipede_site_colors_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (pinnipede_site_colors_dialog), _("Change some colors"));
+
+  dialog_vbox9 = GTK_DIALOG (pinnipede_site_colors_dialog)->vbox;
+  gtk_widget_show (dialog_vbox9);
+
+  frame8 = gtk_frame_new (NULL);
+  gtk_widget_show (frame8);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox9), frame8, TRUE, TRUE, 0);
+
+  vbox14 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox14);
+  gtk_container_add (GTK_CONTAINER (frame8), vbox14);
+
+  blah = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (blah);
+  gtk_box_pack_start (GTK_BOX (vbox14), blah, FALSE, FALSE, 0);
+
+  mark_id_gaps = gtk_check_button_new_with_mnemonic (_("View id gaps (red dotted line)"));
+  gtk_widget_show (mark_id_gaps);
+  gtk_box_pack_start (GTK_BOX (blah), mark_id_gaps, FALSE, FALSE, 0);
+
+  mark_id_gaps_fb = gtk_label_new (_("xx"));
+  gtk_widget_show (mark_id_gaps_fb);
+  gtk_box_pack_start (GTK_BOX (blah), mark_id_gaps_fb, FALSE, FALSE, 0);
+
+  frame9 = gtk_frame_new (NULL);
+  gtk_widget_show (frame9);
+  gtk_box_pack_start (GTK_BOX (vbox14), frame9, TRUE, TRUE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (frame9), 2);
+
+  table4 = gtk_table_new (3, 9, FALSE);
+  gtk_widget_show (table4);
+  gtk_container_add (GTK_CONTAINER (frame9), table4);
+  gtk_table_set_col_spacings (GTK_TABLE (table4), 5);
+
+  label43 = gtk_label_new (_("Background color"));
+  gtk_widget_show (label43);
+  gtk_table_attach (GTK_TABLE (table4), label43, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label43), 0, 0.5);
+
+  pp_bgcolor = gtk_button_new_with_mnemonic (_("pp_bgcolor_bt"));
+  gtk_widget_show (pp_bgcolor);
+  gtk_table_attach (GTK_TABLE (table4), pp_bgcolor, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label44 = gtk_label_new (_("Text foreground"));
+  gtk_widget_show (label44);
+  gtk_table_attach (GTK_TABLE (table4), label44, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label44), 0, 0.5);
+
+  label45 = gtk_label_new (_("Logins"));
+  gtk_widget_show (label45);
+  gtk_table_attach (GTK_TABLE (table4), label45, 3, 4, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (label45), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (label45), 0, 0.5);
+
+  label46 = gtk_label_new (_("Useragents"));
+  gtk_widget_show (label46);
+  gtk_table_attach (GTK_TABLE (table4), label46, 3, 4, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (label46), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (label46), 0, 0.5);
+
+  label47 = gtk_label_new (_("Urls"));
+  gtk_widget_show (label47);
+  gtk_table_attach (GTK_TABLE (table4), label47, 6, 7, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label47), 0, 0.5);
+
+  label48 = gtk_label_new (_("Visited Urls"));
+  gtk_widget_show (label48);
+  gtk_table_attach (GTK_TABLE (table4), label48, 6, 7, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label48), 0, 0.5);
+
+  label49 = gtk_label_new (_("Clocks"));
+  gtk_widget_show (label49);
+  gtk_table_attach (GTK_TABLE (table4), label49, 3, 4, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_label_set_justify (GTK_LABEL (label49), GTK_JUSTIFY_RIGHT);
+  gtk_misc_set_alignment (GTK_MISC (label49), 0, 0.5);
+
+  label50 = gtk_label_new (_("Troll score"));
+  gtk_widget_show (label50);
+  gtk_table_attach (GTK_TABLE (table4), label50, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label50), 0, 0.5);
+
+  pp_fgcolor_opaque = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_fgcolor_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_fgcolor_opaque, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_trollscore_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_trollscore_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_trollscore_color_opaque, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_login_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_login_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_login_color_opaque, 4, 5, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_useragent_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_useragent_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_useragent_color_opaque, 4, 5, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_tstamp_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_tstamp_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_tstamp_color_opaque, 4, 5, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_url_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_url_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_url_color_opaque, 7, 8, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_visited_url_color_opaque = gtk_button_new_with_mnemonic (_("button5"));
+  gtk_widget_show (pp_visited_url_color_opaque);
+  gtk_table_attach (GTK_TABLE (table4), pp_visited_url_color_opaque, 7, 8, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_trollscore_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_trollscore_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_trollscore_color_transp, 2, 3, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_useragent_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_useragent_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_useragent_color_transp, 5, 6, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_tstamp_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_tstamp_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_tstamp_color_transp, 5, 6, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_url_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_url_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_url_color_transp, 8, 9, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_visited_url_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_visited_url_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_visited_url_color_transp, 8, 9, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_login_color_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_login_color_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_login_color_transp, 5, 6, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  pp_fgcolor_transp = gtk_button_new_with_mnemonic (_("button4"));
+  gtk_widget_show (pp_fgcolor_transp);
+  gtk_table_attach (GTK_TABLE (table4), pp_fgcolor_transp, 2, 3, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label51 = gtk_label_new (_("Various colors"));
+  gtk_widget_show (label51);
+  gtk_frame_set_label_widget (GTK_FRAME (frame9), label51);
+
+  label52 = gtk_label_new (_("Visual settings applied to selected sites"));
+  gtk_widget_show (label52);
+  gtk_frame_set_label_widget (GTK_FRAME (frame8), label52);
+
+  dialog_action_area9 = GTK_DIALOG (pinnipede_site_colors_dialog)->action_area;
+  gtk_widget_show (dialog_action_area9);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area9), GTK_BUTTONBOX_END);
+
+  cancelbutton2 = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton2);
+  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_site_colors_dialog), cancelbutton2, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton2, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_site_colors_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  okbutton2 = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton2);
+  gtk_dialog_add_action_widget (GTK_DIALOG (pinnipede_site_colors_dialog), okbutton2, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton2, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_site_colors_dialog, pinnipede_site_colors_dialog, "pinnipede_site_colors_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_site_colors_dialog, dialog_vbox9, "dialog_vbox9");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, frame8, "frame8");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, vbox14, "vbox14");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, blah, "blah");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, mark_id_gaps, "mark_id_gaps");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, mark_id_gaps_fb, "mark_id_gaps_fb");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, frame9, "frame9");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, table4, "table4");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label43, "label43");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_bgcolor, "pp_bgcolor");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label44, "label44");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label45, "label45");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label46, "label46");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label47, "label47");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label48, "label48");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label49, "label49");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label50, "label50");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_fgcolor_opaque, "pp_fgcolor_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_trollscore_color_opaque, "pp_trollscore_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_login_color_opaque, "pp_login_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_useragent_color_opaque, "pp_useragent_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_tstamp_color_opaque, "pp_tstamp_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_url_color_opaque, "pp_url_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_visited_url_color_opaque, "pp_visited_url_color_opaque");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_trollscore_color_transp, "pp_trollscore_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_useragent_color_transp, "pp_useragent_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_tstamp_color_transp, "pp_tstamp_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_url_color_transp, "pp_url_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_visited_url_color_transp, "pp_visited_url_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_login_color_transp, "pp_login_color_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, pp_fgcolor_transp, "pp_fgcolor_transp");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label51, "label51");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, label52, "label52");
+  GLADE_HOOKUP_OBJECT_NO_REF (pinnipede_site_colors_dialog, dialog_action_area9, "dialog_action_area9");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, cancelbutton2, "cancelbutton2");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (pinnipede_site_colors_dialog, okbutton2, "okbutton2");
+
+  return pinnipede_site_colors_dialog;
+}
+
+GtkWidget*
+create_change_board_settings_dialog (void)
+{
+  GtkWidget *change_board_settings_dialog;
+  GtkWidget *dialog_vbox10;
+  GtkWidget *table5;
+  GtkWidget *label55;
+  GtkWidget *hbox20;
+  GtkWidget *all_names_0_;
+  GtkWidget *all_names_1_;
+  GtkWidget *all_names_2_;
+  GtkWidget *all_names_3_;
+  GtkWidget *label57;
+  GtkWidget *label58;
+  GtkWidget *hbox21;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
+  GtkWidget *label59;
+  GtkWidget *board_check_delay_fb;
+  GtkWidget *backend_url;
+  GtkWidget *post_url;
+  GtkWidget *user_cookie;
+  GtkWidget *label66;
+  GtkWidget *label67;
+  GtkWidget *backend_flavour;
+  GtkWidget *menu2;
+  GtkWidget *menuitem5;
+  GtkWidget *menuitem6;
+  GtkWidget *menuitem7;
+  GtkWidget *hbox22;
+  GtkWidget *label60;
+  GtkWidget *grab_cookie_bt;
+  GtkWidget *alignment10;
+  GtkWidget *hbox30;
+  GtkWidget *image13;
+  GtkWidget *label79;
+  GtkWidget *post_template;
+  GtkWidget *label68;
+  GtkWidget *label70;
+  GtkWidget *user_login;
+  GtkWidget *dialog_action_area10;
+  GtkWidget *cancelbutton3;
+  GtkWidget *apply_bt;
+  GtkWidget *okbutton3;
+  GtkTooltips *tooltips;
+
+  tooltips = gtk_tooltips_new ();
+
+  change_board_settings_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (change_board_settings_dialog), _("Change board settings"));
+
+  dialog_vbox10 = GTK_DIALOG (change_board_settings_dialog)->vbox;
+  gtk_widget_show (dialog_vbox10);
+
+  table5 = gtk_table_new (9, 2, FALSE);
+  gtk_widget_show (table5);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox10), table5, TRUE, TRUE, 0);
+
+  label55 = gtk_label_new (_("Site name, and aliases:"));
+  gtk_widget_show (label55);
+  gtk_table_attach (GTK_TABLE (table5), label55, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label55), 0, 0.5);
+
+  hbox20 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox20);
+  gtk_table_attach (GTK_TABLE (table5), hbox20, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_0_, FALSE, TRUE, 0);
+
+  all_names_1_ = gtk_entry_new ();
+  gtk_widget_show (all_names_1_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+
+  all_names_2_ = gtk_entry_new ();
+  gtk_widget_show (all_names_2_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+
+  all_names_3_ = gtk_entry_new ();
+  gtk_widget_show (all_names_3_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+
+  label57 = gtk_label_new (_("Post URL:"));
+  gtk_widget_show (label57);
+  gtk_table_attach (GTK_TABLE (table5), label57, 0, 1, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label57), 0, 0.5);
+
+  label58 = gtk_label_new (_("Refresh frequency:"));
+  gtk_widget_show (label58);
+  gtk_table_attach (GTK_TABLE (table5), label58, 0, 1, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label58), 0, 0.5);
+
+  hbox21 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox21);
+  gtk_table_attach (GTK_TABLE (table5), hbox21, 1, 2, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  board_check_delay_adj = gtk_adjustment_new (1, 1, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay, FALSE, TRUE, 0);
+
+  label59 = gtk_label_new (_("seconds  "));
+  gtk_widget_show (label59);
+  gtk_box_pack_start (GTK_BOX (hbox21), label59, FALSE, FALSE, 0);
+
+  board_check_delay_fb = gtk_label_new (_("  "));
+  gtk_widget_show (board_check_delay_fb);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay_fb, FALSE, FALSE, 0);
+
+  backend_url = gtk_entry_new ();
+  gtk_widget_show (backend_url);
+  gtk_table_attach (GTK_TABLE (table5), backend_url, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  post_url = gtk_entry_new ();
+  gtk_widget_show (post_url);
+  gtk_table_attach (GTK_TABLE (table5), post_url, 1, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  user_cookie = gtk_entry_new ();
+  gtk_widget_show (user_cookie);
+  gtk_table_attach (GTK_TABLE (table5), user_cookie, 1, 2, 6, 7,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label66 = gtk_label_new (_("Backend URL:"));
+  gtk_widget_show (label66);
+  gtk_table_attach (GTK_TABLE (table5), label66, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label66), 0, 0.5);
+
+  label67 = gtk_label_new (_("Backend flavour:"));
+  gtk_widget_show (label67);
+  gtk_table_attach (GTK_TABLE (table5), label67, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label67), 0, 0.5);
+
+  backend_flavour = gtk_option_menu_new ();
+  gtk_widget_show (backend_flavour);
+  gtk_table_attach (GTK_TABLE (table5), backend_flavour, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  menu2 = gtk_menu_new ();
+
+  menuitem5 = gtk_menu_item_new_with_mnemonic (_("message tags are \"htmlentitised\""));
+  gtk_widget_show (menuitem5);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem5);
+
+  menuitem6 = gtk_menu_item_new_with_mnemonic (_("message tags are raw"));
+  gtk_widget_show (menuitem6);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem6);
+
+  menuitem7 = gtk_menu_item_new_with_mnemonic (_("the backend has no pants"));
+  gtk_widget_show (menuitem7);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem7);
+
+  gtk_option_menu_set_menu (GTK_OPTION_MENU (backend_flavour), menu2);
+
+  hbox22 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox22);
+  gtk_table_attach (GTK_TABLE (table5), hbox22, 0, 1, 6, 7,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  label60 = gtk_label_new (_("Cookie(s)"));
+  gtk_widget_show (label60);
+  gtk_box_pack_start (GTK_BOX (hbox22), label60, FALSE, FALSE, 0);
+  gtk_misc_set_alignment (GTK_MISC (label60), 0, 0.5);
+
+  grab_cookie_bt = gtk_button_new ();
+  gtk_widget_show (grab_cookie_bt);
+  gtk_box_pack_start (GTK_BOX (hbox22), grab_cookie_bt, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, grab_cookie_bt, _("attempt to get the cookie from the cookies stored in your browsers"), NULL);
+
+  alignment10 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_show (alignment10);
+  gtk_container_add (GTK_CONTAINER (grab_cookie_bt), alignment10);
+
+  hbox30 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_show (hbox30);
+  gtk_container_add (GTK_CONTAINER (alignment10), hbox30);
+
+  image13 = gtk_image_new_from_stock ("gtk-find", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_show (image13);
+  gtk_box_pack_start (GTK_BOX (hbox30), image13, FALSE, FALSE, 0);
+
+  label79 = gtk_label_new_with_mnemonic (_("(grab cookie)"));
+  gtk_widget_show (label79);
+  gtk_box_pack_start (GTK_BOX (hbox30), label79, FALSE, FALSE, 0);
+
+  post_template = gtk_entry_new ();
+  gtk_widget_show (post_template);
+  gtk_table_attach (GTK_TABLE (table5), post_template, 1, 2, 4, 5,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label68 = gtk_label_new (_("Post Template:"));
+  gtk_widget_show (label68);
+  gtk_table_attach (GTK_TABLE (table5), label68, 0, 1, 4, 5,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label68), 0, 0.5);
+
+  label70 = gtk_label_new (_("Optional login:"));
+  gtk_widget_show (label70);
+  gtk_table_attach (GTK_TABLE (table5), label70, 0, 1, 7, 8,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label70), 0, 0.5);
+
+  user_login = gtk_entry_new ();
+  gtk_widget_show (user_login);
+  gtk_table_attach (GTK_TABLE (table5), user_login, 1, 2, 7, 8,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  dialog_action_area10 = GTK_DIALOG (change_board_settings_dialog)->action_area;
+  gtk_widget_show (dialog_action_area10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area10), GTK_BUTTONBOX_END);
+
+  cancelbutton3 = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_board_settings_dialog), cancelbutton3, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton3, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_board_settings_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  okbutton3 = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_board_settings_dialog), okbutton3, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton3, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (change_board_settings_dialog, change_board_settings_dialog, "change_board_settings_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_board_settings_dialog, dialog_vbox10, "dialog_vbox10");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, table5, "table5");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label55, "label55");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, hbox20, "hbox20");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, all_names_0_, "all_names_0_");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, all_names_1_, "all_names_1_");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, all_names_2_, "all_names_2_");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, all_names_3_, "all_names_3_");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label57, "label57");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label58, "label58");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, hbox21, "hbox21");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label59, "label59");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, board_check_delay_fb, "board_check_delay_fb");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, backend_url, "backend_url");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, post_url, "post_url");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, user_cookie, "user_cookie");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label66, "label66");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label67, "label67");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, backend_flavour, "backend_flavour");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, menu2, "menu2");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, menuitem5, "menuitem5");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, menuitem6, "menuitem6");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, menuitem7, "menuitem7");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, hbox22, "hbox22");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label60, "label60");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, grab_cookie_bt, "grab_cookie_bt");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, alignment10, "alignment10");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, hbox30, "hbox30");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, image13, "image13");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label79, "label79");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, post_template, "post_template");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label68, "label68");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label70, "label70");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, user_login, "user_login");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_board_settings_dialog, dialog_action_area10, "dialog_action_area10");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, cancelbutton3, "cancelbutton3");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, okbutton3, "okbutton3");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_board_settings_dialog, tooltips, "tooltips");
+
+  return change_board_settings_dialog;
+}
+
+GtkWidget*
+create_change_rss_settings_dialog (void)
+{
+  GtkWidget *change_rss_settings_dialog;
+  GtkWidget *dialog_vbox10;
+  GtkWidget *table5;
+  GtkWidget *label55;
+  GtkWidget *hbox20;
+  GtkWidget *all_names_0_;
+  GtkWidget *all_names_1_;
+  GtkWidget *all_names_2_;
+  GtkWidget *all_names_3_;
+  GtkWidget *label58;
+  GtkWidget *hbox21;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
+  GtkWidget *label59;
+  GtkWidget *board_check_delay_fb;
+  GtkWidget *backend_url;
+  GtkWidget *user_cookie;
+  GtkWidget *label66;
+  GtkWidget *label67;
+  GtkWidget *backend_flavour;
+  GtkWidget *menu2;
+  GtkWidget *menuitem5;
+  GtkWidget *menuitem6;
+  GtkWidget *menuitem7;
+  GtkWidget *hbox22;
+  GtkWidget *label60;
+  GtkWidget *grab_cookie_bt;
+  GtkWidget *dialog_action_area10;
+  GtkWidget *cancelbutton3;
+  GtkWidget *apply_bt;
+  GtkWidget *okbutton3;
+  GtkTooltips *tooltips;
+
+  tooltips = gtk_tooltips_new ();
+
+  change_rss_settings_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (change_rss_settings_dialog), _("Change RSS Feed settings"));
+
+  dialog_vbox10 = GTK_DIALOG (change_rss_settings_dialog)->vbox;
+  gtk_widget_show (dialog_vbox10);
+
+  table5 = gtk_table_new (9, 2, FALSE);
+  gtk_widget_show (table5);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox10), table5, TRUE, TRUE, 0);
+
+  label55 = gtk_label_new (_("Site name, and aliases:"));
+  gtk_widget_show (label55);
+  gtk_table_attach (GTK_TABLE (table5), label55, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label55), 0, 0.5);
+
+  hbox20 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox20);
+  gtk_table_attach (GTK_TABLE (table5), hbox20, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_0_, FALSE, TRUE, 0);
+
+  all_names_1_ = gtk_entry_new ();
+  gtk_widget_show (all_names_1_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+
+  all_names_2_ = gtk_entry_new ();
+  gtk_widget_show (all_names_2_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+
+  all_names_3_ = gtk_entry_new ();
+  gtk_widget_show (all_names_3_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+
+  label58 = gtk_label_new (_("Refresh frequency:"));
+  gtk_widget_show (label58);
+  gtk_table_attach (GTK_TABLE (table5), label58, 0, 1, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label58), 0, 0.5);
+
+  hbox21 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox21);
+  gtk_table_attach (GTK_TABLE (table5), hbox21, 1, 2, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  board_check_delay_adj = gtk_adjustment_new (1, 1, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay, FALSE, TRUE, 0);
+
+  label59 = gtk_label_new (_("seconds  "));
+  gtk_widget_show (label59);
+  gtk_box_pack_start (GTK_BOX (hbox21), label59, FALSE, FALSE, 0);
+
+  board_check_delay_fb = gtk_label_new (_("  "));
+  gtk_widget_show (board_check_delay_fb);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay_fb, FALSE, FALSE, 0);
+
+  backend_url = gtk_entry_new ();
+  gtk_widget_show (backend_url);
+  gtk_table_attach (GTK_TABLE (table5), backend_url, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  user_cookie = gtk_entry_new ();
+  gtk_widget_show (user_cookie);
+  gtk_table_attach (GTK_TABLE (table5), user_cookie, 1, 2, 6, 7,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label66 = gtk_label_new (_("Backend URL:"));
+  gtk_widget_show (label66);
+  gtk_table_attach (GTK_TABLE (table5), label66, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label66), 0, 0.5);
+
+  label67 = gtk_label_new (_("Backend flavour:"));
+  gtk_widget_show (label67);
+  gtk_table_attach (GTK_TABLE (table5), label67, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label67), 0, 0.5);
+
+  backend_flavour = gtk_option_menu_new ();
+  gtk_widget_show (backend_flavour);
+  gtk_table_attach (GTK_TABLE (table5), backend_flavour, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  menu2 = gtk_menu_new ();
+
+  menuitem5 = gtk_menu_item_new_with_mnemonic (_("message tags are \"htmlentitised\""));
+  gtk_widget_show (menuitem5);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem5);
+
+  menuitem6 = gtk_menu_item_new_with_mnemonic (_("message tags are raw"));
+  gtk_widget_show (menuitem6);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem6);
+
+  menuitem7 = gtk_menu_item_new_with_mnemonic (_("the backend has no pants"));
+  gtk_widget_show (menuitem7);
+  gtk_container_add (GTK_CONTAINER (menu2), menuitem7);
+
+  gtk_option_menu_set_menu (GTK_OPTION_MENU (backend_flavour), menu2);
+
+  hbox22 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox22);
+  gtk_table_attach (GTK_TABLE (table5), hbox22, 0, 1, 6, 7,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  label60 = gtk_label_new (_("Cookie(s)"));
+  gtk_widget_show (label60);
+  gtk_box_pack_start (GTK_BOX (hbox22), label60, FALSE, FALSE, 0);
+  gtk_misc_set_alignment (GTK_MISC (label60), 0, 0.5);
+
+  grab_cookie_bt = gtk_button_new_with_mnemonic (_("(grab cookie)"));
+  gtk_widget_show (grab_cookie_bt);
+  gtk_box_pack_start (GTK_BOX (hbox22), grab_cookie_bt, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, grab_cookie_bt, _("attempt to get the cookie from the cookies stored in your browsers"), NULL);
+
+  dialog_action_area10 = GTK_DIALOG (change_rss_settings_dialog)->action_area;
+  gtk_widget_show (dialog_action_area10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area10), GTK_BUTTONBOX_END);
+
+  cancelbutton3 = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_rss_settings_dialog), cancelbutton3, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton3, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_rss_settings_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  okbutton3 = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_rss_settings_dialog), okbutton3, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton3, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (change_rss_settings_dialog, change_rss_settings_dialog, "change_rss_settings_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_rss_settings_dialog, dialog_vbox10, "dialog_vbox10");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, table5, "table5");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label55, "label55");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, hbox20, "hbox20");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, all_names_0_, "all_names_0_");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, all_names_1_, "all_names_1_");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, all_names_2_, "all_names_2_");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, all_names_3_, "all_names_3_");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label58, "label58");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, hbox21, "hbox21");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label59, "label59");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, board_check_delay_fb, "board_check_delay_fb");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, backend_url, "backend_url");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, user_cookie, "user_cookie");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label66, "label66");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label67, "label67");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, backend_flavour, "backend_flavour");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, menu2, "menu2");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, menuitem5, "menuitem5");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, menuitem6, "menuitem6");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, menuitem7, "menuitem7");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, hbox22, "hbox22");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label60, "label60");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, grab_cookie_bt, "grab_cookie_bt");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_rss_settings_dialog, dialog_action_area10, "dialog_action_area10");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, cancelbutton3, "cancelbutton3");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, okbutton3, "okbutton3");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_rss_settings_dialog, tooltips, "tooltips");
+
+  return change_rss_settings_dialog;
+}
+
+GtkWidget*
+create_change_pop_settings_dialog (void)
+{
+  GtkWidget *change_pop_settings_dialog;
+  GtkWidget *dialog_vbox10;
+  GtkWidget *table5;
+  GtkWidget *label55;
+  GtkWidget *hbox20;
+  GtkWidget *all_names_0_;
+  GtkWidget *all_names_1_;
+  GtkWidget *all_names_2_;
+  GtkWidget *all_names_3_;
+  GtkWidget *label58;
+  GtkWidget *hbox21;
+  GtkObject *board_check_delay_adj;
+  GtkWidget *board_check_delay;
+  GtkWidget *label59;
+  GtkWidget *board_check_delay_fb;
+  GtkWidget *backend_url;
+  GtkWidget *label66;
+  GtkWidget *label68;
+  GtkWidget *pop3_user;
+  GtkWidget *label69;
+  GtkWidget *pop3_pass;
+  GtkWidget *dialog_action_area10;
+  GtkWidget *cancelbutton3;
+  GtkWidget *apply_bt;
+  GtkWidget *okbutton3;
+
+  change_pop_settings_dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (change_pop_settings_dialog), _("Change POP account settings"));
+
+  dialog_vbox10 = GTK_DIALOG (change_pop_settings_dialog)->vbox;
+  gtk_widget_show (dialog_vbox10);
+
+  table5 = gtk_table_new (9, 2, FALSE);
+  gtk_widget_show (table5);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox10), table5, TRUE, TRUE, 0);
+
+  label55 = gtk_label_new (_("Site name, and aliases:"));
+  gtk_widget_show (label55);
+  gtk_table_attach (GTK_TABLE (table5), label55, 0, 1, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label55), 0, 0.5);
+
+  hbox20 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox20);
+  gtk_table_attach (GTK_TABLE (table5), hbox20, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  all_names_0_ = gtk_entry_new ();
+  gtk_widget_show (all_names_0_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_0_, FALSE, TRUE, 0);
+
+  all_names_1_ = gtk_entry_new ();
+  gtk_widget_show (all_names_1_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+
+  all_names_2_ = gtk_entry_new ();
+  gtk_widget_show (all_names_2_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+
+  all_names_3_ = gtk_entry_new ();
+  gtk_widget_show (all_names_3_);
+  gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+
+  label58 = gtk_label_new (_("Refresh frequency:"));
+  gtk_widget_show (label58);
+  gtk_table_attach (GTK_TABLE (table5), label58, 0, 1, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label58), 0, 0.5);
+
+  hbox21 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox21);
+  gtk_table_attach (GTK_TABLE (table5), hbox21, 1, 2, 5, 6,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (GTK_FILL), 0, 0);
+
+  board_check_delay_adj = gtk_adjustment_new (1, 1, 10000, 1, 10, 10);
+  board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
+  gtk_widget_show (board_check_delay);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay, FALSE, TRUE, 0);
+
+  label59 = gtk_label_new (_("seconds  "));
+  gtk_widget_show (label59);
+  gtk_box_pack_start (GTK_BOX (hbox21), label59, FALSE, FALSE, 0);
+
+  board_check_delay_fb = gtk_label_new (_("  "));
+  gtk_widget_show (board_check_delay_fb);
+  gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay_fb, FALSE, FALSE, 0);
+
+  backend_url = gtk_entry_new ();
+  gtk_widget_show (backend_url);
+  gtk_table_attach (GTK_TABLE (table5), backend_url, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label66 = gtk_label_new (_("Pop3 server:"));
+  gtk_widget_show (label66);
+  gtk_table_attach (GTK_TABLE (table5), label66, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label66), 0, 0.5);
+
+  label68 = gtk_label_new (_("Login"));
+  gtk_widget_show (label68);
+  gtk_table_attach (GTK_TABLE (table5), label68, 0, 1, 7, 8,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label68), 0, 0.5);
+
+  pop3_user = gtk_entry_new ();
+  gtk_widget_show (pop3_user);
+  gtk_table_attach (GTK_TABLE (table5), pop3_user, 1, 2, 7, 8,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  label69 = gtk_label_new (_("Password"));
+  gtk_widget_show (label69);
+  gtk_table_attach (GTK_TABLE (table5), label69, 0, 1, 8, 9,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label69), 0, 0.5);
+
+  pop3_pass = gtk_entry_new ();
+  gtk_widget_show (pop3_pass);
+  gtk_table_attach (GTK_TABLE (table5), pop3_pass, 1, 2, 8, 9,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_entry_set_visibility (GTK_ENTRY (pop3_pass), FALSE);
+
+  dialog_action_area10 = GTK_DIALOG (change_pop_settings_dialog)->action_area;
+  gtk_widget_show (dialog_action_area10);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area10), GTK_BUTTONBOX_END);
+
+  cancelbutton3 = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_widget_show (cancelbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_pop_settings_dialog), cancelbutton3, GTK_RESPONSE_CANCEL);
+  GTK_WIDGET_SET_FLAGS (cancelbutton3, GTK_CAN_DEFAULT);
+
+  apply_bt = gtk_button_new_from_stock ("gtk-apply");
+  gtk_widget_show (apply_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_pop_settings_dialog), apply_bt, GTK_RESPONSE_APPLY);
+  GTK_WIDGET_SET_FLAGS (apply_bt, GTK_CAN_DEFAULT);
+
+  okbutton3 = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (okbutton3);
+  gtk_dialog_add_action_widget (GTK_DIALOG (change_pop_settings_dialog), okbutton3, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (okbutton3, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (change_pop_settings_dialog, change_pop_settings_dialog, "change_pop_settings_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_pop_settings_dialog, dialog_vbox10, "dialog_vbox10");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, table5, "table5");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label55, "label55");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, hbox20, "hbox20");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, all_names_0_, "all_names_0_");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, all_names_1_, "all_names_1_");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, all_names_2_, "all_names_2_");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, all_names_3_, "all_names_3_");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label58, "label58");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, hbox21, "hbox21");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label59, "label59");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, board_check_delay_fb, "board_check_delay_fb");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, backend_url, "backend_url");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label66, "label66");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label68, "label68");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, pop3_user, "pop3_user");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, label69, "label69");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, pop3_pass, "pop3_pass");
+  GLADE_HOOKUP_OBJECT_NO_REF (change_pop_settings_dialog, dialog_action_area10, "dialog_action_area10");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, cancelbutton3, "cancelbutton3");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, apply_bt, "apply_bt");
+  GLADE_HOOKUP_OBJECT (change_pop_settings_dialog, okbutton3, "okbutton3");
+
+  return change_pop_settings_dialog;
+}
+
+GtkWidget*
+create_grab_cookie_dialog (void)
+{
+  GtkWidget *grab_cookie_dialog;
+  GtkWidget *dialog_vbox11;
+  GtkWidget *vbox15;
+  GtkWidget *label61;
+  GtkWidget *hseparator4;
+  GtkWidget *scrolledwindow6;
+  GtkWidget *cookies;
+  GtkWidget *dialog_action_area11;
+  GtkWidget *close_bt;
+
+  grab_cookie_dialog = gtk_dialog_new ();
+  gtk_widget_set_size_request (grab_cookie_dialog, 786, 470);
+  gtk_window_set_title (GTK_WINDOW (grab_cookie_dialog), _("grab a cookie from your browsers"));
+
+  dialog_vbox11 = GTK_DIALOG (grab_cookie_dialog)->vbox;
+  gtk_widget_show (dialog_vbox11);
+
+  vbox15 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox15);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox11), vbox15, TRUE, TRUE, 0);
+
+  label61 = gtk_label_new (_("Cut and paste the selected cookies."));
+  gtk_widget_show (label61);
+  gtk_box_pack_start (GTK_BOX (vbox15), label61, FALSE, FALSE, 0);
+
+  hseparator4 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator4);
+  gtk_box_pack_start (GTK_BOX (vbox15), hseparator4, FALSE, FALSE, 0);
+
+  scrolledwindow6 = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_show (scrolledwindow6);
+  gtk_box_pack_start (GTK_BOX (vbox15), scrolledwindow6, TRUE, TRUE, 0);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow6), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
+  cookies = gtk_text_view_new ();
+  gtk_widget_show (cookies);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow6), cookies);
+  gtk_text_view_set_editable (GTK_TEXT_VIEW (cookies), FALSE);
+
+  dialog_action_area11 = GTK_DIALOG (grab_cookie_dialog)->action_area;
+  gtk_widget_show (dialog_action_area11);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area11), GTK_BUTTONBOX_END);
+
+  close_bt = gtk_button_new_from_stock ("gtk-close");
+  gtk_widget_show (close_bt);
+  gtk_dialog_add_action_widget (GTK_DIALOG (grab_cookie_dialog), close_bt, GTK_RESPONSE_CLOSE);
+  GTK_WIDGET_SET_FLAGS (close_bt, GTK_CAN_DEFAULT);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (grab_cookie_dialog, grab_cookie_dialog, "grab_cookie_dialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (grab_cookie_dialog, dialog_vbox11, "dialog_vbox11");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, vbox15, "vbox15");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, label61, "label61");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, hseparator4, "hseparator4");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, scrolledwindow6, "scrolledwindow6");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, cookies, "cookies");
+  GLADE_HOOKUP_OBJECT_NO_REF (grab_cookie_dialog, dialog_action_area11, "dialog_action_area11");
+  GLADE_HOOKUP_OBJECT (grab_cookie_dialog, close_bt, "close_bt");
+
+  return grab_cookie_dialog;
 }
 

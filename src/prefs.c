@@ -16,6 +16,24 @@
 #define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
 #define FONTSTYLE_SET(fs,u,i,b,tt) { (fs).underlined = u; (fs).slanted = i; (fs).bold = b; (fs).teletype = tt; }
 
+struct {
+  char site_url[500];
+  char path_tribune_add[500];
+  char path_tribune_backend[500];
+} ObsoleteFeatures;
+
+void update_prefs_from_obsolete_features(SitePrefs *sp) {
+  char *site_url, *path_tribune_backend, *path_tribune_add;
+  site_url = ObsoleteFeatures.site_url[0] ? ObsoleteFeatures.site_url : strdup("http://linuxfr.org");
+  path_tribune_backend = ObsoleteFeatures.path_tribune_backend[0] ? ObsoleteFeatures.path_tribune_backend : "board/remote.xml";
+  path_tribune_add = ObsoleteFeatures.path_tribune_add[0] ? ObsoleteFeatures.path_tribune_add : "board/add.php3";
+  while (site_url[strlen(site_url)-1] == '/') site_url[strlen(site_url)-1] = 0;
+  while (path_tribune_backend[0] == '/') path_tribune_backend++;
+  while (path_tribune_add[0] == '/') path_tribune_add++;
+  ASSIGN_STRING_VAL(sp->backend_url, str_printf("%s/%s", site_url, path_tribune_backend));
+  ASSIGN_STRING_VAL(sp->post_url, str_printf("%s/%s", site_url, path_tribune_add));
+}
+
 /* construit le useragent par défaut */
 void
 coincoin_default_useragent(char *s, int sz)
@@ -700,7 +718,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->proxy_name = NULL;
   p->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   p->proxy_nocache = 0;
-  ASSIGN_STRING_VAL(p->backend_url, "http://www.linuxfr.org/board/remote.xml");
+  ASSIGN_STRING_VAL(p->backend_url, "http://linuxfr.org/board/remote.xml");
   p->backend_type = BACKEND_TYPE_BOARD;
   p->backend_flavour = BACKEND_FLAVOUR_UNENCODED; /* style 'moderne' par défaut */
   ASSIGN_STRING_VAL(p->post_url, "");//board/add.php3");
@@ -807,13 +825,13 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->dock_fgcolor = 0x000000;
   p->dock_bgpixmap = NULL;
   p->dock_skin_pixmap = NULL;
-  p->http_timeout = 40;
+  p->http_timeout = 20;
   p->http_inet_ip_version = 0;
   p->use_balloons = 1;
   ASSIGN_STRING_VAL(p->balloon_fn_family, "sans");
   p->balloon_fn_size = 10;
   p->use_iconwin = 1; /* style windowmaker par defaut */
-  p->auto_swallow = 0;
+  p->auto_swallow = 1;
   p->draw_border = 0; /* idem */
   p->palmipede_override_redirect = 1;
   p->dock_xpos = p->dock_ypos = 0;
@@ -822,7 +840,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->default_trollo_speed = 4;
   p->browser_cmd = NULL;
   p->browser2_cmd = NULL;
-  p->gogole_search_url = NULL;
+  ASSIGN_STRING_VAL(p->gogole_search_url, "http://www.google.fr/search?q=%s");
   p->enable_troll_detector = 1;
   p->board_auto_dl_pictures = 0;
   p->board_enable_hfr_pictures = 0;
@@ -881,7 +899,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pp_nick_mode = 4;
   p->pp_trollscore_mode = 1;           
   p->pp_use_classical_tabs = 0;
-  p->pp_use_colored_tabs = 0;
+  p->pp_use_colored_tabs = 1;
   
   p->ew_do_spell = 0;                  /*Ca fonctionne (?)
 					 donc je l'active par defaut
@@ -983,15 +1001,22 @@ wmcc_prefs_destroy(GeneralPrefs *p)
   }
 }
 
-SitePrefs *
-wmcc_prefs_find_site(GeneralPrefs *p, const char *name)
+int
+wmcc_prefs_find_site_id(GeneralPrefs *p, const char *name)
 {
   int i;
   for (i=0; i < MAX_SITES; i++) {
-    if (p->site[i] && strcmp(p->site[i]->site_name, name)==0) 
-      return p->site[i];
+    if (p->site[i] && strcmp(p->site[i]->all_names[0], name)==0) 
+      return i;
   }
-  return NULL;
+  return -1;
+}
+
+SitePrefs *
+wmcc_prefs_find_site(GeneralPrefs *p, const char *name)
+{
+  int i = wmcc_prefs_find_site_id(p,name);
+  return i >= 0 ? p->site[i] : NULL;
 }
 
 
@@ -1017,7 +1042,7 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg, backend_ty
   p->site[p->nb_sites-1] = sp;
   wmcc_site_prefs_copy(sp, global_sp);
   sp->backend_type = btype;
-  if ((err = option_get_string_list(arg, wmcc_options_strings[OPT_site], &sp->all_names, &sp->nb_names))) return err;
+  if ((err = option_get_string_list(arg, wmcc_options_strings[OBSOLETE_OPT_site], &sp->all_names, &sp->nb_names))) return err;
   assert(sp->all_names);
   if (btype == BACKEND_TYPE_RSS || btype == BACKEND_TYPE_POP) {
     if (btype == BACKEND_TYPE_RSS)
@@ -1058,410 +1083,418 @@ char *
 wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, wmcc_options_id opt_num, unsigned char *arg, int verbatim)
 {
   char *opt_name;
-  char obsolete_last_site_root[512];
-  strcpy(obsolete_last_site_root, "fucking_broken_update_your_options_file");
   assert(opt_num < NB_WMCC_OPTIONS);
   opt_name = wmcc_options_strings[opt_num];
   switch (opt_num) {
-  case OPTS_check_board: {
-    CHECK_BOOL_ARG(sp->check_board);
-  } break; 
-  case OPTSG_board_auto_refresh: { /* OBSOLETE */
-    //CHECK_BOOL_ARG(sp->board_auto_refresh);
-  } break;
-  case OPT_verbosity_underpants: {
-    CHECK_INTEGER_ARG(0,10, p->verbosity_underpants);
-  } break;  
-  case OPT_verbosity_http: {
-    CHECK_INTEGER_ARG(0,10, p->verbosity_http);
-  } break;
-  case OPT_font_encoding: { 
-    ASSIGN_STRING_VAL(p->font_encoding,arg); 
-  } break; 
-  case OPTSG_tribune_delay: {
-    CHECK_INTEGER_ARG(10,10000, sp->board_check_delay); 
-  } break;
-  case OPT_tribunenews_max_refresh_delay: {
-    CHECK_INTEGER_ARG(0,0, p->max_refresh_delay);
-  } break; 
-  case OPT_tribunenews_switch_off_coincoin_delay: {
-    CHECK_INTEGER_ARG(0,0, p->switch_off_coincoin_delay);
-  } break; 
-  case OPTSG_tribune_max_messages: {
-    CHECK_INTEGER_ARG(1,0, sp->board_max_msg);
-  } break; 
-  case OPT_tribune_troll_detector: {
-    CHECK_BOOL_ARG(p->enable_troll_detector);
-  } break;
-  case OPT_board_auto_dl_pictures: {
-    CHECK_BOOL_ARG(p->board_auto_dl_pictures);
-  } break;
-  case OPT_board_enable_hfr_pictures: {
-    CHECK_BOOL_ARG(p->board_enable_hfr_pictures);
-  } break;
-  case OPT_tribune_post_cmd: {
-    ASSIGN_STRING_VAL(p->post_cmd[0], arg);
-  } break; 
-  case OPT_tribune_post_cmd_enabled: {
-    CHECK_BOOL_ARG(p->post_cmd_enabled[0]);
-  } break;
-  case OPT_tribune_post_cmd2: {
-    ASSIGN_STRING_VAL(p->post_cmd[1], arg);
-  } break;
-  case OPT_tribune_post_cmd2_enabled: {
-    CHECK_BOOL_ARG(p->post_cmd_enabled[1]);
-  } break;
-  case OPTSG_tribune_wiki_emulation: {
-    ASSIGN_STRING_VAL(sp->board_wiki_emulation, arg);
-  } break; 
-  case OPT_tribune_archive: {
-    CHECK_FILENAME_ARG(p->board_scrinechote);
-  } break; 
-  case OPT_dock_bg_color: {
-    CHECK_COLOR_ARG(p->dock_bgcolor);
-  } break; 
-  case OPT_dock_bg_pixmap: {
-    CHECK_FILENAME_ARG(p->dock_bgpixmap);
-  } break; 
-  case OPT_dock_skin_pixmap: {
-    CHECK_FILENAME_ARG(p->dock_skin_pixmap);
-  } break; 
-  case OPT_dock_fg_color: {
-    CHECK_COLOR_ARG(p->dock_fgcolor);
-  } break; 
-  case OPT_dock_draw_border: {
-    CHECK_BOOL_ARG(p->draw_border);
-  } break; 
-  case OPT_dock_iconwin: {
-    CHECK_BOOL_ARG(p->use_iconwin);
-  } break; 
-  case OPT_dock_auto_swallow: {
-    CHECK_BOOL_ARG(p->auto_swallow);
-  } break; 
-  case OPT_palmipede_override_wmanager: { 
-    CHECK_BOOL_ARG(p->palmipede_override_redirect);
-  } break;
-  case OPT_dock_use_balloons: {
-    CHECK_BOOL_ARG(p->use_balloons);
-  } break; 
-  case OPT_dock_balloons_font_family: {
-    ASSIGN_STRING_VAL(p->balloon_fn_family, arg); 
-  } break; 
-  case OPT_dock_balloons_font_size: {
-    CHECK_INTEGER_ARG(1,100, p->balloon_fn_size);
-  } break; 
-  case OPT_dock_pos: {
-    CHECK_XYPOS_ARG(p->dock_xpos, p->dock_ypos);
-  } break; 
-  case OPT_dock_start_in_boss_mode: {
-    CHECK_BOOL_ARG(p->start_in_boss_mode);
-  } break; 
-  case OPTSG_palmipede_username: {
-    ASSIGN_STRING_VAL(sp->user_name, arg);
-  } break; 
-  case OPTSG_palmipede_msg_max_length: {
-    CHECK_INTEGER_ARG(64, MESSAGE_MAXMAX_LEN, sp->palmi_msg_max_len);
-  } break; 
-  case OPTSG_palmipede_useragent_max_length: {
-    CHECK_INTEGER_ARG(20, USERAGENT_MAXMAX_LEN, sp->palmi_ua_max_len);
-  } break; 
-  case OPTSG_palmipede_userlogin: {
-    ASSIGN_STRING_VAL(sp->user_login, arg);
-  } break; 
-  case OPTSG_palmipede_useragent: {
-    option_set_useragent(arg, sp, verbatim);
-  } break; 
-  case OPT_palmipede_default_message: {
-    ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
-  } break; 
-  case OPTSG_tribune_backend_type: /* OBSOLETE */
-  case OPTSG_backend_type: /* OBSOLETE */
-  case OPTSG_backend_flavour: {
-    CHECK_INTEGER_ARG(1,3, sp->backend_flavour);
-  } break;
-  case OPTSG_http_site_url: { /* OBSOLETE */
-    ASSIGN_STRING_VAL(sp->backend_url, arg);
-    strcpy(obsolete_last_site_root, arg); obsolete_last_site_root[511] = 0;
-  } break; 
-  case OPTSG_backend_url: {
-    char *err = option_backend_url(arg, sp);
-    if (err) return err;
-  } break;
-  case OPTSG_http_path_tribune_backend: { /* OBSOLETE */
-    sp->backend_url = str_cat_printf(sp->backend_url, "/%s", arg);
-  } break; 
-  case OPTSG_http_path_tribune_add: { /* OBSOLETE */
-    FREE_STRING(sp->post_url);
-    sp->post_url = str_printf("%s/%s", obsolete_last_site_root, arg);
-  } break; 
-  case OPTSG_post_url: {
-    char *err = option_post_url(arg, sp);
-    if (err) return err;
-  } break;
-  case OPTSG_http_board_post: /* OBSOLETE */
-  case OPTSG_post_template: {
-    ASSIGN_STRING_VAL(sp->post_template, arg); 
-    if (!strstr(sp->post_template, "%s")) {
-      return strdup("you forgot the %s in the board_post option");
-    }
-  } break; 
-  case OPTS_http_cookie: {
-    char *err = option_http_cookie(sp, arg);
-    if (err) return err;
-  } break; 
-  case OPTSG_http_proxy: {
-    option_set_proxy(arg, sp);
-  } break; 
-  case OPTSG_http_proxy_auth: {
-    char *s = strchr(arg, ':');
-    if (s) {
-      *s = 0;
-      ASSIGN_STRING_VAL(sp->proxy_auth_user, arg); 
-      ASSIGN_STRING_VAL(sp->proxy_auth_pass, s+1);
-    } else {
-      return strdup("invalid proxy user:pass setting (user name and "
-		    "password should be separated by ':')");
-    } 
-  } break; 
-  case OPTSG_http_proxy_use_nocache: {
-    CHECK_BOOL_ARG(sp->proxy_nocache);
-  } break; 
-  case OPTSG_http_use_if_modified_since: {
-    CHECK_BOOL_ARG(sp->use_if_modified_since);
-  } break; 
-  case OPT_http_browser: {
-    option_browser(arg, opt_name, p, 1);
-  } break; 
-  case OPT_http_browser2: {
-    option_browser(arg, opt_name, p, 2);
-  } break; 
-  case OPT_http_gogole_search_url: {
-    ASSIGN_STRING_VAL(p->gogole_search_url, arg);
-  } break;
-  case OPT_http_timeout: {
-    CHECK_INTEGER_ARG(20,600, p->http_timeout);
-  } break;
-  case OPT_http_inet_ip_version: {
-    CHECK_INTEGER_ARG(0,10, p->http_inet_ip_version);
-  } break;
-  case OPT_dock_disable_xft_antialiasing: {
-    CHECK_BOOL_ARG(p->disable_xft_antialiasing);
-  } break;
-  case OPT_pinnipede_font_family: {
-    ASSIGN_STRING_VAL(p->pp_fn_family, arg); 
-  } break; 
-  case OPT_pinnipede_font_size: {
-    CHECK_INTEGER_ARG(1,0, p->pp_fn_size);
-  } break; 
-  case OPTSG_pinnipede_bg_color: {
-    CHECK_COLOR_ARG(sp->pp_bgcolor);
-  } break; 
-  case OPT_pinnipede_start_in_transparency_mode: {
-    CHECK_BOOL_ARG(p->pp_start_in_transparency_mode);
-  } break;
-  case OPT_pinnipede_use_fake_real_transparency: {
-    CHECK_BOOL_ARG(p->use_fake_real_transparency);
-  } break;
-  case OPT_pinnipede_transparency: {
-    CHECK_TRANSP_ARG(p->pp_transparency);
-  } break;
-  case OPTSG_pinnipede_fg_color: {
-    CHECK_BICOLOR_ARG(sp->pp_fgcolor);
-  } break; 
-  case OPTSG_pinnipede_clock_color: {
-    CHECK_BICOLOR_ARG(sp->pp_tstamp_color);
-  } break; 
-  case OPTSG_pinnipede_useragent_color: {
-    CHECK_BICOLOR_ARG(sp->pp_useragent_color);
-  } break; 
-  case OPTSG_pinnipede_login_color: {
-    CHECK_BICOLOR_ARG(sp->pp_login_color);
-  } break; 
-  case OPTSG_pinnipede_url_color: {
-    CHECK_BICOLOR_ARG(sp->pp_url_color);
-  } break; 
-   case OPTSG_pinnipede_visited_url_color: {
-    CHECK_BICOLOR_ARG(sp->pp_visited_url_color);
-  } break; 
-  case OPTSG_pinnipede_trollscore_color: {
-    CHECK_BICOLOR_ARG(sp->pp_trollscore_color);
-  } break; 
-  case OPTSG_pinnipede_strike_color: {
-    CHECK_BICOLOR_ARG(sp->pp_strike_color);
-  } break; 
-  case OPTSG_pinnipede_clock_style: {
-    CHECK_FONTSTYLE_ARG(sp->pp_clock_style);
-  } break;
-  case OPTSG_pinnipede_login_style: {
-    CHECK_FONTSTYLE_ARG(sp->pp_login_style);
-  } break;
-  case OPTSG_pinnipede_useragent_style: {
-    CHECK_FONTSTYLE_ARG(sp->pp_ua_style);
-  } break;
-  case OPT_pinnipede_emph_color: {
-    CHECK_BICOLOR_ARG(p->pp_emph_color);
-  } break; 
-  case OPT_pinnipede_sel_bgcolor: {
-    CHECK_BICOLOR_ARG(p->pp_sel_bgcolor);
-  } break; 
-  case OPT_pinnipede_popup_bgcolor: {
-    CHECK_BICOLOR_ARG(p->pp_popup_bgcolor);
-  } break; 
-  case OPT_pinnipede_popup_fgcolor: {
-    CHECK_BICOLOR_ARG(p->pp_popup_fgcolor);
-  } break; 
-  case OPT_pinnipede_buttonbar_bgcolor: {
-    CHECK_BICOLOR_ARG(p->pp_buttonbar_bgcolor);
-  } break; 
-  case OPT_pinnipede_buttonbar_fgcolor: {
-    CHECK_BICOLOR_ARG(p->pp_buttonbar_fgcolor);
-  } break; 
-  case OPT_pinnipede_buttonbar_msgcnt_color: {
-    CHECK_BICOLOR_ARG(p->pp_buttonbar_msgcnt_color);
-  } break; 
-  case OPT_pinnipede_buttonbar_updlcnt_color: {
-    CHECK_BICOLOR_ARG(p->pp_buttonbar_updlcnt_color);
-  } break; 
-  case OPT_pinnipede_buttonbar_progressbar_color: {
-    CHECK_BICOLOR_ARG(p->pp_buttonbar_progressbar_color);
-  } break; 
-  case OPT_pinnipede_hilight_my_msg_color: {
-    CHECK_BICOLOR_ARG(p->pp_my_msg_color);
-  } break; 
-  case OPT_pinnipede_hilight_answer_my_msg_color: {
-    CHECK_BICOLOR_ARG(p->pp_answer_my_msg_color);
-  } break; 
-  case OPT_pinnipede_hilight_keyword_color0: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color[0]);
-  } break; 
-  case OPT_pinnipede_hilight_keyword_color1: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color[1]);
-  } break; 
-  case OPT_pinnipede_hilight_keyword_color2: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color[2]);
-  } break; 
-  case OPT_pinnipede_hilight_keyword_color3: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color[3]);
-  } break; 
-  case OPT_pinnipede_hilight_keyword_color4: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color[4]);
-  } break; 
-  case OPT_pinnipede_plopify_color: {
-    CHECK_BICOLOR_ARG(p->pp_plopify_color);
-  } break; 
-  case OPT_pinnipede_location: {
-    CHECK_XYPOS_ARG(p->pp_xpos, p->pp_ypos);
-  } break; 
-  case OPT_pinnipede_dimensions: {
-    CHECK_XYPOS_ARG(p->pp_width, p->pp_height);
-  } break; 
-  case OPT_pinnipede_buttons: {
-    CHECK_BOOL_ARG(p->pp_minibar_on);
-  } break; 
-  case OPT_pinnipede_show_tags: {
-    CHECK_BOOL_ARG(p->pp_html_mode);
-  } break; 
-  case OPT_pinnipede_show_seconds: {
-    CHECK_BOOL_ARG(p->pp_show_sec_mode);
-  } break; 
-  case OPT_pinnipede_nick_mode: {
-    CHECK_INTEGER_ARG(0,4, p->pp_nick_mode);
-  } break; 
-  case OPT_pinnipede_show_troll_score: {
-    CHECK_BOOL_ARG(p->pp_trollscore_mode);
-  } break; 
-  case OPT_pinnipede_use_classical_tabs: {
-    CHECK_BOOL_ARG(p->pp_use_classical_tabs);
-  } break; 
-  case OPT_pinnipede_use_colored_tabs: {
-    CHECK_BOOL_ARG(p->pp_use_colored_tabs);
-  } break; 
-  case OPT_pinnipede_plop_keywords: {
-    CHECK_KEY_LIST(p->plopify_key_list,0,3);
-  } break; 
-  case OPT_pinnipede_hilight_keywords: {
-    CHECK_KEY_LIST(p->hilight_key_list,0,4);
-  } break; 
-  case OPT_pinnipede_plop_words: {
-    char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);
-    if (err) return err;
-  } break; 
-  case OPT_pinnipede_url_replace: {
-    char *err = option_get_url_remplacement(arg, &p->url_repl);
-    if (err) return err;
-  } break; 
-  case OPTSG_pinnipede_mark_id_gaps: {
-    CHECK_BOOL_ARG(sp->mark_id_gaps);
-  } break; 
-  case OPT_pinnipede_hungry_boitakon: {
-    CHECK_BOOL_ARG(p->hungry_boitakon);
-  } break;
-  case OPTSG_locale: {
-    if (strcasecmp(arg, "fr")==0) sp->locale = locFR;
-    else sp->locale = locEN;
-  } break; 
-  case OPTSG_pinnipede_use_AM_PM: {
-    CHECK_BOOL_ARG(sp->use_AM_PM);
-  } break;
-  case OPT_scrollcoin_bg_color: {
-    CHECK_BICOLOR_ARG(p->sc_bg_color);
-  } break; 
-  case OPT_scrollcoin_bg_light_color:  {
-    CHECK_BICOLOR_ARG(p->sc_bg_light_color);
-  } break; 
-  case OPT_scrollcoin_bg_dark_color:  {
-    CHECK_BICOLOR_ARG(p->sc_bg_dark_color);
-  } break; 
-  case OPT_scrollcoin_arrow_normal_color: {
-    CHECK_BICOLOR_ARG(p->sc_arrow_normal_color);
-  } break; 
-  case OPT_scrollcoin_arrow_emphasized_color: {
-    CHECK_BICOLOR_ARG(p->sc_arrow_emphasized_color);
-  } break; 
-  case OPT_scrollcoin_bar_color:   {
-    CHECK_BICOLOR_ARG(p->sc_bar_color);
-  } break; 
-  case OPT_scrollcoin_bar_light_color: {
-    CHECK_BICOLOR_ARG(p->sc_bar_light_color);
-  } break; 
-  case OPT_scrollcoin_bar_dark_color: {
-    CHECK_BICOLOR_ARG(p->sc_bar_dark_color);
-  } break; 
-  case OPT_rss_site:
-  case OPT_pop_site:
-  case OPT_board_site:
-  case OPT_site: {
-    if (p->nb_sites >= MAX_SITES-1) {
-      printf("Too much sites (MAX_SITES = %d), ignoring option 'site: %s'\n", MAX_SITES, arg); 
-    } else {
+    case OPTS_check_board: {
+      CHECK_BOOL_ARG(sp->check_board);
+    } break; 
+    case OBSOLETE_OPT_news_font_family:
+    case OBSOLETE_OPTSG_check_news:
+    case OBSOLETE_OPTSG_news_delay:
+    case OBSOLETE_OPTSG_http_path_end_news_url:
+    case OBSOLETE_OPTSG_board_auto_refresh: { 
+    } break;
+    case OPT_verbosity_underpants: {
+      CHECK_INTEGER_ARG(0,10, p->verbosity_underpants);
+    } break;  
+    case OPT_verbosity_http: {
+      CHECK_INTEGER_ARG(0,10, p->verbosity_http);
+    } break;
+    case OPT_font_encoding: { 
+      ASSIGN_STRING_VAL(p->font_encoding,arg); 
+    } break; 
+    case OPTSG_tribune_delay: {
+      CHECK_INTEGER_ARG(10,10000, sp->board_check_delay); 
+    } break;
+    case OPT_tribunenews_max_refresh_delay: {
+      CHECK_INTEGER_ARG(0,0, p->max_refresh_delay);
+    } break; 
+    case OPT_tribunenews_switch_off_coincoin_delay: {
+      CHECK_INTEGER_ARG(0,0, p->switch_off_coincoin_delay);
+    } break; 
+    case OPTSG_tribune_max_messages: {
+      CHECK_INTEGER_ARG(1,0, sp->board_max_msg);
+    } break; 
+    case OPT_tribune_troll_detector: {
+      CHECK_BOOL_ARG(p->enable_troll_detector);
+    } break;
+    case OPT_board_auto_dl_pictures: {
+      CHECK_BOOL_ARG(p->board_auto_dl_pictures);
+    } break;
+    case OPT_board_enable_hfr_pictures: {
+      CHECK_BOOL_ARG(p->board_enable_hfr_pictures);
+    } break;
+    case OPT_tribune_post_cmd: {
+      ASSIGN_STRING_VAL(p->post_cmd[0], arg);
+    } break; 
+    case OPT_tribune_post_cmd_enabled: {
+      CHECK_BOOL_ARG(p->post_cmd_enabled[0]);
+    } break;
+    case OPT_tribune_post_cmd2: {
+      ASSIGN_STRING_VAL(p->post_cmd[1], arg);
+    } break;
+    case OPT_tribune_post_cmd2_enabled: {
+      CHECK_BOOL_ARG(p->post_cmd_enabled[1]);
+    } break;
+    case OPTSG_tribune_wiki_emulation: {
+      ASSIGN_STRING_VAL(sp->board_wiki_emulation, arg);
+    } break; 
+    case OPT_tribune_archive: {
+      CHECK_FILENAME_ARG(p->board_scrinechote);
+    } break; 
+    case OPT_dock_bg_color: {
+      CHECK_COLOR_ARG(p->dock_bgcolor);
+    } break; 
+    case OPT_dock_bg_pixmap: {
+      CHECK_FILENAME_ARG(p->dock_bgpixmap);
+    } break; 
+    case OPT_dock_skin_pixmap: {
+      CHECK_FILENAME_ARG(p->dock_skin_pixmap);
+    } break; 
+    case OPT_dock_fg_color: {
+      CHECK_COLOR_ARG(p->dock_fgcolor);
+    } break; 
+    case OPT_dock_draw_border: {
+      CHECK_BOOL_ARG(p->draw_border);
+    } break; 
+    case OPT_dock_iconwin: {
+      CHECK_BOOL_ARG(p->use_iconwin);
+    } break; 
+    case OPT_dock_auto_swallow: {
+      CHECK_BOOL_ARG(p->auto_swallow);
+    } break; 
+    case OPT_palmipede_override_wmanager: { 
+      CHECK_BOOL_ARG(p->palmipede_override_redirect);
+    } break;
+    case OPT_dock_use_balloons: {
+      CHECK_BOOL_ARG(p->use_balloons);
+    } break; 
+    case OPT_dock_balloons_font_family: {
+      ASSIGN_STRING_VAL(p->balloon_fn_family, arg); 
+    } break; 
+    case OPT_dock_balloons_font_size: {
+      CHECK_INTEGER_ARG(1,100, p->balloon_fn_size);
+    } break; 
+    case OPT_dock_pos: {
+      CHECK_XYPOS_ARG(p->dock_xpos, p->dock_ypos);
+    } break; 
+    case OPT_dock_start_in_boss_mode: {
+      CHECK_BOOL_ARG(p->start_in_boss_mode);
+    } break; 
+    case OPTSG_palmipede_username: {
+      ASSIGN_STRING_VAL(sp->user_name, arg);
+    } break; 
+    case OPTSG_palmipede_msg_max_length: {
+      CHECK_INTEGER_ARG(64, MESSAGE_MAXMAX_LEN, sp->palmi_msg_max_len);
+    } break; 
+    case OPTSG_palmipede_useragent_max_length: {
+      CHECK_INTEGER_ARG(20, USERAGENT_MAXMAX_LEN, sp->palmi_ua_max_len);
+    } break; 
+    case OPTSG_palmipede_userlogin: {
+      ASSIGN_STRING_VAL(sp->user_login, arg);
+    } break; 
+    case OPTSG_palmipede_useragent: {
+      option_set_useragent(arg, sp, verbatim);
+    } break; 
+    case OPT_palmipede_default_message: {
+      ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
+    } break; 
+    case OBSOLETE_OPTSG_tribune_backend_type: 
+    case OBSOLETE_OPTSG_backend_type: 
+    case OPTSG_backend_flavour: {
+      CHECK_INTEGER_ARG(1,3, sp->backend_flavour);
+    } break;
+    case OBSOLETE_OPTSG_http_site_url: {
+      strcpy(ObsoleteFeatures.site_url, arg);
+      update_prefs_from_obsolete_features(sp);
+      /*ASSIGN_STRING_VAL(sp->backend_url, arg);
+        strcpy(obsolete_last_site_root, arg); obsolete_last_site_root[511] = 0;*/
+    } break; 
+    case OBSOLETE_OPTSG_http_path_tribune_backend: {
+      strcpy(ObsoleteFeatures.path_tribune_backend, arg);
+      update_prefs_from_obsolete_features(sp);
+      //sp->backend_url = str_cat_printf(sp->backend_url, "/%s", arg);
+    } break; 
+    case OBSOLETE_OPTSG_http_path_tribune_add: {
+      strcpy(ObsoleteFeatures.path_tribune_add, arg);
+      update_prefs_from_obsolete_features(sp);
+      //FREE_STRING(sp->post_url);
+      //sp->post_url = str_printf("%s/%s", obsolete_last_site_root, arg);
+    } break; 
+    case OPTSG_backend_url: {
+      char *err = option_backend_url(arg, sp);
+      if (err) return err;
+    } break;
+    case OPTSG_post_url: {
+      char *err = option_post_url(arg, sp);
+      if (err) return err;
+    } break;
+    case OBSOLETE_OPTSG_http_board_post: 
+    case OPTSG_post_template: {
+      ASSIGN_STRING_VAL(sp->post_template, arg); 
+      if (!strstr(sp->post_template, "%s")) {
+        return strdup("you forgot the %s in the board_post option");
+      }
+    } break; 
+    case OBSOLETE_OPTS_http_cookie: {
+      char *err = option_http_cookie(sp, arg);
+      if (err) return err;
+    } break; 
+    case OPTSG_http_proxy: {
+      option_set_proxy(arg, sp);
+    } break; 
+    case OPTSG_http_proxy_auth: {
+      char *s = strchr(arg, ':');
+      if (s) {
+        *s = 0;
+        ASSIGN_STRING_VAL(sp->proxy_auth_user, arg); 
+        ASSIGN_STRING_VAL(sp->proxy_auth_pass, s+1);
+      } else {
+        return strdup("invalid proxy user:pass setting (user name and "
+                      "password should be separated by ':')");
+      } 
+    } break; 
+    case OPTSG_http_proxy_use_nocache: {
+      CHECK_BOOL_ARG(sp->proxy_nocache);
+    } break; 
+    case OPTSG_http_use_if_modified_since: {
+      CHECK_BOOL_ARG(sp->use_if_modified_since);
+    } break; 
+    case OPT_http_browser: {
+      option_browser(arg, opt_name, p, 1);
+    } break; 
+    case OPT_http_browser2: {
+      option_browser(arg, opt_name, p, 2);
+    } break; 
+    case OPT_http_gogole_search_url: {
+      ASSIGN_STRING_VAL(p->gogole_search_url, arg);
+    } break;
+    case OPT_http_timeout: {
+      CHECK_INTEGER_ARG(20,600, p->http_timeout);
+    } break;
+    case OPT_http_inet_ip_version: {
+      CHECK_INTEGER_ARG(0,10, p->http_inet_ip_version);
+    } break;
+    case OPT_dock_disable_xft_antialiasing: {
+      CHECK_BOOL_ARG(p->disable_xft_antialiasing);
+    } break;
+    case OPT_pinnipede_font_family: {
+      ASSIGN_STRING_VAL(p->pp_fn_family, arg); 
+    } break; 
+    case OPT_pinnipede_font_size: {
+      CHECK_INTEGER_ARG(1,0, p->pp_fn_size);
+    } break; 
+    case OPTSG_pinnipede_bg_color: {
+      CHECK_COLOR_ARG(sp->pp_bgcolor);
+    } break; 
+    case OPT_pinnipede_start_in_transparency_mode: {
+      CHECK_BOOL_ARG(p->pp_start_in_transparency_mode);
+    } break;
+    case OPT_pinnipede_use_fake_real_transparency: {
+      CHECK_BOOL_ARG(p->use_fake_real_transparency);
+    } break;
+    case OPT_pinnipede_transparency: {
+      CHECK_TRANSP_ARG(p->pp_transparency);
+    } break;
+    case OPTSG_pinnipede_fg_color: {
+      CHECK_BICOLOR_ARG(sp->pp_fgcolor);
+    } break; 
+    case OPTSG_pinnipede_clock_color: {
+      CHECK_BICOLOR_ARG(sp->pp_tstamp_color);
+    } break; 
+    case OPTSG_pinnipede_useragent_color: {
+      CHECK_BICOLOR_ARG(sp->pp_useragent_color);
+    } break; 
+    case OPTSG_pinnipede_login_color: {
+      CHECK_BICOLOR_ARG(sp->pp_login_color);
+    } break; 
+    case OPTSG_pinnipede_url_color: {
+      CHECK_BICOLOR_ARG(sp->pp_url_color);
+    } break; 
+    case OPTSG_pinnipede_visited_url_color: {
+      CHECK_BICOLOR_ARG(sp->pp_visited_url_color);
+    } break; 
+    case OPTSG_pinnipede_trollscore_color: {
+      CHECK_BICOLOR_ARG(sp->pp_trollscore_color);
+    } break; 
+    case OPTSG_pinnipede_strike_color: {
+      CHECK_BICOLOR_ARG(sp->pp_strike_color);
+    } break; 
+    case OPTSG_pinnipede_clock_style: {
+      CHECK_FONTSTYLE_ARG(sp->pp_clock_style);
+    } break;
+    case OPTSG_pinnipede_login_style: {
+      CHECK_FONTSTYLE_ARG(sp->pp_login_style);
+    } break;
+    case OPTSG_pinnipede_useragent_style: {
+      CHECK_FONTSTYLE_ARG(sp->pp_ua_style);
+    } break;
+    case OPT_pinnipede_emph_color: {
+      CHECK_BICOLOR_ARG(p->pp_emph_color);
+    } break; 
+    case OPT_pinnipede_sel_bgcolor: {
+      CHECK_BICOLOR_ARG(p->pp_sel_bgcolor);
+    } break; 
+    case OPT_pinnipede_popup_bgcolor: {
+      CHECK_BICOLOR_ARG(p->pp_popup_bgcolor);
+    } break; 
+    case OPT_pinnipede_popup_fgcolor: {
+      CHECK_BICOLOR_ARG(p->pp_popup_fgcolor);
+    } break; 
+    case OPT_pinnipede_buttonbar_bgcolor: {
+      CHECK_BICOLOR_ARG(p->pp_buttonbar_bgcolor);
+    } break; 
+    case OPT_pinnipede_buttonbar_fgcolor: {
+      CHECK_BICOLOR_ARG(p->pp_buttonbar_fgcolor);
+    } break; 
+    case OPT_pinnipede_buttonbar_msgcnt_color: {
+      CHECK_BICOLOR_ARG(p->pp_buttonbar_msgcnt_color);
+    } break; 
+    case OPT_pinnipede_buttonbar_updlcnt_color: {
+      CHECK_BICOLOR_ARG(p->pp_buttonbar_updlcnt_color);
+    } break; 
+    case OPT_pinnipede_buttonbar_progressbar_color: {
+      CHECK_BICOLOR_ARG(p->pp_buttonbar_progressbar_color);
+    } break; 
+    case OPT_pinnipede_hilight_my_msg_color: {
+      CHECK_BICOLOR_ARG(p->pp_my_msg_color);
+    } break; 
+    case OPT_pinnipede_hilight_answer_my_msg_color: {
+      CHECK_BICOLOR_ARG(p->pp_answer_my_msg_color);
+    } break; 
+    case OPT_pinnipede_hilight_keyword_color0: {
+      CHECK_BICOLOR_ARG(p->pp_keyword_color[0]);
+    } break; 
+    case OPT_pinnipede_hilight_keyword_color1: {
+      CHECK_BICOLOR_ARG(p->pp_keyword_color[1]);
+    } break; 
+    case OPT_pinnipede_hilight_keyword_color2: {
+      CHECK_BICOLOR_ARG(p->pp_keyword_color[2]);
+    } break; 
+    case OPT_pinnipede_hilight_keyword_color3: {
+      CHECK_BICOLOR_ARG(p->pp_keyword_color[3]);
+    } break; 
+    case OPT_pinnipede_hilight_keyword_color4: {
+      CHECK_BICOLOR_ARG(p->pp_keyword_color[4]);
+    } break; 
+    case OPT_pinnipede_plopify_color: {
+      CHECK_BICOLOR_ARG(p->pp_plopify_color);
+    } break; 
+    case OPT_pinnipede_location: {
+      CHECK_XYPOS_ARG(p->pp_xpos, p->pp_ypos);
+    } break; 
+    case OPT_pinnipede_dimensions: {
+      CHECK_XYPOS_ARG(p->pp_width, p->pp_height);
+    } break; 
+    case OPT_pinnipede_buttons: {
+      CHECK_BOOL_ARG(p->pp_minibar_on);
+    } break; 
+    case OPT_pinnipede_show_tags: {
+      CHECK_BOOL_ARG(p->pp_html_mode);
+    } break; 
+    case OPT_pinnipede_show_seconds: {
+      CHECK_BOOL_ARG(p->pp_show_sec_mode);
+    } break; 
+    case OPT_pinnipede_nick_mode: {
+      CHECK_INTEGER_ARG(0,4, p->pp_nick_mode);
+    } break; 
+    case OPT_pinnipede_show_troll_score: {
+      CHECK_BOOL_ARG(p->pp_trollscore_mode);
+    } break; 
+    case OPT_pinnipede_use_classical_tabs: {
+      CHECK_BOOL_ARG(p->pp_use_classical_tabs);
+    } break; 
+    case OPT_pinnipede_use_colored_tabs: {
+      CHECK_BOOL_ARG(p->pp_use_colored_tabs);
+    } break; 
+    case OPT_pinnipede_plop_keywords: {
+      CHECK_KEY_LIST(p->plopify_key_list,0,3);
+    } break; 
+    case OPT_pinnipede_hilight_keywords: {
+      CHECK_KEY_LIST(p->hilight_key_list,0,4);
+    } break; 
+    case OPT_pinnipede_plop_words: {
+      char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);
+      if (err) return err;
+    } break; 
+    case OPT_pinnipede_url_replace: {
+      char *err = option_get_url_remplacement(arg, &p->url_repl);
+      if (err) return err;
+    } break; 
+    case OPTSG_pinnipede_mark_id_gaps: {
+      CHECK_BOOL_ARG(sp->mark_id_gaps);
+    } break; 
+    case OPT_pinnipede_hungry_boitakon: {
+      CHECK_BOOL_ARG(p->hungry_boitakon);
+    } break;
+    case OPTSG_locale: {
+      if (strcasecmp(arg, "fr")==0) sp->locale = locFR;
+      else sp->locale = locEN;
+    } break; 
+    case OPTSG_pinnipede_use_AM_PM: {
+      CHECK_BOOL_ARG(sp->use_AM_PM);
+    } break;
+    case OPT_scrollcoin_bg_color: {
+      CHECK_BICOLOR_ARG(p->sc_bg_color);
+    } break; 
+    case OPT_scrollcoin_bg_light_color:  {
+      CHECK_BICOLOR_ARG(p->sc_bg_light_color);
+    } break; 
+    case OPT_scrollcoin_bg_dark_color:  {
+      CHECK_BICOLOR_ARG(p->sc_bg_dark_color);
+    } break; 
+    case OPT_scrollcoin_arrow_normal_color: {
+      CHECK_BICOLOR_ARG(p->sc_arrow_normal_color);
+    } break; 
+    case OPT_scrollcoin_arrow_emphasized_color: {
+      CHECK_BICOLOR_ARG(p->sc_arrow_emphasized_color);
+    } break; 
+    case OPT_scrollcoin_bar_color:   {
+      CHECK_BICOLOR_ARG(p->sc_bar_color);
+    } break; 
+    case OPT_scrollcoin_bar_light_color: {
+      CHECK_BICOLOR_ARG(p->sc_bar_light_color);
+    } break; 
+    case OPT_scrollcoin_bar_dark_color: {
+      CHECK_BICOLOR_ARG(p->sc_bar_dark_color);
+    } break; 
+    case OPT_rss_site:
+    case OPT_pop_site:
+    case OPT_board_site:
+    case OBSOLETE_OPT_site: {
+      if (p->nb_sites >= MAX_SITES-1) {
+        printf("Too much sites (MAX_SITES = %d), ignoring option 'site: %s'\n", MAX_SITES, arg); 
+      } else {
+        char *err;
+        backend_type_enum bt = BACKEND_TYPE_BOARD;
+        if (opt_num == OPT_rss_site) bt = BACKEND_TYPE_RSS;
+        else if (opt_num == OPT_pop_site) bt = BACKEND_TYPE_POP;
+        if ((err = wmcc_prefs_add_site(p, global_sp, arg, bt))) return err;
+        ObsoleteFeatures.site_url[0] = ObsoleteFeatures.path_tribune_add[0] = ObsoleteFeatures.path_tribune_backend[0] = 0;
+      }
+    } break;
+    case OPT_pinnipede_auto_open: {
+      CHECK_BOOL_ARG(p->pinnipede_open_on_start);
+    } break;
+    case OPT_spell_enable: {
+      CHECK_BOOL_ARG(p->ew_do_spell);
+    } break; 
+    case OPT_spell_cmd: {
+      ASSIGN_STRING_VAL(p->ew_spell_cmd, arg); 
+    } break; 
+    case OPT_spell_dict: {
+      ASSIGN_STRING_VAL(p->ew_spell_dict, arg); 
+    } break;   
+    case OPT_board_miniua_rule: {
       char *err;
-      backend_type_enum bt = BACKEND_TYPE_BOARD;
-      if (opt_num == OPT_rss_site) bt = BACKEND_TYPE_RSS;
-      else if (opt_num == OPT_pop_site) bt = BACKEND_TYPE_POP;
-      if ((err = wmcc_prefs_add_site(p, global_sp, arg, bt))) return err;
+      if ((err = option_miniua_rule(arg, &p->miniuarules))) return err;
+    } break;
+    default: {
+      printf(_("Watch out darling, it's gonnah cut\n")); 
+      printf(_("the option '%s' is valid but not handled, WHAT A SHAME"), opt_name);
+      assert(2+2==5); /* trop gros, passera pas */
     }
-  } break;
-  case OPT_pinnipede_auto_open: {
-    CHECK_BOOL_ARG(p->pinnipede_open_on_start);
-  } break;
-  case OPT_spell_enable: {
-    CHECK_BOOL_ARG(p->ew_do_spell);
-  } break; 
-  case OPT_spell_cmd: {
-    ASSIGN_STRING_VAL(p->ew_spell_cmd, arg); 
-  } break; 
-  case OPT_spell_dict: {
-    ASSIGN_STRING_VAL(p->ew_spell_dict, arg); 
-  } break;   
-  case OPT_board_miniua_rule: {
-    char *err;
-    if ((err = option_miniua_rule(arg, &p->miniuarules))) return err;
-  } break;
-  default: {
-    printf(_("Watch out darling, it's gonnah cut\n")); 
-    printf(_("the option '%s' is valid but not handled, WHAT A SHAME"), opt_name);
-    assert(2+2==5); /* trop gros, passera pas */
-  }
   }
   return NULL;
 }
@@ -1577,7 +1610,9 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
 
 char *
 wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname) {
-  char *fname = str_printf("%s.auth", basefname);
+  char *fname = (basefname[0] != '/' && basefname[0] != '.') ?
+    str_printf("%s/.wmcoincoin/%s.auth", getenv("HOME"), basefname) :
+    str_printf("%s.auth", basefname);
   FILE *f = fopen(fname, "r");  
   char *err = NULL;
   regex_t re_cookies;
@@ -1596,7 +1631,7 @@ wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname) {
         if (regexec(&re_cookies, s, 50, match, 0) == 0) {
           s[match[1].rm_eo] = 0; char *site_name = s+match[1].rm_so;
           s[match[2].rm_eo] = 0; char *cookie = s+match[2].rm_so;
-          printf("cookie '%s' '%s'\n", site_name, cookie);
+          //printf("cookie '%s' '%s'\n", site_name, cookie);
           sp = wmcc_prefs_find_site(p, site_name);
           if (sp) {
             err = option_http_cookie(sp, cookie);
@@ -1607,7 +1642,7 @@ wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname) {
           s[match[1].rm_eo] = 0; char *site_name = s+match[1].rm_so;
           s[match[2].rm_eo] = 0; char *user = s+match[2].rm_so;
           s[match[3].rm_eo] = 0; char *pass = s+match[3].rm_so;
-          printf("pop3: site '%s' '%s' '%s'\n", site_name, user, pass);
+          //printf("pop3: site '%s' '%s' '%s'\n", site_name, user, pass);
           sp = wmcc_prefs_find_site(p, site_name);
           if (sp) {
             sp->pop3_user = strdup(user);
@@ -1642,7 +1677,16 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
 
   if (p->nb_sites == 0) {
     myfprintf(stderr, _("\n\n%<YEL oooooooh !!! you didn't define at least *ONE* site>, you bad boy.\ni do it for you, but this is the last time\n plz %<MAG use wmccc to add new sites>\n\n"));
-    wmcc_prefs_add_site(p, &global_sp, "\"plop\"", 0);
+    wmcc_prefs_add_site(p, &global_sp, "\"linuxfr\"", BACKEND_TYPE_BOARD);
+    p->site[0]->backend_flavour = BACKEND_FLAVOUR_ENCODED;
+    ASSIGN_STRING_VAL(p->site[0]->post_url, "http://linuxfr.org/board/add.html");
+    ASSIGN_STRING_VAL(p->site[0]->post_template, "message=%s&section=1");
+    wmcc_prefs_add_site(p, &global_sp, "\"news\"", BACKEND_TYPE_RSS);
+    ASSIGN_STRING_VAL(p->site[1]->backend_url, "http://linuxfr.org/backend.rss");
+    p->site[1]->pp_bgcolor = 0xe7d74c;
+    wmcc_prefs_add_site(p, &global_sp, "\"journaux\"", BACKEND_TYPE_RSS);
+    ASSIGN_STRING_VAL(p->site[2]->backend_url, "http://linuxfr.org/backend-journaux.rss");
+    p->site[2]->pp_bgcolor = 0xd8ac85;
   }
   if (error == NULL) error = wmcc_prefs_read_options_auth(p,filename);
   wmcc_site_prefs_destroy(&global_sp);

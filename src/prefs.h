@@ -90,7 +90,7 @@ typedef struct _FontStyle {
 
 /* les preferences sont stockees dans ces structures */
 
-typedef enum { BACKEND_FLAVOUR_ENCODED, BACKEND_FLAVOUR_UNENCODED, BACKEND_FLAVOUR_NO_PANTS }
+typedef enum { BACKEND_FLAVOUR_ENCODED=1, BACKEND_FLAVOUR_UNENCODED, BACKEND_FLAVOUR_NO_PANTS }
   backend_flavour_enum;
 
 typedef enum { BACKEND_TYPE_BOARD, BACKEND_TYPE_RSS, BACKEND_TYPE_POP }
@@ -149,8 +149,6 @@ typedef struct _SitePrefs {
   long time_difference; /* decalage horaire du site */
   int mark_id_gaps; /* la ligne rouge pointillée */
   int check_board;
-  //int board_auto_refresh;
-
 } SitePrefs;
 
 #define MAX_SITES 126 /* au-dela, faut vraiment songer à consulter */
@@ -381,6 +379,8 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
 			   wmcc_options_id opt_num, unsigned char *arg, int verbatim);
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
 char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim);
+char *wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname);
+int wmcc_prefs_find_site_id(GeneralPrefs *p, const char *name);
 SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
 void wmcc_site_prefs_set_default(SitePrefs *p);
 void wmcc_site_prefs_destroy(SitePrefs *p);

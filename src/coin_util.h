@@ -55,6 +55,7 @@ void make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int n
 int mark_html_tags(char *s, int sz);
 int convert_to_ascii(char *dest, const char *src, int dest_sz);
 int str_is_empty(const char *s);
+int xstrcmp(const char *a, const char *b);
 char *str_multi_str(const char *src, const char **keys, int nb_keys, int *key_idx);
 char *str_multi_substitute(const char *src, const char **keys, const char **substitutions, int nkeys);
 char *str_substitute(const char *src, const char *key, const char *substitution);
@@ -79,6 +80,7 @@ char *str_dup_unquoted(const char *s);
 char* str_cat(char *s1, const char *s2);
 char* str_ncat(char *s1, const char *s2, int n);
 void str_trunc_nice(char *s, int approx_max_len);
+time_t get_timezone();
 int str_to_time_t(const char *s, time_t *tt);
 void time_t_to_tstamp(time_t tim, char tstamp[15]);
 char *str_fget_line(FILE *f);
@@ -111,4 +113,5 @@ typedef struct SplittedURL {
   char *path[100];
 } SplittedURL;
 int split_url(const char *url, SplittedURL *d);
+char *shorten_path(const char *s_);
 #endif
