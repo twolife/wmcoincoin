@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.79 2003/03/12 21:09:50 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.80 2003/06/09 16:42:29 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.80  2003/06/09 16:42:29  pouaite
+  pan pan
+
   Revision 1.79  2003/03/12 21:09:50  pouaite
   mega patch de gle + micro fix du referer
 
@@ -353,9 +356,7 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
   bcmd = (browser_num == 1) ? Prefs.browser_cmd : Prefs.browser2_cmd;
 
   /* maintenant on est facho */
-  if (strncasecmp(url, "http://",7) != 0 &&
-      strncasecmp(url, "ftp://", 6) != 0 &&
-      strncasecmp(url, "https://",8) != 0) {
+  if (is_url(url) == -1) {
     snprintf(s, CMDSZ, _("this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>"
            "You will have to launch it by hand (copy to the clipboard with a right click, etc.)"), url);
     if (balloon_x != -1 && balloon_y != -1) {

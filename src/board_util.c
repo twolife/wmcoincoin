@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.13 2003/03/02 14:41:22 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.14 2003/06/09 16:42:29 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.14  2003/06/09 16:42:29  pouaite
+  pan pan
+
   Revision 1.13  2003/03/02 14:41:22  pouaite
   ce commit est dédié à la mémoire de jacques martin
 
@@ -444,7 +447,7 @@ check_for_horloge_ref_basic_helper(const unsigned char *ww, const char **site_na
       if (ww[i] == '@') {
 	l = i; /* ben oui faut pas affoler tout le monde */
 
-	if (isalpha(ww[i+1]))
+	if (isalnum(ww[i+1]))
 	  *site_name = ww+i+1;
 	
 /* 	printf("--> site_name = '%s'\n",*site_name);  */
@@ -617,21 +620,16 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
     }
     if (end == start) {
       int is_href;
-      const unsigned char *s1 = "\t<a href=\"http://";
-      const unsigned char *s2 = "\t<a href=\"ftp://";
-      const unsigned char *s3 = "\t<a href=\"https://";
-      const unsigned char *s4 = "\t<a href=\"../";
-      const unsigned char *s5 = "\t<a href=\"./";
+      const unsigned char *s0 = "\t<a href=\"";
+      const unsigned char *s1 = "\t<a href=\"../";
+      const unsigned char *s2 = "\t<a href=\"./";
       /* puis les <a href> (c'est un peu particulier */
 
       /* c'est un peu facho, d'autant que c'est reverifié au niveau de open_url, mais
 	 bon, apres la douche froide... */
-      is_href = 0;
-      if (strncasecmp(start, s1, strlen(s1)) == 0) is_href = 1; 
-      if (strncasecmp(start, s2, strlen(s2)) == 0) is_href = 1; 
-      if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
-      if (strncasecmp(start, s4, strlen(s4)) == 0) is_href = 1; 
-      if (strncasecmp(start, s5, strlen(s5)) == 0) is_href = 1; 
+      is_href = (strncasecmp(start, s0, strlen(s0)) == 0 && is_url(start+10) != -1) ||
+        (strncasecmp(start, s1, strlen(s1)) == 0) ||
+        (strncasecmp(start, s2, strlen(s2)) == 0);
       if (is_href) {
 	/* printf("get_tok: '"); */
 	end = start+1;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.34 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.35 2003/06/09 16:42:29 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.35  2003/06/09 16:42:29  pouaite
+  pan pan
+
   Revision 1.34  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -746,15 +749,22 @@ open_wfile(const char *fname) {
   return f;
 }
 
+int
+is_url(const char *s) {
+  int ok = 1;
+  int i=0;
+  while (s[i] && isalpha(s[i])) ++i;
+  if (i && s[i] == ':' && s[i+1] == '/' && s[i+2] == '/') return i+3;
+  else return -1;
+}
+
 /* rend une url présentable, et lui degage la nuque si nécessaire */
 void url_au_coiffeur(unsigned char *url, int coupe) {
   int i=0,j, j_path=0;
   enum {IN_HOST,IN_PORT,IN_PATH} where = IN_HOST;
   //printf("ENTREE url_au_coiffeur(%s,%d)\n", url, coupe);
-  if (strncasecmp(url, "http://",7)==0) i = 7; 
-  else if (strncasecmp(url, "https://",8)==0) i = 8;
-  else if (strncasecmp(url, "ftp://",6) == 0) i = 6;
-  else {
+  i = is_url(url);
+  if (i == -1) {
     fprintf(stderr,"url_au_coiffeur(%s): vous avez des pous\n", url);
     url[0] = 0; return;
   }

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.9 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.10 2003/06/09 16:42:29 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.10  2003/06/09 16:42:29  pouaite
+  pan pan
+
   Revision 1.9  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -769,9 +772,7 @@ editw_colorize(EditW *ew, unsigned char *ctab)
       word_end = i;
       word_len = word_end-word_start+1; assert(word_len>0);
       /* detection des URLs */
-      if( strncmp(ew->buff+word_start, "https://", 8)==0 ||
-	  strncmp(ew->buff+word_start, "http://", 7)==0 ||
-	  strncmp(ew->buff+word_start, "ftp://", 6)==0 ) {
+      if( is_url(ew->buff+word_start) != -1) {
 	for( j=word_start; j<word_end; ++j) 
 	  ctab[j] = EWC_URL;
 	/* detection des mots trops longs */

@@ -75,5 +75,6 @@ char *str_fget_line(FILE *f);
 void str_trim(unsigned char *s);
 char *str_preencode_for_http(const char *in);
 FILE *open_wfile(const char *fname);
+int is_url(const char *s);
 void url_au_coiffeur(unsigned char *url, int coupe);
 #endif

@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.15 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.16 2003/06/09 16:42:29 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.16  2003/06/09 16:42:29  pouaite
+  pan pan
+
   Revision 1.15  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -117,10 +120,7 @@ char* convert4Spell(const unsigned char* str)
   buff = malloc(strlen(str)+2); strcpy(buff, str); 
   s = buff;
   while (*s) {
-    if( lastspace 
-	&&( strncmp(s, "https://", 8)==0 || 
-	    strncmp(s, "http://", 7)==0 || 
-	    strncmp(s, "ftp://", 6)==0 )) {
+    if (lastspace && is_url(s) != -1 ) {
       for(; s[1] && s[1]>=' '; ++s)
 	*s = ' '; 
       lastspace = 0;

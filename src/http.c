@@ -772,14 +772,15 @@ http_skip_header(HttpRequest *r)
 	  while (buff[j] != ' ' && buff[j]) j++;
 	  if (buff[j] == ' ') {
 	    r->response = atoi(buff+j+1);
-	    if (strcasecmp("304 Not Modified\n", buff+j+1) == 0) {
+            if (r->response == 304) {
+              //if (strcasecmp("304 Not Modified\n", buff+j+1) == 0) {
 	      r->content_length = 0; /* ça sert à rien d'essayer de lire un truc vide 
 					c'est pas super joli de faire ça ici mais ça ira pour cette fois
 				      */
-	    } else 
-	    if (strcasecmp("200 OK\n", buff+j+1) != 0 && 
+	    } else if (r->response != 200 && r->response != 302) {
+              /*if (strcasecmp("200 OK\n", buff+j+1) != 0 && 
 		strcasecmp("302 Found\n", buff+j+1) != 0 &&
-		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {
+		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {*/
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
 	      myprintf(_("[%<MAG %s>]: %<yel %s>"), http_last_url, buff+j+1);
