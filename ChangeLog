@@ -1,3 +1,4 @@
+--------------------------v2.4.5-a-----------------------------------------
 2003-06-21  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (pp_handle_keypress): le pinnipede comprend
@@ -5,13 +6,15 @@
 	raccourcis (qui sont pour la plupart désactivés quand le palmipede
 	est activé):
 
-	- return : ouvre le palmipede
+	- return : ouvre le palmipede	
 	- ctrl-return: ouvre le palmipede pour répondre au message affiché
-	en bas du pinnipède.	
+	en bas du pinnipède ou au message selectionné avec ctrl+(haut|bas)
 	- ctrl-s : passe en mode recherche incrémentale (tapez le texte à
 	chercher, et le pinni affiche tous les postes qui "matchent" le
 	mot. La recherche du mot est aussi faite dans les logins, les ua,
 	et a l'intérieur des urls.
+	- ctrl-f : active/désactive le filtrage.
+	- ctrl-z : passe en boss-mode.
 	- espace : rafraichissement immédiat de la tribune affichée.
 	- ctrl-espace: rafraichissement immédiat de toutes les tribunes
 	affichées.
@@ -19,8 +22,10 @@
 	affichées.
 	- escape : annule le téléchargement en cours
 	- haut,bas,pgup,pgdown,home,end: scrolle le pinnipede.
+	- ctrl+(haut|bas): navigue dans le pinnipède en selectionnant les
+	messages successifs en en faisant ressortir leurs horloges comme
+	si elles étaient survolées par la souris.
 	- gauche/droite : change la tribune active.
-	- "f": active/désactive le filtrage.
 	- "r": active/désactive l'autorefresh.
 
 	* ajout d'un deuxième bigornophone, les deux bigornophones sont

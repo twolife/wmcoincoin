@@ -116,6 +116,17 @@ pp_tabs_build(Dock *dock) {
   pp_tabs_set_visible_sites(pp);
 }
 
+int pp_tabs_is_site_visible(Dock *dock, Site *s) {
+  Pinnipede *pp = dock->pinnipede;
+  int i;
+  for (i=0; i < pp->nb_tabs; i++) {
+    if (pp->tabs[i].site == s && pp->tabs[i].selected) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 void
 pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s)
 {

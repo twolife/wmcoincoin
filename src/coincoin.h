@@ -679,6 +679,7 @@ void pp_set_word_filter(Dock *dock, char *word);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
 Site *pp_tabs_get_main_site(Dock *dock);
+int pp_tabs_is_site_visible(Dock *dock, Site *s);
 void pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s);
 void pp_set_download_info(char *site, char *what);
 

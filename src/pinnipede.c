@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.90 2003/06/21 14:48:45 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.91 2003/06/22 12:17:19 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -860,6 +860,30 @@ pp_pv_destroy(Pinnipede *pp) {
 }
 
 
+static int 
+pp_pv_count_horloges(PostVisual *pv) {
+  PostWord *pw = pv->first;
+  int cnt = 0;
+  while (pw) {
+    if ((pw->attr & PWATTR_REF)) ++cnt;
+    pw = pw->next;
+  }
+  return cnt;
+}
+
+static PostWord *
+pp_pv_get_nth_horloge(PostVisual *pv, int n) {
+  PostWord *pw = pv->first;
+  while (n && pw) {
+    if ((pw->attr & PWATTR_REF)) {
+      n--;
+      if (n == 0) return pw;
+    }
+    pw = pw->next;
+  }
+  return NULL;
+}
+
 void
 pp_selection_unselect(Pinnipede *pp) {
   if (pp->lignes_sel) free(pp->lignes_sel);
@@ -1170,7 +1194,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
     /* la boucle sur tous les mots */
     while (pw && pw->ligne == pl) {
-	
+      int force_bold = 0;
       if (pw->attr & PWATTR_TSTAMP) {
 	pixel = pp->timestamp_pixel[site_num];
 //	if (pw->parent->is_my_message) { pixel = IRGB2PIXEL(0x000080); }
@@ -1205,7 +1229,8 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	XSetForeground(dock->display, dock->NormalGC, pixel);
 	old_pixel = pixel;
       }
-      fn = pv_get_font(pp, pw->attr);
+
+      fn = pv_get_font(pp, pw->attr | (force_bold ? PWATTR_BD : 0));
       if (fn != prev_font) {
 	XSetFont(dock->display, dock->NormalGC, fn->fid);
 	prev_font = fn;
@@ -1428,6 +1453,9 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
        if (id_type_eq(anti_ref_id[i], pw->parent->id)) {
 	 bgpixel = pp->emph_pixel; opaque_bg = 1;
        }
+     }
+     if (pw->parent && id_type_eq(pw->parent->id, pp->kbnav_current_id)) {
+       bgpixel = pp->sel_bgpixel;
      }
    }
    
@@ -1822,6 +1850,9 @@ pp_build(Dock *dock)
   pp->sel_anchor_x = pp->sel_head_x = 0;
   pp->sel_anchor_y = pp->sel_head_y = 0;
   pp->last_selected_text = NULL;
+
+  pp->kbnav_current_id = id_type_invalid_id();
+  pp->kbnav_current_tstamp = -1;
 
   pp->sc = NULL;
 
@@ -2547,12 +2578,12 @@ pp_set_anything_filter(Dock *dock, char *word)
 {
   Pinnipede *pp = dock->pinnipede;
   char fname[200];
-
+  char *s = strdup(word); /* pour les cas où word == filter.anything et unset_filter va le free-er */
   snprintf(fname, 200, "isearch: '%s'", word);
   pp_unset_filter(&pp->filter);
   pp->filter.filter_mode = 1;
   pp->filter.filter_name = strdup(fname);
-  pp->filter.anything = strdup(word);
+  pp->filter.anything = s;
   BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
   pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
   pp_refresh(dock, pp->win, NULL);	  
@@ -3350,6 +3381,82 @@ pp_selection_copy(Dock *dock, char *buff)
   return nc;
 }
 
+void
+kbnav_move(Dock *dock, int dir) {
+  Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
+  PostVisual *pv = NULL;
+  id_type id = pp->kbnav_current_id;
+  int restart = 0;
+  PostWord *refpw = NULL;
+  if (!pp->lignes) return;
+  while (pv == NULL) {
+    int i;
+    for (i=0; i < pp->nb_lignes && pv == 0; ++i) {
+      if (pp->lignes[i] && id_type_eq(pp->lignes[i]->parent->id,id)) { 
+        pv = pp->lignes[i]->parent; 
+      }
+    }
+    if (pv == NULL && restart == 0) {
+      restart = 1;
+      id = pp->id_base;
+    } else break;
+  }
+
+  if (pv == NULL) return;
+  if (restart) {
+    pp->kbnav_current_tstamp = pp_pv_count_horloges(pv)-1;
+  } else {
+    int pv_nb_clock = pp_pv_count_horloges(pv);
+    if (dir == -1) {
+      if (pp->kbnav_current_tstamp > 0) {
+        pp->kbnav_current_tstamp = MIN(pp->kbnav_current_tstamp-1, pv_nb_clock-1);
+      } else {
+        id = get_prev_id_filtered(boards,id,NULL,&pp->filter);
+        pp->kbnav_current_tstamp = 10000;
+      }
+    } else if (dir == +1) {
+      if (pp->kbnav_current_tstamp < pv_nb_clock-1) {
+        pp->kbnav_current_tstamp++;
+      } else {
+        id = get_next_id_filtered(boards,id,NULL,&pp->filter);
+        pp->kbnav_current_tstamp = -1;
+      }
+    }
+  }
+  pp->kbnav_current_id = id;
+  
+  if (!id_type_is_invalid(id)) {
+    int lbefore = 0, lafter = 0, i;
+    for (i=0; i < pp->nb_lignes; ++i) {
+      if (pp->lignes[i] && pp->lignes[i]->parent && id_type_eq(pp->lignes[i]->parent->id, id)) {
+        if (lbefore == 0)
+          lbefore = i;
+        lafter = pp->nb_lignes - i;
+      }
+    }
+    /*printf("dir=%d, lbefore = %d, lafter = %d, nb_lignes=%d\n", dir,lbefore, lafter, pp->nb_lignes);*/
+    if (!restart && lafter < pp->nb_lignes/4 && dir > 0)
+      pp_update_content(dock, pp->kbnav_current_id, pp->nb_lignes/2,0,0);
+    else if (!restart && lbefore < pp->nb_lignes/4 && dir < 0)
+      pp_update_content(dock, pp->kbnav_current_id, MIN(10,pp->nb_lignes/4),0,0);
+    else
+      pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+    pv = pp_find_pv(pp,pp->kbnav_current_id);
+    if (pv) {
+      int pv_nb_clock = pp_pv_count_horloges(pv);
+      if (pv_nb_clock == 0) pp->kbnav_current_tstamp = -1;
+      else pp->kbnav_current_tstamp = MAX(0,MIN(pp->kbnav_current_tstamp, pv_nb_clock-1));
+      refpw = pp_pv_get_nth_horloge(pv, pp->kbnav_current_tstamp+1);
+      /*    if (refpw) refpw->attr |= PWATTR_TMP_EMPH;
+            pw = pv->first;
+            while (pw && (pw->attr & PWATTR_TSTAMP)==0) pw = pw->next;
+            if (pw) pw->attr |= PWATTR_TMP_EMPH;*/
+    }
+    pp_refresh(dock, pp->win, refpw);
+  }
+}
+
 /* /!\ spaghettis */
 int
 pp_handle_keypress(Dock *dock, XEvent *event)
@@ -3378,6 +3485,13 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       }
       ret++;
     } break;
+    /* "ctrl-F" : active/desactive le filtre */
+    case 'F':
+    case 'f': if (!editw_ismapped(dock->editw)) {
+      pp->filter.filter_mode = 1-pp->filter.filter_mode;
+      pp_update_content(dock, pp->id_base, 0,0,0);
+      pp_refresh(dock, pp->win, NULL);
+    } break;
     case 'S':
     case 's': if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) { /* ctrl-s : mode recherche */
       if (pp->filter.filter_mode) { pp->filter.filter_mode = 0; }
@@ -3386,12 +3500,24 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       pp_refresh(dock, pp->win, NULL);
       ret++;
     } break;
+    case 'Z':
+    case 'z': {
+      flag_discretion_request = +1; ret++;
+    } break;
     /* CTRL-ENTER : ouvre le palmi pour répondre au message affiché en bas du pinni */
     case XK_Return:
     case XK_KP_Enter: if (!editw_ismapped(dock->editw)) {
-      if (pp->lignes) {
+      PostWord *pwts = NULL;
+      PostVisual *pv;
+      if ((pv = pp_find_pv(pp, pp->kbnav_current_id))) {
+        PostWord *pw = pv->first;
+        while (pw) {
+          if ((pw->attr & PWATTR_TSTAMP)) { pwts = pw;  break; }
+          pw = pw->next;
+        }
+      }
+      if (pwts == NULL && pp->lignes) {
         int i=pp->nb_lignes-1;
-        PostWord *pwts = NULL;
         /* :(================ */
         while (i>=0 && !pwts) {
           if (pp->lignes[i]) {          
@@ -3403,9 +3529,19 @@ pp_handle_keypress(Dock *dock, XEvent *event)
           }
           i--;
         }
-        if (pwts)
-          pp_open_palmi_for_reply(dock,pwts);
       }
+      if (pwts)
+        pp_open_palmi_for_reply(dock,pwts);
+      ret++;
+    } break;
+    case XK_KP_Up:
+    case XK_Up: if (!editw_ismapped(dock->editw)) {
+      kbnav_move(dock,-1);
+      ret++;
+    } break;
+    case XK_KP_Down:
+    case XK_Down: if (!editw_ismapped(dock->editw)) {
+      kbnav_move(dock,+1);
       ret++;
     } break;
     }
@@ -3493,13 +3629,6 @@ pp_handle_keypress(Dock *dock, XEvent *event)
           ret++;
         }
       }
-    } break;
-    /* "F" : active/desactive le filtre */
-    case 'F':
-    case 'f': if (!editw_ismapped(dock->editw)) {
-      pp->filter.filter_mode = 1-pp->filter.filter_mode;
-      pp_update_content(dock, pp->id_base, 0,0,0);
-      pp_refresh(dock, pp->win, NULL);
     } break;
     case ' ': {
       if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) {

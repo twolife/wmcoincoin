@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.28  2003/06/22 12:17:17  pouaite
+dnl   2.4.5a a la piscine
+dnl
 dnl   Revision 1.27  2003/06/21 14:48:44  pouaite
 dnl   g cho
 dnl
@@ -169,7 +172,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.4-enlarged, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.5a, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -217,6 +220,12 @@ RESET="\\033\\1330m"
 AC_PATH_X
 AC_PATH_XTRA
 echo x_cflags=$X_CFLAGS libs=$LIBS pre_lib=$X_PRE_LIBS x_libs=$X_LIBS x_extra=$X_EXTRA_LIBS
+
+if test x$no_x = xyes; then
+  echo "You need to supply the path to the X headers and libraries with --x-includes=dir and --x-libraries=dir";
+  exit 1;
+fi;
+
 dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)

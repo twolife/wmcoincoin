@@ -149,6 +149,9 @@ struct _Pinnipede {
 
   int colle_en_bas; /* pour savoir si on scrolle lors de nouveaux messages */
 
+  id_type kbnav_current_id;
+  int kbnav_current_tstamp; /* navigation au clavier : indique le message actuellement selectionné, et le numéro de l'horloge dans ce message qui est actuellement activée */
+
   //  int html_mode;
   int nick_mode; /* 0 : n'affiche rien, 
 		    1:  affiche les useragent raccourcis, 
@@ -224,7 +227,6 @@ void pp_tabs_set_visible_sites(Pinnipede *pp);
 void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt);
 void pp_tabs_changed(Dock *dock);
 void pp_change_active_tab(Dock *dock, int dir);
-
 void pp_scrollcoin_update_bounds(Dock *dock);
 void pp_widgets_set_pos(Dock *dock);
 void pp_widgets_refresh(Dock *dock);

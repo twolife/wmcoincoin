@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.11 2003/06/21 14:48:45 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.12 2003/06/22 12:17:19 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.12  2003/06/22 12:17:19  pouaite
+  2.4.5a a la piscine
+
   Revision 1.11  2003/06/21 14:48:45  pouaite
   g cho
 
@@ -1825,6 +1828,24 @@ editw_balise_tt(EditW *ew) {
 #define FORWARD_KEY XSendEvent(dock->display, dock->rootwin, True, KeyPressMask, event); \
                     editw_set_kbfocus(dock, ew, 1);
 
+static void floude(Dock *dock, char *s) {
+  char *msg = s; 
+  Site *site;
+  pp_set_download_info("[all]", "flooding ...");
+  if (!s) msg = dock->coin_coin_message;
+  for (site = dock->sites->list; site; site = site->next) {
+    if (pp_tabs_is_site_visible(dock,site)) {
+      printf("C'esT PARTI [%s]: UA=\"%s\", MSG=\"%s\"\n", 
+             site->prefs->site_name,
+             site->board->coin_coin_useragent, 
+             msg);
+      ccqueue_push_board_post(site->site_id,  
+                              site->board->coin_coin_useragent, msg);
+    }
+  }
+  editw_hide(dock, dock->editw);
+}
+
 int
 editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 {
@@ -1832,7 +1853,8 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   int klen;
   unsigned char buff[4];
   static XComposeStatus compose_status = { 0, 0 };
-
+  static unsigned ctrl_mem = 0;
+  static unsigned lev = 0;
   //printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
   if (!editw_ismapped(dock->editw) || ew->action != NOACTION) return 0; /* animation encours */
 
@@ -1845,7 +1867,33 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
 
-  //printf("klen=%2d %08x %c state=%08x\n", klen, ksym, ksym, event->xkey.state);
+  if (!(event->xkey.state & ControlMask) || !(event->xkey.state & ShiftMask)) { ctrl_mem = 0; lev = 0; }
+  else { ctrl_mem ^= ksym; ctrl_mem += (ksym & 0xff) << 4; lev++; }
+
+  /*printf("klen=%2d %08x %c state=%08x %04x lev=%d\n", klen, ksym, ksym, event->xkey.state, ctrl_mem, lev);*/
+
+  if (lev >= 3) {
+    switch (ctrl_mem) {
+    case 0xf38: msgbox_show(dock, "Dave ?"); break;
+    case 0x13cd: msgbox_show(dock, "I'm afraid. I'm afraid, Dave."); break;
+    case 0x22fa: break;
+    case 0x1850: msgbox_show(dock, "I honestly think you ought to calm down"); lev += 10; break;
+    case 0x27a5: break;
+    case 0x1D99: msgbox_show(dock, "..."); lev += 100; break;
+    case 0x31CC: msgbox_show(dock, "CO1N C01N IS COMING NOW!"); floude(dock,NULL); break;
+    case 0x2d40: break;
+    default: {
+      if (lev > 4 && lev < 100) {
+        msgbox_show(dock, "I'm sorry Dave, I'm afraid I can't do that.");
+      } else if (lev > 100) {
+        char *s = "I GIVE MY SOUL NOW I SURRENDER TO COINCOIN";
+        msgbox_show(dock, s); floude(dock,s);
+      } 
+      lev = 0; ctrl_mem = 0;
+    } break;
+    }
+    return 1;
+  }
 
   if (ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
     editw_insert_char(ew, (unsigned char)'¤');
@@ -1915,8 +1963,6 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case 'Y':
     case 'y': editw_cb_paste(dock, ew, 0); break;
 
-    case 'Z':
-    case 'z':
     case '_': editw_undo(dock, ew); break;
 
     case XK_Tab:
