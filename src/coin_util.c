@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.41 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.42 2004/04/28 22:19:00 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.42  2004/04/28 22:19:00  pouaite
+  bugfixes dae + des trucs que j'ai oublie
+
   Revision 1.41  2004/04/18 15:37:28  pouaite
   un deux un deux
 
@@ -1045,9 +1048,9 @@ str_to_time_t(const char *s, time_t *tt) {
       *tt -= get_timezone(); //(timezone_h*60+timezone_m)*60;
     }
     *tt += confidence;
-    if (confidence) {
+    /*if (confidence) {
       printf("s=%s time = %ld %s\n", s, *tt, asctime(localtime(tt)));
-    }
+      }*/
   }
   return ok;
 }

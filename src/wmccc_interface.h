@@ -16,3 +16,4 @@ GtkWidget* create_change_board_settings_dialog (void);
 GtkWidget* create_change_rss_settings_dialog (void);
 GtkWidget* create_change_pop_settings_dialog (void);
 GtkWidget* create_grab_cookie_dialog (void);
+GtkWidget* create_fontselectiondialog (void);

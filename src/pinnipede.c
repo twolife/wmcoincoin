@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.103 2004/04/26 20:32:31 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.104 2004/04/28 22:19:00 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -1372,6 +1372,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 		  par defaut, vaut -1 (cad désactivé)
                   peut valoir -2 : la ref est précise, mais on ne se sert que de l'id, pas des timestamps
 		*/
+
+  pp->flag_pp_refresh_request = 0;
   if (pp->lignes == NULL) return; /* ça peut arriver pendant que flag_updating_board != 0 */
 
   /*  {
@@ -1711,12 +1713,14 @@ pp_animate(Dock *dock)
       pp_minib_refresh(dock);
       pp_tabs_refresh(dock);
     }
-  }
-  if (pp->flag_pp_update_request && !flag_updating_board) {
-    pp->flag_pp_update_request = 0;
-    pp_pv_destroy(pp);
-    pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
-    pp_refresh(dock, pp->win, NULL);   
+    if (pp->flag_pp_update_request && !flag_updating_board) {
+      pp->flag_pp_update_request = 0;
+      pp_pv_destroy(pp);
+      pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
+      pp_refresh(dock, pp->win, NULL);   
+    } else if (pp->flag_pp_refresh_request) {
+      pp_refresh(dock, pp->win, NULL);
+    }
   }
 }
 
@@ -1969,6 +1973,7 @@ pp_build(Dock *dock)
   pp->colle_en_bas = 1;
 
   pp->flag_pp_update_request = 0;
+  pp->flag_pp_refresh_request = 0;
 
   pp->win_width = Prefs.pp_width;
   pp->win_height = Prefs.pp_height;
@@ -2057,8 +2062,7 @@ pp_rebuild(Dock *dock, int destroy_tabs)
     pp_scrollcoin_set(dock,1);
   }
   if (destroy_tabs) {
-    pp_tabs_destroy(pp);
-    pp_tabs_build(dock);
+    pp_tabs_rebuild(dock);
   }
   pp_widgets_set_pos(dock);  
   if (pp_ismapped(dock)) {
@@ -2273,11 +2277,12 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
   CCFontId fn;
   char *s;
   int ry0, ry1;
- 
+  int fn_h;
   if (txt == NULL) return;
   if (strlen(txt) == 0) return;
 
   fn = pp->fn_bd;
+  fn_h = ccfont_height(pp->fn_bd); // ccfont_ascent(pp->fn_bd) + ccfont_descent(pp->fn_bd) + 1;
   //XSetFont(dock->display, dock->NormalGC, fn->fid);
   l = 0; s = txt;
   while (*s) {
@@ -2289,8 +2294,8 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
       }
     }
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->popup_bgcolor));
-    ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - ccfont_ascent(fn));
-    ry1 = (l+1)*pp->fn_h + ccfont_descent(fn) + (s[cnt]==0 ? 6 : 0);
+    ry0 = (l == 0 ? 0 : (l+1)*fn_h); // - ccfont_ascent(fn));
+    ry1 = (l+1)*fn_h + fn_h; //ccfont_descent(fn) + (s[cnt]==0 ? 6 : 0);
     XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry0,
 		   pp->zmsg_w, ry1 - ry0+1);
     if (s[cnt]==0) {
@@ -2423,11 +2428,14 @@ pp_check_survol(Dock *dock, PostWord *pw, int force_refresh)
       } else {
         snprintf(snrep, 1024, _("%d %s (and %d plop%s from the boitakon)"),nrep-nrep_bak, (nrep-nrep_bak > 1) ? _("answers") : _("answer"), nrep_bak, nrep_bak > 1 ? "s" : "");
       }
-      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%s%s\ntimestamp=%lu (%s)", 
+      char *stime = strdup(asctime(localtime(&mi->timestamp)));
+      while (stime && stime[0] && stime[strlen(stime)-1] == '\n') stime[strlen(stime)-1] = 0;
+      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%s%s\ntimestamp=(%s)", 
 	       Prefs.site[pw->parent->id.sid]->site_name,
 	       pw->parent->id.lid, 
 	       (mi ? mi->useragent : ""), 
-	       snrep, blah, mi->timestamp, asctime(localtime(&mi->timestamp)));
+	       snrep, blah, stime);
+      free(stime);
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
       is_a_ref = 1;
@@ -2718,7 +2726,7 @@ pp_set_anything_filter(Dock *dock, char *word)
 
 
 static void
-gogole_search(Dock *dock, int mx, int my, char *w, int quote_all)
+gogole_search(Dock *dock, int mx, int my, char *w, int quote_all, int browser_num)
 {
   Pinnipede *pp = dock->pinnipede;
 
@@ -2734,7 +2742,7 @@ gogole_search(Dock *dock, int mx, int my, char *w, int quote_all)
     s0 = str_substitute(Prefs.gogole_search_url, "%22%s%22", ww);
     s = str_substitute(s0, "%s", ww);
     free(s0);
-    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 1);
+    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, browser_num);
     free(s); free(ww); 
   }
 }
@@ -2965,7 +2973,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     }
   } break;
   case PUP_GOGOLE: {
-    gogole_search(dock, mx, my, txt, 1);
+    gogole_search(dock, mx, my, txt, 1, 1);
   } break;
   case PUP_COPY_URL: {
     assert(pw);
@@ -3038,7 +3046,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 }
 
 static void
-pp_open_login_home_in_browser(Dock *dock, int sid UNUSED, int mx, int my, char *w, int bnum UNUSED) {
+pp_open_login_home_in_browser(Dock *dock, int sid UNUSED, int mx, int my, char *w, int browser_num) {
   /*Pinnipede *pp = dock->pinnipede;
   char *s;
   assert(w);
@@ -3053,8 +3061,8 @@ pp_open_login_home_in_browser(Dock *dock, int sid UNUSED, int mx, int my, char *
   SplittedURL su; 
   if (url && split_url(url,&su) == 0) {
     char s[500]; snprintf(s, 500, "\"%s\" site:%s", w, su.host);
-    gogole_search(dock, mx, my, s, 0);
-  } else gogole_search(dock,mx,my,w, 1);
+    gogole_search(dock, mx, my, s, 0, browser_num);
+  } else gogole_search(dock,mx,my,w, 1, browser_num);
 }
 
 
@@ -4095,7 +4103,8 @@ pp_dispatch_event(Dock *dock, XEvent *event)
       */
       if (event->xexpose.count == 0) {
         //printf("REFRESH!\n");
-	pp_refresh(dock, pp->win, NULL);
+	//pp_refresh(dock, pp->win, NULL);
+        pp->flag_pp_refresh_request = 1;
 	flush_expose(dock, pp->win);
       }
     } break;

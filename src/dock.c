@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.43 2004/04/26 20:32:31 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.44 2004/04/28 22:19:00 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.44  2004/04/28 22:19:00  pouaite
+  bugfixes dae + des trucs que j'ai oublie
+
   Revision 1.43  2004/04/26 20:32:31  pouaite
   roger demande le commit
 
@@ -670,8 +673,8 @@ refresh_msginfo(Dock *dock)
 	assert(b);
 	nbsec_since_last_msg = time(NULL) - (mi->timestamp + b->time_shift);
 	if (nbsec_since_last_msg < 600) {
-	  sprintf(dock->msginfo, "%.6s+%02ds", sp->site_name,
-		  nbsec_since_last_msg);
+          sprintf(dock->msginfo, "%.6s+%02d%s", sp->site_name,
+                  nbsec_since_last_msg, strlen(sp->site_name) <= 4 ? "s" : "");
 	} else {
 	  if ((nbsec_since_last_msg % 42) == 0) {
 	    sprintf(dock->msginfo, "GNU/HOLE!!");

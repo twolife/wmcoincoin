@@ -514,7 +514,7 @@ typedef struct Dock_ {
 
 /* c'est classé par ordre de priorité décroissante */
 typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, 
-	       Q_NEWSLST_UPDATE } ccqueue_elt_type;
+	       Q_NEWSLST_UPDATE, Q_SMILEY_DL } ccqueue_elt_type;
 
 typedef struct _ccqueue_elt {
   ccqueue_elt_type what;
@@ -565,6 +565,7 @@ void ccqueue_push_board_update(int sid);
 void ccqueue_push_comments_update(int sid);
 void ccqueue_push_messages_update(int sid);
 void ccqueue_push_newslst_update(int sid);
+void ccqueue_push_smiley_dl(char *imgname);
 int ccqueue_state();
 void ccqueue_print();
 const ccqueue_elt *ccqueue_doing_what();

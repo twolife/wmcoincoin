@@ -117,6 +117,7 @@ create_new_rss_dialog (void)
   GtkWidget *label10;
   GtkObject *board_check_delay_adj;
   GtkWidget *board_check_delay;
+  GtkWidget *checkbutton2;
   GtkWidget *label7;
   GtkWidget *dialog_action_area2;
   GtkWidget *cancel_bt;
@@ -211,7 +212,7 @@ create_new_rss_dialog (void)
   gtk_widget_show (frame2);
   gtk_box_pack_start (GTK_BOX (vbox4), frame2, TRUE, TRUE, 2);
 
-  table1 = gtk_table_new (3, 2, FALSE);
+  table1 = gtk_table_new (4, 2, FALSE);
   gtk_widget_show (table1);
   gtk_container_add (GTK_CONTAINER (frame2), table1);
   gtk_container_set_border_width (GTK_CONTAINER (table1), 2);
@@ -274,6 +275,12 @@ create_new_rss_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
+  checkbutton2 = gtk_check_button_new_with_mnemonic (_("Ignore <description> content (some links-only feeds contain ads in this field)"));
+  gtk_widget_show (checkbutton2);
+  gtk_table_attach (GTK_TABLE (table1), checkbutton2, 0, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
   label7 = gtk_label_new (_("RSS Backend information"));
   gtk_widget_show (label7);
   gtk_frame_set_label_widget (GTK_FRAME (frame2), label7);
@@ -329,6 +336,7 @@ create_new_rss_dialog (void)
   GLADE_HOOKUP_OBJECT (new_rss_dialog, backend_type_3, "backend_type_3");
   GLADE_HOOKUP_OBJECT (new_rss_dialog, label10, "label10");
   GLADE_HOOKUP_OBJECT (new_rss_dialog, board_check_delay, "board_check_delay");
+  GLADE_HOOKUP_OBJECT (new_rss_dialog, checkbutton2, "checkbutton2");
   GLADE_HOOKUP_OBJECT (new_rss_dialog, label7, "label7");
   GLADE_HOOKUP_OBJECT_NO_REF (new_rss_dialog, dialog_action_area2, "dialog_action_area2");
   GLADE_HOOKUP_OBJECT (new_rss_dialog, cancel_bt, "cancel_bt");
@@ -1026,6 +1034,7 @@ create_global_pinnipede_options_dialog (void)
   GtkWidget *label20;
   GtkObject *pp_fn_size_adj;
   GtkWidget *pp_fn_size;
+  GtkWidget *font_bt;
   GtkWidget *label18;
   GtkWidget *hbox9;
   GtkWidget *pinnipede_open_on_start;
@@ -1157,6 +1166,10 @@ create_global_pinnipede_options_dialog (void)
   pp_fn_size = gtk_spin_button_new (GTK_ADJUSTMENT (pp_fn_size_adj), 1, 0);
   gtk_widget_show (pp_fn_size);
   gtk_box_pack_start (GTK_BOX (hbox6), pp_fn_size, TRUE, TRUE, 0);
+
+  font_bt = gtk_button_new_from_stock ("gtk-select-font");
+  gtk_widget_show (font_bt);
+  gtk_box_pack_start (GTK_BOX (hbox6), font_bt, FALSE, FALSE, 0);
 
   label18 = gtk_label_new (_("Font"));
   gtk_widget_show (label18);
@@ -1490,6 +1503,7 @@ create_global_pinnipede_options_dialog (void)
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_fn_family, "pp_fn_family");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label20, "label20");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pp_fn_size, "pp_fn_size");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, font_bt, "font_bt");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label18, "label18");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox9, "hbox9");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, pinnipede_open_on_start, "pinnipede_open_on_start");
@@ -2399,14 +2413,17 @@ create_change_board_settings_dialog (void)
   all_names_1_ = gtk_entry_new ();
   gtk_widget_show (all_names_1_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_1_, 120, -1);
 
   all_names_2_ = gtk_entry_new ();
   gtk_widget_show (all_names_2_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+  gtk_widget_set_size_request (all_names_2_, 120, -1);
 
   all_names_3_ = gtk_entry_new ();
   gtk_widget_show (all_names_3_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_3_, 120, -1);
 
   label57 = gtk_label_new (_("Post URL:"));
   gtk_widget_show (label57);
@@ -2664,6 +2681,7 @@ create_change_rss_settings_dialog (void)
   GtkWidget *hbox22;
   GtkWidget *label60;
   GtkWidget *grab_cookie_bt;
+  GtkWidget *rss_ignore_description;
   GtkWidget *dialog_action_area10;
   GtkWidget *cancelbutton3;
   GtkWidget *apply_bt;
@@ -2698,18 +2716,22 @@ create_change_rss_settings_dialog (void)
   all_names_0_ = gtk_entry_new ();
   gtk_widget_show (all_names_0_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_0_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_0_, 158, -1);
 
   all_names_1_ = gtk_entry_new ();
   gtk_widget_show (all_names_1_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_1_, 120, -1);
 
   all_names_2_ = gtk_entry_new ();
   gtk_widget_show (all_names_2_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+  gtk_widget_set_size_request (all_names_2_, 120, -1);
 
   all_names_3_ = gtk_entry_new ();
   gtk_widget_show (all_names_3_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_3_, 120, -1);
 
   label58 = gtk_label_new (_("Refresh frequency:"));
   gtk_widget_show (label58);
@@ -2801,6 +2823,12 @@ create_change_rss_settings_dialog (void)
   gtk_box_pack_start (GTK_BOX (hbox22), grab_cookie_bt, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, grab_cookie_bt, _("attempt to get the cookie from the cookies stored in your browsers"), NULL);
 
+  rss_ignore_description = gtk_check_button_new_with_mnemonic (_("Ignore <description> content (some links-only feeds contain ads in this field)"));
+  gtk_widget_show (rss_ignore_description);
+  gtk_table_attach (GTK_TABLE (table5), rss_ignore_description, 0, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
   dialog_action_area10 = GTK_DIALOG (change_rss_settings_dialog)->action_area;
   gtk_widget_show (dialog_action_area10);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area10), GTK_BUTTONBOX_END);
@@ -2847,6 +2875,7 @@ create_change_rss_settings_dialog (void)
   GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, hbox22, "hbox22");
   GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, label60, "label60");
   GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, grab_cookie_bt, "grab_cookie_bt");
+  GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, rss_ignore_description, "rss_ignore_description");
   GLADE_HOOKUP_OBJECT_NO_REF (change_rss_settings_dialog, dialog_action_area10, "dialog_action_area10");
   GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, cancelbutton3, "cancelbutton3");
   GLADE_HOOKUP_OBJECT (change_rss_settings_dialog, apply_bt, "apply_bt");
@@ -2915,14 +2944,17 @@ create_change_pop_settings_dialog (void)
   all_names_1_ = gtk_entry_new ();
   gtk_widget_show (all_names_1_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_1_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_1_, 120, -1);
 
   all_names_2_ = gtk_entry_new ();
   gtk_widget_show (all_names_2_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_2_, FALSE, FALSE, 0);
+  gtk_widget_set_size_request (all_names_2_, 120, -1);
 
   all_names_3_ = gtk_entry_new ();
   gtk_widget_show (all_names_3_);
   gtk_box_pack_start (GTK_BOX (hbox20), all_names_3_, FALSE, TRUE, 0);
+  gtk_widget_set_size_request (all_names_3_, 120, -1);
 
   label58 = gtk_label_new (_("Refresh frequency:"));
   gtk_widget_show (label58);
@@ -3101,5 +3133,42 @@ create_grab_cookie_dialog (void)
   GLADE_HOOKUP_OBJECT (grab_cookie_dialog, close_bt, "close_bt");
 
   return grab_cookie_dialog;
+}
+
+GtkWidget*
+create_fontselectiondialog (void)
+{
+  GtkWidget *fontselectiondialog;
+  GtkWidget *ok_button2;
+  GtkWidget *cancel_button2;
+  GtkWidget *apply_button1;
+  GtkWidget *font_selection1;
+
+  fontselectiondialog = gtk_font_selection_dialog_new (_("Select Font"));
+  gtk_container_set_border_width (GTK_CONTAINER (fontselectiondialog), 4);
+
+  ok_button2 = GTK_FONT_SELECTION_DIALOG (fontselectiondialog)->ok_button;
+  gtk_widget_show (ok_button2);
+  GTK_WIDGET_SET_FLAGS (ok_button2, GTK_CAN_DEFAULT);
+
+  cancel_button2 = GTK_FONT_SELECTION_DIALOG (fontselectiondialog)->cancel_button;
+  gtk_widget_show (cancel_button2);
+  GTK_WIDGET_SET_FLAGS (cancel_button2, GTK_CAN_DEFAULT);
+
+  apply_button1 = GTK_FONT_SELECTION_DIALOG (fontselectiondialog)->apply_button;
+  GTK_WIDGET_SET_FLAGS (apply_button1, GTK_CAN_DEFAULT);
+
+  font_selection1 = GTK_FONT_SELECTION_DIALOG (fontselectiondialog)->fontsel;
+  gtk_widget_show (font_selection1);
+  gtk_container_set_border_width (GTK_CONTAINER (font_selection1), 4);
+
+  /* Store pointers to all widgets, for use by lookup_widget(). */
+  GLADE_HOOKUP_OBJECT_NO_REF (fontselectiondialog, fontselectiondialog, "fontselectiondialog");
+  GLADE_HOOKUP_OBJECT_NO_REF (fontselectiondialog, ok_button2, "ok_button2");
+  GLADE_HOOKUP_OBJECT_NO_REF (fontselectiondialog, cancel_button2, "cancel_button2");
+  GLADE_HOOKUP_OBJECT_NO_REF (fontselectiondialog, apply_button1, "apply_button1");
+  GLADE_HOOKUP_OBJECT_NO_REF (fontselectiondialog, font_selection1, "font_selection1");
+
+  return fontselectiondialog;
 }
 

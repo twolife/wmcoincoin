@@ -67,6 +67,31 @@ GtkWidget *releasedlg(wmccc_dialog_t dlg) { return getdlg_(dlg,TRUE); }
 
 void wmccc_dialog_response_cb(GtkWidget *dlg, gint response, int idx);
 
+void global_pinnipede_options_font_bt_cb() {
+  GtkFontSelectionDialog *w = GTK_FONT_SELECTION_DIALOG(create_fontselectiondialog());
+  /*char oldfnname[512];
+    snprintf(oldfnname, sizeof oldfnname, "%s %d", Prefs->pp_fn_family, Prefs->pp_fn_size);*/
+
+  PangoFontDescription *oldpfn = pango_font_description_new();
+  pango_font_description_set_family(oldpfn, Prefs->pp_fn_family);
+  pango_font_description_set_size(oldpfn, Prefs->pp_fn_size * PANGO_SCALE);
+  //printf("old pango font selection : %s\n", pango_font_description_to_string(oldpfn));
+
+  gtk_font_selection_dialog_set_font_name(w, pango_font_description_to_string(oldpfn));
+  pango_font_description_free(oldpfn);
+  if (gtk_dialog_run(w) == GTK_RESPONSE_OK) {
+    char *newfnname = gtk_font_selection_dialog_get_font_name(w);
+    PangoFontDescription* pfn = pango_font_description_from_string(newfnname);
+    //printf("new selection : %s:pixelsize=%d\n", pango_font_description_get_family(pfn), pango_font_description_get_size(pfn)/PANGO_SCALE);
+    gtk_entry_set_text(GTK_ENTRY(lookup_widget(getdlg(DLG_GLOBAL_PINNIPEDE_OPTIONS), "pp_fn_family")), 
+                       pango_font_description_get_family(pfn));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(lookup_widget(getdlg(DLG_GLOBAL_PINNIPEDE_OPTIONS), "pp_fn_size")), 
+                              pango_font_description_get_size(pfn)/PANGO_SCALE);
+    pango_font_description_free(pfn);
+  }
+  gtk_widget_destroy(GTK_WIDGET(w));
+}
+
 static void wmccc_initialize_dialog(wmccc_dialog_t dlg) {
   static int isinit[NB_DLG] = {0,};
   GtkWidget *w = getdlg(dlg);
@@ -94,7 +119,12 @@ static void wmccc_initialize_dialog(wmccc_dialog_t dlg) {
       assert(my_lookup_widget(w,"all_names[0]"));
       break;
     case DLG_SITE_COLORS:  prepare_conf_dialog(w); break;
-    case DLG_GLOBAL_PINNIPEDE_OPTIONS: prepare_conf_dialog(w); break;
+    case DLG_GLOBAL_PINNIPEDE_OPTIONS: 
+      prepare_conf_dialog(w); 
+      g_signal_connect(G_OBJECT(lookup_widget(w, "font_bt")), "clicked",
+                       G_CALLBACK(global_pinnipede_options_font_bt_cb),
+                       NULL);
+      break;
     default: assert(0);
   }
   isinit[dlg] = 1;

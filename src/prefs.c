@@ -735,6 +735,7 @@ wmcc_site_prefs_set_default(SitePrefs *p, int verbatim) {
   p->user_login = NULL;
   p->pop3_user = NULL;
   p->pop3_pass = NULL;
+  p->rss_ignore_description = 0;
   p->pp_bgcolor = 0xdae6e6;
   BICOLOR_SET(p->pp_fgcolor,0x303030,0xd0d0d0);
   BICOLOR_SET(p->pp_tstamp_color,0x004000, 0xffff80);
@@ -1196,6 +1197,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     case OPT_dock_start_in_boss_mode: {
       CHECK_BOOL_ARG(p->start_in_boss_mode);
     } break; 
+    case OPTSG_rss_ignore_description: {
+      CHECK_BOOL_ARG(sp->rss_ignore_description);
+    }
     case OPTSG_palmipede_username: {
       ASSIGN_STRING_VAL(sp->user_name, arg);
     } break; 

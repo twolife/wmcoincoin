@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.16 2003/06/09 16:42:29 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.17 2004/04/28 22:19:00 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.17  2004/04/28 22:19:00  pouaite
+  bugfixes dae + des trucs que j'ai oublie
+
   Revision 1.16  2003/06/09 16:42:29  pouaite
   pan pan
 
@@ -344,7 +347,7 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 
       /* lecture de la ligne comme un gros boeuf */
       i = 0; buff[0] = 0;
-      while (i < 1023) {
+      while (i < (int)(sizeof buff) - 1) {
 	do {
 	  got = read(ispell_stdout, &c, 1);
 	  ALLOW_X_LOOP;
@@ -402,7 +405,8 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	end_of_ret = &(tmp->next);
 	break;
       case '(': /* '(#) International Ispell Version 3.1.20 10/10/95, patch 1'  etc.. bug ? pas bug ? */
-	printf("mouaaaaif vas-y dis-moi des mots bleus\n");
+        printf("%s\n", buff);
+	//printf("mouaaaaif vas-y dis-moi des mots bleus\n");
 	break;
       default:
 	/* Qu'est ce que je fout ici moi ?

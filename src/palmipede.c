@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.23 2004/04/26 20:32:31 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.24 2004/04/28 22:19:00 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.24  2004/04/28 22:19:00  pouaite
+  bugfixes dae + des trucs que j'ai oublie
+
   Revision 1.23  2004/04/26 20:32:31  pouaite
   roger demande le commit
 
@@ -964,11 +967,14 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   
   /* le texte */
   //XSetFont(dock->display, dock->NormalGC, ew->fn->fid);
-  if (!Prefs.pp_use_colored_tabs)
+  if (!Prefs.pp_use_colored_tabs) 
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->txt_bgcolor));
-  else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_bgcolor));
-  XFillRectangle(dock->display, d, dock->NormalGC, 
-		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
+  else {
+    XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_bgcolor));
+    XFillRectangle(dock->display, d, dock->NormalGC, 
+                   EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
+    cccolor_reset(&ew->txt_fgcolor[EWC_NORMAL], ew->prefs->pp_fgcolor.opaque);
+  }
 
 
 

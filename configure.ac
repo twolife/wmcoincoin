@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.39  2004/04/28 22:18:57  pouaite
+dnl   bugfixes dae + des trucs que j'ai oublie
+dnl
 dnl   Revision 1.38  2004/04/26 20:32:15  pouaite
 dnl   roger demande le commit
 dnl
@@ -440,15 +443,15 @@ if test "x$build_wmcc_player" = "xyes"; then
         build_wmcc_player="yes"
         AC_DEFINE(HAVE_WMCOINCOIN_PLAYER,1,[wmcoincoin_player is supported])
   fi
-  AC_CHECK_PROG([CURL_IN_PATH],[curl],[yes],[no])
-  if test "x$CURL_IN_PATH" = "xno"; then
-        echo " *********************** YOU ARE NOT READY FOR THE DESKTOP ***********************"
-        echo " * no arms                     ==> no chocolate                                  *"
-        echo " * curl was not found in path  ==> wmcoincoin-totoz-get won't work               *"
-        echo " *                             ==> wmcoincoin_player will not be built.          *"
-        echo " ************************* Thank you for your attention **************************"
-        build_wmcc_player="no"
-  fi
+dnl  AC_CHECK_PROG([CURL_IN_PATH],[curl],[yes],[no])
+dnl  if test "x$CURL_IN_PATH" = "xno"; then
+dnl         echo " *********************** YOU ARE NOT READY FOR THE DESKTOP ***********************"
+dnl         echo " * no arms                     ==> no chocolate                                  *"
+dnl         echo " * curl was not found in path  ==> wmcoincoin-totoz-get won't work               *"
+dnl         echo " *                             ==> wmcoincoin_player will not be built.          *"
+dnl         echo " ************************* Thank you for your attention **************************"
+dnl         build_wmcc_player="no"
+dnl   fi
 fi
 AC_SUBST([WMCOINCOIN_PLAYER])
 

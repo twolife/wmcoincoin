@@ -1,5 +1,5 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.63 2004/04/26 20:32:15 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.64 2004/04/28 22:18:57 pouaite Exp $
 
 ###vous pouvez decommenter des options et changer leur valeurs
 
@@ -50,6 +50,9 @@
 #[.]backend.url: "http://linuxfr.org/board/remote.xml"
 #[.]post.url: "http://linuxfr.org/board/add.php"
 #[.]post.template: message=%s
+
+### pour les RSS dont le champ <description> est rempli de pub
+#[.]rss.ignore_description: off
 
 ### active ou desactive une tribune
 #.check_board: on

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.92 2004/04/26 20:32:33 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.93 2004/04/28 22:19:01 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.93  2004/04/28 22:19:01  pouaite
+  bugfixes dae + des trucs que j'ai oublie
+
   Revision 1.92  2004/04/26 20:32:33  pouaite
   roger demande le commit
 
@@ -1986,6 +1989,11 @@ void test_time_functions() {
  exit(0);
 }
 #endif
+int x_error_handler_debug(Display *dpy, XErrorEvent *err) {
+  fprintf(stderr, "X11 error\n");
+  dump_backtrace();
+  abort();
+}
 
 int main(int argc, char **argv)
 {
@@ -2062,6 +2070,7 @@ int main(int argc, char **argv)
   ccqueue_build();
 
   if (Prefs.debug & 1) {
+    XSetErrorHandler(x_error_handler_debug);
     _Xdebug = 1; /* oblige la synchronisation */
   }
 

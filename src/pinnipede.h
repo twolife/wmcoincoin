@@ -121,6 +121,7 @@ typedef enum { PPT_MAY_SET_MAIN_TAB, PPT_MAY_UNSELECT_TAB,
 
 typedef struct _PinnipedeTab {
   Site *site;
+  char *site_name; /* utilise pour retrouver le site pendant le rebuild */
   int selected, was_selected;
   int x,y,w,h;
   int clicked;
@@ -173,6 +174,8 @@ struct _Pinnipede {
 
   int flag_pp_update_request; /* si non nul, on fait pp_pv_destroy + pp_update_content(last_id_filtered) + pp_refresh
                                  des que possible */
+
+  int flag_pp_refresh_request;
 
   int non_filtered_message_count; /* ~= count_all_id_filtered(boards, &pp->filter)
                                      maj par pp_scrollcoin_update_bounds (meme qd le scrollcoin est caché),
@@ -255,6 +258,7 @@ void pp_minib_refresh(Dock *dock);
 void pp_minib_show(Dock *dock);
 void pp_minib_hide(Dock *dock);
 void pp_tabs_build(Dock *dock);
+void pp_tabs_rebuild(Dock *dock);
 //void pp_tabs_set_position(Pinnipede *pp);
 void pp_tabs_destroy(Pinnipede *pp);
 void pp_tabs_save_state(Dock *dock, FILE *f);
@@ -287,6 +291,7 @@ int pp_totoz_update_status_all(Dock *dock);
 void pp_check_totoz(Dock *dock, PostWord *pw, int x_root, int y_root);
 int  pp_totoz_dispatch_event(Dock *dock, XEvent *event);
 void pp_totoz_download(Dock *dock, unsigned char *imgname);
+void pp_totoz_get_image(Dock *dock, unsigned char *imgname);
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->zmsg_y2 - (pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2)
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1)

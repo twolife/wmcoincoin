@@ -295,7 +295,7 @@ void balltrap_animate(Dock *dock) {
       //XUnmapWindow(dock->display,d->win);
       XMoveWindow(dock->display, d->win, d->x, d->y);    
       //XMapRaised(dock->display,d->win);
-      if (newimg != oldimg || d->step == DUCK_DIES_LEFT0+1 || d->step == DUCK_DIES_RIGHT0+1) {
+      if (newimg != oldimg || d->age == 1 || d->step == DUCK_DIES_LEFT0+1 || d->step == DUCK_DIES_RIGHT0+1) {
         XShapeCombineMask(dock->display, d->win, ShapeBounding, 0, 0, duck_img.masks[newimg],
                           ShapeSet);
         XCopyArea(dock->display, duck_img.pix, d->win, dock->NormalGC, newimg * 32, 0, 32, 32, 0, 0);
@@ -394,9 +394,9 @@ void balltrap_check_message(id_type id, const unsigned char *msg) {
       isinit = 1;
     }
     //printf("test: %s\n", msg);
-    if (strstr(msg, "pan")) {
+    /*if (strstr(msg, "pan")) {
       printf("pan candidate: %s\n", msg);
-    }
+      }*/
     if (regexec(&re, msg, 0, NULL, 0) == 0) {
       printf("PAN FOUND! %s\n", msg);
       pan_found = 1;
@@ -405,14 +405,14 @@ void balltrap_check_message(id_type id, const unsigned char *msg) {
 
   if (coin_found && queue_sz < MAX_QUEUE) {
     queue[queue_sz++] = id;
-    BLAHBLAH(0, myprintf("duck hunt is opened ! prepare your guns!\n[%s] msg=%s\n", Prefs.site[id_type_sid(id)]->site_name, msg));
+    BLAHBLAH(1, myprintf("duck hunt is opened ! prepare your guns!\n -> [%s] msg=%s\n", Prefs.site[id_type_sid(id)]->site_name, msg));
     //balltrap_add(get_dock(), id);
   }
   if (pan_found) {
     if (mi) {
       int i;
       for (i = 0; i < mi->nb_refs; ++i) {
-        pan_pan(get_dock(), mi->refs[i].mi);
+        if (mi->refs[i].mi) pan_pan(get_dock(), mi->refs[i].mi);
       }
     }
   }
@@ -423,6 +423,7 @@ void balltrap_launch() {
   while (queue_sz) {
     int i = wmcc_rand(queue_sz);   assert(i < queue_sz);
     balltrap_add(get_dock(), queue[i]);
+    printf("new duck launched : %s\n", boards_find_id(get_dock()->sites->boards, queue[i])->msg);
     memmove(queue+i, queue+i+1, (queue_sz - i - 1)*sizeof(queue[0]));
     queue_sz--;
   }

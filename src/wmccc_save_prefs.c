@@ -276,6 +276,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     fprintf(f,"\n");
     
     SP_SAVEBOOL(OPTS_check_board, check_board);
+    SP_SAVEBOOL(OPTSG_rss_ignore_description, rss_ignore_description);
     if (sp->locale != default_sp->locale) 
       fprintf(f, ".%s: %s\n", DOTIFY(OPTSG_locale), sp->locale == locFR ? "fr" : "en");
     SP_SAVEINT(OPTSG_tribune_delay, board_check_delay);

@@ -248,7 +248,7 @@ rss_board_update(Board *board, char *path) {
 
   if (get_XMLBlock(rsstxt, strlen(rsstxt), "ttl", &xmlb) >= 0) {
     refresh_request = atoi(xmlb.content) * 60; /* en minutes */
-    printf("ttl detected, %d\n", refresh_request);
+    //printf("ttl detected, %d\n", refresh_request);
   } if (get_XMLBlock(rsstxt, strlen(rsstxt), "*:updatePeriod", &xmlb) >= 0) {
     int period = 1;
     if (str_case_startswith(xmlb.content, "hour")) period = 3600;
@@ -292,7 +292,8 @@ rss_board_update(Board *board, char *path) {
         link = str_ndup(b2.content, b2.content_len);
         //printf("found link: '%s'\n", link);
       }
-      if (get_XMLBlock(xmlb.content, xmlb.content_len, "description", &b2) &&  b2.content_len) {
+      if (!board->site->prefs->rss_ignore_description &&
+          get_XMLBlock(xmlb.content, xmlb.content_len, "description", &b2) &&  b2.content_len) {
         description = str_ndup(b2.content, b2.content_len);
       }
       if (get_XMLBlock(xmlb.content, xmlb.content_len, "author", &b2) &&  b2.content_len) {
@@ -398,6 +399,11 @@ rss_board_update(Board *board, char *path) {
             author = str_cat_printf(author, "@%s", rss_title);
           } else {
             FREE_STRING(author); author = strdup(rss_title);
+          }
+          {
+            char author_tmp[1024];
+            convert_to_ascii(author_tmp, author, sizeof author_tmp);
+            FREE_STRING(author); author = strdup(author_tmp);
           }
           prelog_add(fake_ua, author, timestamp, msgd, link, md5, was_already_viewed);
           board->nb_msg_at_last_check++;

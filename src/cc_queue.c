@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "coincoin.h"
+#include "pinnipede.h"
 #include "site.h"
 #include <libintl.h>
 #define _(String) gettext (String)
@@ -26,6 +27,7 @@ ccqueue_elt_type_2_str(ccqueue_elt_type t) {
   case Q_BOARD_POST: return "BOARD_POST"; break;
   case Q_BOARD_UPDATE: return "BOARD_UPDATE"; break;
   case Q_NEWSLST_UPDATE: return "NEWSLST_UPDATE"; break;
+  case Q_SMILEY_DL: return "SMILEY_DL"; break;
   default: return "Oups BUG"; break;
   }
   return NULL;
@@ -89,6 +91,10 @@ void ccqueue_push_board_update(int sid)
 void ccqueue_push_newslst_update(int sid)
 {
   ccqueue_push(&queue, Q_NEWSLST_UPDATE, sid, NULL, NULL, -1);
+}
+void ccqueue_push_smiley_dl(char *imgname)
+{
+  ccqueue_push(&queue, Q_SMILEY_DL, -1, NULL, imgname, -1);
 }
 ccqueue_elt*
 ccqueue_find_next(ccqueue_elt_type what, int sid, ccqueue_elt *q) {
@@ -222,6 +228,16 @@ void ccqueue_loop(Dock *dock) {
 	if (s) {
 	  site_news_dl_and_update(s);
           }*/
+      } break;
+      case Q_SMILEY_DL: {
+       /* L'url de l'image à télécharger devrait être dans q->msg */
+       if ( q->msg == NULL )
+         myfprintf(stderr, "mmm, il me semble que la fonction de récupération de smiley a ete programmee avec les pieds\n");
+       else {
+         pp_set_download_info(NULL, "downloading smiley");
+         pp_totoz_get_image(dock, q->msg);
+         /*pp_set_download_info(NULL, NULL); Je ne le met pas vu qu'il est présent 9 lignes plus bas*/
+       }
       } break;
       }
       if (flag_cancel_task) {

@@ -455,6 +455,25 @@ int multi_get_option_menu(GtkWidget *w, gboolean *value) {
 }
 
 /* ------------------- text entry ---------------------------- */
+int check_for_non_ascii(const char *s) {
+  int i;
+  for (i = 0; i < strlen(s); ++i) 
+    if (s[i] < 0 || s[i] == 127) {
+      quick_message("Please, please, please !!!\n Avoid non-ASCII characters in wmccc...\n"
+                    "Since gtk2 is all-UTF8, and wmcc is all-iso8859 everything is going to break "
+                    "if you put accentuated character everywhere... So for now, it is restricted to pure ascii.\nYes, it sux.");
+      return -1;
+    }
+}
+char *gtk_entry_get_text_iso8859(GtkEntry *w) {
+  /*int new_len;
+  const char *s = gtk_entry_get_text(w);
+  char *s2 = g_convert(s, -1, "iso-8859-15", "utf8", NULL, &new_len, NULL);
+  return s2 == NULL ? "invalid!!" : s2;*/
+  const char *s = gtk_entry_get_text(w);
+  check_for_non_ascii(s); return s;
+}
+
 void multi_set_text_entry(GtkWidget *w, GtkWidget *feedback_label, char *value, int count) {
   TouchedInfo *ti = NULL;
   //printf("multi set text entry : count = %d, val = %s\n",count,value);
@@ -472,7 +491,7 @@ void multi_set_text_entry(GtkWidget *w, GtkWidget *feedback_label, char *value, 
     gtk_entry_set_text(GTK_ENTRY(w), value);
   } else {
     ti = g_object_get_data(G_OBJECT(w), "touched");
-    if (strcmp(value, gtk_entry_get_text(GTK_ENTRY(w))) && !ti->multivalued) {
+    if (strcmp(value, gtk_entry_get_text_iso8859(GTK_ENTRY(w))) && !ti->multivalued) {
       ti->multivalued = 1;
       if (feedback_label == NULL) gtk_entry_set_text(GTK_ENTRY(w), "[multiple values]");
     }
@@ -487,11 +506,12 @@ void multi_set_text_entry(GtkWidget *w, GtkWidget *feedback_label, char *value, 
   ti->touched = 0;  
 }
 
+
 int multi_get_text_entry(GtkWidget *w, char **pstr) {
   TouchedInfo *ti = g_object_get_data(G_OBJECT(w), "touched"); g_assert(ti);
   if (ti->touched) {
     //printf("multi_get_text_entry: %s <- %s\n", *pstr,  gtk_entry_get_text(GTK_ENTRY(w)));
-    ASSIGN_STRING_VAL(*pstr, gtk_entry_get_text(GTK_ENTRY(w)));
+    ASSIGN_STRING_VAL(*pstr, gtk_entry_get_text_iso8859(GTK_ENTRY(w)));
   }
   return ti->touched;
 }
@@ -633,6 +653,7 @@ int validate_post_template(const char *url, SitePrefs *sp) {
 
 int validate_site_name(const char *s, SitePrefs *sp, int check_new_site) {
   if (str_is_empty(s)) { quick_message("Empty site name"); return -1; }
+  if (check_for_non_ascii(s)) return -1;
   if (check_new_site) {
     char *s2 = strdup(s); str_trim(s2);
     int i;
@@ -746,6 +767,7 @@ static int prepare_or_finalize_conf_dialog_(GtkWidget *dialog, int finalize) {
   PFC_TEXT_ENTRY_S(user_agent);
   PFC_TEXT_ENTRY_G(pp_fn_family);
   PFC_SPIN_BUTTON_G(pp_fn_size);
+  PFC_TOGGLE_BUTTON_S(rss_ignore_description);
   PFC_TOGGLE_BUTTON_G(pinnipede_open_on_start);
   PFC_TOGGLE_BUTTON_G(pp_use_classical_tabs);
   PFC_TOGGLE_BUTTON_G(pp_use_colored_tabs);

@@ -280,6 +280,7 @@ pp_tabs_build(Dock *dock) {
   for (s = dock->sites->list, pt = pp->tabs; s; s = s->next) {
     if (s->board) {
       pt->site = s;
+      pt->site_name = strdup(s->prefs->site_name);
       if (s->board->auto_refresh && pp->active_tab == NULL) {
         pt->selected = 1; pp->active_tab = pt;
       } else pt->selected = 0;
@@ -296,6 +297,40 @@ pp_tabs_build(Dock *dock) {
   pp_tabs_set_pos(pp);
   pp_tabs_set_visible_sites(pp);
 }
+
+static void
+pp_tabs_destroy_(PinnipedeTab **ptab, int *pnb) {
+  int i;
+  for (i=0; i < *pnb; i++) { free((*ptab)[i].site_name); }
+  if (*ptab) {
+    free(*ptab); *ptab = NULL; 
+  }
+  *pnb = 0;
+}
+
+void pp_tabs_destroy(Pinnipede *pp) {
+  pp_tabs_destroy_(&pp->tabs, &pp->nb_tabs);
+  pp->active_tab = NULL;
+}  
+
+void pp_tabs_rebuild(Dock *dock) {
+  Pinnipede *pp = dock->pinnipede;
+  PinnipedeTab *old_tabs = pp->tabs;
+  char *old_active_tab = pp->active_tab ? pp->active_tab->site_name : NULL;
+  int old_nb_tabs = pp->nb_tabs, i;
+  pp_tabs_build(dock);
+  for (i = 0; i < pp->nb_tabs; ++i) {
+    int j;
+    for (j = 0; j < old_nb_tabs; ++j) {
+      if (strcmp(pp->tabs[i].site_name, old_tabs[j].site_name) == 0) {
+        PinnipedeTab tmp = pp->tabs[i]; pp->tabs[i] = old_tabs[i]; old_tabs[i] = tmp;
+      }
+      if (old_active_tab && strcmp(pp->tabs[i].site_name, old_active_tab) == 0) pp->active_tab = pp->tabs + i;
+    }
+  }
+  pp_tabs_destroy_(&old_tabs, &old_nb_tabs);
+}
+
 
 int pp_tabs_is_site_visible(Dock *dock, Site *s) {
   Pinnipede *pp = dock->pinnipede;
@@ -320,15 +355,6 @@ pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s)
   }
 }
 
-void
-pp_tabs_destroy(Pinnipede *pp)
-{
-  if (pp->tabs) {
-    free(pp->tabs); pp->tabs = NULL; 
-  }
-  pp->nb_tabs = 0;
-  pp->active_tab = NULL;
-}
 
 static unsigned long 
 pp_tabs_bg_pixel_of_tab(Dock *dock, PinnipedeTab *pt) {
@@ -475,7 +501,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
   {
     char *t; 
     int tw, tx, ty, tlen, clen;
-    CCColorId fgcolor = dock->gray_colors[3];
+    CCColorId fgcolor = (bgpixel != 0L ? dock->gray_colors[3] : dock->gray_colors[8]);
     int main_site = 0;
     int cnt_new_msg = 0, cnt_unviewed_msg = 0;
     int maxw = pt->w - (draw_grip ? 10 : 0), base_x = d_x + (draw_grip < 0 ? 10 : 0);

@@ -1,5 +1,7 @@
 #include <signal.h>
+#include <stdio.h>
 #include "pinnipede.h"
+#include "coincoin.h"
 #include <X11/extensions/shape.h>
 
 typedef struct pp_totoz_img {
@@ -236,33 +238,40 @@ pp_totoz_update_status(Dock *dock, char *imgname) {
   int status,tw,th;
   char s[512],  mimetype[100], realname[512];
   pp_totoz_img *img = NULL;
-  char *fname = pp_totoz_realfname(imgname, 1);
-  FILE *f = fopen(fname, "rt");
 
-  /* record de concentration de gotos ! */
-  if (f == NULL) { 
-    status = PP_TOTOZ_STATUS_UNKNOWN;
-  } else if (fgets(s, 512,f) == NULL) { 
-    printf("pp_totoz_update_status: uuurg?\n");
-    status = PP_TOTOZ_STATUS_NOTFOUND;
-  } else if (strncmp(s, "NOTFOUND", 8) == 0) {
-    status = PP_TOTOZ_STATUS_NOTFOUND;
-  } else if (sscanf(s, " %511s %dx%d %99s", realname, &tw, &th, mimetype) != 4) {
-    printf("pp_totoz_update_status: grunt?\n");
-    status = PP_TOTOZ_STATUS_NOTFOUND;    
-  } else {
-    status = PP_TOTOZ_STATUS_FOUND;
+  
+  if (pp_totoz_img_status(pp, imgname) == PP_TOTOZ_STATUS_DOWNLOADING) {
+    img = pp_totoz_register_img(pp,imgname,PP_TOTOZ_STATUS_DOWNLOADING);
   }
-  if (f) fclose(f);
-  img = pp_totoz_register_img(pp,imgname,status);
-  if (status == PP_TOTOZ_STATUS_FOUND) {
-    img->w = tw; img->h = th;
-    if (img->mime) free(img->mime);
-    img->mime = strdup(mimetype);
-    if (img->realname) free(img->realname);
-    img->realname = strdup(realname);
+  else {
+    char *fname = pp_totoz_realfname(imgname, 1);
+    FILE *f = fopen(fname, "rt");
+        
+    /* record de concentration de gotos ! */
+    if (f == NULL) { 
+      status = PP_TOTOZ_STATUS_UNKNOWN;
+    } else if (fgets(s, 512,f) == NULL) { 
+      printf("pp_totoz_update_status: uuurg?\n");
+      status = PP_TOTOZ_STATUS_NOTFOUND;
+    } else if (strncmp(s, "NOTFOUND", 8) == 0) {
+      status = PP_TOTOZ_STATUS_NOTFOUND;
+    } else if (sscanf(s, " %511s %dx%d %99s", realname, &tw, &th, mimetype) != 4) {
+      printf("pp_totoz_update_status: grunt?\n");
+      status = PP_TOTOZ_STATUS_NOTFOUND;    
+    } else {
+      status = PP_TOTOZ_STATUS_FOUND;
+    }
+    if (f) fclose(f);
+    img = pp_totoz_register_img(pp,imgname,status);
+    if (status == PP_TOTOZ_STATUS_FOUND) {
+      img->w = tw; img->h = th;
+      if (img->mime) free(img->mime);
+      img->mime = strdup(mimetype);
+      if (img->realname) free(img->realname);
+      img->realname = strdup(realname);
+    }
+    free(fname);
   }
-  free(fname);
   return img;
 }
 
@@ -272,7 +281,7 @@ pp_totoz_update_status_all(Dock *dock) {
   int i, cnt=0;
   for (i = 0; i < pp->totoz->nb_img; ++i) {
     if (pp->totoz->img[i].status == PP_TOTOZ_STATUS_DOWNLOADING) {
-      pp_totoz_update_status(dock, pp->totoz->img[i].name);
+      /*pp_totoz_update_status(dock, pp->totoz->img[i].name);*/
       cnt++;
     } else if (Prefs.board_auto_dl_pictures && pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) {
       pp_totoz_update_status(dock, pp->totoz->img[i].name);
@@ -285,7 +294,7 @@ pp_totoz_update_status_all(Dock *dock) {
 void
 pp_totoz_check_updates(Dock *dock) {
   Pinnipede *pp = dock->pinnipede;
-  if (pp_totoz_update_status_all(dock)) {
+  if (pp_ismapped(dock) && pp_totoz_update_status_all(dock)) {
     pp_pv_destroy(pp); 
     pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
     pp_refresh(dock, pp->win, NULL);
@@ -381,7 +390,7 @@ pp_check_totoz(Dock *dock, PostWord *pw, int x_root, int y_root) {
   pp->totoz->survol_hash = survol_hash;
 }
 
-void
+/*void
 pp_totoz_download(Dock *dock, unsigned char *imgname) {
   char *realname = pp_totoz_realfname(imgname,0);
   char *cmd = NULL;
@@ -392,5 +401,70 @@ pp_totoz_download(Dock *dock, unsigned char *imgname) {
   system(cmd);
   free(cmd);
   free(realname);
+}*/
+
+void
+pp_totoz_download(Dock *dock, unsigned char *imgname) {
+  char *realname = pp_totoz_realfname(imgname,0);
+  pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_DOWNLOADING);
+  ccqueue_push_smiley_dl(realname);
+  BLAHBLAH(0, myprintf("Download of picture [%s] queued!\n", realname));
+  free(realname);
 }
 
+void
+pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
+  HttpRequest r;
+  char *realname, *imgurl=NULL, *pathimg=NULL, *pathdesc=NULL, *cmd;
+  int is_found=0, i=0, lu;
+  static char siteroot[]="http://forum.hardware.fr/images/perso";
+  static char *extlist[]={"gif", "png", NULL};
+  static char *mimelist[]={"image/gif", "image/png", NULL};
+  char buf[1500];
+  FILE *f;
+  
+  realname = str_printf("[:%s]", imgname);
+  
+  while( !is_found && extlist[i] ) {
+    imgurl = str_printf("%s/%s.%s", siteroot, imgname, extlist[i]);
+    wmcc_init_http_request(&r, dock->sites->list->prefs, imgurl);
+    http_request_send(&r);
+    
+    if (http_is_ok(&r)) {
+      is_found = 1;
+      pathimg  = str_printf("%s/.wmcoincoin/totoz/%s.%s", getenv("HOME"), imgname, extlist[i]);
+      pathdesc = str_printf("%s/.wmcoincoin/totoz/%s.desc", getenv("HOME"), imgname);
+      wmcc_log_http_request(dock->sites->list, &r);
+      
+      f = fopen(pathimg, "w");
+      if (f == NULL) {
+        myfprintf(stderr, "Impossible d'ouvrir/creer le fichier\n");
+        pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_UNKNOWN);
+      }
+      else {
+        while( (lu = http_read(&r, buf, 1500)) > 0 && !r.telnet.error && !ferror(f) )
+          fwrite(buf, lu, 1, f);
+        
+        if ( r.telnet.error || ferror(f) ) {
+         fclose(f);
+          myfprintf(stderr, "Erreur lors du telechargement du fichier\n");
+          pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_NOTFOUND);
+       }
+       else {
+         fclose(f);
+         cmd = str_printf("echo \"%s.%s\" `wmcoincoin_player -i \"%s\"` \"%s\" > \"%s\"", imgname, extlist[i], pathimg, mimelist[i], pathdesc);
+         system(cmd);
+          free(cmd);
+          pp_totoz_register_img(dock->pinnipede, realname, PP_TOTOZ_STATUS_FOUND);
+         pp_totoz_update_status(dock, realname);
+        }
+        http_request_close(&r);
+       
+      }
+      free(pathimg);
+    }
+    i++;
+    free(imgurl);
+  }
+  free(realname);
+}

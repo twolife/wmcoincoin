@@ -1,8 +1,21 @@
-2004-04-26  pouaite  <c0in@altern.org>
+2004-04-28  pouaite  <c0in@altern.org>
+
+	* quelques microbugfixes inspirés par les remarques constructives
+	du pointilleux dae.
+
+2004-04-27  pouaite  <c0in@altern.org>
+
+	* src/pinnipede_totoz.c: patch d'eolyte (remplacement de
+	wmcc-totoz-get par du vrai code pour le d/l des img de hfr)
 
 	* src/balltrap.c: pan ! pan !
 
 	* le coincoin relit les options de la 2.4.6
+
+	* wmccc: bon c'est la merde avec l'utf8. gtk2 ne comprend que ça,
+	et wmcc n'est pas encore ready pour le tout-utf8, en conséquence
+	de quoi le wmccc n'accepte plus que l'US-ASCII de base, c'est beau
+	le progrès.
 
 2004-04-*  pouaite  <c0in@altern.org>
 	* wmccc: bon, le nouveau wmccc en gtk2 commence a planter un peu

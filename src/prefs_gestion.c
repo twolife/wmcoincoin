@@ -611,7 +611,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       p = Prefs.site[i];
       np = wmcc_prefs_find_site(&newPrefs, p->site_name); 
       if (np == NULL) continue;
-      
+
+      SP_INT_OPT_COPY(rss_ignore_description);
       SP_INT_OPT_COPY(board_check_delay);
       SP_INT_OPT_COPY(board_max_msg);
       SP_INT_OPT_COPY(backend_type);
