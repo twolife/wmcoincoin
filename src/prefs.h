@@ -214,7 +214,7 @@ typedef struct _GeneralPrefs{
   char *pp_fortune_fn_family;
   int pp_fortune_fn_size;
   int enable_troll_detector;
-
+  int pp_use_classical_tabs;
 
   /* preferences pour le spelchecker */
   int ew_do_spell;
@@ -360,6 +360,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
 char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename);
 SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
+void wmcc_site_prefs_set_default(SitePrefs *p);
 void wmcc_site_prefs_destroy(SitePrefs *p);
 void wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src);
 #endif

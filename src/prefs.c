@@ -622,9 +622,15 @@ option_get_url_remplacement(const unsigned char *arg, URLReplacements *urlr) {
   s = p+1;
   while (*s && *s <= ' ') s++;
   if (*s != 0) goto erreur;
-  
-  ur->next = urlr->first;
-  urlr->first = ur;
+
+  /* insere en respectant l'ordre */
+  ur->next = NULL;
+  if (urlr->first == NULL) urlr->first = ur;
+  else {
+    URLReplacement *c_ur;
+    for (c_ur = urlr->first; c_ur->next; c_ur = c_ur->next) ;
+    c_ur->next = ur;
+  }
 
   str_tolower(ur->key);
   return NULL;
@@ -855,6 +861,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   ASSIGN_STRING_VAL(p->pp_fortune_fn_family, "helvetica");
   p->pp_fortune_fn_size = 10;
 
+  p->pp_use_classical_tabs = 0;
   
   p->ew_do_spell = 0;                  /*Ca fonctionne (?)
 					 donc je l'active par defaut
@@ -976,6 +983,21 @@ option_get_filename(char *arg, char **fname) {
     *fname = strdup(arg);
   }
   assert(*fname);
+}
+
+char*
+wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg)
+{
+  SitePrefs *sp;
+  char *err;
+  p->nb_sites++; 
+  sp = calloc(1, sizeof(SitePrefs));
+  p->site[p->nb_sites-1] = sp;
+  wmcc_site_prefs_copy(sp, global_sp);
+  if ((err == option_get_string_list(arg, wmcc_options_strings[OPT_site], &sp->all_names, &sp->nb_names))) return err;
+  assert(sp->all_names);
+  sp->site_name = sp->all_names[0];
+  return NULL;
 }
 
 /* les macros c'est sale mais c'est j'aime ça */
@@ -1152,7 +1174,11 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     ASSIGN_STRING_VAL(sp->path_messages, arg); 
   } break; 
   case OPTS_http_cookie: {
-    ASSIGN_STRING_VAL(sp->user_cookie, arg); 
+    char *old = sp->user_cookie;
+    
+    if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what)");
+    if (old == NULL) sp->user_cookie = strdup(arg);
+    else { sp->user_cookie = str_printf("%s\n%s", old, arg); free(old); }
   } break; 
   case OPTSG_http_force_fortune_retrieval: {
     CHECK_BOOL_ARG(sp->force_fortune_retrieval);
@@ -1167,8 +1193,8 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
       ASSIGN_STRING_VAL(sp->proxy_auth_user, arg); 
       ASSIGN_STRING_VAL(sp->proxy_auth_pass, s+1);
     } else {
-      return 
-	"invalid proxy user:pass setting (user name and password should be separated by ':')";
+      return strdup("invalid proxy user:pass setting (user name and "
+		    "password should be separated by ':')");
     } 
   } break; 
   case OPTSG_http_proxy_use_nocache: {
@@ -1318,6 +1344,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPT_pinnipede_show_fortune: {
     CHECK_BOOL_ARG(p->pp_fortune_mode);
   } break; 
+  case OPT_pinnipede_use_classical_tabs: {
+    CHECK_BOOL_ARG(p->pp_use_classical_tabs);
+  } break; 
   case OPT_pinnipede_plop_keywords: {
     CHECK_KEY_LIST(p->plopify_key_list,0,2);
   } break; 
@@ -1367,15 +1396,8 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     if (p->nb_sites >= MAX_SITES-1) {
       printf("Too much sites (MAX_SITES = %d), ignoring option 'site: %s'\n", MAX_SITES, arg); 
     } else {
-      SitePrefs *sp;
       char *err;
-      p->nb_sites++; 
-      sp = calloc(1, sizeof(SitePrefs));
-      p->site[p->nb_sites-1] = sp;
-      wmcc_site_prefs_copy(sp, global_sp);
-      if ((err = option_get_string_list(arg, opt_name, &sp->all_names, &sp->nb_names))) return err;
-      assert(sp->all_names);
-      sp->site_name = sp->all_names[0];
+      if ((err = wmcc_prefs_add_site(p, global_sp, arg))) return err;
     }
   } break;
   case OPT_pinnipede_auto_open: {
@@ -1394,7 +1416,11 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     char *err;
     if ((err = option_miniua_rule(arg, &p->miniuarules))) return err;
   } break;
-  default: printf(_("Watch out darling, it's gonnah cut\n")); assert(0);
+  default: {
+    printf(_("Watch out darling, it's gonnah cut\n")); 
+    printf(_("the option '%s' is valid but not handled, WHAT A SHAME"), opt_name);
+    assert(0);
+  }
   }
   return NULL;
 }
@@ -1517,6 +1543,12 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename)
 
   wmcc_site_prefs_set_default(&global_sp);
   wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error);
+
+  if (p->nb_sites == 0) {
+    myfprintf(stderr, _("oooooooh !!! you didn't define at least *ONE* site, you bad boy.\ni do it for you, but this is the last time"));
+    wmcc_prefs_add_site(p, &global_sp, "\"plop\"");
+  }
+
   wmcc_site_prefs_destroy(&global_sp);
   return error;
 }

@@ -509,6 +509,7 @@ void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browse
 void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
 void block_sigalrm(int bloque);
+int launch_wmccc();
 
 /* picohtml.c */
 void picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width);
@@ -629,7 +630,9 @@ Site *pp_tabs_get_main_site(Dock *dock);
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
 void wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p);
-void wmcc_prefs_relecture(Dock *dock);
+void wmcc_prefs_relecture(Dock *dock, int whichfile);
+char *get_wmcc_options_filename();
+char *get_wmcc_tmp_options_filename();
 
 /* troll_detector.c */
 void troll_detector(board_msg_info *mi);

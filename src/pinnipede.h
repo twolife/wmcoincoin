@@ -88,11 +88,11 @@ typedef struct _PinnipedeLignesSel {
 } PinnipedeLignesSel;
 
 typedef struct _PPMinib {
-#define NB_MINIB 9
+#define NB_MINIB 10
 #define MINIB_H 12
 #define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY, TRANSPARENT } type;
+  enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY, TRANSPARENT, PREFS } type;
   int x, y;
   int w, h;
   int clicked;

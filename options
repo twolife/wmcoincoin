@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.38 2002/08/26 00:52:22 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.39 2002/08/28 00:42:31 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.39  2002/08/28 00:42:31  pouaite
+#%  wmccc aware
+#%
 #%  Revision 1.38  2002/08/26 00:52:22  pouaite
 #%  coin coin coin
 #%
@@ -137,7 +140,9 @@
 ### et les suivants définissent des alias)
 #site: "dlfp","linuxfr"
 
-#.http.cookie: <inserez la valeur xxx du cookie 'session_id=xxx' du site ici si vous voulez etre authentifié>
+### Attention, dorénavant, le cookie doit être fourni avec son nom
+### Si plusieurs cookies sont necessaires, répétez cette option autant de fois
+#.http.cookie: session_id=0sDSFdCo1nOF92fPl0p8
 
 ### indiquez la locale du dacode ("fr" si il vous cause en français, "en" si il
 ### cause en anglais etc.. 
@@ -385,8 +390,6 @@
 #pinnipede.fortune_fgcolor: 000000
 #pinnipede.fortune_font_family: helvetica
 #pinnipede.fortune_font_size: 9
-#pinnipede.buttonbar.bg_color: cdcdcd
-#pinnipede.buttonbar.fg_color: 000000
 
 #scrollcoin.bg_color:               cdcdcd cdcdcd
 #scrollcoin.bg_light_color:         ffffff ffffff
@@ -417,6 +420,8 @@
 #pinnipede.show_troll_score: on
 #pinnipede.show_fortune: on
 
+### pour retrouver un comportement 'classique' des tabs
+#pinnipede.use_classical_tabs: on
 
 ### liste des elements déclenchant la plopification (en plus de ceux
 ### que vous pouvez ajouter en faisant shift+right clic dans le pinni)

@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.23 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: global.h,v 1.24 2002/08/28 00:42:32 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.24  2002/08/28 00:42:32  pouaite
+  wmccc aware
+
   Revision 1.23  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -167,8 +170,11 @@ DECL_GLOB_INIT(volatile int flag_http_error, 0);
 DECL_GLOB_INIT(volatile int flag_spell_request, 0); /* pour le palmipede (ça commence à puer le vilain hack... mais bon, je veux pas de threads alors j'assume) */
 DECL_GLOB_INIT(volatile int flag_spell_finished, 0);
 
+/*
+  1 == relire le fichier d'options normal
+  2 == relire le fichier d'options temporaire écrit par wmccc
+*/
 DECL_GLOB_INIT(volatile int flag_update_prefs_request, 0);
-
 
 DECL_GLOB_INIT(volatile int wmcc_tic_cnt,0);
 

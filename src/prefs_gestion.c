@@ -432,11 +432,17 @@ string_list_copy_if_changed(char ***a, int *na, char * const *b, const int nb)
 #define STRING_LIST_COPY_IF_CHANGED(_a,_b,_x,_nb) (string_list_copy_if_changed(&_a._x, &_a._nb, \
    _b._x, _b._nb))
 #define G_STRING_LIST_COPY_IF_CHANGED(_x,_nb) STRING_LIST_COPY_IF_CHANGED(Prefs,newPrefs,_x,_nb)
+char *get_wmcc_tmp_options_filename() {
+  return str_printf("%s/.wmcoincoin/wmcc_%u.tmp", getenv("HOME"), getpid());
+}
 
+char *get_wmcc_options_filename() {
+  return str_printf("%s/.wmcoincoin/%s", getenv("HOME"), options_file_name);
+}
 
 /* c'est un peu bourrin comme approche mais ça devrait marcher..*/
 void
-wmcc_prefs_relecture(Dock *dock)
+wmcc_prefs_relecture(Dock *dock, int whatfile)
 {
   GeneralPrefs newPrefs;
   char *errmsg;
@@ -444,8 +450,11 @@ wmcc_prefs_relecture(Dock *dock)
 
   memset(&newPrefs, 0, sizeof(GeneralPrefs));
   wmcc_prefs_set_default(&newPrefs);
-  options_full_file_name = check_install_data_file("options", options_file_name);
-
+  if (whatfile == 1) {
+    options_full_file_name = check_install_data_file("options", options_file_name);
+  } else {
+    options_full_file_name = get_wmcc_tmp_options_filename();
+  }
   errmsg = wmcc_prefs_read_options(&newPrefs, options_full_file_name);
   if (errmsg) {
     char *s = str_printf(_("Error while rereading options [%s]<br>%s"),
@@ -470,6 +479,7 @@ wmcc_prefs_relecture(Dock *dock)
     G_INT_OPT_COPY(max_refresh_delay);
     G_INT_OPT_COPY(switch_off_coincoin_delay);
     G_INT_OPT_COPY(use_balloons);
+    G_INT_OPT_COPY(pp_use_classical_tabs);
 
     /* l'ensemble des options http */
     G_INT_OPT_COPY(http_timeout);
@@ -767,5 +777,4 @@ wmcc_prefs_relecture(Dock *dock)
 
   wmcc_prefs_destroy(&newPrefs);
   free(options_full_file_name);
-  myprintf("use_balloons: %d\n", Prefs.use_balloons);
 }

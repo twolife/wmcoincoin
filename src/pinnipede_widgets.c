@@ -242,19 +242,27 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
       if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
 	board->enabled = 1-board->enabled;
       } else {
-	if (pt != pp->active_tab) {
-	  if (pt->selected) {
-	    pp->active_tab = pt;
-	  } else pt->selected = 1;
-	} else {
-	  int all_active = 1;
-	  for (i=0; i < pp->nb_tabs; i++) if (pp->tabs[i].selected == 0) all_active = 0;
-	  if (all_active) {
-	    for (i=0; i < pp->nb_tabs; i++) 
-	      pp->tabs[i].selected = (pp->tabs+i == pt);
+	/* clic 'classique sur une tab */
+	if (Prefs.pp_use_classical_tabs) {
+	  pp->active_tab = pt;
+	  for (i=0; i < pp->nb_tabs; i++) 
+	    pp->tabs[i].selected = (pp->tabs+i == pt);
+
+	} else {	  /* clic plus tordu */
+	  if (pt != pp->active_tab) {
+	    if (pt->selected) {
+	      pp->active_tab = pt;
+	    } else pt->selected = 1;
 	  } else {
-	    for (i=0; i < pp->nb_tabs; i++) 
-	      pp->tabs[i].selected = 1;
+	    int all_active = 1;
+	    for (i=0; i < pp->nb_tabs; i++) if (pp->tabs[i].selected == 0) all_active = 0;
+	    if (all_active) {
+	      for (i=0; i < pp->nb_tabs; i++) 
+		pp->tabs[i].selected = (pp->tabs+i == pt);
+	    } else {
+	      for (i=0; i < pp->nb_tabs; i++) 
+		pp->tabs[i].selected = 1;
+	    }
 	  }
 	}
       }
@@ -301,6 +309,8 @@ pp_minib_set_pos(Pinnipede *pp)
   pp->mb[i].type = FORTUNE;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = FILTER;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = PREFS;           pp->mb[i].w = 40; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+
   //  pp->mb[i].type = REFRESH_NEWS;    pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   //  pp->mb[i].type = REFRESH_TRIBUNE; pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
 
@@ -354,7 +364,7 @@ pp_minib_refresh(Dock *dock)
       snprintf(s_filtre, 60, _("FILTER UNDEFINED"));
     }
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawString(dock->display, pp->lpix, dock->NormalGC, 5+pp->mb_x0, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
+    XDrawString(dock->display, pp->lpix, dock->NormalGC, 5+pp->mb_x0, pp->fn_minib->ascent+2, s_filtre, strlen(s_filtre));
   } else {
     
     /* affichage de la charge du serveur de dlfp */
@@ -385,20 +395,20 @@ pp_minib_refresh(Dock *dock)
     x = 5+pp->mb_x0;
     w = MINIB_FN_W*strlen(s_cpu);
     if (x+w < x_minib) {
-      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_cpu, strlen(s_cpu));
+      XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_cpu, strlen(s_cpu));
     }
     x += w + 6;
     w = MINIB_FN_W*strlen(s_xp);
     if (strlen(s_xp)) {
       if (x+w < x_minib) {
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_xp, strlen(s_xp));
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_xp, strlen(s_xp));
       }
     }
     x += w + 6;
     w = MINIB_FN_W*strlen(s_votes);
     if (strlen(s_votes)) {
       if (x+w < x_minib) {
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_votes, strlen(s_votes));
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_votes, strlen(s_votes));
       }
     }
     x += w + 6;
@@ -406,7 +416,7 @@ pp_minib_refresh(Dock *dock)
     if (strlen(s_nb_messages)) {
       if (x+w < x_minib) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_msgcnt_pixel);	
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_nb_messages, strlen(s_nb_messages));
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_nb_messages, strlen(s_nb_messages));
       }
     }
     x += w + 6;
@@ -414,7 +424,7 @@ pp_minib_refresh(Dock *dock)
     if (strlen(s_http_stats)) {
       if (x+w < x_minib) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_updlcnt_pixel);
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_http_stats, strlen(s_http_stats));
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+2, s_http_stats, strlen(s_http_stats));
       }
     }
 
@@ -453,6 +463,13 @@ pp_minib_refresh(Dock *dock)
 	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
 	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, pp->mb[i].h-3);
 	}
+      } break;
+    case PREFS:
+      {
+	char *s;
+	s = "wmc³";
+	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x303030));
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-(MINIB_FN_W*strlen(s))/2, pp->fn_minib->ascent+2, s, strlen(s));
       } break;
       /*    case REFRESH_TRIBUNE:
       {
@@ -786,6 +803,10 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
 	}
 	pp_refresh(dock, pp->win, NULL);
       } break;
+    case PREFS:
+      {
+	launch_wmccc();
+      } break;
     default:
       assert(0); 
     }
@@ -883,6 +904,7 @@ pp_check_balloons(Dock *dock, int x, int y)
       case FORTUNE: msg = _("Bring/hide the fortune (if appropriate)"); break;
       case FILTER: msg = _("Activate/deactivate the <b>filter</b>. To filter the messages, do a <font color=#0000ff>ctrl+left clic</font> on a word/login/useragent or a clock (to display a thread). To remove the filter, just click here"); break;
       case PLOPIFY: msg = _("Change the plopification type (beware, you will also see the messages in the boitakon!). <p> To plopify a message, <font color=#0000ff>shift+right click</font> on a word/login/useragent/clock (or the zone on the left of the clock to plopify a thread). To unplopify (or let someone out of the boitakon), just click on the same place.<br> To access to the superplopification, do a <font color=#0000ff>Mod1+shift+right click</font><br> To put a login/ua/etc. in the <b>boitakon</b>(tm), you have to use the mega combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right click</font>."); break;
+      case PREFS: msg = _("Launch wmccc (wmcoincoin configuration)"); break;
 /*       case REFRESH_NEWS: msg = _("Click here to force the refresh of the news, messages, fortune and XP"); break; */
 /*       case REFRESH_TRIBUNE: msg = _("Click here to force the refresh of the board"); break; */
       default: assert(0);

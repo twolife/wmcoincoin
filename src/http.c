@@ -919,7 +919,20 @@ http_request_send(HttpRequest *r)
   }
 
   if (r->cookie) {
-    header = str_cat_printf(header, "Cookie: %s" CRLF, r->cookie);
+    char *s = r->cookie;
+    while (s && *s) {
+      char *ck, *s2;
+      s2 = strchr(s, '\n');
+      if (s2 == NULL) {
+	ck = strdup(s);
+      } else ck = str_ndup(s, s2-s);
+      assert(ck);
+      if (*ck) {
+	header = str_cat_printf(header, "Cookie: %s" CRLF, ck);
+      }
+      free(ck);
+      s = s2 ? s2+1 : NULL;
+    }
   }
 
   if (r->pragma_nocache) {

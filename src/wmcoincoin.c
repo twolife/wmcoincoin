@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.55 2002/08/26 00:52:22 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.56 2002/08/28 00:42:32 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.56  2002/08/28 00:42:32  pouaite
+  wmccc aware
+
   Revision 1.55  2002/08/26 00:52:22  pouaite
   coin coin coin
 
@@ -191,7 +194,8 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
-//#include <sys/types.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 //#include <regex.h>
 #include <X11/Xlib.h>
@@ -438,11 +442,9 @@ wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path)
 void
 wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path)
 {
-  char *cookie;
   wmcc_init_http_request(r, sp, url_path);
   if (sp->user_cookie) {
-    cookie = str_printf("session_id=%s", sp->user_cookie); 
-    r->cookie = cookie;
+    r->cookie = strdup(sp->user_cookie); 
   }
 }
 
@@ -529,6 +531,37 @@ flush_expose(Window w) {
 }
 */
 
+int
+launch_wmccc()
+{
+  pid_t wmccc_pid;
+  char *spid = str_printf("%u", getpid());
+  char *stmpopt = get_wmcc_tmp_options_filename();
+  switch ( wmccc_pid = fork() ) {
+  case -1: /* arrrrg */
+    {
+      fprintf(stderr, _("Fork failed...(%s)..\n you sux\n"), strerror(errno));
+      return -1;
+    } break;
+  case 0: /* fiston (wmccc) */
+    {
+      int retExec;      
+      retExec = execlp("wmccc", "wmccc", "-wmccpid", spid, 
+		       get_wmcc_options_filename(), stmpopt, 
+		       NULL);
+      if( retExec==-1 ) {
+	fprintf(stderr, _("Exec of wmccc failed...(%s)..\n you sux\n"), strerror(errno));
+      }
+      exit(retExec);
+    } break;
+  default: /* pôpa (wmcc) */
+    {
+    } break;
+  }  
+  free(spid);
+  return 0;
+}
+
 /* sauvegarde ou restaure l'état du wmcc
    (position du pinnipede/newswin) 
    decalage horaire des boards
@@ -578,6 +611,7 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
       site_msg_save_state(site);
     } else site_news_restore_state(site); 
   }
+  unlink(get_wmcc_tmp_options_filename());
 }
 
 /* declenchement des ballons d'aide...*/
@@ -748,7 +782,10 @@ timer_signal(int signum) {
 #   endif
     return;
   } else if (signum == SIGUSR2) {
-    flag_discretion_request = -1;
+    //    flag_discretion_request = -1;
+
+    flag_update_prefs_request = 2; /* c'est wmccc qui nous cause */
+
     //    printf("sigusr2\n"); 
 #   ifdef SIGNAUX_A_LANCIENNE // mais maintenant on utilise sigaction
 #   ifdef _XOPEN_SOURCE
@@ -1467,7 +1504,7 @@ void *Net_loop (Dock *dock) {
     }
 
     if (flag_update_prefs_request) {
-      wmcc_prefs_relecture(dock); flag_update_prefs_request = 0;
+      wmcc_prefs_relecture(dock, flag_update_prefs_request); flag_update_prefs_request = 0;
     }
 
     /* update loop for all sites */
@@ -1536,6 +1573,15 @@ void *Net_loop (Dock *dock) {
 #else
     pause(); 
 #endif
+    {
+      pid_t pid;
+      int status;
+      if ((pid = waitpid(0, &status, WNOHANG))) {
+	if (pid > 1 && WIFEXITED(status)) {
+	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", WEXITSTATUS(status));
+	}
+      }
+    }
     ALLOW_X_LOOP;
     for (site = dock->sites->list; site; site = site->next) {
       site->news_refresh_cnt++;
@@ -1594,12 +1640,14 @@ install_sighandlers()
          errno, strerror(errno));
      exit(1);
     }
+
     action.sa_handler = sigchld_signal;
     if (sigaction(SIGCHLD, &action, NULL) != 0) {
      fprintf(stderr,_("sigaction: erreur %d (%s)\n essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"),
          errno, strerror(errno));
      exit(1);
     }
+    
     action.sa_handler = sigint_signal;
     if (sigaction(SIGINT, &action, NULL) != 0) {
      fprintf(stderr,_("sigaction: erreur %d (%s)\n essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"),
@@ -1677,14 +1725,7 @@ main(int argc, char **argv)
     while (app_useragent[i] < '0' || app_useragent[i] > '9') app_useragent[i--] = 0;
   }
     
-  printf(_("locale used: %s\n"), "hello");
-  {
-    int i,j=0;
-    char *s = setlocale (LC_MESSAGES, NULL);
-    for (i=0; s[i]; i++) 
-      j+=s[i];
-    printf("j=%d\n", j);
-  }
+  printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, NULL));
   memset(&Prefs, 0, sizeof(Prefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);
   
