@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.6 2002/01/06 16:52:37 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.7 2002/01/10 09:03:06 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.7  2002/01/10 09:03:06  pouaite
+  integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
+
   Revision 1.6  2002/01/06 16:52:37  pouaite
   preparation pour la prochaine v. de la tribune avec sa gestion integree du wiki et des logins, tout ça ..
 
@@ -45,6 +48,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+/* C'est sale, mais j'ai pas envie de la triballer dans toutes les fonctions
+   - n'est accédé que dans ce fichier */
+char tribune_last_modified[512] = "";
 
 /* utilise tres localement, c'est la longueur DANS remote.rdf, la longueur réelle sera moindre
    (remplacement de &eacute par 'é' etc... ) */
@@ -420,7 +427,7 @@ dlfp_updatetribune(DLFP *dlfp)
   snprintf(s, 8192, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   if ((Prefs.debug & 2) == 0) {
     fd = http_get(Prefs.site_root, Prefs.site_port, s, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified);
   } else {
     snprintf(s, 8192, "%s/wmcoincoin/test/remote.rdf", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);

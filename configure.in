@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.6  2002/01/10 09:03:07  pouaite
+dnl   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
+dnl
 dnl   Revision 1.5  2002/01/03 22:15:31  pouaite
 dnl   patch top moumoute de glandium pour la gestion du wiki
 dnl
@@ -18,7 +21,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.3-mh3)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.4)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name

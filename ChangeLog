@@ -1,3 +1,14 @@
+--------------------------v2.3.3mh4-----------------------------------------
+2001-01-08 glandium <mh@glandium.org>
+
+	* src/http_unix.c, src/http_win.c, src/http.h et tout plein d'autres:
+	Remplacement des requêtes HTTP/1.0 par des requêtes HTTP/1.0 avec
+	entête If-Modified-Since pour décharger le serveur dacode en trafic.
+	(en théorie, ça peut faire pas mal de différence, parce que, en prenant
+	l'exemple de la tribune, même si on arrête de récupérer les posts
+	parce qu'il n'y en a pas de nouveaux, les données ont déjà été
+	transmises).
+
 --------------------------v2.3.3mh3-----------------------------------------
 
 2001-12-28 glandium <mh@glandium.org>

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.2 2001/12/02 18:26:06 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.3 2002/01/10 09:03:06 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.3  2002/01/10 09:03:06  pouaite
+  integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
+
   Revision 1.2  2001/12/02 18:26:06  pouaite
   modif http (affreux hack pr ispell + http.c fait maintenant un #include de http_unix/win.c )
 
@@ -421,7 +424,7 @@ http_connect(const char *host_name, int port)
   si il y a une connexion timeout, on renvoie -2
 */
 int
-http_skip_header(int fd)
+http_skip_header(int fd, char *last_modified)
 {
   char buff[512];
   int i, got, lnum;
@@ -450,14 +453,20 @@ http_skip_header(int fd)
 	  if (buff[j] == ' ') {
 	    if (strcasecmp("200 OK\n", buff+j+1) != 0 && 
 		strcasecmp("302 Found\n", buff+j+1) != 0 &&
+		strcasecmp("304 Not Modified\n", buff+j+1) != 0 &&
 		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {
 	      strncpy(http_errmsg, buff+j+1,HTTP_ERRSZ); http_errmsg[HTTP_ERRSZ-1] = 0;
 	      printf("http_skip_header: erreur detectee\n");
 	      return -1;
 	    }
 	  }
+	} else if (last_modified) {
+	  if (strncmp(buff,"Last-Modified: ",15) == 0) {
+	    strncpy(last_modified, buff + 15, 512);
+	  }
 	}
 	lnum++;
+	i=0;
       } else {
 	i++; if (i >= 511) i = 510;
       }
@@ -521,13 +530,14 @@ http_get_line(char *s, int sz, SOCKET fd)
   descripteur a fermer par un close(d)
 */
 SOCKET
-http_get_with_cookie(const char *host_name, int host_port, const char *host_path, const char *proxy, const char *userpass, int proxy_port, const char *user_agent, const char *cookie)
+http_get_with_cookie(const char *host_name, int host_port, const char *host_path, const char *proxy, const char *userpass, int proxy_port, const char *user_agent, const char *cookie, char *last_modified)
 {
   SOCKET sockfd;
 #define BSIZE 1024
   char buff[BSIZE];
   char cookie_s[512];
   const char *pnocache;
+  char last_modified_s[512];
 
   flag_http_transfert++;
 
@@ -536,6 +546,11 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   cookie_s[0] = 0;
   if (cookie) {
     snprintf(cookie_s,512,"Cookie: %s" CRLF, cookie);
+  }
+
+  last_modified_s[0] = 0;
+  if (last_modified && last_modified[0]) {
+    snprintf(last_modified_s,512,"If-Modified-Since: %s" CRLF, last_modified);
   }
 
   pnocache = Prefs.proxy_nocache ? "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF : "";
@@ -548,22 +563,21 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 
   if (userpass == NULL) {
     if (proxy == NULL) {
-      snprintf(buff, BSIZE, "GET %s HTTP/1.0" CRLF
+      snprintf(buff, BSIZE, "GET %s HTTP/1.1" CRLF
 	       "Host: %s" CRLF
 	       "%s"
 	       "User-Agent: %s" CRLF
-	       "Pragma: no-cache" CRLF
 	       "%s"
 	       "Accept: */*" CRLF CRLF,
-	       host_path, host_name, cookie_s, user_agent, pnocache);
+	       host_path, host_name, cookie_s, user_agent, last_modified_s);
     } else {
-      snprintf(buff, BSIZE, "GET http://%s%s HTTP/1.0" CRLF
+      snprintf(buff, BSIZE, "GET http://%s%s HTTP/1.1" CRLF
 	       "Host: %s" CRLF
 	       "%s"
 	       "User-Agent: %s" CRLF
-	       "%s"
+	       "%s%s"
 	       "Accept: */*" CRLF CRLF,
-	       host_name, host_path, host_name, cookie_s, user_agent, pnocache);
+	       host_name, host_path, host_name, cookie_s, user_agent, last_modified_s, pnocache);
     }
   } else {
     char *auth;
@@ -572,14 +586,15 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
     /* on ne gère que le schema d'authentification basique [base64(USER:PASS)]
        wget 1.6 fait mieux, mais pas curl 7.6 donc ca ira...
      */
-    snprintf(buff, BSIZE, "GET http://%s:%d%s HTTP/1.0" CRLF
+    snprintf(buff, BSIZE, "GET http://%s:%d%s HTTP/1.1" CRLF
 	     "Host: %s:%d" CRLF
 	     "%s"
 	     "User-Agent: %s" CRLF
+	     "%s"
 	     "Proxy-Authorization: Basic %s" CRLF
 	     "%s"
 	     "Accept: */*" CRLF CRLF,
-	     host_name, host_port, host_path, host_name, host_port, cookie_s,user_agent, auth, pnocache);
+	     host_name, host_port, host_path, host_name, host_port, cookie_s,user_agent, last_modified_s, auth, pnocache);
     free(auth);
   }
   BLAHBLAH(2,printf("sending:\n%s", buff));
@@ -591,7 +606,7 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   //  write(sockfd, buff, strlen(buff));
   BLAHBLAH(2,printf("ok, sent\n"));
   
-  if (http_skip_header(sockfd) != 0) {
+  if (http_skip_header(sockfd, last_modified) != 0) {
     do { close(sockfd); } while (errno == EINTR);
     goto error;
   }
@@ -607,9 +622,9 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 }
 
 SOCKET
-http_get(const char *host_name, int host_port, const char *host_path, const char *proxy, const char *userpass, int proxy_port, const char *user_agent)
+http_get(const char *host_name, int host_port, const char *host_path, const char *proxy, const char *userpass, int proxy_port, const char *user_agent, char *last_modified)
 {
-  return http_get_with_cookie(host_name, host_port, host_path, proxy, userpass, proxy_port, user_agent, NULL);
+  return http_get_with_cookie(host_name, host_port, host_path, proxy, userpass, proxy_port, user_agent, NULL, last_modified);
 }
 
 /* 

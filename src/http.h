@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: http.h,v 1.3 2002/01/10 09:03:06 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.3  2002/01/10 09:03:06  pouaite
+  integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -34,13 +37,13 @@ int http_iwrite(SOCKET fd, char *buf, int len);
 int http_get_line(char *s, int sz, SOCKET fd);
 char *http_url_encode(char *string);
 SOCKET http_get(const char *host_name, int host_port, const char *host_path, 
-	     const char *proxy, const char *userpass, int proxy_port, const char *user_agent);
+	     const char *proxy, const char *userpass, int proxy_port, const char *user_agent, char *last_modified);
 SOCKET http_get_with_cookie(const char *host_name, int host_port, const char *host_path, 
-	     const char *proxy, const char *userpass, int proxy_port, const char *user_agent, const char *cookie);
+	     const char *proxy, const char *userpass, int proxy_port, const char *user_agent, const char *cookie, char *last_modified);
 SOCKET http_post_with_cookie(const char *host_name, int host_port, const char *host_path, 
 	      const char *proxy, const char *userpass, int proxy_port, const char *user_agent, 
 	      const unsigned char *referer, const char *cookie, const unsigned char *post);
-int http_skip_header(SOCKET fd);
+int http_skip_header(SOCKET fd, char *last_modified);
 int http_close (SOCKET fd);
 
 #endif

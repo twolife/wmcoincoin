@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.6 2001/12/17 17:58:58 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.7 2002/01/10 09:03:06 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.7  2002/01/10 09:03:06  pouaite
+  integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
+
   Revision 1.6  2001/12/17 17:58:58  pouaite
   bugfix plutot gruik du flamometre qui partait en nouille
 
@@ -1102,7 +1105,7 @@ exec_coin_coin(Dock *dock)
   if (fd != INVALID_SOCKET) {
     int got;
     
-    if (http_skip_header(fd) < 0) {
+    if (http_skip_header(fd, NULL) < 0) {
       /* si la reponse n'est pas un 302 Found */
       snprintf(s, 2048, "Damned ! y'a une pouille dans le cotage<p>%s", http_error());
       msgbox_show(dock, s);
