@@ -11,6 +11,8 @@
 #include "options_list.h" /* liste des noms des options */
 #include "keylist.h"
 
+#define COND_FREE(x) { if (x) free(x); x = NULL; }
+
 /* valeur absolument maximale de la longueur d'un message envoyé
    (selon les prefs par sites, des valeurs inférieure sont fixées */
 #define MESSAGE_MAXMAX_LEN 1024

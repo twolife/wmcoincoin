@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.10 2002/10/05 18:08:14 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.11 2002/11/11 15:26:38 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.11  2002/11/11 15:26:38  pouaite
+  fix soulignement et strike avec les span
+
   Revision 1.10  2002/10/05 18:08:14  pouaite
   ajout menu contextuel + fix de la coloration des boutons du wmccc
 
@@ -632,6 +635,12 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	end = start+6;
       } else if (strncasecmp(start+2, "/tt\t>", 5) == 0) {
 	end = start+7;
+      } else if (strncasecmp(start+2, "span style=\"text-decoration: underline\"\t>", 41)==0) {
+	end = start+43;
+      } else if (strncasecmp(start+2, "span style=\"text-decoration: line-through\"\t>", 44)==0) {
+	end = start+46;
+      } else if (strncasecmp(start+2, "/span\t>", 7) == 0) {
+	end = start+9;
       } else {
 	const char *p;
 

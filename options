@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.45 2002/10/13 23:30:49 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.46 2002/11/11 15:26:37 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.46  2002/11/11 15:26:37  pouaite
+#%  fix soulignement et strike avec les span
+#%
 #%  Revision 1.45  2002/10/13 23:30:49  pouaite
 #%  plop
 #%
@@ -525,8 +528,7 @@ pinnipede.url_replace: "dtc" => "[dtc]"
 
 ### cette option remplace l'ancien fichier useragents
 ### elle est mieux(c)(tm)
-### les regles sont testées dans l'ordre, les regles non terminal se signalent par '...'
-### et les regles terminales par un seul point.
+### les regles sont testées dans l'ordre.
 ### on peut matcher 
 ###   'ua:' , 'site:', 'login:'
 ### et remplacer (après le '=>')
@@ -535,7 +537,10 @@ pinnipede.url_replace: "dtc" => "[dtc]"
 ### pour les ua, il s'agit des regex posix en mode étendu (cf man regex)
 ### et le remplacement des ua peut faire intervenir des \1, \2 etc (regarder
 ### par exemple la regle pour internet explorer)
-
+### Il faut bien faire la distinction entre 
+###    symb="dtri"  (fixe le symbole sauf si il est refixé par une regle suivante) 
+### et symb:="dtri" (fixe le symbole définitivement, même si une règle suivante 
+###                  aurait pu le rechanger)
 board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:="un bot!",symb:="circ",color:="#ffffff"
 board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#00ff00"
 ### pour faire plaisir à jr :°)

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.68 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.69 2002/11/11 15:26:43 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.69  2002/11/11 15:26:43  pouaite
+  fix soulignement et strike avec les span
+
   Revision 1.68  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -1391,7 +1394,7 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   
-  //  if (Prefs.use_iconwin) {
+  if (Prefs.use_iconwin) {
     /* create icon window */
     dock->iconwin = XCreateSimpleWindow(dock->display, dock->rootwin,
 					xsh.x, xsh.y, xsh.width, xsh.height, 0,
@@ -1402,7 +1405,7 @@ void initx(Dock *dock, int argc, char **argv) {
       fprintf(stderr, _("Couldn't create icon window\n"));
       exit(1);
     }
-    //  } else dock->iconwin = None;
+  } else dock->iconwin = None;
     
 
 
@@ -1535,7 +1538,6 @@ void initx(Dock *dock, int argc, char **argv) {
   
   /* map the main window */
   XMapWindow(dock->display, dock->win);
-
   /* affiche l'image d'initialisation (oh comme c'est userfriendly ! ) */
   XSync(dock->display, True);
   XCopyArea(dock->display, dock->coinpix, DOCK_WIN(dock), dock->NormalGC, 0, 0, 64, 64, 0, 0);

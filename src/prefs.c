@@ -1193,10 +1193,17 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break; 
   case OPTS_http_cookie: {
     char *old = sp->user_cookie;
-    
+    unsigned char *src, *dest;
     if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what). Now you have to put the cookie name with its value");
-    if (old == NULL) sp->user_cookie = strdup(arg);
-    else { sp->user_cookie = str_printf("%s;%s", old, arg); free(old); }
+    COND_FREE(old);
+    /* copie du cookie en virant les espaces superflus (et surtout DANJEREU) */
+    sp->user_cookie = malloc(strlen(arg)+1);
+    dest = sp->user_cookie;
+    for (src = arg; *src; src++) {
+      if (*src > ' ') { *dest = *src; dest++; }
+    }
+    *dest = 0;
+    //    else { sp->user_cookie = str_printf("%s;%s", old, arg); free(old); }
   } break; 
   case OPTSG_http_force_fortune_retrieval: {
     CHECK_BOOL_ARG(sp->force_fortune_retrieval);

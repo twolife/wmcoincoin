@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.82 2002/10/06 22:55:58 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.83 2002/11/11 15:26:40 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -593,12 +593,17 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	attr |= PWATTR_BD; 
       } else if (strcasecmp(s,"\t</b\t>")==0) {
 	attr &= (~PWATTR_BD);
-      } else if (strcasecmp(s,"\t<u\t>")==0) {
+      } else if (strcasecmp(s,"\t<u\t>")==0 ||
+		 strcasecmp(s, "\t<span style=\"text-decoration: underline\"\t>")==0) {
 	attr |= PWATTR_U;
       } else if (strcasecmp(s,"\t</u\t>")==0) {
 	attr &= (~PWATTR_U);
-      } else if (strcasecmp(s,"\t<s\t>")==0) {
+      } else if (strcasecmp(s,"\t<s\t>")==0 ||
+		 strcasecmp(s, "\t<span style=\"text-decoration: line-through\"\t>")==0) {
 	attr |= PWATTR_S; 
+      } else if (strcasecmp(s, "\t</span\t>")==0) { /* lequel choisir... fait chier :-/ */
+	if (attr & PWATTR_S) attr &= ~PWATTR_S; /* dtc si c pas le bon ordre */
+	else if (attr & PWATTR_U) attr &= ~PWATTR_U;
       } else if (strcasecmp(s,"\t</s\t>")==0) {
 	attr &= (~PWATTR_S);
       } else if (strcasecmp(s,"\t<tt\t>")==0) {
@@ -2184,7 +2189,7 @@ pp_check_survol(Dock *dock, int x, int y)
   pw = pp_get_pw_at_xy(pp,x,y);
   survol[0] = 0;
   if (pw) {
-    if (pw->attr_s) { /* pour les [url] */
+    if (pw->attr_s && (pw->attr & PWATTR_REF)==0) { /* pour les [url] */
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
     } else if (pw->attr & PWATTR_TSTAMP) {
       board_msg_info *mi;

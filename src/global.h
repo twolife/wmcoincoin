@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.27 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: global.h,v 1.28 2002/11/11 15:26:39 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.28  2002/11/11 15:26:39  pouaite
+  fix soulignement et strike avec les span
+
   Revision 1.27  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -132,7 +135,6 @@
 # define VALGRINDCHK
 #endif
 
-#define COND_FREE(x) { if (x) free(x); x = NULL; }
 /*
   il faut des protections pour les appels systèmes non reentrant :-( (malloc...)
   (la cause des bugs bizarres du "mur vert" ?)
