@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.49 2002/04/11 10:15:28 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.50 2002/04/11 23:16:54 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.50  2002/04/11 23:16:54  pouaite
+  boitakon mega combo
+
   Revision 1.49  2002/04/11 10:15:28  pouaite
   fix compil
 
@@ -1195,7 +1198,18 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   pp->nb_lignes = pp->zmsg_h / pp->fn_h;
   cur_lig = pp->nb_lignes;
 
+  /* on s'aligne sur le premier message qui n'est pas dans la boitakon */
+  if (pp->disable_plopify == 0) {
+    tribune_msg_info *mi;
+    mi = tribune_find_id(trib, id_base);
+    while (mi && mi->in_boitakon) {
+      decal = 0;
+      id_base = get_prev_id(trib, id_base, &mi, &pp->filter);
+    }
+  }
+
   id = id_base;
+
 
   /* 'scroll down' */
   //printf("entree update_content: id_base = %d (%d), decal = %d (%d), adjust=%d\n",
@@ -1224,9 +1238,7 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
     if (pv == NULL) { /* on n'arrive pas a remplir jusqu'en haut ? */
       if (adjust == 0) {
 	if (pp->id_base >= 0) {
-	//	if (pp->decal_base != 0 || get_next_id(trib, pp->id_base) != -1) { // on n'est pas ligné sur le dernier post ?
 	  pp_update_content(dock,trib,pp->id_base,pp->decal_base+cur_lig, 1, update_scrollbar_bounds); /* pas joli-joli */
-	  //	}
 	} else {
 	  id = get_next_id(trib, -1, NULL, &pp->filter); /* premier id */
 	  if (id >= 0) { /* sinon ça veut dire que la tribune est comptelemt vide */
@@ -1238,15 +1250,6 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
     }
     pv->ref_cnt = 0;
     id = get_prev_id(trib, id, NULL, &pp->filter);
-
-
-    //    if (id == -1 && pp->id_base == -1 && adjust == 0) { /* on vient de scroller beaucoup trop fort */
-    //      printf("ca ppue.\n");
-    //      id = get_next_id(trib, -1, NULL); /* premier id */
-    //      if (id >= 0) { /* sinon ça veut dire que la tribune est comptelemt vide */
-    //	pp_update_content(dock,trib,id,0, 0); /* pas joli-joli */
-    //      }
-    //    }
 
     //printf("pv->nblig=%d, , pid=%d\n",pv->nblig, id);
     if (decal + pv->nblig > 0) { // test si le 'scroll up a été suffisant
@@ -2636,7 +2639,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       }
       hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
       if (hk && blah_sz > 60) {
-	snprintf(s, blah_sz, "\nmessage plopifié  car: "); blah_sz -= strlen(s); s += strlen(s);
+	snprintf(s, blah_sz, "\nmessage plopifié (niveau %d) car: ", hk->num); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
 	  snprintf(s, blah_sz, " {%s='%.20s'}", 
 		   tribune_key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
@@ -3232,7 +3235,7 @@ ET aussi
    un useragent/login/mot clef
 */
 static void
-pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int plopify_flag)
+pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int plopify_level)
 {
   Pinnipede *pp = dock->pinnipede;
   PostWord *pw;
@@ -3254,18 +3257,25 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 
 
   num = 0;
-  if (plopify_flag == 2) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
+  if (plopify_level == 2) num = 1;
+  if (plopify_level == 3) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
 
   if (pw) {
     tribune_msg_info *mi;
+    unsigned boitakon_state;
+
     mi = tribune_find_id(trib, pw->parent->id);
+
+    if (plopify_level) {
+      boitakon_state = tribune_key_list_get_state(*pkl, 2);
+    }
 
     if (mi && thread_clic) {
       char sid[15];
       snprintf(sid, 15, "%d", mi->id);
       *pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD, num);
     } else if (mi && pw->attr & PWATTR_NICK) {
-      if (plopify_flag == 0) {
+      if (plopify_level == 0) {
 	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA, num);
       } else {
 	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
@@ -3285,7 +3295,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	 puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
 	 en 'plop' ou 'pikaa' ...
       */
-      if (plopify_flag && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
+      if (plopify_level && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
 	*pkl = tribune_key_list_remove(*pkl, hk->key, hk->type);
       } else {
 	
@@ -3304,6 +3314,13 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
     }
 
     *pkl = tribune_key_list_cleanup(trib, *pkl); /* supprime les key faisant ref à des messages detruits */
+    
+    /* vérifie si la boitakon a été modifiée */
+    if (plopify_level) {
+      if (boitakon_state != tribune_key_list_get_state(*pkl, 2)) {
+	tribune_update_boitakon(trib);
+      }
+    }
 
     pp_pv_destroy(pp); /* force le rafraichissement complet */
     pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
@@ -3501,11 +3518,13 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {
       int plop_level = 1;
-      if ((event->state & ControlMask) && 
-	  (event->state & Mod4Mask) && 
-	  (event->state & Mod1Mask)) {
-	printf("yo! %04X\n", event->state);
+      if (event->state & Mod1Mask) {
 	plop_level = 2;
+	if ((event->state & ControlMask) && 
+	    (event->state & Mod4Mask)) {
+	  //	  printf("yo! %04x\n", event->state);
+	  plop_level = 3;
+	}
       }
       pp_handle_shift_clic(dock, trib, &Prefs.plopify_key_list, mx, my, plop_level);
     } else {
@@ -3805,12 +3824,12 @@ pp_check_balloons(Dock *dock, int x, int y)
       case TSCORE: msg = "affiche/cache le score troll (les chiffres à gauche de certains messages)"; break;
       case FORTUNE: msg = "affiche/cache la fortune (pour qu'elle soit téléchargée, il faut soit que vous soyez identifié, soit que vous utilisiez l'option <tt>http.force_fortune_retrieval</tt>"; break;
       case FILTER: msg = "active/désactive le <b>filtre</b>. Pour filtrer des messages, faites <font color=#0000ff>ctrl+left clic</font> sur un mot/login/useragent ou une horloge (pour afficher un thread). Pour virer le filtre, il suffit de cliquer sur ce bouton"; break;
-      case PLOPIFY: msg = "change le type de plopification. Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier, il suffit de recliquer au même endroit."; break;
+      case PLOPIFY: msg = "change le type de plopification (attention, vous allez aussi voir les messages de la boitakon!). Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier, il suffit de recliquer au même endroit.<br> Pour accèder à la plopification de niveau 1, faire <font color=#0000ff>Mod1+shift+right clic</font><br> Pour mettre un login/ua/etc dans la <b>boitakon</b>, il faut utiliser la méga combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right clic</font>."; break;
       case REFRESH_NEWS: msg = "cliquer ici pour forcer le rafraichissement immédiat des news, messages, fortune et XP"; break;
       case REFRESH_TRIBUNE: msg = "cliquer ici pour forcer le rafraichissement immédiat de la tribune"; break;
       default: assert(0);
       }
-      balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos, 0, 
+      balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos-15, 0, 
 		   pp->mb[i].x, MINIB_Y0, 
 		   pp->mb[i].w, MINIB_H, msg);
     }

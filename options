@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.21 2002/04/09 23:38:29 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.22 2002/04/11 23:16:54 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.22  2002/04/11 23:16:54  pouaite
+#%  boitakon mega combo
+#%
 #%  Revision 1.21  2002/04/09 23:38:29  pouaite
 #%  boitakon et son cortège de bugfixes
 #%
@@ -301,11 +304,12 @@
 
 ### liste des elements déclenchant la plopification (en plus de ceux
 ### que vous pouvez ajouter en faisant shift+right clic dans le pinni)
-### la syntaxe est [LOGIN:|UA:|WORD:][numéro de catégorie:]"la phrase clef"
+### la syntaxe est [LOGIN:|UA:|UA_NOLOGIN:|WORD:][numéro de catégorie:]"la phrase clef"
 ### remarque: le niveau 0 correspond à une plopification normale, le
 ### niveau 1 à un superplopification (le message est remplacé par 'plop'
 ### et le niveau 2 correspond à une Boitakon, les messages du malotru
 ### deviennent invisibles
+### remarque: pour l'ua et le login, il faut indiquer l'ua (/le login) complète.
 #pinnipede.plop_keywords: LOGIN:2:"gros boulet",  \
 #                        "communiste", "fasciste" # etc selon le troll saoulant du moment ;)
 

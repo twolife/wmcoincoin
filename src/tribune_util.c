@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.17 2002/04/10 22:53:44 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.18 2002/04/11 23:16:54 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.18  2002/04/11 23:16:54  pouaite
+  boitakon mega combo
+
   Revision 1.17  2002/04/10 22:53:44  pouaite
   un commit et au lit
 
@@ -438,7 +441,19 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
       } else if (best_mi->id == caller_mi->id) {
 	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
       } else if (best_mi->in_boitakon) {
-	snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon !", (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent);
+	KeyList *hk;
+	char *nom;
+
+	nom = (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent;
+	hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
+	if (hk) {
+	  snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon ! "
+		   "(car %s=%.20s)", nom,
+		   tribune_key_list_type_name(hk->type), hk->key);
+	} else {
+	  snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon, "
+		   "MAIS VOUS VENEZ DE TROUVER UN BUG DANS LA BOITAKON :-(", nom);
+	}
       }
     }
   }
@@ -651,6 +666,45 @@ tribune_key_list_test_thread(DLFP_tribune *trib, tribune_msg_info *mi, int threa
   return 0;
 }
 
+static int
+tribune_key_list_test_mi_hk(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *hk)
+{
+  if (hk->type == HK_UA) {
+    if (strcmp(hk->key, mi->useragent) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_UA_NOLOGIN) {
+    if (mi->login[0]==0 && strcmp(hk->key, mi->useragent) == 0) {
+      return 1;
+    }
+  }  else if (hk->type == HK_LOGIN) {
+    if (strcmp(hk->key, mi->login) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_WORD) {
+    if (str_noaccent_casestr(mi->msg, hk->key)) {
+      //	printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id);
+      return 1;
+    } 
+  } else if (hk->type == HK_ID) {
+    char sid[10];
+    snprintf(sid,10, "%d", mi->id);
+    if (strcmp(sid, hk->key) == 0) {
+      return 1;
+    }
+  } else if (hk->type == HK_THREAD) {
+    tribune_msg_info *tmi;
+    int id;
+    int antibug = 0;
+    
+    tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
+    id = atoi(hk->key);
+    
+    if (tribune_key_list_test_thread(trib, mi, id, &antibug)) { return 1; }
+  }
+  return 0;
+}
+
 KeyList *
 tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist)
 {
@@ -662,41 +716,30 @@ tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klis
   
   hk = klist;
   while (hk) {
-    if (hk->type == HK_UA) {
-      if (strcmp(hk->key, mi->useragent) == 0) {
-	return hk;
-      }
-    } else if (hk->type == HK_UA_NOLOGIN) {
-      if (mi->login[0]==0 && strcmp(hk->key, mi->useragent) == 0) {
-	return hk;
-      }
-    }  else if (hk->type == HK_LOGIN) {
-      if (strcmp(hk->key, mi->login) == 0) {
-	return hk;
-      }
-    } else if (hk->type == HK_WORD) {
-      if (str_noaccent_casestr(mi->msg, hk->key)) {
-//	printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id);
-	return hk;
-      } 
-    } else if (hk->type == HK_ID) {
-      if (strcmp(sid, hk->key) == 0) {
-	return hk;
-      }
-    } else if (hk->type == HK_THREAD) {
-      tribune_msg_info *tmi;
-      int id;
-      int antibug = 0;
-      
-      tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
-      id = atoi(hk->key);
-      
-      if (tribune_key_list_test_thread(trib, mi, id, &antibug)) { return hk; }
-    }
+    if (tribune_key_list_test_mi_hk(trib,mi,hk)) return hk;
     hk = hk->next;
   }
   return NULL;
 }
+
+
+KeyList *
+tribune_key_list_test_mi_num(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist, int num)
+{
+  KeyList *hk;
+
+  if (mi == NULL) return NULL;
+  
+  hk = klist;
+  while (hk) {
+    if (hk->num == num)
+      if (tribune_key_list_test_mi_hk(trib,mi,hk)) return hk;
+    hk = hk->next;
+  }
+  return NULL;
+}
+
+
 
 KeyList *
 tribune_key_list_find(KeyList *hk, const char *s, KeyListType t)
@@ -737,4 +780,24 @@ tribune_key_list_type_name(KeyListType t)
   case HK_ALL: break;
   }
   return NULL;
+}
+
+/* renvoie un hash_code identifiant l'état de la boitakon (pour savoir si elle a été modifiée ou pas */
+unsigned
+tribune_key_list_get_state(KeyList *first, int num) {
+  unsigned hash = 0x98651030;
+  static unsigned bloup[4] = {0xf0e84bb1,0x8124e841,0xd1ccc871,0x31415976};
+  KeyList *hk;
+  int cnt = 0;
+
+  hk = first;
+  while (hk) {
+    if (hk->num == num) {
+      hash ^= (((int)hk->type) ^ bloup[cnt % 4]);
+      hash ^= str_hache(hk->key, 100);
+      cnt++;
+    }
+    hk = hk->next;
+  }
+  return hash;
 }

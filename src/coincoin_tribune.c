@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.30 2002/04/09 23:38:29 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.31 2002/04/11 23:16:54 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.31  2002/04/11 23:16:54  pouaite
+  boitakon mega combo
+
   Revision 1.30  2002/04/09 23:38:29  pouaite
   boitakon et son cortège de bugfixes
 
@@ -432,6 +435,21 @@ do_wiki_emulation(const char *inmsg, char *dest)
   return j;
 }
 
+
+void
+tribune_update_boitakon(DLFP_tribune *trib)
+{
+  tribune_msg_info *mi = trib->msg;
+  while (mi) {
+    KeyList *hk = tribune_key_list_test_mi_num(trib, mi, Prefs.plopify_key_list, 2);
+    if (hk) { /* bienvenu dans la boitakon */
+      mi->in_boitakon = 1;
+    } else mi->in_boitakon = 0;
+    mi = mi->next;
+  }
+  flag_tribune_updated = 1;
+}
+
 /*
   enregistre un nouveau message
 */
@@ -532,8 +550,8 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   troll_detector(it);
 
   {
-    KeyList *hk = tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list);
-    if (hk && hk->num == 2) { /* bienvenu dans la boitakon */
+    KeyList *hk = tribune_key_list_test_mi_num(trib, it, Prefs.plopify_key_list, 2);
+    if (hk) { /* bienvenu dans la boitakon */
       it->in_boitakon = 1;
       BLAHBLAH(2, myprintf("bienvenu au message de '%.20s' dans la boitakon\n", it->login ? it->login : it->useragent));
     }

@@ -415,6 +415,7 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
     if (strncasecmp(s, "word:", 5) == 0) { t = HK_WORD; s+=5; }
     if (strncasecmp(s, "id:", 3) == 0) { t = HK_ID; s+= 3; }
     if (strncasecmp(s, "thread:", 7) == 0) { t = HK_THREAD; s+= 7; }
+    if (strncasecmp(s, "ua_nologin:", 11) == 0) { t = HK_UA_NOLOGIN; s+= 11; }
 
     num = nummin;
     if (*s >= '0' && *s <= '9') { 

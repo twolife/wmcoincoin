@@ -579,7 +579,8 @@ int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h,
 void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
 KeyList* tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first);
 KeyList* tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist);
-
+KeyList *tribune_key_list_test_mi_num(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist, int num);
+unsigned tribune_key_list_get_state(KeyList *first, int num);
 
 /* coincoin_tribune.c */
 void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
@@ -589,6 +590,7 @@ time_t tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it)
 time_t tribune_get_time_now(const DLFP_tribune *trib);
 void tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int *msg_cnt, int *my_msg_cnt);
 void dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trate, float *tscore);
+void tribune_update_boitakon(DLFP_tribune *trib);
 void dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent);
 
 /* coincoin_news.c */

@@ -339,6 +339,8 @@ wmcc_prefs_relecture(Dock *dock)
 			 options_full_file_name, errmsg); free(errmsg);
     msgbox_show(dock, s); free(s);
   } else {
+    int pp_need_refresh = 0;
+
     //    char *msg_cancelled_changes = strdup(""), *tmp;
     myprintf("relecture des options '%<YEL %s>' réussie\n", options_full_file_name);
 
@@ -439,6 +441,12 @@ wmcc_prefs_relecture(Dock *dock)
       if (showed) pp_show(dock, &dock->dlfp->tribune);
     }
 
+    if (KEY_LIST_COPY_IF_CHANGED(plopify_key_list)) {
+      tribune_update_boitakon(&dock->dlfp->tribune);
+      pp_need_refresh = 1;
+    }
+
+
     /* les options plus light se négocient avec un bon gros refresh */
     if (BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
         INT_OPT_COPY_IF_CHANGED(pp_bgcolor) ||
@@ -462,13 +470,13 @@ wmcc_prefs_relecture(Dock *dock)
         BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
 	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
         INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) ||
-	KEY_LIST_COPY_IF_CHANGED(plopify_key_list) ||
 	KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
-	STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words))
+	STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words) ||
+	pp_need_refresh)
       {
+	pp_set_prefs_colors(dock);
 	if (pp_ismapped(dock)) {
 	  pp_unmap(dock);
-	  pp_set_prefs_colors(dock);
 	  pp_show(dock, &dock->dlfp->tribune);
 	}
       }
