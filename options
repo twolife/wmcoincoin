@@ -1,0 +1,154 @@
+###fichier d'options rcsid=$Id: options,v 1.1 2001/12/02 18:04:00 pouaite Exp $
+#%/*
+#%  ChangeLog:
+#%  $Log: options,v $
+#%  Revision 1.1  2001/12/02 18:04:00  pouaite
+#%  ajout des fichiers d'options et de useragents par defaut sur le cvs
+#%
+#%*/
+
+###vous pouvez décommenter des options et changer leur valeurs
+
+### delai enntre deux verifications de la tribune (en secondes)
+#tribune.delay: 30
+
+### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede
+### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas été conçu pour ça !
+#tribune.max_messages: 400
+
+#tribune.troll_detector: off
+
+### les couleurs sont en héxadecimal ( '00000' = noir, 'ff0000' = rouge, '00ff00' = vert ...)
+
+#dock.bg_color: ffb12b
+#dock.bg_pixmap: /chemin/vers/un/fichier.xpm (de dimensions 64x64)
+### couleur du texte défilant
+#dock.fg_color: 000000
+
+### jouer sur les deux options suivantes pour faire fonctionner wmcoincoin avec d'autres
+### windowmanagers que WindowMaker (par exemple, sous kwm/KDE, il faut 'dock.iconwin: False')
+### (en ligne de commande, ce sont les options '-B' et -w')
+#dock.draw_border: False
+#dock.iconwin: True
+
+### ces petits ballons d'aide peuvent être casse-couilles
+#dock.use_balloons: True
+
+### quand draw_border est activée, cette option permet de position la fenetre (format 'xpos:ypos')
+### (equivalent de l'option '-x'
+#dock.pos: 0:400
+
+
+### delai entre deux verifications des news, du flamometre, etc... (en secondes)
+#news.delay: 300
+
+### la fonte des news ... verdana en 11, c'est plus joli
+#news.font_family: helvetica
+#news.font_size: 12
+#news.bg_color: dae6e6
+#news.fg_color: 000000
+### position et dimensions de la fenêtre d'affichage des news
+#news.location: 100:200
+#news.dimensions: 600:300
+
+### ce nom apparaitra au début de tous vos posts
+#palmipede.username: plop
+### si il y a une occurenre de '$u', '$v', '$s', '$r' et/ou '$m', elles seront
+###  remplacés par les valeurs suivantes:
+###  $u -> votre username
+###  $v -> version du canard
+###  $s -> system name (Linux, ...)
+###  $r -> system release
+###  $m -> machine (i686,...)
+#palmipede.useragent: my name is $u and i love you
+#palmipede.default_message: je ne suis pas du tout d'accord avec toi
+
+
+### equivalent de l'option '-r' -> url de la page principale
+#http.site_url: http://linuxfr.org
+#http.path_tribune_backend: board/remote.xml
+#http.path_news_backend: short.php3
+#http.path_end_news_url: ,0,-1,6.html
+#http.path_tribune_add: board/add.php3
+#http.path_myposts: users/myposts.php3?order=id
+#http.path_messages: messages/
+
+#http.cookie: <inserez la valeur xxx du cookie 'session_id=xxx' de linuxfr ici>
+
+### si vous ne fournissez pas votre cookie, mais que vous voulez qd meme
+### voir des fortunes dans le pinnipede, utilisez cette option
+#http.force_fortune_retrieval: yes
+
+#http.proxy: proxy:port
+#http.proxy_auth: username:password
+
+### décommenter cette ligne si votre proxy a tendance à cacher comme un salaud
+#http.proxy_use_nocache: on
+
+# ## L'option 'http.browser' permet d'utiliser un navigateur externe, pour
+# ## lire les commentaires détecté par le flamophone, et pour afficher les [url] du
+# ## pinnipede teletype. on peut utiliser:
+# ## ATTENTION, ce genre de commande externe peut etre une source de vulnerabilité,
+# ## les caractères bizarres dans les urls sont escapés avant d'etre envoyés
+# ## au browser externe, mais si le browser est lui-même buggé...
+# ## Par défaut, aucun browser n'est sélectionné (ça peut rassurer les plus paranoiaques)
+# ## Le %s est remplacé par l'url escapée, et la ligne de commande résultante est passée au shell
+
+#http.browser: opera %s &
+#http.browser: galeon -n %s &
+#http.browser: konqueror %s &
+#http.browser: netscape %s &
+#http.browser: mozilla %s &
+
+### nouveau (v2.2beta) -> un deuxième browser, activable en cliquant avec le bouton
+### du milieu au lieu du bouton de gauche
+#http.browser2: xterm -fn 6x13 -bg white -fg black -geometry 120x80 -e w3m %s &
+
+
+# ## par défaut le pinnipède est en helvetica, mais je trouve 'verdana' (en taille 11)
+# ## bien plus jolie. l'inconvenient, c'est qu'elle est plus lente a afficher...          
+# ## et qu'elle n'est pas dispo sur toutes les distribs
+
+#pinnipede.font_family: verdana
+#pinnipede.font_size: 11
+#pinnipede.bg_color: dae6e6
+#pinnipede.fg_color: 303030
+#pinnipede.clock_color: 004000
+#pinnipede.useragent_color: 800000
+#pinnipede.login_color: ffff00
+#pinnipede.url_color: 0000ff
+#pinnipede.trollscore_color:
+#pinnipede.button_color: dae6e6
+#pinnipede.emph_color: ffffff
+#pinnipede.fortune_bgcolor: b0b0b0
+#pinnipede.fortune_fgcolor: 000000
+#pinnipede.fortune_font_family: helvetica
+#pinnipede.fortune_font_size: 9
+
+### location du pinnipede (sous la forme 'xpos:ypos' )
+#pinnipede.location: 128:64
+### dimension du pinnipede, au format largeur:hauteur
+#pinnipede.dimensions: 300:455
+#pinnipede.buttons: off
+
+### les 5 options suivantes correspondent aux boutons
+### du pinnipede
+#pinnipede.show_tags: on
+#pinnipede.show_seconds: on
+
+### nick_mode-> 0: n'affiche rien, 
+###		1: affiche les useragent raccourcis, 
+###     	2: affiche les logins, 
+###		3: affiche les deux, 
+###		4: affiche useragent ou login
+#pinnipede.nick_mode: 4
+#pinnipede.show_troll_score: on
+#pinnipede.show_fortune: on
+
+### Options relatives au spell checker
+### Active/desactive le spellchecker
+spell.enable: True
+### spell checker compatible ispell (ispell, aspell, ...)
+spell.cmd: ispell
+### Dictionnaire associé (french, english ....)
+spell.dict: french
