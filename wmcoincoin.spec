@@ -1,5 +1,5 @@
 %define name wmcoincoin
-%define version 2.3.3
+%define version 2.3.4
 %define release 1
 
 Summary: wmcoincoin is a stupid dock app for linuxfr-addicted people
@@ -49,26 +49,29 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Sun Dec 16 2001 pommier julien <jul@dr.com> 2.3.2-1
+* Sun Jan 20 2002 pouaite <c0in@altern.org> 2.3.4-1
+- version 2.3.4
+
+* Sun Dec 16 2001 pommier julien <c0in@altern.org> 2.3.2-1
 - version 2.3.2
 
-* Sun Nov 18 2001 pommier julien <jul@dr.com> 2.2.4beta-1
+* Sun Nov 18 2001 pommier julien <c0in@altern.org> 2.2.4beta-1
 - passage en v2.2.4 suites aux modifs de dacode
 
-* Sun Nov 18 2001 pommier julien <jul@dr.com> 2.2.3beta-2
+* Sun Nov 18 2001 pommier julien <c0in@altern.org> 2.2.3beta-2
 - renomage de remote.php3 en remote.rdf, gestion des tags '<br />'
 
-* Mon Nov 12 2001 pommier julien <jul@dr.com> 2.2.3-1
+* Mon Nov 12 2001 pommier julien <c0in@altern.org> 2.2.3-1
 - gestion de la messagerie, améliorations diverses
 
-* Tue Oct 23 2001 pommier julien <jul@dr.com> 2.2beta-1 - réecriture de l'affichage des
+* Tue Oct 23 2001 pommier julien <c0in@altern.org> 2.2beta-1 - réecriture de l'affichage des
 news, coup de pied dans le cul de la libwraster, GROSSE modif de la boucle principal (pour éviter
 des plantages rares mais bizarres). Ajout d'un TrollDetector(tm)(c)MAPL
 
-* Thu Oct 11 2001 pommier julien <jul@dr.com> 2.11beta-1
+* Thu Oct 11 2001 pommier julien <c0in@altern.org> 2.11beta-1
 - merge de la branche cygwin de gege, et ajout de petits bugfixes
 
-* Sun Sep 30 2001 pommier julien <jul@dr.com> 2.1beta-1
+* Sun Sep 30 2001 pommier julien <c0in@altern.org> 2.1beta-1
 - après l'ignoble v2.0, voici venir la v2.1beta et son cortège de fonctionnalités.
 
 * Tue Sep 25 2001 pommier julien <c0in@altern.org> 2.0-2 

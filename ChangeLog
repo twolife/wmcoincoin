@@ -1,3 +1,11 @@
+--------------------------v2.3.4-----------------------------------------
+
+2002-01-20  pouaite  <c0in@altern.org>
+
+	* src/http_*.c configure.in: bugfix de l'option
+	"http.proxy_use_nocache:" pour qu'elle fonctionne avec les proxy
+	transparents (qui puent). bugfix du configure.in pour cygwin.
+
 2002-01-19  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c src/tribune_util.c src/coincoin.h src/global.h
@@ -13,6 +21,8 @@
 	Ils peuvent être affichés/masqués avec un clic gauche sur le crochet 
 	(ou un clic sur le mot clef).
 
+	remarque: l'option 'pinnipede.my_msg_bgcolor' n'existe plus
+	
 2002-01-18  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c src/coincoin_tribune.c src/tribune_util.c le

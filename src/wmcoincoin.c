@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.14 2002/01/20 02:17:13 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.15 2002/01/20 22:49:38 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.15  2002/01/20 22:49:38  pouaite
+  ça va releaser
+
   Revision 1.14  2002/01/20 02:17:13  pouaite
   modifs d'ordre esthetique (!) sans grand interet
 
@@ -106,7 +109,7 @@
 
 /* des vieilles variables globales qui feraient mieux de rentrer dans une jolie structure */
 
-int temps_depuis_dernier_event = 0;
+int temps_depuis_dernier_event = 0; /* incrémenté 25 fois / sec */
 
 
 structPrefs Prefs;
