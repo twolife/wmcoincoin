@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.2  2002/08/31 21:26:46  pouaite
+dnl   ajout du wmccc
+dnl
 dnl   Revision 1.1  2002/08/22 20:04:16  pouaite
 dnl   fin de la premiere manche contre gettextize
 dnl
@@ -108,6 +111,13 @@ case $host_os in
          * ) CYGWIN=no;;
 esac
 
+dnl internationalization macros
+ALL_LINGUAS="fr"
+AM_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION(0.11.2)
+
+
+
 dnl Checks for programs.
 dnl ===================
 AC_PROG_CC
@@ -134,7 +144,26 @@ dnl  $X_LIBS -lX11 -lXext)
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
 
-dnl AC_DEFINE_UNQUOTED(PKGDATADIR, "$pkgdatadir/wmcoincoin")
+AM_PATH_GTK(1.2.0, ,
+            AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
+
+dnl Set PACKAGE_DATA_DIR in config.h.
+if test "x${datadir}" = 'x${prefix}/share'; then
+  if test "x${prefix}" = "xNONE"; then
+    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${ac_default_prefix}/share/${PACKAGE}")
+  else
+    AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${prefix}/share/${PACKAGE}")
+  fi
+else
+  AC_DEFINE_UNQUOTED(PACKAGE_DATA_DIR, "${datadir}/${PACKAGE}")
+fi
+
+dnl Set PACKAGE_SOURCE_DIR in config.h.
+packagesrcdir=`cd $srcdir && pwd`
+AC_DEFINE_UNQUOTED(PACKAGE_SOURCE_DIR, "${packagesrcdir}")
+
+
+
 dnl Checks for library functions.
 dnl ============================
 AC_FUNC_VPRINTF
@@ -152,14 +181,11 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-dnl internationalization macros
-AM_GNU_GETTEXT
-
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
 
 AC_ARG_WITH(ipv6, [ --with-ipv6    allow use of ipv6 [default=no]], ipv6_ok=$withval, ipv6_ok=no)
-if test "$ipv6_ok" = "yes"; then
+if test "x$ipv6_ok" = "xyes"; then
   echo "IPv6 enabled !"
   AC_DEFINE(USE_IPV6, 1, [Define if build with IPv6 support])
 fi

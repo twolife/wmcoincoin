@@ -908,6 +908,8 @@ pp_update_fortune(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
   char * fortune = pp->active_tab->site->fortune;
   
+#warning "s'occuper des fortunes"
+  return;
   assert(flag_updating_comments == 0);
   if (!picohtml_isempty(pp->ph_fortune)) {
     picohtml_freetxt(pp->ph_fortune);

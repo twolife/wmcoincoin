@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.13 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.14 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.14  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.13  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -140,23 +143,27 @@ launch_ispell(const char *spell_cmd, const char* spell_dict)
   int tube_stdout[2];
   int spell_pid;
   static time_t time_last_fork = 0, now;
+  static int launched_last_time = 1;
 
   assert(ispell_pid == -1);
   now = time(NULL);
   if (difftime(now, time_last_fork) < 30 && time_last_fork) {
     static int cnt = 0;
-    cnt ++;
-    printf("[%d] mmmmhh ispell a dejà été lancé il y a %d secondes, on va attendre un peu\n"
-	   "(si ce message se répète, vous avez un pb avec ispell, genre mauvais dictionnaire..)\n", cnt,
-	   (int)difftime(now, time_last_fork));
-    if (cnt > 200) {
-      myprintf("%<MAG BON CA SUFFIT MAINTENANT>!\n spell-check désactivé\n");
-      Prefs.ew_do_spell = 0;
+    if (launched_last_time == 1) {
+      cnt ++;
+      printf("[%d] mmmmhh ispell a dejà été lancé il y a %d secondes, on va attendre un peu\n"
+	     "(si ce message se répète, vous avez un pb avec ispell, genre mauvais dictionnaire..)\n", cnt,
+	     (int)difftime(now, time_last_fork));
+      if (cnt > 80) {
+	myprintf("%<MAG BON CA SUFFIT MAINTENANT>!\n spell-check désactivé\n");
+	Prefs.ew_do_spell = 0;
+      }
+      launched_last_time = 0;
     }
     return -1; /* petite capote à ispells mal configurés (dico inexistant..) */
   }
   time_last_fork = now;
- 
+  launched_last_time = 1;
   /* tout ceci a été pompée de mnière éhontée dans 'prog syst en c sous linux'..*/
   if (pipe(tube_stdin)) {
     return -1;

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.57 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.58 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.58  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.57  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -282,6 +285,13 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
   char secure_url[SECSZ];
   int i,j;
   char *bcmd;
+  static int wmcc_tic_cnt_last = 0;
+
+  if (ABS(wmcc_tic_cnt - wmcc_tic_cnt_last) < 10) {
+    myprintf("hé on se calme sur les urls !\n"); /* capote à souris qui cliquent 100 fois de suite */
+    return;
+  }
+  wmcc_tic_cnt_last = wmcc_tic_cnt;
 
   if (url == NULL) return;
 
@@ -884,7 +894,6 @@ void X_loop()
   if (timer_cnt % 5 == 0) {
     pp_animate(dock);   /* omg ! il bouge ! */
   }
-  pp_hilight_newest_messages(dock); /* lui aussi ! */
 
   if (timer_cnt % 1 == 0) {
     if (dock->horloge_mode == 0) {
@@ -946,6 +955,7 @@ void X_loop()
       Site *site;
       if ((site = sl_find_xp_change(dock->sites))) {
 	site->xp_change_flag = 0;
+	printf("debut flamo %s\n", site->prefs->site_name);
 	/* on s'assure de rajouter une quantité divisible par FLAMOMETRE_XP_CLIGN_SPEED */
 	dock->flamometre.xp_change_decnt += (((FLAMOMETRE_XP_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 					      FLAMOMETRE_XP_CLIGN_SPEED)*FLAMOMETRE_XP_CLIGN_SPEED);
@@ -1599,7 +1609,7 @@ void *Net_loop (Dock *dock) {
       int status;
       if ((pid = waitpid(0, &status, WNOHANG))) {
 	if (pid > 1 && WIFEXITED(status)) {
-	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", WEXITSTATUS(status));
+	  myfprintf(stderr, "fiston n° %u vient de mourir, au revoir fiston, son dernier mot a été %d\n", pid, WEXITSTATUS(status));
 	}
       }
     }

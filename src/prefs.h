@@ -130,6 +130,7 @@ typedef struct _SitePrefs {
   char *site_name; /* le nom court du site (premier argument de l'option 'site:'),
 		      le pointeur pointe sur all_names[0] */
   long time_difference; /* decalage horaire du site */
+  int mark_id_gaps; /* la ligne rouge pointillée */
   int check_news;
   int check_board;
   int check_comments;

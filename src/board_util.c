@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.5 2002/08/23 00:25:21 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.6 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.6  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.5  2002/08/23 00:25:21  pouaite
   oué
 
@@ -587,6 +590,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
     /* pour aider la reconnaissance des timestamp */
     if (*end >= '0' && *end <= '9') {
       unsigned char last = *end;
+      int is_multi = 0;
       while (*end && 
 	     ((*end >= '0' && *end <= '9') || strchr(":.hm¹²³", *end))) {
 	end++;
@@ -595,13 +599,14 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	last = *end;
       }
       if (*end == '@') {
+	is_multi = 1;
 	do { 
 	  end++;
 	} while (isalpha(*end));
 /* 		{ char c = *end; *end = 0; printf("TOK : %s\n", start); *end = c; } */
       }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
-      if (end-start > 4 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
+      if (end-start > 4 && is_multi == 0 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
     } else {
       /* un mot normal */
       while (*end && *end != '\t' && *end > ' ' && (*end < '0' || *end > '9')) end++;

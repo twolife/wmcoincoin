@@ -12,10 +12,13 @@
 /* --------------- gestion des commentaire -------------- */
 
 /*
-  rcsid=$Id: comments.c,v 1.3 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: comments.c,v 1.4 2002/08/31 21:26:46 pouaite Exp $
 
   ChangeLog:
   $Log: comments.c,v $
+  Revision 1.4  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.3  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -211,7 +214,8 @@ site_yc_dl_and_update(Site *site)
     if (p != NULL) {
       int xp;
       if (regexp_extract(p, pat_xp, &xp)) {
-	if (site->xp != xp && site->xp_change_flag == 0 && site->xp > -1000) {
+	if (site->xp != xp && site->xp_change_flag == 0 && site->xp > -100000) {
+	  printf("debut flamo : %d %d\n", xp, site->xp);
 	  site->xp_change_flag = 1;
 	}
 	if (site->xp != xp) {

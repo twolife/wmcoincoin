@@ -45,11 +45,13 @@
 #  define LASTERR_EAGAIN (WSAGetLastError() == WSAEINPROGRESS)
 #  define SETERR_TIMEOUT WSASetLastError(WSAETIMEDOUT)
 #  define STR_LAST_ERROR strerror(WSAGetLastError())
+#  define LASTERR_ESUCCESS (WSAGetLastError() == 0) /* à tester ... */
 #else
 #  define LASTERR_EINTR (errno==EINTR)
 #  define SETERR_TIMEOUT errno=ETIMEDOUT
 #  define STR_LAST_ERROR strerror(errno)
 #  define LASTERR_EAGAIN (errno==EAGAIN)
+#  define LASTERR_ESUCCESS (errno==0)
 #endif
 
 
@@ -818,8 +820,6 @@ http_get_line(HttpRequest *r, char *s, int sz)
 #else
   WSASetLastError(0);
 #endif
-  //  if (r->response != 0 && r->response != 200) return 0;
-
   do {
 
     while (r->error == 0 && (got = http_read(r, s+i, 1)) > 0) {
@@ -834,7 +834,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
       s[i] = 0;
     }
 
-    if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN) {
+    if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN && !LASTERR_ESUCCESS) {
       printf(_("http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"), (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
     }
   } while (got == 0 && LASTERR_EAGAIN && r->error == 0 && r->chunk_pos != r->content_length);

@@ -692,6 +692,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   /*  ASSIGN_STRING_VAL(p->site_name, "linuxfr");
       ASSIGN_STRING_VAL(p->all_names, "linuxfr");*/
   p->time_difference = 0;
+  p->mark_id_gaps = 1;
   p->check_news = 1;
   p->check_board = 1;
   p->check_comments = 1;
@@ -1360,6 +1361,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPT_pinnipede_url_replace: {
     char *err = option_get_url_remplacement(arg, &p->url_repl);
     if (err) return err;
+  } break; 
+  case OPTSG_pinnipede_mark_id_gaps: {
+    CHECK_BOOL_ARG(sp->mark_id_gaps);
   } break; 
   case OPTSG_locale: {
     if (strcasecmp(arg, "fr")==0) sp->locale = locFR;

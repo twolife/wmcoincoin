@@ -118,7 +118,7 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   
   site->news_update_request = 0;
 
-  site->xp = site->xp_old = 0;
+  site->xp = site->xp_old = -100000;
   site->xp_change_flag = 0;
   site->comment_change_flag = 0;
   

@@ -617,7 +617,6 @@ void pp_minib_dispatch_event(Dock *dock, Board *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
 void pp_check_board_updated(Dock *dock);
 void pp_animate(Dock *dock);
-void pp_hilight_newest_messages(Dock *dock);
 void pp_set_board_updated(Dock *dock);
 void pp_set_prefs_colors(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.8 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.9 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.9  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.8  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -37,10 +40,10 @@
 #define _RGB2PIXEL(c,r,g,b) ((c->truecolor) ? c->rtable[r] + \
                              c->gtable[g] + \
                              c->btable[b] : c->pseudocol_palette[(r*PSEUDOCOL_NCOLORS+128)/255][(g*PSEUDOCOL_NCOLORS+128)/255][(b*PSEUDOCOL_NCOLORS+128)/255])
-#define _IRGB2PIXEL(c,rgb) ((c->truecolor) ? c->rtable[(rgb>>16) & 0xff] + \
-                            c->gtable[(rgb>> 8) & 0xff] + \
-                            c->btable[(rgb    ) & 0xff] : \
-                            c->pseudocol_palette[(((rgb>>16) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][(((rgb>> 8) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][(((rgb) & 0xff)*PSEUDOCOL_NCOLORS+128)/255])
+#define _IRGB2PIXEL(c,rgb) ((c->truecolor) ? c->rtable[((rgb)>>16) & 0xff] + \
+                            c->gtable[((rgb)>> 8) & 0xff] + \
+                            c->btable[((rgb)    ) & 0xff] : \
+                            c->pseudocol_palette[((((rgb)>>16) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][((((rgb)>> 8) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][(((rgb) & 0xff)*PSEUDOCOL_NCOLORS+128)/255])
 
 
 typedef struct RGBAContext {

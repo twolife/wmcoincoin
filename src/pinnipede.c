@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.74 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.75 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.75  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.74  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -1270,7 +1273,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
   /* dessine une ligne horizontale pour signifier qu'il y a eu une coupure dans le
      "flux" des messages (puisque le msg id-1 n'existe pas / n'a pas été récupéré) */
-  if (pw && pw->ligne == 1 && pw->parent->is_skipped_id) {
+  if (pw && Prefs.site[site_num]->mark_id_gaps && pw->ligne == 1 && pw->parent->is_skipped_id) {
     XGCValues xgc;
     xgc.foreground = IRGB2PIXEL(0xff0000);
     xgc.line_style = LineOnOffDash;
@@ -1737,34 +1740,6 @@ pp_hilight_newest_messages(Dock *dock)
   }
 }
 */
-void
-pp_hilight_newest_messages(Dock *dock)
-{
-    Pinnipede *pp = dock->pinnipede;
-#warning virez moi  
-  return;
-  /*
-  int l = 0;
-  if (pp->lignes == NULL) return;
-  while (l < pp->nb_lignes) {
-    PostVisual *pv;
-    if (pp->lignes[l] == NULL) { l++; continue; }
-    pv = pp->lignes[l]->parent;
-
-    if (pv->new_decnt > 0) {
-      int y0 = LINEY0(l);
-
-      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x0000ff));
-      XDrawLine(dock->display, pp->win, dock->NormalGC, 0, y0, 0, y0+pp->fn_h-1);
-      XDrawLine(dock->display, pp->win, dock->NormalGC, 1, y0, 1, y0+pp->fn_h-1);
-      XDrawLine(dock->display, pp->win, dock->NormalGC, 2, y0, 2, y0+pp->fn_h-1);
-      pv->new_decnt--;
-    }
-    l++;
-    }*/
-
-}
-
 
 
 /* appelée depuis wmcoincoin.c, pour gèrer l'autoscroll et rafraichir l'affichage */

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.21 2002/08/26 00:52:22 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.22 2002/08/31 21:26:46 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.22  2002/08/31 21:26:46  pouaite
+  ajout du wmccc
+
   Revision 1.21  2002/08/26 00:52:22  pouaite
   coin coin coin
 
@@ -1308,44 +1311,29 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
     /************************** BOUTON MILIEU ****************************************************/
   } else if (xbevent->button == Button2) {
-    /*
-	  demande de rafraichissement de la tribune ?
-	  (bouton milieu dans la trolloscope)
-	*/
     if (IS_INSIDE(x,y,2,2,59,13) && 
 	(dock->door_state == CLOSED)) {
 
-      //      dock->news_update_request = 1;
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ****************DESACTIVEEEEEEEE************>\n");
-
-
+      /* rafraichissement des news */
+      Site *site;
+      for (site = dock->sites->list; site; site = site->next) {
+	if (site->prefs->check_news || site->prefs->check_comments ||
+	    site->prefs->check_messages)
+	  site->news_update_request = 1;
+      }
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
-      /* rafraichissement des news */
-      //    dock->board_update_request = 1;
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ********************************************>\n");
-      myprintf("%<YEL ****************DESACTIVEEEEEEEE************>\n");
-
+      /*
+	demande de rafraichissement de la tribune ?
+	(bouton milieu dans la trolloscope)
+      */
+      Site *site;
+      for (site = dock->sites->list; site; site = site->next) {
+	if (site->prefs->check_board && site->board->enabled) {
+	  site->board->update_request = 1;
+	}
+      }
 
     } else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {

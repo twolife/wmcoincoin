@@ -622,7 +622,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	rebuild_palmi = 1;
       }
 
-      if (SP_BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) +
+      if (SP_INT_OPT_COPY_IF_CHANGED(mark_id_gaps) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) +
 	  SP_INT_OPT_COPY_IF_CHANGED(pp_bgcolor) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) +

@@ -128,6 +128,7 @@ OPTSG_pinnipede_url_color,
 OPTSG_pinnipede_visited_url_color,
 OPTSG_pinnipede_trollscore_color,
 OPTSG_pinnipede_strike_color,
+OPTSG_pinnipede_mark_id_gaps,
 OPTSG_pinnipede_use_AM_PM,
 NB_WMCC_OPTIONS
 } wmcc_options_id;
@@ -258,6 +259,7 @@ static char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "!pinnipede.visited_url_color",
 "!pinnipede.trollscore_color",
 "!pinnipede.strike_color",
+"!pinnipede.mark_id_gaps",
 "!pinnipede.use_AM_PM",
 NULL};
 #endif

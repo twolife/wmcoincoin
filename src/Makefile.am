@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.13 2002/08/22 18:50:38 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.14 2002/08/31 21:26:46 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.14  2002/08/31 21:26:46  pouaite
+##   ajout du wmccc
+##
 ##   Revision 1.13  2002/08/22 18:50:38  pouaite
 ##   et là ça compile ?
 ##
@@ -42,7 +45,7 @@
 localedir = $(datadir)/locale
 LIBS = @LIBINTL@ @LIBS@
 
-bin_PROGRAMS = wmcoincoin
+bin_PROGRAMS = wmcoincoin wmccc
 
 EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
@@ -74,6 +77,25 @@ wmcoincoin_SOURCES = \
         coin_xutil.c coin_xutil.h \
 	prefs.c prefs.h options_list.h prefs_gestion.c\
 	spell_coin.c spell_coin.h
+
+
+INCLUDES = \
+	@GTK_CFLAGS@
+
+wmccc_SOURCES = \
+	wmccc.c wmccc.h \
+	wmccc_support.c wmccc_support.h \
+	wmccc_interface.c wmccc_interface.h \
+	wmccc_callbacks.c wmccc_callbacks.h \
+	myprintf.c myprintf.h \
+	prefs.c prefs.h \
+	coin_util.c coin_util.h \
+	options_list.h \
+	keylist.c keylist.h
+
+wmccc_LDADD = @GTK_LIBS@
+
+
 
 #useragents_file.c
 
