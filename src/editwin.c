@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.10 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.11 2002/03/01 00:27:40 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.11  2002/03/01 00:27:40  pouaite
+  trois fois rien
+
   Revision 1.10  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -1615,13 +1618,13 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 
   if ((event->xkey.state & 0xdfe0) || 
       (ew->input_context && XFilterEvent(event, None))) {
-    //    printf("forward key: \n");
+    //printf("forward key: \n");
     FORWARD_KEY;
     return;
   }
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
-  //printf("klen=%2d %08x %c\n", klen, ksym, ksym);
+  //printf("klen=%2d %08x %c state=%08x\n", klen, ksym, ksym, event->xkey.state);
   if (ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
     editw_insert_char(ew, (unsigned char)'¤');
   } else if (event->xkey.state & Mod1Mask) {

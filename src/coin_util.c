@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.11 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.12 2002/03/01 00:27:40 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.12  2002/03/01 00:27:40  pouaite
+  trois fois rien
+
   Revision 1.11  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -306,8 +309,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
 	     {"ordf;"  , "ª"},
 	     {"laquo;" , "«"},
 	     {"not;"   , "¬"},
-	     //	     {"shy;"   , "????"}, // 0xad soft hyphen ... non visible ?
-
+	     {"shy;"   , "­"},
 	     {"reg;"   , "®"},
 	     {"macr;"  , "¯"},
 	     {"deg;"   , "°"}, // 0xb0
@@ -383,7 +385,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, in
 	     {"ocirc;" , "ô"},
 	     {"otilde;", "õ"},
 	     {"ouml;"  , "ö"},
-
+	     {"divide;", "÷"},
 	     {"oslash;", "ø"},
 	     {"uacute;", "ú"},
 	     {"ugrave;", "ù"},

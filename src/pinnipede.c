@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.26 2002/02/28 01:12:33 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.27 2002/03/01 00:27:40 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.27  2002/03/01 00:27:40  pouaite
+  trois fois rien
+
   Revision 1.26  2002/02/28 01:12:33  pouaite
   scrollcoin dans la fenetre des news
 
@@ -417,20 +420,79 @@ plopify_word(unsigned char *s, int sz, int bidon)
 {
   unsigned char s_simple[sz];
 
-  static char *not_plop[] = {"mon", "son", 
-			     "la", "cette", "une", 
-			     "les", "ces", "des", "mes", "ses", 
-			     "nos", "vos", "notre", "votre", "leur", "leurs"
-			     "est", "etait", "sont", "etes", "sera", 
-			     "fait", "fera", "vais", 
-			     "ont", "aurait", "aura", "fallu",
-			     "que", "quoi", "quel", "quand", "comment", "pourquoi", "par", 
-			     "elle", "nous", "vous", "ils", "elles", "moi"
-			     "amha", "non", "oui", "ouais", "pas", 
-			     "sans", "avec", "tous", "toutes", "vais",
-			     "donc", "alors", "plus", "pour", "avec", "entre", 
-			     "sur", "moins", "meme", "autant", "puis", "tant", 
-			     "peu", "beaucoup",
+  static char *not_plop[] = {"alors", 
+			     "amha", 
+			     "aura", 
+			     "aurait", 
+			     "autant", 
+			     "avec", 
+			     "avec", 
+			     "beaucoup"
+			     "ces", 
+			     "cette", 
+			     "comment", 
+			     "dans",
+			     "des", 
+			     "donc", 
+			     "elle", 
+			     "elles", 
+			     "entre", 
+			     "est", 
+			     "etait", 
+			     "etes", 
+			     "fait", 
+			     "fallu",
+			     "fera", 
+			     "ils", 
+			     "la", 
+			     "les", 
+			     "leur", 
+			     "leurs"
+			     "mais",
+			     "meme", 
+			     "mes", 
+			     "mien", 
+			     "moi"
+			     "moins", 
+			     "mon", 
+			     "non", 
+			     "nos", 
+			     "notre", 
+			     "nous", 
+			     "ont", 
+			     "ouais", 
+			     "oui", 
+			     "par", 
+			     "parce", 
+			     "pas", 
+			     "pas", 
+			     "peu", 
+			     "plus", 
+			     "pour", 
+			     "pourquoi", 
+			     "puis", 
+			     "quand", 
+			     "que", 
+			     "quel", 
+			     "quoi", 
+			     "sans", 
+			     "sera", 
+			     "ses", 
+			     "sien"
+			     "son", 
+			     "sont", 
+			     "sur", 
+			     "tant", 
+			     "tien", 
+			     "tous", 
+			     "tout", 
+			     "toutes", 
+			     "une", 
+			     "vais",
+			     "vais", 
+			     "vos", 
+			     "votre", 
+			     "vous", 
 			     NULL};
 
   static unsigned nb_not_plop = 0;
@@ -440,6 +502,7 @@ plopify_word(unsigned char *s, int sz, int bidon)
   static char *plop[] = {"plop", "grouik", "gruiiiik", "miaou", "slurpppe", "côôoot", 
 			 "pikaaaa", "kaa-pika", "chuuu", "prout", "uuurrrg", "blob", 
 			 "ploop", "pl0p", "c0in", "pouet", "coin!", "flebelebelblbll", 
+			 "blop", "gloup",
 			 NULL};
 
   /*
@@ -469,7 +532,7 @@ plopify_word(unsigned char *s, int sz, int bidon)
     }
     ALLOC_VEC(not_plop_hached, nb_not_plop, int);
     for (i=0; i < nb_not_plop; i++) {
-      not_plop_hached[i] = str_hache(not_plop[i], 20);
+      not_plop_hached[i] = str_hache(not_plop[i], strlen(not_plop[i]));
     }
   }
   if (nb_plop_subst == 0) {
@@ -484,7 +547,7 @@ plopify_word(unsigned char *s, int sz, int bidon)
 
 
   /* longeur > 15 => substitution assurée */
-  hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(slen,15))*nb_plop_subst)/10);
+  hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(slen,15))*nb_plop_subst)/8);
   
   if (hache_s < nb_plop_subst) {
     strncpy(s, plop[hache_s], sz); s[sz-1] = 0;
@@ -1863,8 +1926,10 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 	pp_scrollcoin_update_bounds(dock, trib); 
       }      
       if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
+	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
 	pp_update_content(dock, trib, trib->last_post_id, 0, 0, 0);
       } else {
+	printf("pp_check_tribune_updated, on laisse filer de %d à %d\n", pp->last_post_id, trib->last_post_id);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0, 0);
       }
       pp_refresh(dock, trib, pp->win, NULL);

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.21 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.22 2002/03/01 00:27:40 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.22  2002/03/01 00:27:40  pouaite
+  trois fois rien
+
   Revision 1.21  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -617,7 +620,9 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);
     fd = open(s, O_RDONLY);
   }
+
   if (fd != INVALID_SOCKET) {
+    int roll_back_cnt = 0;
     while (http_get_line(s, 8192, fd) > 0) {
       if (strncasecmp(s,tribune_sign_posttime, strlen(tribune_sign_info)) == 0) {
 	char stimestamp[15];
@@ -636,8 +641,40 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	if (id < 0) { errmsg="id sgn"; goto err; }
 
 	//	printf("id=%d , last=%d\n",id,dlfp->tribune.last_post_id);
-	if (tribune_find_id(&dlfp->tribune,id)) {
-	  break;
+	if (tribune_find_id(&dlfp->tribune,id) && roll_back_cnt == 0) {
+	  /*	  break;
+            Rollback bugfix
+
+	    il semblerait qu'il arrive parfois une sorte de race condition dans le backend (lors de posts multiples dans la
+	    même seconde) :  à l'instant t, le backend contient les ids {n, n-1, n-2, ..}, et à l'instant t+1 
+	    il reçoit le message n+1 en DEUXIEME POSITION: {n, n+1, n-1, n-2,...} du coup si le coincoin avait fait son
+	    update entre t et t+1, il va rater le message n+1, puisque lors de la prochaine update, la lecture du backend 
+	    s'arrêtera sur le message n, déjà connu.
+
+	    solution: on fait un rollback lorsqu'il y un trou dans les id des 3 derniers messages
+	  */
+	  int need_roll_back = 0;
+
+	  /* on regarde (comme un boeuf) si les message id-1, id-2 et id-3 ont bien été reçus */
+	  if (id > 1 && dlfp->tribune.msg) {
+	    if (tribune_find_id(&dlfp->tribune, id-1) == NULL) need_roll_back = 2;
+	    if (id > 2 && dlfp->tribune.msg->next) {
+	      if (tribune_find_id(&dlfp->tribune, id-2) == NULL) need_roll_back = 3;
+	      if (id > 3 && dlfp->tribune.msg->next->next) {
+		if (tribune_find_id(&dlfp->tribune, id-3) == NULL) need_roll_back = 4;
+	      }
+	    }
+	  }
+	  if (need_roll_back == 0) {
+	    break; /* ça roule, cassos */
+	  } else {
+	    /* il manque un message, soit il provient de la tribune des modérateurs et est donc inaccessible,
+	       soit il y a effectivement eu une race condition dans dacode */
+	    myprintf("%<YEL \\o/ il vient d'y avoir une race condition dans le backend de tribune !> (id=%d, il manque le msg id=%d).\n"
+		     "DON'T PANIC, le coincoin va gèrer tout ça calmement, ça prouve au moins que\n"
+		     "je me suis pas fait chier à faire ce bugfix pour rien\n", id, id-need_roll_back);
+	    roll_back_cnt = 3;
+	  }
 	}
 
 	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(info)"; goto err; }
@@ -693,15 +730,18 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	} else {
 	  login[0] = 0;
 	}
-	//	printf("login = '%s'\n", login);
 
-	flag_updating_tribune++;
-	tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
-	flag_updating_tribune--;
-	    
+	if (roll_back_cnt == 0 || tribune_find_id(&dlfp->tribune,id) == NULL) {
+	  if (roll_back_cnt) myprintf("%<YEL \\o/ sauvetage du message %d réussi !>\n", id);
+	  flag_updating_tribune++;
+	  tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
+	  flag_updating_tribune--;
+	}
+
 	BLAHBLAH(1, printf("dlfp_updatetribune: last_post_time=%5s - last_post_id=%d\n",
 			   dlfp->tribune.last_post_time, id));
-	//	myprintf("%<CYA %s> %<YEL %.10s> '%<GRN %s>'\n", stimestamp+8, ua, msg);
+	if (roll_back_cnt > 1) roll_back_cnt--;
+	else if (roll_back_cnt == 1) break;
       }
     }
   err:
