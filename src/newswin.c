@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.9 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.10 2002/05/19 01:14:59 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.10  2002/05/19 01:14:59  pouaite
+  bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
+
   Revision 1.9  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -293,6 +296,9 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
     }
   }
 
+  if (nw->nb_ztitle > 0) { /* sinon, il peut y avoir un crash idiot dans l'assert de phwview_draw */
+    nw->active_znum = MIN(nw->active_znum, nw->nb_ztitle);
+  } else { nw->active_znum = -1; }
 
   nw->phv_news.ph_h = 0;
   if (!picohtml_isempty(nw->phv_news.ph)) {
@@ -727,6 +733,9 @@ void
 newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
 {
   Newswin *nw = dock->newswin;
+
+  if (flag_news_updated) { newswin_update_content(dock, dlfp, 1); flag_news_updated = 0; }
+
   if (nw->window != None) {
     switch (event->type) {
     case DestroyNotify:

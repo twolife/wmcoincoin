@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.25 2002/05/18 21:29:41 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.26 2002/05/19 01:14:57 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.26  2002/05/19 01:14:57  pouaite
+  bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
+
   Revision 1.25  2002/05/18 21:29:41  pouaite
   PAN PAN le vilain bug
 
@@ -219,6 +222,8 @@ dlfp_delete_news(DLFP *dlfp, int id) {
   if (n->mail) free(n->mail);
   if (n->url) free(n->url);
   free(n);
+  dlfp->updated = 1;
+  flag_news_updated = 1;
   return 0;
 }
 

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.12 2002/04/26 08:55:27 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.13 2002/05/19 01:14:58 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.13  2002/05/19 01:14:58  pouaite
+  bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
+
   Revision 1.12  2002/04/26 08:55:27  pouaite
   fix pour le mode horloge avec l'option '-w'/dock.iconwin (merci gle!)
 
@@ -360,6 +363,7 @@ dock_checkout_newstitles(Dock *dock, DLFP *dlfp)
       DLFP_news *n;
       int pos, pos0;
       dlfp->updated = 0;
+
       if (dlfp_count_news(dlfp) == 0) {
 	sprintf(dock->newstitles, "..NO NEWS");
 	memset(dock->newstitles_id, 0, sizeof(dock->newstitles_id[0]) * MAX_NEWSTITLES_LEN);
