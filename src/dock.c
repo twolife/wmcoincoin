@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.8 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.9 2002/04/04 20:42:51 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.9  2002/04/04 20:42:51  pouaite
+  replop
+
   Revision 1.8  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -915,19 +918,16 @@ dock_build_pixmap_porte(Dock *dock)
       
       for (i=0; i< (int)rgba_porte->w; i++) {
 	for (j=0; j< (int)rgba_porte->h; j++) {
-	  XColor color;
 	  unsigned char r, g, b;
+	  unsigned long pixel;
 	  int shade;
 
-	  color.pixel = XGetPixel (XiPixPixmap, i, j);
-	  XQueryColor (dock->display, 
-		       DefaultColormap (dock->display, dock->screennum) , 
-		       &color);
-
+	  pixel = XGetPixel (XiPixPixmap, i, j);
+	  
 	  /* on ramene les composantes de 16bits à 8bits */
-	  r = color.red >> 8;
-	  g = color.green >> 8;
-	  b = color.blue >> 8;
+	  r = PIXEL2R(dock->rgba_context, pixel);
+	  g = PIXEL2G(dock->rgba_context, pixel);
+	  b = PIXEL2B(dock->rgba_context, pixel);
 
 	  /* selon le niveau de gris de rgba_porte */
 	  shade = rgba_porte->data[j][i].rgba[0] - 0x7F; /* shade = 0 pour les couleurs non modifiees, ~92 pour les 
