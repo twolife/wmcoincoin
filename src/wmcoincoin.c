@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.5 2001/12/16 01:43:33 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.6 2001/12/17 17:58:58 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.6  2001/12/17 17:58:58  pouaite
+  bugfix plutot gruik du flamometre qui partait en nouille
+
   Revision 1.5  2001/12/16 01:43:33  pouaite
   filtrage des posts, meilleure gestion des posts multiples
 
@@ -1396,7 +1399,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	DLFP_comment *com;
 	if ((com = dlfp_yc_find_modified(dock->dlfp,NULL))) {
 	  char url[1024];
-	  snprintf(url, 1024, "http://%s:%d/%s%scomments/thread.php3?news_id=%d&com_id=%d",
+	  snprintf(url, 1024, "http://%s:%d/%s%scomments/thread.php3?news_id=%d&com_id=%d&res_type=1",
 		   Prefs.site_root, Prefs.site_port, Prefs.site_path, strlen(Prefs.site_path) ? "/" : "", 
 		   com->news_id, com->com_id);
 	  open_url(url, -1, -1, 1);
