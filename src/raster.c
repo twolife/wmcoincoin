@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.12 2002/05/11 22:00:20 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.13 2002/05/13 10:51:46 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.13  2002/05/13 10:51:46  pouaite
+  bugfix lecture xpm
+
   Revision 1.12  2002/05/11 22:00:20  pouaite
   bugfix lecture des xpms en niveaux de gris
 
@@ -354,7 +357,7 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
 {
   FILE *f;
 #define LEN_MAX 4096
-#define NLIG_MAX 2048
+#define NLIG_MAX 8192
 
   char *l_tab[NLIG_MAX]; /* beurk */
   char l[LEN_MAX];       /* eeeerk */
@@ -391,6 +394,10 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
       /*      printf("ajout de la ligne: '%s'\n", l+1); */
       l_tab[lcnt] = strdup(l+1);
       lcnt++;
+      if (lcnt == NLIG_MAX) {
+	fprintf(stderr, "il y a trop de lignes dans '%s' (max=%d) !! \n", xpm_file, NLIG_MAX);
+	exit(1);
+      }
     }
   } while (!feof(f));
   fclose(f);
