@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.3 2001/12/02 20:29:31 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.4 2001/12/17 00:18:04 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.4  2001/12/17 00:18:04  pouaite
+  changement du format du backend -> on utilise desormais le /backend.rdf
+
   Revision 1.3  2001/12/02 20:29:31  pouaite
   rajout de 'options' et 'useragents' dans le Makefile.am ...
 
@@ -96,11 +99,13 @@ after_substr(const char *s, const char *substr)
 
 /* remplace pat_news */
 void
-extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
+extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens)
 {
-  const char *p, *p2=NULL;
+  const unsigned char *p, *p2=NULL;
 
-  *p_date = *p_txt = *p_liens = NULL;
+  *p_date = *p_auteur = *p_section = *p_txt = *p_liens = NULL;
+
+  
   p = after_substr(s, "class=\"newsinfo\"");
   p = after_substr(s, "Approuvé le ");
   if (p) {
@@ -110,7 +115,33 @@ extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
     }
   }
 
+  //  printf("p_date = '%s'\n", *p_date);
+
+  p = after_substr(s, "class=\"newsinfo\"");
+  p = after_substr(s, "Posté par");
+  if (p) {
+    p2 = strstr(p, "Approuvé le ");
+    if (p2) {
+      *p_auteur = strndup(p, p2-p);
+    }
+  }
+  if (*p_auteur == NULL) { *p_auteur = "???"; }
+
+  /* recherche de la section */
   p = after_substr(s, "Topic:");
+  if (p == NULL) p = after_substr(s, "Thème:"); /* actuellement (16/12/2001) c'est cette chaine qui est utilisee */
+  if (p) {
+    p = strchr(p, '>');
+    if (p) {
+      p++;
+      p2 = strchr(p, '<');
+      if (p2 && p2 - p < 100) {
+	*p_section = strndup(p, p2-p);
+      }
+    }
+  }
+  if (*p_section == NULL) *p_section = strdup("???");
+
   p = after_substr(p, "class=\"newstext\"");
   p = after_substr(p, ">");  
   if (p) {
@@ -119,6 +150,8 @@ extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
       *p_txt = strndup(p, p2-p);
     }
   }
+
+  //  printf("p_txt = '%s'\n", *p_txt);
 
   if (*p_txt) { /* si pas de txt , on ne s'acharne pas */
     p = after_substr(p2, "class=\"newslink\"");
@@ -130,6 +163,10 @@ extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
       }
     }
   }
+
+  //  printf("p_liens = '%s'\n", *p_liens);
+
+
 }
 
 int 

@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.3 2001/12/03 13:49:10 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.4 2001/12/17 00:18:04 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.4  2001/12/17 00:18:04  pouaite
+  changement du format du backend -> on utilise desormais le /backend.rdf
+
   Revision 1.3  2001/12/03 13:49:10  pouaite
   fix pour la compil sous cygwin
 
@@ -58,7 +61,7 @@ extern patterns_t patterns[];
 int regexp_extract(const char *str, pat_type_t pattern, ...);
 
 /* et une fonction speciale qui n'utilise pas les regex.. */
-void extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens);
+void extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens);
 
 /* et deux fonctions à la con qui peuvent etre utiles */
 char * strndup(const char *s, int n);

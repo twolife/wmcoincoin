@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.5 2001/12/16 21:51:22 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.6 2001/12/17 00:18:04 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.6  2001/12/17 00:18:04  pouaite
+  changement du format du backend -> on utilise desormais le /backend.rdf
+
   Revision 1.5  2001/12/16 21:51:22  pouaite
   *** empty log message ***
 
@@ -339,7 +342,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   int err;
   SOCKET fd;
 
-  char *date = NULL;
+  char *date = NULL, *auteur = NULL, *section = NULL;
   char *texte = NULL, *liens = NULL;
 
   /* la table des liens (donnés en fin de news) */
@@ -388,7 +391,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     n->heure = 0;
 
     
-    extract_news_txt(s, &date, &texte, &liens); /* fonction definie dans regexp.c */
+    extract_news_txt(s, &date, &auteur, &section, &texte, &liens); /* fonction definie dans regexp.c */
 
     /*    fprintf(stderr, "\n--\n%s\n--\n", p);*/
     /*
@@ -482,6 +485,9 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
       BLAHBLAH(2,myprintf("date: '%<BLU %s>' => heure: %d\n", date, n->heure));
     }
     
+    n->auteur = strdup(auteur);
+    n->topic = strdup(section);
+
     p = n->txt;
     while (*p) { if (((unsigned char)*p) <= ' ') *p = ' '; p++; }
     
@@ -507,6 +513,8 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   if (texte) free(texte);
   if (liens) free(liens);
   if (date) free(date);
+  if (auteur) free(auteur);
+  if (section) free(section);
 
   return err;
 }
@@ -665,14 +673,20 @@ dlfp_updatenews(DLFP *dlfp)
     fd = open(path, O_RDONLY);
   }
   if (fd != INVALID_SOCKET) {
-    char titre[512];
-    char auteur[512];
-    char mail[512];
-    char topic[512];
+
+
+    const char *news_item_sign = "<item>";
+    const char *news_item_endsign = "</item>";
+    const char *news_title_sign = "<title>";
+    const char *news_title_endsign = "</title>";
+    const char *news_url_sign = "<link>";
+    const char *news_url_endsign = "</link>";
+
+    char title[512];
     char s_id[10];
     char date[11];
-    int id = -1;
-    char s[512], news_url[512];
+    int id;
+    char s[512], url[512], base_url[512];
     int l_cnt;
     int news_err;
 
@@ -680,157 +694,152 @@ dlfp_updatenews(DLFP *dlfp)
     news_err = 0;
 
     BLAHBLAH(2,printf("le transfert semble ok\n"));
-    l_cnt = 1;
-    titre[0] = 0; auteur[0] = 0; mail[0] = 0; topic[0] = 0; s_id[0] = 0; date[0] = 0; news_url[0] = 0; s[0] = 0;
+    l_cnt = -1;
+    s[0] = 0;
     while (http_get_line(s, 512, fd)>0) {
       ALLOW_X_LOOP;
-      if (strncmp(s, "%%", 2) == 0) { 
+
+      /* faut sauter l'entete */
+      if (strstr(s, "</channel>")) l_cnt = 0;
+      if (l_cnt == -1) continue;
+
+      if (strstr(s, news_item_sign)) { 
+	if (l_cnt != 0) { news_err = 1; break; }
 	l_cnt = 1; 
-      }
-      if (l_cnt == 1) {
-	news_err = 0;
-	titre[0] = 0; auteur[0] = 0; id = -1; topic[0] = 0; mail[0] = 0;
-      }
+	id = -1;
+	url[0] = 0; s_id[0] = 0; date[0] = 0; title[0] = 0; base_url[0] = 0;
+      } else if (strstr(s, news_title_sign)) {
+	char *p;
+	if (l_cnt != 1) { news_err = 2; break; }
+	l_cnt = 2;
+	p = strstr(s, news_title_endsign);
+	if (p == NULL) { news_err = 3; break; }
+	*p = 0;
+	p = strstr(s, news_title_sign) + strlen(news_title_sign);
+	convert_to_ascii(title, p, 512, 0);
+      } else if (strstr(s, news_url_sign)) {
+	char *p;
+	if (l_cnt != 2) { news_err = 4; break; }
+	l_cnt = 3;
+	p = strstr(s, news_url_endsign);
+	if (p == NULL) { news_err = 5; break; }
+	*p = 0;
+	p = strstr(s, news_url_sign) + strlen(news_url_sign);
+	strncpy(url, p, 512); url[511] = 0;
+      } else if (strstr(s, news_item_endsign)) {
 
-      switch (l_cnt) {
+	char base_url[512];
+	char *p;
+	int i;
+	DLFP_news *n = NULL;
 
-      /* ligne 2 -> le titre */
-      case 2:
-	{
-	  strcpy(titre, s);
-	} break;
+	memset(s, 0, 512); /* anti bug temporaire */
+	if (l_cnt != 3) { news_err = 6; break; }
+	l_cnt = 0;
 
-      /* troisieme ligne -> recupere l'id de la news dans son URL */
-      case 3:
-	{
-	  /* on recupere l'url en enlevant le debut, la fin, ainsi que le numero de port */
-	  if (strstr(s,"http://") || s[0] == '/') {	/* on gere aussi le cas où l'url ne contient pas http://... mais juste /2001/11/... */
-	    char *p,*pp;
+	/* on recupere l'url en enlevant le debut, la fin, ainsi que le numero de port */
+	if (!strstr(url,"http://") && !strstr(url,"https://") && url[0] == '/') {	/* on gere aussi le cas où l'url ne contient pas http://... mais juste /2001/11/... */
+	  news_err = 8; break;
+	}	  
 
-	    if (s[0] != '/') {
-	      p = strchr(s+7,'/');
-	      while (*p == '/') p++;
-	    } else {
-	      p = s+1;
-	    }
-	    news_url[0] = '/';
-	    strcpy(news_url+1, p); news_url[511]=0;
-
-	    /* suppression du numero de port si on le trouve dans l'url (A TESTER) */
-	    p = strstr(news_url, ":");
-	    if (p) {
-	      pp = p;
-	      p++;
-	      while (*p <= '9' && *p >= '0' && *p) p++;
-	      memmove(pp, p, strlen(p));
-	    }
-	    
-	    p = strstr(news_url, ",0");
-	    if (p) *p = 0;
-	    else {
-	      BLAHBLAH(1,myprintf("le backend '%s' n'a pas l'air tres orthodoxe...\n", Prefs.path_news_backend));
-	    }
-	  }
-	  if (l_cnt == 3) {
-	    char *p;
-	    int i;
-	    /*
-	      changement depuis le ~04/03/2001 -> ca ne marche plus
-	      p = strstr(s, ",0,1,0.html");
-	    */
-	    //	    printf("'%s'\n",s);
-	    p = strstr(s, ",0");
-	    if (p) {
-	      i = p-s;
-	      *p = 0;
-	      while (s[i] != '/' && i > 0) i--;
-	      if (i == 0) p = NULL;
-	      else {
-		strncpy(s_id, s+i+1, 9); s_id[9] = 0;
-	      }
-	      
-	      /* on enchaine pour recuperer la date */
-	      if (i > 10) {
-		strncpy(date, s+i-10, 10); date[10] = 0;
-	      } else {
-		p = NULL; news_err = 1;
-	      }
-	    }
-	    /* p est NULL si il y a eu un probleme */
-	    if (p) {
-	      id = atoi(s_id);
-	      if (id <= 0) {
-		fprintf(stderr, "probleme dans linuxfr.short -> ligne url news: '%s' -> id='%s'=%d\n",s, s_id, id);
-	      }
-	    } else {
-	      id = -1; news_err = 1;
-	    }
-	  }
-	} break;
-      case 4:
-	{
-	  strcpy(auteur, s);
-	} break;
-      case 5:
-	{
-	  strcpy(mail, s);
-	} break;
-      case 6:
-	{
-	  strcpy(topic, s);
-	}
-      } /* switch */
-      l_cnt ++;
-
-      flag_news_updated = 1;
-
-      ALLOW_X_LOOP;
-
-      /* on vient de finir d'analyser une news ? */
-      if (l_cnt == 7) {
-	DLFP_news *n;
-	BLAHBLAH(2,printf("recuperations de la news id=%d -- le '%10s', topic '%s'\n", id, date, topic));
-	if (news_err != 0) {
-	  myfprintf(stderr,"%<RED OUUUPS!> %<grn dlfp_updatenews> il y a eu pour la news id=%d -> on l'oublie cettes news!\n", id);
+	
+	if (url[0] != '/') {
+	  p = strchr(url+7,'/');
+	  while (*p == '/') p++;
 	} else {
-	  if (dlfp_is_news_too_old(date)) {
-	    BLAHBLAH(1, printf("La news id=%d est trop vieille (date=%s, age max=%d), on la vire\n",id,date,Prefs.news_max_nb_days));
-	    if (dlfp_find_news_id(dlfp,id)) {
-	      dlfp_delete_news(dlfp, id);
-	    }
-	  } else if ((n=dlfp_find_news_id(dlfp,id))) {
-	    BLAHBLAH(1,printf("** Cette news est deja enregistree, pas de probleme\n"));
-	    if (n->txt == NULL) {
-	      BLAHBLAH(1,printf("** Par contre, son texte n'a pas encore ete mis a jour on va reessayer... problème?\n"));
-	      dlfp_updatenews_txt(dlfp, id);
-	    }
-	  } else {
+	  p = url+1;
+	}
 
-	    ALLOW_X_LOOP;
-	    n = dlfp_insert_news(dlfp); assert(n);
-	    n->titre = strdup(titre);
-	    n->url = strdup(news_url);
-	    n->txt = NULL;
-	    n->auteur = strdup(auteur);
-	    n->topic = strdup(topic);
-	    n->mail = strdup(mail);
-	    strncpy(n->date, date, 11); date[10] = 0;
-	    n->id = id;
-	    n->flag_unreaded = 1-first_run;
-	    dlfp->updated = 1;
-	    BLAHBLAH(2,printf(" . titre='%s'\n", titre));
-	    BLAHBLAH(2,printf(" . auteur='%s', mail='%s'\n", auteur, mail));
-	    BLAHBLAH(2,printf("** News AJOUTEE\n"));
+	assert(p); 
+	assert(p>url);
+
+	base_url[0] = '/';
+	strncpy(base_url+1, p, 512); base_url[511]=0;
+
+	/* suppression du numero de port si on le trouve dans l'url (A TESTER) */
+	p = strstr(base_url, ":");
+	if (p) {
+	  char *pp;
+	  pp = p;
+	  p++;
+	  while (*p <= '9' && *p >= '0' && *p) p++;
+	  memmove(pp, p, strlen(p));
+	}
+	    
+	p = strstr(base_url, ",0");
+	if (p && p != base_url) {
+	  *p = 0;
+	} else {
+	  BLAHBLAH(1,myprintf("le backend '%s' n'a pas l'air tres orthodoxe...\n", Prefs.path_news_backend));
+	  news_err = 7; break;
+	}
+
+	/* recupere l'id */
+	i = p-base_url-1;
+	while (i > 0 && base_url[i] != '/') i--;
+	if (i == 0) {
+	  news_err = 9;
+	  p = NULL; break;
+	} else {
+	  strncpy(s_id, base_url+i+1, 9); s_id[9] = 0;
+	}
+	
+	/* on enchaine pour recuperer la date */
+	if (i > 10) {
+	  strncpy(date, base_url+i-10, 10); date[10] = 0;
+	} else {
+	  p = NULL; news_err = 10; break;
+	}
+
+	id = atoi(s_id);
+	if (id <= 0) {
+	  fprintf(stderr, "probleme dans le backend des news -> ligne url news: '%s' -> id='%s'=%d\n",url, s_id, id);
+	  news_err = 11; break;
+	}
+
+	flag_news_updated = 1;
+
+	ALLOW_X_LOOP;
+
+	if (dlfp_is_news_too_old(date)) {
+	  BLAHBLAH(1, printf("La news id=%d est trop vieille (date=%s, age max=%d), on la vire\n",id,date,Prefs.news_max_nb_days));
+	  if (dlfp_find_news_id(dlfp,id)) {
+	    dlfp_delete_news(dlfp, id);
+	  }
+	} else if ((n=dlfp_find_news_id(dlfp,id))) {
+	  BLAHBLAH(1,printf("** Cette news est deja enregistree, pas de probleme\n"));
+	  if (n->txt == NULL) {
+	    BLAHBLAH(1,printf("** Par contre, son texte n'a pas encore ete mis a jour on va reessayer... problème?\n"));
 	    dlfp_updatenews_txt(dlfp, id);
-	    flag_news_updated = 1;
+	  }
+	} else {
+	  ALLOW_X_LOOP;
+	  n = dlfp_insert_news(dlfp); assert(n);
+	  n->titre = strdup(title);
+	  n->url = strdup(base_url);
+	  n->txt = NULL;
+	  n->auteur = NULL; 
+	  n->topic = NULL;
+	  n->mail = strdup("mailpic");
+	  strncpy(n->date, date, 11); date[10] = 0;
+	  n->id = id;
+	  n->flag_unreaded = 1-first_run;
+	  dlfp->updated = 1;
+	  BLAHBLAH(2,printf(" . titre='%s'\n", title));
+	  BLAHBLAH(2,printf(" . auteur='%s', mail='%s'\n", n->auteur, n->mail));
+	  BLAHBLAH(2,printf("** News AJOUTEE\n"));
+	  dlfp_updatenews_txt(dlfp, id);
+	  flag_news_updated = 1;
 	    //if (dlfp_updatenews_txt(dlfp, id) != 0) return;
 
 	    //	    if (dlfp_count_news(dlfp) > 4) break;
 	    //	    break;
 	    //	    dlfp_updatenews_txt(dlfp, 2293);
-	  }
 	}
-      }
+      } /* nouvelle news ajoutée */
+    } /* while http_get_line */
+    if (news_err != 0) {
+      myfprintf(stderr,"%<RED OUUUPS!> %<grn dlfp_updatenews> il y a eu une erreur (err=%d) dans le parsage du backend des news\n", news_err);
     }
     http_close(fd);
     transfert_cnt++;

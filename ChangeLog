@@ -1,3 +1,8 @@
+2001-12-17  pouaite  <jul@dr.com>
+
+	* src/coincoin_news.c (dlfp_updatenews): changement dans l'urgence
+	du backend des news (c'est /backend.rdf maintenant)
+
 2001-12-16  pouaite  <jul@dr.com>
 
 	* src/editwin.c: ajout des suggestions proposées par Amaury.
