@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.7 2002/04/15 19:56:38 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.8 2002/05/25 10:53:05 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.8  2002/05/25 10:53:05  pouaite
+##   aujourd'hui c'est la saint beugue
+##
 ##   Revision 1.7  2002/04/15 19:56:38  pouaite
 ##   v2.3.7a
 ##
@@ -21,6 +24,9 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
+# pour faire plaisir à woof :°)
+prefix=$(DESTDIR)@prefix@
+
 SUBDIRS = src doc
 EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
@@ -38,4 +44,4 @@ rpm-dist: dist
 bin-dist: all
 	cp src/wmcoincoin .
 	strip wmcoincoin
-	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options wmcoincoin
+	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options useragents wmcoincoin
