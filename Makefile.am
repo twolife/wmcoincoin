@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.13 2002/06/23 10:44:05 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.14 2002/06/23 14:01:36 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.14  2002/06/23 14:01:36  pouaite
+##   ouups, j'avais flingué les modifs depuis la v2.3.8b
+##
 ##   Revision 1.13  2002/06/23 10:44:05  pouaite
 ##   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 ##
@@ -36,7 +39,7 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
-AUTOMAKE_OPTIONS = 1.5 dist-bzip2
+#AUTOMAKE_OPTIONS = 1.5 dist-bzip2
 
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@

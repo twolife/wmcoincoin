@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.9 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: http.h,v 1.10 2002/06/23 14:01:36 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.10  2002/06/23 14:01:36  pouaite
+  ouups, j'avais flingué les modifs depuis la v2.3.8b
+
   Revision 1.9  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -44,6 +47,7 @@
 #   define SOCKET unsigned int
 # endif
 #endif
+
 
 typedef struct {
   /* input members */

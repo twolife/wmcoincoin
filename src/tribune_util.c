@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.25 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.26 2002/06/23 14:01:36 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.26  2002/06/23 14:01:36  pouaite
+  ouups, j'avais flingué les modifs depuis la v2.3.8b
+
   Revision 1.25  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -458,7 +461,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
       if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
-	   && mi->hmsf[1] == m && best_mi == NULL && !previous_mi_was_a_match) {
+	   && mi->hmsf[1] == m && !previous_mi_was_a_match) {
 	match = 1;
       }
     } else {

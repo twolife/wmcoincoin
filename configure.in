@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.27  2002/06/23 14:01:36  pouaite
+dnl   ouups, j'avais flingué les modifs depuis la v2.3.8b
+dnl
 dnl   Revision 1.26  2002/06/23 10:44:05  pouaite
 dnl   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 dnl
@@ -78,7 +81,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8b)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8cvs)
 AM_CONFIG_HEADER(config.h)
 
 dnl Checks for host/os name
@@ -142,12 +145,18 @@ AM_GNU_GETTEXT
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
 
+AC_ARG_WITH(ipv6, [ --with-ipv6    allow use of ipv6 [default=no]], ipv6_ok=$withval, ipv6_ok=no)
+if test "$ipv6_ok" = "yes"; then
+  echo "IPv6 enabled !"
+  AC_DEFINE(USE_IPV6, 1, [Define if build with IPv6 support])
+fi
+
 case "$host" in
     *-linux-*)
-          echo -e "\n${YELLOW}vous utilisez GNU/linux, c'est Bien(c)(tm) !${RESET}\n"
+          echo -e "\n${YELLOW}you are using GNU/linux, c'est Bien(c)(tm) !${RESET}\n"
           ;;
     *-solaris*)
-          echo -e "\n${YELLOW}oh oh !! wmcc sur solaris marche a peu pres, bon courage !${RESET}\n"
+          echo -e "\n${YELLOW}oh oh !! wmcc runs quite well on solaris, good luck !${RESET}\n"
           ;;
     *bsd*)
           echo -e "\nbsd detected!\n"
@@ -163,10 +172,10 @@ case "$host" in
           echo -e "\n${YELLOW}darwin detected !${RESET}\n"
           ;;
     *GNU*)
-	  echo -e "\n${YELLOW}kikooo kilobug !${RESET}\n"
+	  echo -e "\n${YELLOW}GNU/Hurd ! ${RESET}\n"
 	  ;;
     *)
-	  echo -e "\n${YELLOW}vous compilez sur $host , c'est original${RESET}\n"
+	  echo -e "\n${YELLOW}you are compiling on $host , it's original${RESET}\n"
          ;;
 esac
 

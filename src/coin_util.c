@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.26 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.27 2002/06/23 14:01:36 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.27  2002/06/23 14:01:36  pouaite
+  ouups, j'avais flingué les modifs depuis la v2.3.8b
+
   Revision 1.26  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -408,7 +411,7 @@ str_substitute(const char *src, const char *key, const char *substitution) {
 char *
 shell_quote(const char *src)
 {
-  char *quote = "&;`'\\\"|*?~<>^()[]{}$ ";
+  char *quote = "&;`'\\\"|*?~<>^()[]{}$ \t";
   int i,dest_sz;
   const char *p;
   char *dest;

@@ -12,7 +12,7 @@
 #  include "myprintf.h"
 #  include "coin_util.h"
 #else
-
+#include "../config.h"
 #  include <unistd.h>
 #  include <fcntl.h>
 #  include <sys/types.h>
@@ -40,9 +40,6 @@
 
 #endif /* ifdef __CYGWIN */
 
-
-
-
 #ifdef __CYGWIN__
 #  define LASTERR_EINTR (WSAGetLastError() == WSAEINTR)
 #  define LASTERR_EAGAIN (WSAGetLastError() == WSAEINPROGRESS)
@@ -55,6 +52,16 @@
 #  define LASTERR_EAGAIN (errno==EAGAIN)
 #endif
 
+
+#ifdef USE_IPV6
+#define SOCKADDR_IN struct sockaddr_in6
+#define GETHOSTBYNAME(x) gethostbyname2(x,AF_INET6)
+#else
+#define SOCKADDR_IN struct sockaddr_in
+#define GETHOSTBYNAME(x) gethostbyname(x)
+#endif
+
+
 #include <libintl.h>
 #define _(String) gettext (String)
 
@@ -65,7 +72,7 @@ static char http_last_err_msg[HTTP_ERR_MSG_SZ] = "";
 static char http_last_err_url[HTTP_LAST_ERR_URL_SZ] = "";
 time_t http_err_time = 0;
 static char http_last_url[HTTP_LAST_ERR_URL_SZ] = "";
-static char http_used_ip[20] = "xxx.xxx.xxx.xxx";
+static char http_used_ip[100] = "xxx.xxx.xxx.xxx";
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -402,7 +409,7 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
   ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
 				  jour la led indiquant 'gethostbyname' */
   ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-  phost = gethostbyname(hostname); /* rahhh comme c'est lent :-( */
+  phost = GETHOSTBYNAME(hostname); /* rahhh comme c'est lent :-( */
   ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
   if (phost) {
     addr[0] = (unsigned char)phost->h_length;
@@ -431,7 +438,8 @@ static SOCKET
 http_connect(const char *host_name, int port)
 {
   SOCKET sockfd = INVALID_SOCKET;
-  struct sockaddr_in dest_addr;   /* Contiendra l'adresse de destination */
+
+  SOCKADDR_IN dest_addr;   /* Contiendra l'adresse de destination */
   int num_try;
 
   static unsigned char addr[65]; /* premier char = nombre d'octets utilisés pour reprensenter l'adresse 
@@ -465,14 +473,30 @@ http_connect(const char *host_name, int port)
 #endif
 	  flag_gethostbyname = 0;
 	  if (addr[0]) {
-	    snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
+#ifndef USE_IPV6
+	    snprintf(http_used_ip, 100, "%u.%u.%u.%u", 
 		     (unsigned char)addr[1],
 		     (unsigned char)addr[2],
 		     (unsigned char)addr[3],
 		     (unsigned char)addr[4]);
+#else
+	    snprintf(http_used_ip, 100, "%x:%x:%x:%x:%x:%x:%x:%x", 
+		     *((unsigned short *)(addr+1)),
+		     *((unsigned short *)(addr+3)),
+		     *((unsigned short *)(addr+5)),
+		     *((unsigned short *)(addr+7)),
+		     *((unsigned short *)(addr+9)),
+		     *((unsigned short *)(addr+11)),
+		     *((unsigned short *)(addr+13)),
+		     *((unsigned short *)(addr+15)));
+#endif
 	    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
 	  } else {
+#ifndef USE_IPV6
 	    snprintf(http_used_ip, 20, "???.???.???.???");
+#else
+	    snprintf(http_used_ip, 20, "?:?:?:?:?:?:?:?");
+#endif
 	  }
 	}
 
@@ -496,13 +520,19 @@ http_connect(const char *host_name, int port)
 	return INVALID_SOCKET;
       }
   
-      dest_addr.sin_family = AF_INET;       
+#ifndef USE_IPV6
+      dest_addr.sin_family = AF_INET;
       dest_addr.sin_port = htons(port);
-
       /* pris dans wget, donc ca doit etre du robuste */
       memcpy(&dest_addr.sin_addr, addr+1, addr[0]);
-
       memset(&(dest_addr.sin_zero), 0, 8);
+#else
+      //      dest_addr.sin6_len = sizeof(dest_addr);
+      dest_addr.sin6_family = AF_INET6;
+      dest_addr.sin6_port = htons(port);
+      memcpy(&dest_addr.sin6_addr, addr+1, addr[0]);
+#endif
+
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les
