@@ -18,6 +18,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
  */
+/*
+  rcsid=$Id: regexp.c,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  ChangeLog:
+  $Log: regexp.c,v $
+  Revision 1.2  2001/12/02 18:24:16  pouaite
+  modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
+
+*/
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +38,15 @@ patterns_t patterns[] =
     { pat_xp, "XP[^:]*:[^[:digit:]]*([[:digit:]]*)", NULL, "d"  },
     { pat_votes, 
       "([[:digit:]]*)[[:space:]]*votes[[:space:]]*.*"
-      "reste[^:]*:[^[:digit:]]*([[:digit:]]*)", NULL, "dd" },
+      "reste[^:]*:[^[:digit:]]*([[:digit:]]*)", NULL, "dd" }
+    /*    
+	  
+    pat_news est remplace par la fonction ci-dessous (j'arrive pas a avoir une regex qui marche
+    bien -> cad qui fonctionne dans tous les cas et qui est rapide -> en particulier gros pb sur
+    openbsd
+
+
+
     { pat_news,
       //"<!-- *NEWSBOX +[[:digit:]]+ *-->.*"
       //"class=\"newstitle\"[^>]*>.*<a[^>]*>([^<]*)</a>: <a +name=[^>]*>([^<]*)</a></td>.*"
@@ -38,18 +54,80 @@ patterns_t patterns[] =
       //"class=\"newstext\"[^>]*><a[^>]*>.*</a>(.*)</td>.*"
       //"class=\"newslink\"[^>]*>(.*)"
       //"class=\"[^\"]*\"[^>]*>.*"
-      //"<!-- */ *NEWSBOX *-->",
       //       NULL,
       //      "ssssss" },
 
       //"<span class=\"newstext\"[^<]*<a[^>]*>([^<]*)</a>.*" // le titre
       ".*Approuvé +le +([^<]*).*"           // date
-      "class=\"newstext\"[^>]*>(.*)</td>.*"  // texte de la news
-      "class=\"newslink\"[^>]*>(.*)"                       // le bloc des liens
-      "class=\"[^\"]*\"[^>]*>.*",
-      NULL,
-      "sss" }
+      "class=\"newstext\"[^>]*>(.+)</td>.*"  // texte de la news
+      "class=\"newslink\"[^>]*>([^[.</td>.]]+).*"                       // le bloc des liens
+      //      "class=\"[^\"]*\"[^>]*>.*"
+      ,NULL,
+      "sss" }*/
   };
+
+char *
+strndup(const char *s, int n)
+{
+  char *p;
+
+  p = malloc(n+1);
+  strncpy(p, s, n); p[n] = 0;
+  return p;
+}
+
+char*
+after_substr(const char *s, const char *substr)
+{
+  const char *p;
+
+  if (s == NULL) return NULL;
+  p = strstr(s, substr);
+  if (p) {
+    return (char *) p+strlen(substr);
+  } else {
+    return NULL;
+  }
+}
+
+
+/* remplace pat_news */
+void
+extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
+{
+  const char *p, *p2;
+
+  *p_date = *p_txt = *p_liens = NULL;
+  p = after_substr(s, "class=\"newsinfo\"");
+  p = after_substr(s, "Approuvé le ");
+  if (p) {
+    p2 = strchr(p, '<');
+    if (p2) {
+      *p_date = strndup(p, p2-p);
+    }
+  }
+
+  p = after_substr(s, "Topic:");
+  p = after_substr(p, "class=\"newstext\"");
+  p = after_substr(p, ">");  
+  if (p) {
+    p2 = strstr(p, "</td>");
+    if (p2) {
+      *p_txt = strndup(p, p2-p);
+    }
+  }
+
+  if (*p_txt) { /* si pas de txt , on ne s'acharne pas */
+    p = after_substr(p2, "class=\"newslink\"");
+    p = after_substr(p, ">");
+    if (p) {
+      p2 = strstr(p, "</td>");
+      if (p2) {
+	*p_liens = strndup(p, p2-p);
+      }
+    }
+  }
+}
 
 int 
 regexp_extract(const char *str, pat_type_t pattern, ...)

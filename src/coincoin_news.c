@@ -17,7 +17,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
- */
+*/
+
+/*
+  rcsid=$Id: coincoin_news.c,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  ChangeLog:
+  $Log: coincoin_news.c,v $
+  Revision 1.2  2001/12/02 18:24:16  pouaite
+  modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
+
+*/
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -368,47 +378,63 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
 
     n->heure = 0;
 
-    /*    fprintf(stderr, "\n--\n%s\n--\n", p);*/
+    
+    extract_news_txt(s, &date, &texte, &liens); /* fonction definie dans regexp.c */
 
+    /*    fprintf(stderr, "\n--\n%s\n--\n", p);*/
+    /*
     {
       int res;
-      
-      /*      res = regexp_extract(p, pat_news, &section, &titre, &auteur, &date,
-			   &texte, &liens);
-      */
       res = regexp_extract(s, pat_news, &date,
 			   &texte, &liens);
-      //      printf("res=%d\n", res);
       if (!res) {
 	printf("fuck!\n");
-	//	res = regexp_extract(s, pat_news_no_sec, &titre, &auteur, &date,
-	//			     &texte, &liens);
       }
-    }
+      }
+*/
     
     if (texte == NULL) { err = 7; goto ouups1; }
+
+    myprintf("liens: '%<BLU %s>'\n", liens);
     
     p2 = liens;
     while (p2) {
-      char *p3, *p4;
+      char *p3;
+
+
+      url_tab[nb_url] = NULL;
       /* bourrin .. au moindre problème on laisse tomber */
-      p3 = strstr(p2, "</td>");
+
+      /* essai 1 : y'a t-il un onmouseover ? (pour chopper le vrai lien) */
+      p3 = after_substr(p2, " onmouseover=\"javascript: window.status='");
+      if (p3) {
+	url_tab[nb_url] = p3;
+	p3 = strchr(p3, '\'');
+	if (p3) {
+	  *p3 = 0; p3++;
+	}
+      }
+
+      /* essai 2, il y a juste un href= */
+      if (url_tab[nb_url] == NULL) {
+	p3 = after_substr(p2, "<a href=\"");
+	if (p3 == NULL) goto stop_url;
+	url_tab[nb_url] = p3;
+	p3 = strchr(p3, '"');
+	if (p3 == NULL) goto stop_url;
+	*p3 = 0; p3++;
+      }
+
+      /* chope la descriptuion de l'url */
+      p3 = strstr(p3, ">");
       if (p3 == NULL) goto stop_url;
-      p4 = strstr(p2, "<a href=\"");
-      if (p4 == NULL || p4 > p3) goto stop_url;
-      url_tab[nb_url] = p4 + 9;
-      p4 = strchr(p4+9, '"');
-      if (p4 == NULL || p4 > p3) goto stop_url;
-      *p4 = 0; p4++;
-      p4 = strstr(p4, ">");
-      if (p4 == NULL || p4 > p3) goto stop_url;
-      url_tab_desc[nb_url] = p4+1;
-      p4 = strstr(p4, "<");
-      if (p4 == NULL || p4 > p3) goto stop_url;
-      *p4 = 0; p4++;
+      url_tab_desc[nb_url] = p3+1;
+      p3 = strstr(p3, "<");
+      if (p3 == NULL) goto stop_url;
+      *p3 = 0; p3++;
       //      printf("LINK='%s' , DESC='%s'\n", url_tab[nb_url], url_tab_desc[nb_url]);
       nb_url++;
-      p2 = p4;
+      p2 = p3;
     }
 
   stop_url:      
@@ -437,12 +463,14 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
 
     if (date) {
       p = strstr(date, "à");
-      while (!isdigit(*p) && *p) p++;
-      n->heure = atoi(p) * 60;
-      p += 2;
-      while (!isdigit(*p) && *p) p++;      
-      n->heure += atoi(p);     
-      BLAHBLAH(2,myprintf("date: %s => heure: %d\n", date, n->heure));
+      if (p) {
+	while (!isdigit(*p) && *p) p++;
+	n->heure = atoi(p) * 60;
+	p += 2;
+	while (!isdigit(*p) && *p) p++;      
+	n->heure += atoi(p);     
+      }
+      BLAHBLAH(2,myprintf("date: '%<BLU %s>' => heure: %d\n", date, n->heure));
     }
     
     p = n->txt;

@@ -18,6 +18,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 */
+/*
+  rcsid=$Id: regexp.h,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  ChangeLog:
+  $Log: regexp.h,v $
+  Revision 1.2  2001/12/02 18:24:16  pouaite
+  modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
+
+*/
 
 #ifndef COINCOIN_REGEXP_H
 #define COINCOIN_REGEXP_H
@@ -44,5 +52,12 @@ typedef struct _patterns_t
 extern patterns_t patterns[];
 
 int regexp_extract(const char *str, pat_type_t pattern, ...);
+
+/* et une fonction speciale qui n'utilise pas les regex.. */
+void extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens);
+
+/* et deux fonctions à la con qui peuvent etre utiles */
+char * strndup(const char *s, int n);
+char *after_substr(const char *s, const char *substr);
 
 #endif
