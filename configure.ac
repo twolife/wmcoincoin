@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.21  2003/03/02 16:45:22  pouaite
+dnl   autoconferies
+dnl
 dnl   Revision 1.20  2003/03/02 14:41:21  pouaite
 dnl   ce commit est dédié à la mémoire de jacques martin
 dnl
@@ -206,9 +209,9 @@ xinerama=no
 AC_ARG_ENABLE(xinerama, 
 [  --disable-xinerama	  disable XInerama extension support],
 		xinerama=$enableval, xinerama=yes)
-if test "$xinerama" = yes; then
+if test x$xinerama = xyes; then
 	AC_CHECK_LIB(Xinerama, XineramaQueryScreens, [XLIBS="-lXinerama $XLIBS"
-                AC_DEFINE(XINERAMA)], xinerama=no, $XLFLAGS $XLIBS)
+                AC_DEFINE([XINERAMA],1,[define if xinerama API is supported])], xinerama=no, $XLFLAGS $XLIBS)
 fi
 
 
@@ -241,6 +244,9 @@ dnl AC_SUBST(GTK_LIBS)
   WMCCC="wmccc"
 fi
 AC_SUBST(WMCCC)
+
+AC_DEFINE([PACKAGE_DATA_DIR], [], [data directory for wmcc])
+AC_DEFINE([PACKAGE_SOURCE_DIR], [], [source directory for wmcc])
 
 dnl Set PACKAGE_DATA_DIR in config.h.
 if test "x${datadir}" = 'x${prefix}/share'; then

@@ -90,10 +90,18 @@ echo "  aclocal -I m4 $ACLOCAL_FLAGS"
 aclocal -I m4 $ACLOCAL_FLAGS
 echo "  autoheader"
 autoheader || exit;
+if test ! -e m4/Makefile.am; then
+  echo "cette grosse bouse de gettextize ne veut plus installer de Makefile.am dans le rép m4"
+  echo "alors je vais le faire"
+  s=`cd m4 && ls *.m4`;
+  echo "#made by autogen.sh ..." > m4/Makefile.am
+  echo "EXTRA_DIST = "$s >> m4/Makefile.am
+fi;
 echo "  automake --add-missing --gnu --include-deps"
 automake --add-missing --gnu --include-deps
 echo "  autoconf"
 autoconf || exit;
+
 
 if test -z "$*"; then
     echo "I am going to run ./configure with no arguments - if you wish "
