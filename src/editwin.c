@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.6 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.7 2002/01/12 19:03:54 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.7  2002/01/12 19:03:54  pouaite
+  bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
+
   Revision 1.6  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -1592,7 +1595,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   unsigned char buff[4];
   static XComposeStatus compose_status = { 0, 0 };
 
-  //  printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
+  //printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
 
   if ((event->xkey.state & 0xdfe0) || 
       (ew->input_context && XFilterEvent(event, None))) {
@@ -1602,8 +1605,10 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   }
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
-  //  printf("klen=%2d %08x %c\n", klen, ksym, ksym);
-  if (event->xkey.state & Mod1Mask) {
+  //printf("klen=%2d %08x %c\n", klen, ksym, ksym);
+  if (ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
+    editw_insert_char(ew, (unsigned char)'¤');
+  } else if (event->xkey.state & Mod1Mask) {
     switch (ksym) {
     case 'I':
     case 'i': editw_balise_ital(ew); break;

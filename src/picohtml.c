@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.3 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.4 2002/01/12 19:03:54 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.4  2002/01/12 19:03:54  pouaite
+  bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
+
   Revision 1.3  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -118,7 +121,9 @@ justif_ligne(PicoHtmlItem *it_debut_ligne, int xmax, int parag_align)
     nb_word++; 
   }
 
-  assert(xjust >= 0); 
+  if (xjust < 0) xjust = 0; /* ça arrive si le mot est plus large que la fenetre et qu'on essaye
+			       deseperement de le centrer ... */
+  //  assert(xjust >= 0); 
   if (xjust == 0) return;
 
   /* justification à droite et à gauche */

@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.9 2002/01/12 19:03:54 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
-  Revision 1.8  2002/01/12 17:29:08  pouaite
-  support de l'iso8859-15 (euro..)
+  Revision 1.9  2002/01/12 19:03:54  pouaite
+  bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
 
   Revision 1.7  2002/01/06 17:06:27  pouaite
   enlevage du patch de glandium (enfin j'essaye..)
@@ -133,7 +133,7 @@ struct _Pinnipede {
 
   struct _PinnipedeFilter filter;
 
-  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
+  //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
 
 
@@ -189,6 +189,11 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
       h = (w[0]-'0')*10 + (w[1]-'0');
       m = (w[2]-'0')*10 + (w[3]-'0');
       s = (w[4]-'0')*10 + (w[5]-'0');
+    } else if (l == 7) {
+      h = (w[0]-'0')*10 + (w[1]-'0');
+      m = (w[2]-'0')*10 + (w[3]-'0');
+      s = (w[4]-'0')*10 + (w[5]-'0');
+      if (w[6] == '¹') num = 0; else if (w[6] == '²') num = 1; else if (w[6] == '³') num = 2; else return 0;
     } else return 0;
 
     /* ci-dessous minipatch pour Dae qui reference les posts multiples
