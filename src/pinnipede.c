@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.100 2004/03/03 23:00:39 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.101 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -652,9 +652,7 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	s[i] = 0;
 	url = s+10;
 	if (url[0] == '.') { /* chemin relatif :-/ */	  
-	  char *tmp = str_printf("http://%s:%d/%s/%s", board->site->prefs->site_root, 
-				 board->site->prefs->site_port, board->site->prefs->site_path, 
-				 board->site->prefs->path_board_backend);
+	  char *tmp = strdup(board->site->relative_urls_base);
 	  url_au_coiffeur(tmp, 1); /* vire le nom du backend */
 	  tmp = str_cat_printf(tmp, "/%s", url);
 	  url_au_coiffeur(tmp, 0);
@@ -927,7 +925,7 @@ pp_get_win_bgcolor(Dock *dock) {
 
   if (pp->active_tab) {
     int sid = pp->active_tab->site->site_id; assert(sid>=0);
-    return pp->win_bgpixel[sid];
+    return cccolor_pixel(pp->win_bgcolor[sid]);
   } else return WhitePixel(dock->display, dock->screennum);
 }
 
@@ -1141,7 +1139,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   /* couleur de la zone selectionnée */
   if (sel_info) {
     if (sel_info->x0 < sel_info->x1) {
-      XSetForeground(dock->display, dock->NormalGC, pp->sel_bgpixel);
+      XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->sel_bgcolor));
       XFillRectangle(dock->display, lpix, dock->NormalGC, 
 		     sel_info->x0, 0, 
 		     sel_info->x1-sel_info->x0, pp->fn_h);
@@ -1191,11 +1189,11 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
       
       if (pw->parent->is_my_message && pp->hilight_my_message_mode) { 
-	pixel = pp->hilight_my_msg_pixel;
+	pixel = cccolor_pixel(pp->hilight_my_msg_color);
       } else if (pw->parent->is_answer_to_me && pp->hilight_answer_to_me_mode) { 
-	pixel = pp->hilight_answer_my_msg_pixel;
+	pixel = cccolor_pixel(pp->hilight_answer_my_msg_color);
       } else if (pw->parent->is_hilight_key && pp->hilight_key_mode) { 
-	pixel = pp->hilight_keyword_pixel[pw->parent->is_hilight_key-1];
+	pixel = cccolor_pixel(pp->hilight_keyword_color[pw->parent->is_hilight_key-1]);
       } else do_hilight = 0;
       
       if (do_hilight) {
@@ -1257,7 +1255,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
       }
 
       if (pw->attr & (PWATTR_TMP_EMPH)) {
-	XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->popup_bgcolor));
 	XFillRectangle(dock->display, lpix, dock->NormalGC,pw->xpos, 1, pw->xwidth, pp->fn_h-1);
 	color = pp->popup_fgcolor;
 	//XSetForeground(dock->display, dock->NormalGC, pixel);
@@ -1294,7 +1292,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
       if (pw->attr & PWATTR_S) {	  
 	int x1;
-	pixel = pp->strike_pixel[site_num]; 
+	pixel = cccolor_pixel(pp->txt_color[site_num]);
 	XSetForeground(dock->display, dock->NormalGC, pixel);
 	if (pw->next && pw->next->ligne == pw->ligne && (pw->next->attr & PWATTR_S)) {
 	  x1 = pw->next->xpos;
@@ -1473,14 +1471,14 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
     
     pw = pp->lignes[l];
     opaque_bg = 0;
-    bgpixel = pp->win_bgpixel[pp->active_tab->site->site_id];
+    bgpixel = cccolor_pixel(pp->win_bgcolor[pp->active_tab->site->site_id]);
     
    if (pw) {
      int site_num;
      int i;
      
      site_num = id_type_sid(pw->parent->id);
-     bgpixel = pp->win_bgpixel[site_num];
+     bgpixel = cccolor_pixel(pp->win_bgcolor[site_num]);
       
       /* if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel; */
       /*      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;*/
@@ -1489,21 +1487,21 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
        if (ref_num == -1) {
 	 if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window
 	     && id_type_sid(pw->parent->id) == id_type_sid(ref_mi->id)) {
-	   bgpixel = pp->emph_pixel; opaque_bg = 1;
+	   bgpixel = cccolor_pixel(pp->emph_color); opaque_bg = 1;
 	 }
        } else {
 	 if (id_type_eq(pw->parent->id, ref_mi->id) && ref_in_window) {
-	   bgpixel = pp->emph_pixel; opaque_bg = 1;
+	   bgpixel = cccolor_pixel(pp->emph_color); opaque_bg = 1;
 	 }
        }
      }
      for (i = 0; i < nb_anti_ref; i++) {
        if (id_type_eq(anti_ref_id[i], pw->parent->id)) {
-	 bgpixel = pp->emph_pixel; opaque_bg = 1;
+	 bgpixel = cccolor_pixel(pp->emph_color); opaque_bg = 1;
        }
      }
      if (pw->parent && id_type_eq(pw->parent->id, pp->kbnav_current_id)) {
-       bgpixel = pp->sel_bgpixel;
+       bgpixel = cccolor_pixel(pp->sel_bgcolor);
      }
    }
    
@@ -1532,7 +1530,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	if (pv) {
 	  PostWord *pw = pv->first;
 	  while (pw) {
-	    pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); 
+	    pw = pp_draw_line(dock, pp->lpix, pw, cccolor_pixel(pp->emph_color), NULL, 0, y); 
 	    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, y);
 	    y += pp->fn_h;
 	  }
@@ -1545,9 +1543,9 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
     /* affichage du commentaire (optionnel) */
     if (ref_mi || strlen(ref_comment)) {
       if (strlen(ref_comment) && (ref_mi==NULL || (ref_mi->in_boitakon && pp->disable_plopify == 0))) {
-	XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->emph_color)); //WhitePixel(dock->display, dock->screennum));
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
-	XSetBackground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
+	XSetBackground(dock->display, dock->NormalGC, cccolor_pixel(pp->emph_color)); //WhitePixel(dock->display, dock->screennum));
 	//XSetFont(dock->display, dock->NormalGC, pp->fn_it->fid);
         ccfont_draw_string8(pp->fn_it, pp->timestamp_color[pp->active_tab->site->site_id], 
                             pp->lpix, 5, ccfont_ascent(pp->fn_it), ref_comment, strlen(ref_comment));
@@ -1555,7 +1553,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, y);
 	y += pp->fn_h;
       }
-      XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
+      XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->emph_color)); //WhitePixel(dock->display, dock->screennum));
       XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, 0, pp->win_width, 3);
       XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, y, pp->win_width, 3);
       y+=3;
@@ -1893,79 +1891,50 @@ pp_free_fonts(Pinnipede *pp)
   */
 }
 
-static void 
-pp_free_colors(Pinnipede *pp) {
-  int i;
-  cccolor_release(&pp->ccc_black);
-  cccolor_release(&pp->popup_fgcolor);
-  cccolor_release(&pp->plopify_color);
-  cccolor_release(&pp->totoz_unknown_color);
-  cccolor_release(&pp->totoz_found_color);
-  cccolor_release(&pp->totoz_downloading_color);
-  cccolor_release(&pp->minib_dark_color);
-  for (i=0; i <MAX_SITES; i++) {
-    cccolor_release(&pp->timestamp_color[i]);
-    cccolor_release(&pp->useragent_color[i]);
-    cccolor_release(&pp->login_color[i]);
-    cccolor_release(&pp->lnk_color[i]);
-    cccolor_release(&pp->visited_lnk_color[i]);
-    cccolor_release(&pp->txt_color[i]);
-    cccolor_release(&pp->trollscore_color[i]);
-  }
-}
 
-
-#define GET_BICOLOR(x) (pp->transparency_mode ? IRGB2PIXEL(x.transp) : IRGB2PIXEL(x.opaque))
-
+#define GET_BICOLOR(x) (pp->transparency_mode ? x.transp : x.opaque)
+enum { INIT_COLORS, RELEASE_COLORS, RESET_COLORS };
+#define INIT_OR_RESET_OR_FREE_COLOR(a,b) { if (mode == INIT_COLORS) a = cccolor_get(b); \
+  else if (mode == RELEASE_COLORS) cccolor_release(&a); else cccolor_reset(&a,b); }
 static void
-pp_set_prefs_colors(Dock *dock) 
+pp_set_prefs_colors(Pinnipede *pp, int mode) 
 {
-  Pinnipede *pp = dock->pinnipede;
   int i;
   
-  cccolor_reset(&pp->ccc_black, 0);
-  cccolor_reset(&pp->popup_fgcolor, GET_BICOLOR(Prefs.pp_popup_fgcolor));
-  cccolor_reset(&pp->plopify_color, GET_BICOLOR(Prefs.pp_plopify_color));
-  cccolor_reset(&pp->totoz_unknown_color, 0xa00000);
-  cccolor_reset(&pp->totoz_found_color, 0x0000a0);
-  cccolor_reset(&pp->totoz_downloading_color, 0x00a000);
-  cccolor_reset(&pp->minib_dark_color, GET_BICOLOR(Prefs.pp_buttonbar_fgcolor));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->ccc_black, 0);
+  INIT_OR_RESET_OR_FREE_COLOR(pp->popup_fgcolor, GET_BICOLOR(Prefs.pp_popup_fgcolor));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->plopify_color, GET_BICOLOR(Prefs.pp_plopify_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->totoz_unknown_color, 0xa00000);
+  INIT_OR_RESET_OR_FREE_COLOR(pp->totoz_found_color, 0x0000a0);
+  INIT_OR_RESET_OR_FREE_COLOR(pp->totoz_downloading_color, 0x00a000);
+  INIT_OR_RESET_OR_FREE_COLOR(pp->minib_dark_color, GET_BICOLOR(Prefs.pp_buttonbar_fgcolor));
 
   for (i=0; i <MAX_SITES; i++) {
     if (Prefs.site[i] == NULL) continue;
-    pp->win_bgpixel[i] = IRGB2PIXEL(Prefs.site[i]->pp_bgcolor);
-    pp->timestamp_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_tstamp_color);
-    pp->lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_url_color);
-    pp->visited_lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_visited_url_color);
-    pp->strike_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_strike_color);
-    pp->txt_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_fgcolor);
-    pp->useragent_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_useragent_color);
-    pp->login_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_login_color);
-    pp->trollscore_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_trollscore_color);
-    cccolor_reset(&pp->timestamp_color[i], GET_BICOLOR(Prefs.site[i]->pp_tstamp_color));
-    cccolor_reset(&pp->useragent_color[i], GET_BICOLOR(Prefs.site[i]->pp_useragent_color));
-    cccolor_reset(&pp->login_color[i], GET_BICOLOR(Prefs.site[i]->pp_login_color));
-    cccolor_reset(&pp->lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_url_color));
-    cccolor_reset(&pp->visited_lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_visited_url_color));
-    cccolor_reset(&pp->txt_color[i], GET_BICOLOR(Prefs.site[i]->pp_fgcolor));
-    cccolor_reset(&pp->trollscore_color[i], GET_BICOLOR(Prefs.site[i]->pp_trollscore_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->win_bgcolor[i], Prefs.site[i]->pp_bgcolor);
+    //INIT_OR_RESET_OR_FREE_COLOR(pp->strike_color[i], GET_BICOLOR(Prefs.site[i]->pp_strike_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->timestamp_color[i], GET_BICOLOR(Prefs.site[i]->pp_tstamp_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->useragent_color[i], GET_BICOLOR(Prefs.site[i]->pp_useragent_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->login_color[i], GET_BICOLOR(Prefs.site[i]->pp_login_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_url_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->visited_lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_visited_url_color));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->txt_color[i], GET_BICOLOR(Prefs.site[i]->pp_fgcolor));
+    INIT_OR_RESET_OR_FREE_COLOR(pp->trollscore_color[i], GET_BICOLOR(Prefs.site[i]->pp_trollscore_color));
   }
-  pp->popup_fgpixel = GET_BICOLOR(Prefs.pp_popup_fgcolor);
-  pp->popup_bgpixel = GET_BICOLOR(Prefs.pp_popup_bgcolor);
-  pp->minib_pixel = GET_BICOLOR(Prefs.pp_buttonbar_bgcolor);
-  pp->minib_msgcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color);
-  pp->minib_updlcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_updlcnt_color);
-  pp->progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
-  pp->sel_bgpixel = GET_BICOLOR(Prefs.pp_sel_bgcolor);
-  pp->emph_pixel = GET_BICOLOR(Prefs.pp_emph_color);
-  pp->hilight_my_msg_pixel = GET_BICOLOR(Prefs.pp_my_msg_color);
-  pp->hilight_answer_my_msg_pixel = GET_BICOLOR(Prefs.pp_answer_my_msg_color);
+  INIT_OR_RESET_OR_FREE_COLOR(pp->popup_bgcolor, GET_BICOLOR(Prefs.pp_popup_bgcolor));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->minib_color, GET_BICOLOR(Prefs.pp_buttonbar_bgcolor));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->minib_msgcnt_color, GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->minib_updlcnt_color, GET_BICOLOR(Prefs.pp_buttonbar_updlcnt_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->progress_bar_color, GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->sel_bgcolor, GET_BICOLOR(Prefs.pp_sel_bgcolor));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->emph_color, GET_BICOLOR(Prefs.pp_emph_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->hilight_my_msg_color, GET_BICOLOR(Prefs.pp_my_msg_color));
+  INIT_OR_RESET_OR_FREE_COLOR(pp->hilight_answer_my_msg_color, GET_BICOLOR(Prefs.pp_answer_my_msg_color));
   for (i=0; i < NB_PP_KEYWORD_CATEG; i++) {
-    pp->hilight_keyword_pixel[i] = GET_BICOLOR(Prefs.pp_keyword_color[i]);
+    INIT_OR_RESET_OR_FREE_COLOR(pp->hilight_keyword_color[i], GET_BICOLOR(Prefs.pp_keyword_color[i]));
   }
-  pp->plopify_pixel = GET_BICOLOR(Prefs.pp_plopify_color);
 
-  if (pp->sc) {
+  if (mode != RELEASE_COLORS && pp->sc) {
     scrollcoin_change_colors(pp->sc, pp->transparency_mode);
   }
 }
@@ -1975,7 +1944,7 @@ pp_change_transparency_mode(Dock *dock, int on_off)
 {
   Pinnipede *pp = dock->pinnipede;
   pp->transparency_mode = on_off;
-  pp_set_prefs_colors(dock);
+  pp_set_prefs_colors(pp, RESET_COLORS);
 }
 
 
@@ -1984,22 +1953,14 @@ void
 pp_build(Dock *dock) 
 {
   Pinnipede *pp;
-  int i;
   ALLOC_OBJ(pp, Pinnipede);
   dock->pinnipede = pp;
 
   pp->mapped = 0;
 
   pp->fn_base = pp->fn_it = pp->fn_itbd = pp->fn_bd = pp->fn_mono = pp->fn_minib = (CCFontId)(-1);
-  pp->ccc_black = (CCColorId)(-1);
-  pp->popup_fgcolor = pp->plopify_color = pp->totoz_unknown_color = 
-    pp->totoz_found_color = pp->totoz_downloading_color = 
-    pp->minib_dark_color = (CCColorId)(-1);
-  for (i=0;i <MAX_SITES; i++) {
-    pp->timestamp_color[i] = pp->useragent_color[i] = pp->login_color[i] = 
-      pp->lnk_color[i] = pp->visited_lnk_color[i] = pp->txt_color[i] = 
-      pp->trollscore_color[i] = (CCColorId)(-1);
-  }
+  
+  pp_set_prefs_colors(pp, INIT_COLORS);
 
   pp->lpix_h0 = 0;
   pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
@@ -2070,7 +2031,7 @@ pp_destroy(Dock *dock)
   assert(pp->pv == NULL); assert(pp->sc == NULL); 
   assert(pp->lignes_sel == NULL); assert(pp->lignes == NULL);
   pp_free_fonts(pp);
-  pp_free_colors(pp);
+  pp_set_prefs_colors(pp, RELEASE_COLORS);
   pp_tabs_destroy(pp);
   pp_totoz_destroy(dock);
   free(pp); dock->pinnipede = NULL;
@@ -2089,7 +2050,7 @@ pp_rebuild(Dock *dock)
       myprintf(_("Uuuurg !! No helvetica, I shoot my nose.\n")); exit(-1);
     }
   }
-  pp_set_prefs_colors(dock);
+  pp_set_prefs_colors(pp, RESET_COLORS);
   if (pp_ismapped(dock)) {
     pp_scrollcoin_set(dock,0);
     pp_update_bg_pixmap(dock);
@@ -2236,6 +2197,7 @@ pp_show(Dock *dock)
 
   pp_update_bg_pixmap(dock);
 
+  XSetWindowBackground(dock->display, pp->win, cccolor_pixel(pp->minib_color));
   XMapRaised(dock->display, pp->win);
 
 
@@ -2324,7 +2286,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
 	cnt--; break;
       }
     }
-    XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->popup_bgcolor));
     ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - ccfont_ascent(fn));
     ry1 = (l+1)*pp->fn_h + ccfont_descent(fn) + (s[cnt]==0 ? 6 : 0);
     XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry0,
@@ -3063,7 +3025,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 
 static void
 pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int bnum) {
-  Pinnipede *pp = dock->pinnipede;
+  /*Pinnipede *pp = dock->pinnipede;
   char *s;
   assert(w);
   assert(Prefs.site[sid]);
@@ -3072,7 +3034,8 @@ pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int 
 		 Prefs.site[sid]->site_port, 
 		 Prefs.site[sid]->site_path, w);
   open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, bnum);
-  free(s);
+  free(s);*/
+  gogole_search(dock,mx,my,w);
 }
 
 
@@ -3507,8 +3470,8 @@ pp_selection_refresh(Dock *dock)
   for (l=0; l < pp->nb_lignes; l++) {
 
     if (pp->lignes_sel[l].trashed) {
-      unsigned long bgpixel = pp->win_bgpixel[pp->active_tab->site->site_id];
-      if (pp->lignes[l]) { bgpixel = pp->win_bgpixel[id_type_sid(pp->lignes[l]->parent->id)]; }
+      unsigned long bgpixel = cccolor_pixel(pp->win_bgcolor[pp->active_tab->site->site_id]);
+      if (pp->lignes[l]) { bgpixel = cccolor_pixel(pp->win_bgcolor[id_type_sid(pp->lignes[l]->parent->id)]); }
     
       pp_draw_line(dock, pp->lpix, pp->lignes[l], bgpixel, 
 		   &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));

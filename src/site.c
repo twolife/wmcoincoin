@@ -100,6 +100,15 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   ALLOC_OBJ(site, Site);
   site->prefs = sp;
 
+  SplittedURL su;
+  assert(split_url(sp->backend_url, &su) == 0);
+  if (sp->backend_type != BACKEND_TYPE_POP) {
+    site->relative_urls_base = strdup(sp->backend_url);
+    url_au_coiffeur(site->relative_urls_base, 1); /* vire le nom du backend */
+    printf("%s -> relative_urls_base : %s\n", sp->backend_url, site->relative_urls_base);
+  } else site->relative_urls_base = strdup("invalid://");
+  
+
   if (sp->check_board) site->board = board_create(site, sl->boards);
   else site->board = NULL;
 
@@ -137,7 +146,7 @@ sl_delete_site(SiteList *sl, Site *site)
     sl->list = p;
   }
   if (site->board) board_destroy(site->board);
-
+  if (site->relative_urls_base) free(site->relative_urls_base);
   free(site);
   boards_init_sites(sl);
 }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.19 2003/03/02 14:41:22 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.20 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.20  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.19  2003/03/02 14:41:22  pouaite
   ce commit est dédié à la mémoire de jacques martin
 
@@ -149,13 +152,13 @@ cassos:
   return 0;
 }
 
-void http_init() {
+void net_init() {
   global_http_download_cnt = 0;
   global_http_upload_cnt = 0;
 }
 
 
-int http_close(SOCKET fd) {
+int net_close(SOCKET fd) {
   do { close (fd); } while (errno == EINTR);
   return 0;
 }

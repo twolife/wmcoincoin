@@ -426,6 +426,34 @@ int run_new_board_dialog()
 
 /* ---------------- pinnipede_dialog -------------------*/
 
+int pfc_toggle_button(GtkWidget *win, const char *widget_name, int *value, int index, int finalize) {
+  GtkWidget *w, *w_fb;
+  if ((w=lookup_widget(win, widget_name))) {
+    char *name_fb = str_printf("%s_fb", widget_name);
+    w_fb = lookup_widget(win, name_fb);
+    FREE_STRING(name_fb);
+    if (finalize == 0) {
+      multi_set_toggle_button(w, w_fb, *value, index);
+    } else multi_get_toggle_button(w, value);
+    return 1;
+  } else return 0;
+}
+
+#define PFC_TOGGLE_BUTTON_G(pname) { pfc_toggle_button(dialog, #pname, &Prefs->pname, 0, finalize); }
+#define PFC_TOGGLE_BUTTON_S(pname) { SitePrefs *sp;  for (i__=0; i__ < glob.nb_selected_sites; ++i__) \
+                                       pfc_toggle_button(dialog, #pname, &Prefs->site[i__]->pname, i, finalize); }
+
+int prepare_or_finalize_conf_dialog(GtkWidget *dialog, int finalize) {
+  PFC_TOGGLE_BUTTON_G(pinnipede_open_on_start);
+  PFC_TOGGLE_BUTTON_G(pp_use_classical_tabs);
+  PFC_TOGGLE_BUTTON_G(pp_use_colored_tabs);
+  PFC_TOGGLE_BUTTON_G(hungry_boitakon);
+  PFC_TOGGLE_BUTTON_G(disable_xft_antialiasing);
+  PFC_TOGGLE_BUTTON_S(mark_id_gaps);
+  PFC_COLOR_BUTTON_S(pp_bgcolor);
+  PFC_COLOR_BUTTON_S(pp_pp_fgcolor.opaque);
+}
+
 int prepare_pinnipede_dialog()
 {
   int i; SitePrefs *sp;
@@ -433,6 +461,16 @@ int prepare_pinnipede_dialog()
   if (!glob.wmcc_pid) gtk_widget_set_sensitive(pinnipede_dialog("apply_bt"),FALSE);
   gtk_entry_set_text(GTK_ENTRY(pinnipede_dialog("fnfamily_comboentry")), Prefs->pp_fn_family);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(pinnipede_dialog("fnsize_spinbutton")), Prefs->pp_fn_size);
+  multi_set_toggle_button(pinnipede_dialog("pp_auto_open"), 
+                          pinnipede_dialog("pp_auto_open_fb"), Prefs->pinnipede_open_on_start, 0);
+  multi_set_toggle_button(pinnipede_dialog("pp_use_classical_tabs"), 
+                          pinnipede_dialog("pp_use_classical_tabs_fb"), Prefs->pp_use_classical_tabs, 0);
+  multi_set_toggle_button(pinnipede_dialog("pp_use_colored_tabs"), 
+                          pinnipede_dialog("pp_use_colored_tabs_fb"), Prefs->pp_use_colored_tabs, 0);
+  multi_set_toggle_button(pinnipede_dialog("pp_hungry_boitakon"), 
+                          pinnipede_dialog("pp_hungry_boitakon_fb"), Prefs->hungry_boitakon, 0);  
+  multi_set_toggle_button(pinnipede_dialog("disable_aa"), 
+                          pinnipede_dialog("disable_aa_fb"), Prefs->disable_xft_antialiasing, 0);  
   for (i=0; i < glob.nb_selected_sites && (sp = glob.selected_sites[i]); ++i) {
     multi_set_toggle_button(pinnipede_dialog("mark_id_gaps_checkbutton"), 
                             pinnipede_dialog("mark_id_gaps_checkbutton_fb"), sp->mark_id_gaps, i);
@@ -453,6 +491,11 @@ int validate_pinnipede_dialog()
   int i; SitePrefs *sp;
   ASSIGN_STRING_VAL(Prefs->pp_fn_family, gtk_entry_get_text(GTK_ENTRY(pinnipede_dialog("fnfamily_comboentry")))); 
   Prefs->pp_fn_size = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pinnipede_dialog("fnsize_spinbutton")));
+  multi_get_toggle_button(pinnipede_dialog("pp_auto_open"), &Prefs->pinnipede_open_on_start);
+  multi_get_toggle_button(pinnipede_dialog("pp_use_classical_tabs"), &Prefs->pp_use_classical_tabs);
+  multi_get_toggle_button(pinnipede_dialog("pp_use_colored_tabs"), &Prefs->pp_use_colored_tabs);
+  multi_get_toggle_button(pinnipede_dialog("pp_hungry_boitakon"), &Prefs->hungry_boitakon);
+  multi_get_toggle_button(pinnipede_dialog("disable_aa"), &Prefs->disable_xft_antialiasing);
   for (i=0; i < glob.nb_selected_sites; ++i) {
     sp = glob.selected_sites[i];
     multi_get_toggle_button(pinnipede_dialog("mark_id_gaps_checkbutton"), &sp->mark_id_gaps);

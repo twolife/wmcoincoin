@@ -180,7 +180,7 @@ http_url_encode(const char *string, int use_plus)
 }
 
 
-static SOCKET http_connect(const char *host_name, int port, int* tic_cnt);
+static SOCKET net_connect(const char *host_name, int port, int* tic_cnt);
 
 char*
 http_complete_error_info()
@@ -230,6 +230,7 @@ set_http_err()
   time(&http_err_time);
 }
 
+int http_is_ok(HttpRequest *r) { return r->telnet.error == 0; }
 
 int base64_encode(const void *data, int size, char **str)
 {
@@ -311,7 +312,7 @@ http_select_fd (SOCKET fd, int maxtime_sec, int maxtime_usec, int writep)
    stale if more than OPT.TIMEOUT time is spent in select() or
    read()).  */
 static int
-http_iread (SOCKET fd, char *buf, int len)
+net_iread (SOCKET fd, char *buf, int len)
 {
   int res;
 
@@ -347,11 +348,11 @@ http_iread (SOCKET fd, char *buf, int len)
 	  }
 #else
 	  if (res == SOCKET_ERROR) {
-	    printf(_("http_iread: socket error, res=%d (%s)\n"), res, STR_LAST_ERROR);
+	    printf(_("net_iread: socket error, res=%d (%s)\n"), res, STR_LAST_ERROR);
             goto error;
 	  }
 	  if (res == 0) {
-	    printf (_("http_iread: Timeout...\n"));
+	    printf (_("net_iread: Timeout...\n"));
 	    goto error;
 	  }
 #endif
@@ -387,7 +388,7 @@ http_iread (SOCKET fd, char *buf, int len)
    with checking that the return value equals to LEN.  Instead, you
    should simply check for -1.  */
 static int
-http_iwrite (SOCKET fd, char *buf, int len)
+net_iwrite (SOCKET fd, char *buf, int len)
 {
   int res = 0;
 
@@ -419,7 +420,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 	if (res == SOCKET_ERROR)
 	  goto error;
 	if (res == 0) {
-	  printf (_("http_iwrite: Timeout...\n"));
+	  printf (_("net_iwrite: Timeout...\n"));
 	  goto error;
 	}
 #endif /* ifndef __CYGWIN__ */
@@ -632,7 +633,7 @@ http_try_connect_to_resolved_host(HostEntry *h) {
                                          salen, Prefs.http_timeout);
 #endif
       if (err) {
-        http_close(sockfd); sockfd = INVALID_SOCKET;
+        net_close(sockfd); sockfd = INVALID_SOCKET;
         if ( end == NULL) {
           set_http_err();
           snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "connect(): %s", STR_LAST_ERROR);
@@ -664,7 +665,7 @@ http_try_connect_to_resolved_host(HostEntry *h) {
 
 /* -1 => erreur */
 static SOCKET
-http_connect(const char *host_name, int port, int *connect_tic_cnt)
+net_connect(const char *host_name, int port, int *connect_tic_cnt)
 {
   SOCKET sockfd = INVALID_SOCKET;
 
@@ -710,8 +711,8 @@ http_print_request(HttpRequest *r)
   assert(r);
   printf("------------HttpRequest-----------\n");
   myprintf("type = %s\n", r->type == HTTP_GET ? "GET" : "POST");
-  myprintf("host  = '%<YEL %s>'\n", r->host);
-  myprintf("port  = '%<YEL %d>'\n", r->port);
+  myprintf("host  = '%<YEL %s>'\n", r->telnet.host);
+  myprintf("port  = '%<YEL %d>'\n", r->telnet.port);
   myprintf("path  = '%<YEL %s>'\n", r->host_path);
   myprintf("proxy = '%<YEL %s>'\n", r->proxy_name);
   myprintf("proxy_user_pass = '%<YEL censored>'\n");
@@ -725,8 +726,8 @@ http_print_request(HttpRequest *r)
   myprintf("chunk_num = '%<YEL %d>'\n", r->chunk_num);
   myprintf("chunk_size = '%<YEL %d>'\n", r->chunk_size);
   myprintf("chunk_pos = '%<YEL %d>'\n", r->chunk_pos);
-  myprintf("fd = '%<YEL %d>'\n", (int)r->fd);
-  myprintf("error = '%<YEL %d>'\n", r->error);
+  myprintf("fd = '%<YEL %d>'\n", (int)r->telnet.fd);
+  myprintf("error = '%<YEL %d>'\n", r->telnet.error);
 }
 
 
@@ -753,7 +754,7 @@ http_skip_header(HttpRequest *r)
 
   r->is_chunk_encoded = 0;
   do {
-    while((got = http_iread(r->fd, buff+i, 1)) > 0) {
+    while((got = net_iread(r->telnet.fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
       BLAHBLAH(Prefs.verbosity_http, myprintf("%<GRN %c>", buff[i]););
       if(buff[i] == '\n' && (last == '\n')) {
@@ -782,8 +783,8 @@ http_skip_header(HttpRequest *r)
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
 	      myprintf(_("[%<MAG %s>]: %<yel %s>"), http_last_url, buff+j+1);
-	      r->error = 1;
-              dns_cache_remove_host_by_name(r->host,r->port);
+	      r->telnet.error = 1;
+              dns_cache_remove_host_by_name(r->telnet.host,r->telnet.port);
 	    }
 	  }
 	} else {
@@ -812,10 +813,10 @@ http_skip_header(HttpRequest *r)
   if (got == SOCKET_ERROR || ok == 0) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_skip_header has a socket issue ! (%s)"), STR_LAST_ERROR);
-    r->error = 2;
+    r->telnet.error = 2;
     return;
   }
-  //  r->error = 0;
+  //  r->telnet.error = 0;
   return;
 }
 
@@ -829,7 +830,7 @@ int
 http_read(HttpRequest *r, char *buff, int len)
 {
   int got;
-  assert(r->error == 0);
+  assert(r->telnet.error == 0);
 
   if (len>1) {
     BLAHBLAH(Prefs.verbosity_http+1, printf(_("http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"), len, r->chunk_pos, r->chunk_num, r->chunk_size));
@@ -847,7 +848,7 @@ http_read(HttpRequest *r, char *buff, int len)
 
       r->chunk_num++; r->chunk_pos = 0;
       i = 0; lcnt = 0;
-      while(i < 511 && (got = http_iread(r->fd, s_chunk_size+i, 1)) > 0) {
+      while(i < 511 && (got = net_iread(r->telnet.fd, s_chunk_size+i, 1)) > 0) {
 	if (s_chunk_size[i] == '\n') {
 	  lcnt++;
 	  if (lcnt == 2 || (lcnt == 1 && r->chunk_num == 0)) 
@@ -859,7 +860,7 @@ http_read(HttpRequest *r, char *buff, int len)
       }
       s_chunk_size[i] = 0;
       if (sscanf(s_chunk_size, "%lx", &r->chunk_size) != 1) {
-	r->error = 1; 
+	r->telnet.error = 1; 
 	printf(_("error in chunk '%s'\n"), s_chunk_size);
 	return 0;
       }
@@ -879,14 +880,14 @@ http_read(HttpRequest *r, char *buff, int len)
   
   if (len <= 0) return 0;
 
-  got = http_iread(r->fd, buff, len);
+  got = net_iread(r->telnet.fd, buff, len);
   if (got > 0) { r->chunk_pos += got; }
   else if (got == SOCKET_ERROR) {
     if (!LASTERR_EAGAIN) {
       /* erreur non récupérable */
       set_http_err();
       snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_read has encountered a socket problem, pos=%d, len=%d !(%s)"), (int)r->chunk_pos, (int)len, STR_LAST_ERROR);
-      r->error = 1;
+      r->telnet.error = 1;
     } else {
       got = 0; /* on n'a rien lu ce coup-ci, mais ça viendra */
     }
@@ -918,7 +919,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
 #endif
   do {
 
-    while (r->error == 0 && (got = http_read(r, s+i, 1)) > 0) {
+    while (r->telnet.error == 0 && (got = http_read(r, s+i, 1)) > 0) {
       cnt++;
       if (s[i] == '\n' || s[i] == 0) {
 	s[i] = 0; break;
@@ -931,11 +932,11 @@ http_get_line(HttpRequest *r, char *s, int sz)
     }
 
     if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN && !LASTERR_ESUCCESS && (!(r->is_chunk_encoded && r->chunk_size == 0))) {
-      printf(_("http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"), (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
+      printf(_("http_get_line: weird, got=0 while reading %d/%d [r->telnet.error=%d, errmsg='%s']\n"), (int)r->chunk_pos, (int)r->content_length, r->telnet.error, STR_LAST_ERROR);
     }
-  } while (got == 0 && LASTERR_EAGAIN && r->error == 0 && r->chunk_pos != r->content_length);
+  } while (got == 0 && LASTERR_EAGAIN && r->telnet.error == 0 && r->chunk_pos != r->content_length);
 
-  if (r->error) {
+  if (r->telnet.error) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_get_line messed up (got=%d): %s!"), got, STR_LAST_ERROR);
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
@@ -984,11 +985,11 @@ http_request_send(HttpRequest *r)
   /* corriger ce ifndef un de ces jours */
 #ifndef __CYGWIN__
   if (Prefs.debug & 2) {
-    r->fd = open(r->host_path, O_RDONLY);
-    if (r->fd < 0) {
+    r->telnet.fd = open(r->host_path, O_RDONLY);
+    if (r->telnet.fd < 0) {
       fprintf(stderr, _("http_send_request/debug, unable to open '%s':%s\n"), 
 	      r->host_path, STR_LAST_ERROR);
-      r->error = 1;
+      r->telnet.error = 1;
     }
     return;
   }
@@ -1009,11 +1010,11 @@ http_request_send(HttpRequest *r)
 	header = str_cat_printf(header, "GET %s HTTP/1.1" CRLF, r->host_path);
       } else {
 	header = str_cat_printf(header, "GET http://%s%s HTTP/1.1" CRLF,
-			      r->host, r->host_path);
+			      r->telnet.host, r->host_path);
       }
     } else {
       header = str_cat_printf(header, "GET http://%s:%d%s HTTP/1.1" CRLF,
-			      r->host, r->port, r->host_path);
+			      r->telnet.host, r->telnet.port, r->host_path);
     }
   } else if (r->type == HTTP_POST) {
     if (r->proxy_name == NULL) {
@@ -1021,16 +1022,16 @@ http_request_send(HttpRequest *r)
 			    r->host_path);
     } else {
       header = str_cat_printf(header, "POST http://%s:%d%s HTTP/1.1" CRLF, 
-			    r->host, r->port, r->host_path);
+			    r->telnet.host, r->telnet.port, r->host_path);
     }
   }
   
-  if (r->port != 80) {
-    header = str_cat_printf(header, "Host: %s:%d" CRLF, r->host, r->port);
+  if (r->telnet.port != 80) {
+    header = str_cat_printf(header, "Host: %s:%d" CRLF, r->telnet.host, r->telnet.port);
   } else {
     /* qd le port est celui par défaut, on ne le précise pas
        pour faire plaisir à f-cpu.tuxfamily.org qui n'en veut pas sinon */
-    header = str_cat_printf(header, "Host: %s" CRLF, r->host);
+    header = str_cat_printf(header, "Host: %s" CRLF, r->telnet.host);
   }
 
   if (r->cookie) {
@@ -1059,7 +1060,7 @@ http_request_send(HttpRequest *r)
     header = str_cat_printf(header, "If-Modified-Since: %s" CRLF, s);
   }
 
-  snprintf(http_last_url, HTTP_LAST_ERR_URL_SZ, "%s:%d%s", r->host, r->port, r->host_path);
+  snprintf(http_last_url, HTTP_LAST_ERR_URL_SZ, "%s:%d%s", r->telnet.host, r->telnet.port, r->host_path);
 
   if (r->user_agent) {
     header = str_cat_printf(header, "User-Agent: %s" CRLF,
@@ -1083,15 +1084,15 @@ http_request_send(HttpRequest *r)
   
 
   if (r->proxy_name) {
-    r->fd = http_connect(r->proxy_name, r->proxy_port, &r->tic_cnt_tstamp);
+    r->telnet.fd = net_connect(r->proxy_name, r->proxy_port, &r->telnet.tic_cnt_tstamp);
   } else {
-    r->fd = http_connect(r->host, r->port, &r->tic_cnt_tstamp);
+    r->telnet.fd = net_connect(r->telnet.host, r->telnet.port, &r->telnet.tic_cnt_tstamp);
   }
-  if (r->fd == INVALID_SOCKET) goto error_close;
+  if (r->telnet.fd == INVALID_SOCKET) goto error_close;
 
   BLAHBLAH(Prefs.verbosity_http, myprintf("HTTP_REQUEST: \n%<YEL %s>\n", header));
 
-  if (http_iwrite(r->fd, header, strlen(header)) == SOCKET_ERROR) {
+  if (net_iwrite(r->telnet.fd, header, strlen(header)) == SOCKET_ERROR) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_get couldn't send its request: %s"), STR_LAST_ERROR);
     goto error_close;
@@ -1100,7 +1101,7 @@ http_request_send(HttpRequest *r)
   BLAHBLAH(Prefs.verbosity_http ,printf(_("ok, request sent\n")));
   
   http_skip_header(r);
-  if (r->error) {
+  if (r->telnet.error) {
     goto error_close;
   }
 
@@ -1110,23 +1111,23 @@ http_request_send(HttpRequest *r)
   return;
 
  error_close:
-  http_request_close(r); r->fd = SOCKET_ERROR;
+  http_request_close(r); r->telnet.fd = SOCKET_ERROR;
   if (header) free(header);
-  r->error = 1;
+  r->telnet.error = 1;
   flag_http_error = 1;
   flag_http_transfert--;
 }
+
 
 void
 http_request_init(HttpRequest *r) {
   memset(r, 0, sizeof(HttpRequest));
   r->content_length = -1;
   r->is_chunk_encoded = 0;
-  r->tic_cnt_tstamp = -1;
+  telnet_session_init(&r->telnet);
 }
 
 void http_request_close (HttpRequest *r) {
-  if (r->host) free(r->host); r->host = NULL;
   if (r->host_path) free(r->host_path); r->host_path = NULL;
   if (r->proxy_name) free(r->proxy_name); r->proxy_name = NULL;
   if (r->proxy_user_pass) free(r->proxy_user_pass); r->proxy_user_pass = NULL;
@@ -1136,10 +1137,7 @@ void http_request_close (HttpRequest *r) {
   if (r->post) free(r->post); r->post = NULL;
 
   r->content_length = -1;
-  if (r->fd != INVALID_SOCKET) {
-    http_close(r->fd);
-    r->fd = INVALID_SOCKET;
-  }
+  telnet_session_close(&r->telnet);
 }
 
 /* fonction a-la-con: lecture de toutes les données en mémoire.. */
@@ -1160,7 +1158,7 @@ http_read_all(HttpRequest *r, char *what)
     
     /* attention : les ames sensible pourraient etre choques
        par la brutalite de ce qui va suivre ... */
-    while ((got=http_read(r, s+bi, bchunk)) > 0 && r->error == 0) {
+    while ((got=http_read(r, s+bi, bchunk)) > 0 && r->telnet.error == 0) {
       bi += got;
       s[bi] = 0;
       bsize += bchunk;
@@ -1183,3 +1181,78 @@ http_read_all(HttpRequest *r, char *what)
   }
   return s;
 }
+
+void telnet_session_init(TelnetSession *ts) {
+  memset(ts, 0, sizeof(TelnetSession));
+  ts->tic_cnt_tstamp = -1;
+}
+
+void telnet_session_open(TelnetSession *ts) {
+  flag_http_transfert++;
+
+  ts->fd = net_connect(ts->host, ts->port, &ts->tic_cnt_tstamp);
+  if (ts->fd == INVALID_SOCKET) {
+    ts->error = 1;
+    flag_http_error = 1;
+  }
+  flag_http_transfert--;
+}
+
+void telnet_session_close(TelnetSession *ts) {
+  if (ts->host) free(ts->host); ts->host = NULL;
+  if (ts->fd != INVALID_SOCKET) {
+    net_close(ts->fd);
+    ts->fd = INVALID_SOCKET;
+  }
+}
+
+void telnet_get_line(TelnetSession *ts, char *buff, int sz) {
+  int i, got;
+  int ok = 0;
+  i = 0;
+
+  flag_http_transfert++;
+  buff[sz-1] = 0;  
+  do {
+    while((got = net_iread(ts->fd, buff+i, 1)) > 0) {
+      buff[i+1] = 0;
+      BLAHBLAH(Prefs.verbosity_http, myprintf("%<GRN %c>", buff[i]););
+      if(buff[i] == '\n') {
+	ok = 1;
+	break;
+      }
+      if(buff[i] == '\r')
+	continue;
+      i++; if (i >= sz-1) i = sz-2;
+    }
+  } while (got==SOCKET_ERROR && LASTERR_EAGAIN);
+  if (got == SOCKET_ERROR || ok == 0) {
+    set_http_err();
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("telnet_get_line has a socket issue ! (%s)"), STR_LAST_ERROR);
+    ts->error = 2;
+    flag_http_transfert--;
+    return;
+  }
+  flag_http_transfert--;
+  flag_http_error = 0;
+  return;
+}
+
+void telnet_send(TelnetSession *ts, char *s) {
+  flag_http_transfert++;
+  if (net_iwrite(ts->fd, s, strlen(s)) == SOCKET_ERROR) {
+    set_http_err();
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("telnet_send couldn't send: %s"), STR_LAST_ERROR);
+    goto error_close;
+  }
+  flag_http_error = 0;
+  flag_http_transfert--;
+  return;
+ error_close:
+  telnet_session_close(ts); ts->fd = SOCKET_ERROR;
+  ts->error = 1;
+  flag_http_error = 1;
+  flag_http_transfert--;
+}
+
+int telnet_is_ok(TelnetSession *ts) { return ts->error == 0; }

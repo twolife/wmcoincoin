@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.40 2004/03/03 23:00:39 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.41 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.41  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.40  2004/03/03 23:00:39  pouaite
   commit du soir
 
@@ -1039,16 +1042,18 @@ dock_red_button_check(Dock *dock) {
       } else {
 	s = sl_find_site_id(dock->sites, dock->coin_coin_site_id);
 	if (s && s->board) {
-	  ccqueue_push_board_post(s->site_id,  
-				  s->board->coin_coin_useragent, 
-				  dock->coin_coin_message);
-          pp_unset_kbnav(dock);
-	  //	  ccqueue_print();
-	  kikoo = 1;
-          dock->red_button_send_cnt = 0;
-	} else {
+          if (board_can_post_messages(s->board)) {
+            ccqueue_push_board_post(s->site_id,  
+                                    s->board->coin_coin_useragent, 
+                                    dock->coin_coin_message);
+          } else msgbox_show(dock, _("This board is read-only"));
+        } else {
 	  myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
 	}
+        pp_unset_kbnav(dock);
+        //	  ccqueue_print();
+        kikoo = 1;
+        dock->red_button_send_cnt = 0;
       }
     }
     

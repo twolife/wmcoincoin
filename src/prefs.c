@@ -222,64 +222,42 @@ option_set_useragent(const char *optarg,
 }
 
 /* lecture du nom du site (avec le port) */
-void
-option_site_root (const char  *optarg,
-		  SitePrefs *prefs, int verbatim)
+char*
+option_backend_url(const char  *optarg,
+                   SitePrefs *prefs)
 {
-  char *s;
-  char *p,*p2;
-  char *nice_url;
+  SplittedURL su;
   assert(optarg);
-  if (prefs->site_root) free(prefs->site_root);
-  prefs->site_root = NULL;
-  if (prefs->site_path) free(prefs->site_path);
-  prefs->site_path = NULL;
-
-  s = strdup(optarg); // pour pouvoir ecrire dedans
-  p = s;
-  if (strstr(p,"http://")) p+=7;
-  
-
-  /* voila ton patch, woof< ! */
-
-  /* welcome to the magical world of parsers!
-   * please fasten your seatbelts!
-   */
-
-  /* cherche numero de port et le nom du site */
-  if (p[0] == '[' && (p2 = strchr(p, ']')) && p2 > p+1) { /* ipv6 */
-    prefs->site_root = str_ndup(p+1, p2-p-1);
-    p2++;
-  } else {
-    p2 = strchr(p, ':');
-    if (p2 == NULL) p2 = strchr(p, '/');
-    if (p2) prefs->site_root = str_ndup(p, p2-p);
-    else prefs->site_root = strdup(p);
+  FREE_STRING(prefs->backend_url);
+  prefs->backend_url = str_dup_unquoted(optarg);
+  if (split_url(prefs->backend_url,&su) != 0) {
+    return str_printf("invalid URL: '%s'", optarg);
   }
-  if (p2 && *p2 == ':') {
-    p2++; p = p2;    
-    while (*p2 >= '0' && *p2 <= '9' && *p2) p2++;
-    prefs->site_port = atoi(p);
-  } else prefs->site_port = 80;  
-  p = p2;
-  /* recupere le path */
-  if (p && strlen(p) && p[0] == '/') {
-    prefs->site_path = strdup(p+1);
-  } else prefs->site_path = strdup("");
-  nice_url = str_printf("http://%s:%d/%s",prefs->site_root, prefs->site_port, prefs->site_path);
-  url_au_coiffeur(nice_url,0);
-
-  /*  myprintf(_("site_root : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n"), 
-	   prefs->site_root, prefs->site_port, prefs->site_path,strlen(prefs->site_path) ? "/" : "");
-  */
-  //myprintf(_("site_root : %<YEL %s>\n"), nice_url);
-  if (verbatim) {
-    free(prefs->site_root);
-    prefs->site_root = nice_url;
-  } else {
-    free(nice_url);
+  if (su.type != HTTP_URL && su.type != FILE_URL && 
+      (prefs->backend_type == BACKEND_TYPE_BOARD || prefs->backend_type == BACKEND_TYPE_RSS)) {
+    return str_printf("this kind of URL not allowed here: '%s' (expected http:// or file://)", optarg);
   }
-  free(s);
+  if (su.type != POP3_URL && su.type != APOP_URL && prefs->backend_type == BACKEND_TYPE_POP) {
+    return str_printf("this kind of URL not allowed here: '%s' (expected pop3://)", optarg);
+  }
+  return NULL;
+}
+
+char*
+option_post_url(const char  *optarg,
+                SitePrefs *prefs)
+{
+  SplittedURL su;
+  assert(optarg);
+  FREE_STRING(prefs->post_url);
+  prefs->post_url = str_dup_unquoted(optarg);
+  if (split_url(prefs->post_url, &su) || su.type != HTTP_URL) {
+    return str_printf("invalid POST URL: '%s'", optarg);
+  }
+  if (prefs->backend_type == BACKEND_TYPE_POP) {
+    return str_printf("pop accounts are read-only..");
+  }
+  return NULL;
 }
 
 static void
@@ -341,6 +319,22 @@ option_browser(const char *optarg,const char *optname,
   if (strstr(s, "'%s'")) {
     myfprintf(stderr, _("%s (linne %d) : %<YEL warning>: '%%s' == Bad, %%s == Good (all the URLs are escaped)\n"));
   }
+  return NULL;
+}
+
+char *
+option_http_cookie(SitePrefs *sp, char *arg) {
+  char *old = sp->user_cookie;
+  unsigned char *src, *dest;
+  if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what). Now you have to put the cookie name with its value");
+  COND_FREE(old);
+  /* copie du cookie en virant les espaces superflus (et surtout DANJEREU) */
+  sp->user_cookie = malloc(strlen(arg)+1);
+  dest = sp->user_cookie;
+  for (src = arg; *src; src++) {
+    if (*src > ' ') { *dest = *src; dest++; }
+  }
+  *dest = 0;
   return NULL;
 }
 
@@ -693,7 +687,6 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   memset(p, 0, sizeof(SitePrefs));
   p->board_check_delay = 30; /* 2 fois par minute */
   p->board_max_msg = 300;
-  p->backend_type = 1; /* style 'moderne' par défaut */
   p->board_wiki_emulation = NULL;
   if (p->user_agent) free(p->user_agent); 
   p->user_agent = malloc(USERAGENT_MAXMAX_LEN+1);
@@ -707,14 +700,15 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->proxy_name = NULL;
   p->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   p->proxy_nocache = 0;
-  ASSIGN_STRING_VAL(p->site_root, "www.linuxfr.org");
-  p->site_port = 80;
-  ASSIGN_STRING_VAL(p->site_path, "");
-  ASSIGN_STRING_VAL(p->path_board_backend, "board/remote.xml");
-  ASSIGN_STRING_VAL(p->path_board_add, "");//board/add.php3");
-  ASSIGN_STRING_VAL(p->board_post, "message=%s");
+  ASSIGN_STRING_VAL(p->backend_url, "http://www.linuxfr.org/board/remote.xml");
+  p->backend_type = BACKEND_TYPE_BOARD;
+  p->backend_flavour = BACKEND_FLAVOUR_UNENCODED; /* style 'moderne' par défaut */
+  ASSIGN_STRING_VAL(p->post_url, "");//board/add.php3");
+  ASSIGN_STRING_VAL(p->post_template, "message=%s");
   p->user_cookie = NULL; 
   p->user_login = NULL;
+  p->pop3_user = NULL;
+  p->pop3_pass = NULL;
   p->pp_bgcolor = 0xdae6e6;
   BICOLOR_SET(p->pp_fgcolor,0x303030,0xd0d0d0);
   BICOLOR_SET(p->pp_tstamp_color,0x004000, 0xffff80);
@@ -761,14 +755,13 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
   SPSTRDUP(proxy_auth_pass);
   SPSTRDUP(proxy_name);
 
-  SPSTRDUP(site_root);
-  SPSTRDUP(site_path);
-  SPSTRDUP(path_board_backend);
-  SPSTRDUP(path_board_add);
-  SPSTRDUP(board_post);
+  SPSTRDUP(backend_url);
+  SPSTRDUP(post_url);
+  SPSTRDUP(post_template);
   SPSTRDUP(user_cookie);
   SPSTRDUP(user_login);
-
+  SPSTRDUP(pop3_user);
+  SPSTRDUP(pop3_pass);
   if (src->nb_names>0) {
     ALLOC_VEC(sp->all_names, src->nb_names, char *);
     for (i=0; i < src->nb_names; i++) sp->all_names[i] = strdup(src->all_names[i]);
@@ -781,16 +774,16 @@ wmcc_site_prefs_destroy(SitePrefs *p)
 {
   FREE_STRING(p->user_agent);
   FREE_STRING(p->board_wiki_emulation);
-  FREE_STRING(p->site_root);
-  FREE_STRING(p->site_path);
+  FREE_STRING(p->backend_url);
   FREE_STRING(p->proxy_auth_user); 
   FREE_STRING(p->proxy_auth_pass); 
   FREE_STRING(p->proxy_name); 
-  FREE_STRING(p->path_board_backend);
-  FREE_STRING(p->path_board_add);
-  FREE_STRING(p->board_post);
+  FREE_STRING(p->post_template);
+  FREE_STRING(p->post_url);
   FREE_STRING(p->user_cookie);
   FREE_STRING(p->user_login);
+  FREE_STRING(p->pop3_user);
+  FREE_STRING(p->pop3_pass);
   FREE_STRING(p->user_name);
   /*  FREE_STRING(p->site_name); NON ! c'est detruit dans all_names */
   destroy_string_list(&p->all_names, &p->nb_names);
@@ -817,7 +810,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->http_timeout = 40;
   p->http_inet_ip_version = 0;
   p->use_balloons = 1;
-  ASSIGN_STRING_VAL(p->balloon_fn_family, "helvetica");
+  ASSIGN_STRING_VAL(p->balloon_fn_family, "sans");
   p->balloon_fn_size = 10;
   p->use_iconwin = 1; /* style windowmaker par defaut */
   p->auto_swallow = 0;
@@ -835,7 +828,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->board_enable_hfr_pictures = 0;
 
   p->disable_xft_antialiasing = 0;
-  ASSIGN_STRING_VAL(p->pp_fn_family, "helvetica");
+  ASSIGN_STRING_VAL(p->pp_fn_family, "sans");
   p->pp_fn_size = 12;
   p->pp_start_in_transparency_mode = 0;
   p->use_fake_real_transparency = 0;
@@ -1015,7 +1008,7 @@ option_get_filename(char *arg, char **fname) {
 }
 
 char*
-wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg, int is_RSS)
+wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg, backend_type_enum btype)
 {
   SitePrefs *sp;
   char *err;
@@ -1023,33 +1016,16 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg, int is_RSS
   sp = calloc(1, sizeof(SitePrefs));
   p->site[p->nb_sites-1] = sp;
   wmcc_site_prefs_copy(sp, global_sp);
-  if (is_RSS) 
-    sp->backend_type = RSS_FEED;
+  sp->backend_type = btype;
   if ((err = option_get_string_list(arg, wmcc_options_strings[OPT_site], &sp->all_names, &sp->nb_names))) return err;
   assert(sp->all_names);
-
-  if (is_RSS) {
-    char *url = sp->all_names[sp->nb_names-1], *p;
-    url_au_coiffeur(url, 0);
-    assert(strncmp(url, "http://", 7) == 0);
-    FREE_STRING(sp->site_root);
-    p = strrchr(url, '/'); 
-    if (!p) {
-      fprintf(stderr, "malformed rss url : '%s'..\n", url); exit(1);
-    }
-    *p = 0;
-    option_site_root (url, sp, 0);    
-    ASSIGN_STRING_VAL(sp->path_board_backend, p+1);    
-    url += 7; p = strchr(url, '/');
-    if (p == NULL ||  p > url) {
-      if (p) *p = 0; 
-      p = strrchr(url, '.');
-      if (p && p > url) *p = 0;
-      p = strchr(url, '.');
-      if (p && *p) url = p+1;
-    }
-    if (strlen(url)) { memmove(sp->all_names[sp->nb_names-1], url, strlen(url)+1); }
+  if (btype == BACKEND_TYPE_RSS || btype == BACKEND_TYPE_POP) {
+    if (btype == BACKEND_TYPE_RSS)
+      sp->backend_flavour = BACKEND_FLAVOUR_ENCODED;
+    else sp->backend_flavour = BACKEND_FLAVOUR_UNENCODED;
+    sp->board_check_delay = 600;
   }
+  
   sp->site_name = sp->all_names[0];
   if (wmcc_prefs_find_site(p, sp->site_name) != sp) {
     return str_printf("Duplicated site_name: a site named '%s' already exists!", sp->site_name);
@@ -1082,6 +1058,8 @@ char *
 wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, wmcc_options_id opt_num, unsigned char *arg, int verbatim)
 {
   char *opt_name;
+  char obsolete_last_site_root[512];
+  strcpy(obsolete_last_site_root, "fucking_broken_update_your_options_file");
   assert(opt_num < NB_WMCC_OPTIONS);
   opt_name = wmcc_options_strings[opt_num];
   switch (opt_num) {
@@ -1196,38 +1174,40 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPT_palmipede_default_message: {
     ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
   } break; 
-  case OPTSG_tribune_backend_type:
-  case OPTSG_backend_type: {
-    CHECK_INTEGER_ARG(1,4, sp->backend_type);
+  case OPTSG_tribune_backend_type: /* OBSOLETE */
+  case OPTSG_backend_type: /* OBSOLETE */
+  case OPTSG_backend_flavour: {
+    CHECK_INTEGER_ARG(1,3, sp->backend_flavour);
+  } break;
+  case OPTSG_http_site_url: { /* OBSOLETE */
+    ASSIGN_STRING_VAL(sp->backend_url, arg);
+    strcpy(obsolete_last_site_root, arg); obsolete_last_site_root[511] = 0;
   } break; 
-  case OPTSG_http_site_url: {
-    option_site_root(arg,sp,verbatim);
+  case OPTSG_backend_url: {
+    char *err = option_backend_url(arg, sp);
+    if (err) return err;
+  } break;
+  case OPTSG_http_path_tribune_backend: { /* OBSOLETE */
+    sp->backend_url = str_cat_printf(sp->backend_url, "/%s", arg);
   } break; 
-  case OPTSG_http_path_tribune_backend: {
-    ASSIGN_STRING_VAL(sp->path_board_backend, arg); 
+  case OPTSG_http_path_tribune_add: { /* OBSOLETE */
+    FREE_STRING(sp->post_url);
+    sp->post_url = str_printf("%s/%s", obsolete_last_site_root, arg);
   } break; 
-  case OPTSG_http_path_tribune_add: {
-    ASSIGN_STRING_VAL(sp->path_board_add, arg); 
-  } break; 
-  case OPTSG_http_board_post: {
-    ASSIGN_STRING_VAL(sp->board_post, arg); 
-    if (!strstr(sp->board_post, "%s")) {
+  case OPTSG_post_url: {
+    char *err = option_post_url(arg, sp);
+    if (err) return err;
+  } break;
+  case OPTSG_http_board_post: /* OBSOLETE */
+  case OPTSG_post_template: {
+    ASSIGN_STRING_VAL(sp->post_template, arg); 
+    if (!strstr(sp->post_template, "%s")) {
       return strdup("you forgot the %s in the board_post option");
     }
   } break; 
   case OPTS_http_cookie: {
-    char *old = sp->user_cookie;
-    unsigned char *src, *dest;
-    if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what). Now you have to put the cookie name with its value");
-    COND_FREE(old);
-    /* copie du cookie en virant les espaces superflus (et surtout DANJEREU) */
-    sp->user_cookie = malloc(strlen(arg)+1);
-    dest = sp->user_cookie;
-    for (src = arg; *src; src++) {
-      if (*src > ' ') { *dest = *src; dest++; }
-    }
-    *dest = 0;
-    //    else { sp->user_cookie = str_printf("%s;%s", old, arg); free(old); }
+    char *err = option_http_cookie(sp, arg);
+    if (err) return err;
   } break; 
   case OPTSG_http_proxy: {
     option_set_proxy(arg, sp);
@@ -1448,12 +1428,17 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_BICOLOR_ARG(p->sc_bar_dark_color);
   } break; 
   case OPT_rss_site:
+  case OPT_pop_site:
+  case OPT_board_site:
   case OPT_site: {
     if (p->nb_sites >= MAX_SITES-1) {
       printf("Too much sites (MAX_SITES = %d), ignoring option 'site: %s'\n", MAX_SITES, arg); 
     } else {
       char *err;
-      if ((err = wmcc_prefs_add_site(p, global_sp, arg, opt_num == OPT_rss_site))) return err;
+      backend_type_enum bt = BACKEND_TYPE_BOARD;
+      if (opt_num == OPT_rss_site) bt = BACKEND_TYPE_RSS;
+      else if (opt_num == OPT_pop_site) bt = BACKEND_TYPE_POP;
+      if ((err = wmcc_prefs_add_site(p, global_sp, arg, bt))) return err;
     }
   } break;
   case OPT_pinnipede_auto_open: {
@@ -1590,6 +1575,61 @@ wmcc_prefs_read_options_recurs(GeneralPrefs *p, SitePrefs *global_sp, const char
   return 1;
 }
 
+char *
+wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname) {
+  char *fname = str_printf("%s.auth", basefname);
+  FILE *f = fopen(fname, "r");  
+  char *err = NULL;
+  regex_t re_cookies;
+  regex_t re_pop3;
+  assert(regcomp(&re_cookies, "\"(.+)\" +cookie: *\"(.*)\"",
+                 REG_EXTENDED | REG_ICASE) == 0);
+  assert(regcomp(&re_pop3,    "\"([^\"]+)\" *user: *\"([^\"]+)\" *pass: *\"([^\"]+)\"", 
+                 REG_EXTENDED | REG_ICASE) == 0);
+  if (f) {
+    regmatch_t match[50];
+    char *s;
+    SitePrefs *sp;
+    do {
+      s = str_fget_line(f); str_trim(s);
+      if (s && *s && s[0] != '#') {
+        if (regexec(&re_cookies, s, 50, match, 0) == 0) {
+          s[match[1].rm_eo] = 0; char *site_name = s+match[1].rm_so;
+          s[match[2].rm_eo] = 0; char *cookie = s+match[2].rm_so;
+          printf("cookie '%s' '%s'\n", site_name, cookie);
+          sp = wmcc_prefs_find_site(p, site_name);
+          if (sp) {
+            err = option_http_cookie(sp, cookie);
+          } else {
+            printf("warning: site '%s' is not listed in %s\n", site_name, basefname);
+          }
+        } else if (regexec(&re_pop3, s, 50, match, 0) == 0) {
+          s[match[1].rm_eo] = 0; char *site_name = s+match[1].rm_so;
+          s[match[2].rm_eo] = 0; char *user = s+match[2].rm_so;
+          s[match[3].rm_eo] = 0; char *pass = s+match[3].rm_so;
+          printf("pop3: site '%s' '%s' '%s'\n", site_name, user, pass);
+          sp = wmcc_prefs_find_site(p, site_name);
+          if (sp) {
+            sp->pop3_user = strdup(user);
+            sp->pop3_pass = strdup(pass);
+          } else {
+            printf("warning: site '%s' is not listed in %s\n", site_name, basefname);
+          }
+        } else {
+          printf("unmatched line: %.12s...\n", s);
+          exit(1);
+        }
+      }
+    } while (!feof(f) && err == NULL);
+  } else {
+    fprintf(stderr, "could not open %s : %s\n", fname, strerror(errno));
+  }
+  FREE_STRING(fname);
+  regfree(&re_pop3);
+  regfree(&re_cookies);
+  return err;
+}
+
 /* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
 char *
 wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
@@ -1604,7 +1644,7 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
     myfprintf(stderr, _("\n\n%<YEL oooooooh !!! you didn't define at least *ONE* site>, you bad boy.\ni do it for you, but this is the last time\n plz %<MAG use wmccc to add new sites>\n\n"));
     wmcc_prefs_add_site(p, &global_sp, "\"plop\"", 0);
   }
-
+  if (error == NULL) error = wmcc_prefs_read_options_auth(p,filename);
   wmcc_site_prefs_destroy(&global_sp);
   return error;
 }

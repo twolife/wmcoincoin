@@ -263,6 +263,7 @@ struct Site_ {
   float http_ping_stat_buf[NB_HTTP_PING_STAT];
   int http_ping_stat_i;
   float http_ping_stat; /* moyenne judicieusement pondérée */
+  char *relative_urls_base;
 };
 
 struct SiteList_ {
@@ -566,10 +567,6 @@ ccqueue_elt* ccqueue_find_next(ccqueue_elt_type what, int sid, ccqueue_elt *q);
 ccqueue_elt* ccqueue_find(ccqueue_elt_type what, int sid);
 void ccqueue_loop(Dock *dock);
 
-/* useragents_file.c */
-int useragents_file_reread(Dock *dock, Site*dlfp);
-int useragents_file_read_initial(Dock *dock, Site*dlfp);
-
 /* palmipede.c  */
 void editw_show(Dock *dock, SitePrefs *sp, int useragent_mode);
 void editw_hide(Dock *dock, EditW *ew); /* rentrer le palmipede */
@@ -659,6 +656,7 @@ void pp_set_download_info(char *site, char *what);
 void pp_unset_kbnav(Dock *dock);
 void pp_totoz_check_updates(Dock *dock);
 char *pp_totoz_realfname(unsigned char *name, int with_path);
+
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
 void wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p);
@@ -685,6 +683,8 @@ void board_restore_state(FILE *f, Board *board);
 void board_set_viewed(Board *board, int id);
 int board_is_rss_feed(Board *b);
 int board_is_regular_board(Board *b);
+int board_is_pop3(Board *b);
+int board_can_post_messages(Board *b);
 RSSBonusInfo *rss_find_from_link(Boards *boards, char *link);
 RSSBonusInfo *rss_find_from_id(Boards *boards, id_type id); /* slow */
 

@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.60 2004/03/03 23:00:37 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.61 2004/03/07 13:51:11 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.61  2004/03/07 13:51:11  pouaite
+#%  commit du dimanche
+#%
 #%  Revision 1.60  2004/03/03 23:00:37  pouaite
 #%  commit du soir
 #%
@@ -201,9 +204,16 @@
 
 ### définition d'un nouveau site (le premier mot indiqué choisit le nom principal du site
 ### et les suivants définissent des alias)
+
+### site est marquee obsolete, c'est un alias pour board_site
 #site: "dlfp","linuxfr"
 
-#rss_site: lk
+#board_site: "dlfp", "linuxfr"
+
+#rss_site: "k5"
+
+#pop_site: "c0in@altern"
+
 
 ### Attention, dorénavant, le cookie doit être fourni avec son nom
 ### Si plusieurs cookies sont necessaires, répétez cette option autant de fois
@@ -352,10 +362,18 @@
 #[.]palmipede.useragent_max_length: 60
 
 ### equivalent de l'option '-r' -> url de la page principale
+
+### DEBUT OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
 #[.]http.site_url: http://linuxfr.org
 #[.]http.path_tribune_backend: board/remote.xml
 #[.]http.path_tribune_add: board/add.php3
 #[.]http.board_post: message=%s
+### FIN OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE
+### les quatre options du dessus sont remplacées par:
+#[.]backend.flavour: 1
+#[.]backend.url: "http://linuxfr.org/board/remote.xml"
+#[.]post.url: "http://linuxfr.org/board/add.php"
+#[.]post.template: message=%s
 
 #.check_board: on
 

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.17 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: http.h,v 1.18 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.18  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.17  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -73,12 +76,20 @@
 #endif
 #include "global.h"
 
+typedef struct {
+  char *host;
+  int port;
+  SOCKET fd;
+  int error;
+  int tic_cnt_tstamp;
+} TelnetSession;
 
 typedef struct {
   /* input members */
   enum { HTTP_GET, HTTP_POST} type;
-  char *host;
-  int port;
+  TelnetSession telnet;
+  /*char *host;
+    int port;*/
   char *host_path;
 
   char *proxy_name;
@@ -99,24 +110,28 @@ typedef struct {
   int        is_chunk_encoded;
   int        chunk_num;
   long       chunk_pos, chunk_size;
-  SOCKET     fd;
+  /*SOCKET     fd;*/
 
   int        content_length;
-  int        error;
+  /*int        error;*/
 
   int        response; /* 404, 200, 502 etc.. */
-  int        tic_cnt_tstamp; /* -1 si le resolv n'a pas marché, 
+  /*int        tic_cnt_tstamp;*/ /* -1 si le resolv n'a pas marché, 
 				sinon contient la valeur de wmcc_tic_cnt
 				à l'instant ou le connect a été tenté */
   char * post;
 } HttpRequest;
 
-
-
-void http_init();
+void net_init();
 char *http_error();
-char *http_complete_error_info(); /* renvoie une chaine alloué, ATTENTION */
+char *http_complete_error_info(); /* renvoie une chaine allouée, ATTENTION */
 
+void telnet_session_init(TelnetSession *ts);
+void telnet_session_open(TelnetSession *ts);
+void telnet_session_close(TelnetSession *ts);
+void telnet_get_line(TelnetSession *ts, char *s, int sz);
+void telnet_send(TelnetSession *ts, char *s);
+int telnet_is_ok(TelnetSession *ts);
 
 void http_request_init(HttpRequest *r);
 void http_request_send(HttpRequest *r);
@@ -126,4 +141,5 @@ int http_get_line(HttpRequest *r, char *s, int sz);
 int http_get_line_trim(HttpRequest *r, char *s, int sz);
 char *http_url_encode(const char *string, int use_plus);
 unsigned char *http_read_all(HttpRequest *r, char *what);
+int http_is_ok(HttpRequest *r);
 #endif

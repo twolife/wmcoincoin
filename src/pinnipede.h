@@ -131,18 +131,14 @@ struct pp_totoz;
 
 struct _Pinnipede {
   Window win;
-  unsigned long win_bgpixel[MAX_SITES], timestamp_pixel[MAX_SITES], useragent_pixel[MAX_SITES], 
-    login_pixel[MAX_SITES], lnk_pixel[MAX_SITES], visited_lnk_pixel[MAX_SITES], 
-    txt_pixel[MAX_SITES], strike_pixel[MAX_SITES], trollscore_pixel[MAX_SITES],  emph_pixel, 
-    popup_fgpixel, popup_bgpixel, sel_bgpixel,
-    hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
-    plopify_pixel, 
-    minib_pixel, minib_msgcnt_pixel, 
-    minib_updlcnt_pixel, progress_bar_pixel;
-  CCColorId timestamp_color[MAX_SITES], useragent_color[MAX_SITES], login_color[MAX_SITES], 
+  CCColorId win_bgcolor[MAX_SITES], timestamp_color[MAX_SITES], useragent_color[MAX_SITES], login_color[MAX_SITES], 
     lnk_color[MAX_SITES], visited_lnk_color[MAX_SITES], txt_color[MAX_SITES], 
     trollscore_color[MAX_SITES], popup_fgcolor, plopify_color, 
-    totoz_unknown_color, totoz_downloading_color, totoz_found_color, minib_dark_color;
+    totoz_unknown_color, totoz_downloading_color, totoz_found_color, minib_dark_color,
+    emph_color, popup_bgcolor, sel_bgcolor,
+    hilight_my_msg_color,hilight_answer_my_msg_color,hilight_keyword_color[NB_PP_KEYWORD_CATEG],    
+    minib_color, minib_msgcnt_color, 
+    minib_updlcnt_color, progress_bar_color;
   int mapped;
   int win_width, win_height, win_decor_xpos, win_decor_ypos, win_real_xpos, win_real_ypos;
 

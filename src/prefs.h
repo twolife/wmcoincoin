@@ -90,19 +90,24 @@ typedef struct _FontStyle {
 
 /* les preferences sont stockees dans ces structures */
 
-typedef enum { REGULAR_BOARD_UNENCODED=1, REGULAR_BOARD_ENCODED, REGULAR_BOARD_NO_PANTS, RSS_FEED } 
+typedef enum { BACKEND_FLAVOUR_ENCODED, BACKEND_FLAVOUR_UNENCODED, BACKEND_FLAVOUR_NO_PANTS }
+  backend_flavour_enum;
+
+typedef enum { BACKEND_TYPE_BOARD, BACKEND_TYPE_RSS, BACKEND_TYPE_POP }
   backend_type_enum;
 
 typedef struct _SitePrefs {
   /* delai (en sec) et assez approximatif entre deux verif de la tribune */
   int board_check_delay;
-  backend_type_enum backend_type; /* pour gerer les variations saisonnières du format de backend..
-                                     peut prendre 3 valeurs: 
-                                     1: les tags apparaissent sous la forme '<b>'
-                                     2: les tags sont du type '&lt;b;&gt'
-                                     3: le backend est en vrac, on a les deux types de tags :-/ 
-                                     4: rss feed
-                                  */
+  backend_type_enum backend_type;
+  backend_flavour_enum backend_flavour; /* pour gerer les variations saisonnières du format de backend..
+                                           peut prendre 3 valeurs: 
+                                           1: les tags apparaissent sous la forme '<b>'
+                                           2: les tags sont du type '&lt;b;&gt'
+                                           3: le backend est en vrac, on a les deux types de tags :-/ 
+                                        */
+  char *backend_url;
+
   /* nb max de messages conserves en memoire */
   int board_max_msg;
   char *board_wiki_emulation; /* non nul => émulation des wiki-urls */
@@ -121,14 +126,12 @@ typedef struct _SitePrefs {
   int palmi_msg_max_len;
   int palmi_ua_max_len;
 
-  char *site_root; /* par defaut: 'linuxfr.org' */
-  char *site_path; /* par defaut: "" */
-  int site_port; /* le port http (defaut 80) */
-  char *path_board_backend; /* par defaut: "board/remote.xml" */
-  char *path_board_add;  /* "board/add.php3" */
-  char *board_post; /* ce qu'on envoie pour le post (le %s est remplacé par le message) */
+  char *post_url;    /* "board/add.php3" */
+  char *post_template; /* ce qu'on envoie pour le post (le %s est remplacé par le message) */
   char *user_cookie;
   char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
+
+  char *pop3_user, *pop3_pass;
 
   /* quelques couleurs qui dépendent du site visité */
   BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 

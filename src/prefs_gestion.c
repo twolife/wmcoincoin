@@ -616,17 +616,14 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_INT_OPT_COPY(locale);
       
       if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) +
-	  SP_STR_OPT_COPY_IF_CHANGED(site_root)) {
+	  SP_STR_OPT_COPY_IF_CHANGED(backend_url)) {
 	myprintf(_("You changed the site/proxy, gethostbyname soon in progress\n"));
       }
       
       SP_INT_OPT_COPY(proxy_port);
       SP_STR_OPT_COPY(user_name);
-      SP_STR_OPT_COPY(site_path);
-      SP_INT_OPT_COPY(site_port);
-      SP_STR_OPT_COPY(path_board_backend);
-      SP_STR_OPT_COPY(path_board_add);
-      SP_STR_OPT_COPY(board_post);
+      SP_STR_OPT_COPY(post_url);
+      SP_STR_OPT_COPY(post_template);
       SP_STR_OPT_COPY(user_cookie);
       SP_STR_OPT_COPY(user_login);
       //SP_INT_OPT_COPY(board_auto_refresh);

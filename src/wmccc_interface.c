@@ -578,6 +578,9 @@ create_pinnipede_dialog (void)
   GtkWidget *hbox12;
   GtkWidget *pp_hungry_boitakon;
   GtkWidget *pp_hungry_boitakon_fb;
+  GtkWidget *hbox18;
+  GtkWidget *disable_aa;
+  GtkWidget *disable_aa_fb;
   GtkWidget *label16;
   GtkWidget *frame5;
   GtkWidget *vbox7;
@@ -727,6 +730,19 @@ create_pinnipede_dialog (void)
   pp_hungry_boitakon_fb = gtk_label_new (_("label32"));
   gtk_widget_show (pp_hungry_boitakon_fb);
   gtk_box_pack_start (GTK_BOX (hbox12), pp_hungry_boitakon_fb, FALSE, FALSE, 0);
+
+  hbox18 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox18);
+  gtk_box_pack_start (GTK_BOX (vbox6), hbox18, TRUE, TRUE, 0);
+
+  disable_aa = gtk_check_button_new_with_mnemonic (_("Disable antialiasing"));
+  gtk_widget_show (disable_aa);
+  gtk_box_pack_start (GTK_BOX (hbox18), disable_aa, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, disable_aa, _("If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled"), NULL);
+
+  disable_aa_fb = gtk_label_new (_("label32"));
+  gtk_widget_show (disable_aa_fb);
+  gtk_box_pack_start (GTK_BOX (hbox18), disable_aa_fb, FALSE, FALSE, 0);
 
   label16 = gtk_label_new (_("Global settings"));
   gtk_widget_show (label16);
@@ -930,6 +946,9 @@ create_pinnipede_dialog (void)
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox12, "hbox12");
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_hungry_boitakon, "pp_hungry_boitakon");
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, pp_hungry_boitakon_fb, "pp_hungry_boitakon_fb");
+  GLADE_HOOKUP_OBJECT (pinnipede_dialog, hbox18, "hbox18");
+  GLADE_HOOKUP_OBJECT (pinnipede_dialog, disable_aa, "disable_aa");
+  GLADE_HOOKUP_OBJECT (pinnipede_dialog, disable_aa_fb, "disable_aa_fb");
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, label16, "label16");
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, frame5, "frame5");
   GLADE_HOOKUP_OBJECT (pinnipede_dialog, vbox7, "vbox7");

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.89 2004/03/03 23:00:40 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.90 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.90  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.89  2004/03/03 23:00:40  pouaite
   commit du soir
 
@@ -526,13 +529,22 @@ check_if_board_was_updated(Dock *dock)
 }
 
 void
-wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path)
+wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url)
 {
   http_request_init(r);
+  SplittedURL su;
+  int i;
+  if (str_startswith(url, "fucking_brocken")) {
+    myprintf("%<RED FIX THIS URL>: %<MAG %s>\n", url); exit(1);
+  }
+  if (split_url(url,&su)) assert(0);
+  
   r->type = HTTP_GET;
-  r->host = strdup(sp->site_root);
-  r->port = sp->site_port;
-  r->host_path = strdup(url_path);
+  r->telnet.host = strdup(su.host);
+  r->telnet.port = su.port;
+  r->host_path = NULL;
+  for (i=0; i < su.path_len; ++i) r->host_path = str_cat_printf(r->host_path, "/%s", su.path[i]);
+  if (r->host_path == NULL) r->host_path = strdup("/");
   if (sp->proxy_name) r->proxy_name = strdup(sp->proxy_name);
   if (sp->proxy_auth_user && sp->proxy_auth_pass) 
     r->proxy_user_pass = str_printf("%s:%s", sp->proxy_auth_user, sp->proxy_auth_pass);
@@ -545,22 +557,22 @@ wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path)
 }
 
 void
-wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path)
+wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url)
 {
-  wmcc_init_http_request(r, sp, url_path);
+  wmcc_init_http_request(r, sp, url);
   if (sp->user_cookie) {
-    r->cookie = strdup(sp->user_cookie); 
+    r->cookie = strdup(sp->user_cookie);
   }
 }
 
 void
 wmcc_log_http_request(Site *s, HttpRequest *r)
 {
-  if (r->tic_cnt_tstamp != -1) {
+  if (r->telnet.tic_cnt_tstamp != -1) {
     int i,cnt=0;
     float sum =0.;
     s->http_ping_stat_buf[s->http_ping_stat_i] = 
-      (wmcc_tic_cnt - r->tic_cnt_tstamp)*0.001*WMCC_TIMER_DELAY_MS;
+      (wmcc_tic_cnt - r->telnet.tic_cnt_tstamp)*0.001*WMCC_TIMER_DELAY_MS;
     s->http_ping_stat_i = (s->http_ping_stat_i+1)%NB_HTTP_PING_STAT;
     for (i = 0; i < NB_HTTP_PING_STAT; ++i) {
       int ii = (s->http_ping_stat_i+i)%NB_HTTP_PING_STAT;
@@ -603,13 +615,13 @@ char *formate_erreur( char *tribune, char *message_ignoble )
           
           if ( NULL != strstr( erreur, "XP >=" )	)
             {
-              printf("erreur=%s\nlen=%d", erreur,strlen(erreur));
+              printf("erreur=%s\nlen=%d", erreur,(int)strlen(erreur));
               
               joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
                                            "the server answered:<p>%s<p>%s"), tribune, erreur,
                                          _("Check your cookies !") );
             } else {
-              printf("erreur=%s\nlen=%d", erreur,strlen(erreur)); fflush(stdout);
+            printf("erreur=%s\nlen=%d", erreur,(int)strlen(erreur)); fflush(stdout);
               joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
                                            "the server answered:<p>%s"), tribune, erreur );
             }
@@ -655,7 +667,7 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
     myprintf("???? site %s has no board ! (bug!)\n", site->prefs->site_name);
     return;
   }
-  if (site->prefs->board_post == NULL) {
+  if (str_is_empty(site->prefs->post_url)) {
     char *s = str_printf("Hello, this is the wmcoincoin delivery agent.<p>"
                          "I'm sorry to have to inform you that the message returned "
                          "below could not be delivered to one or more destinations.<p>"
@@ -669,23 +681,23 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
   convert_from_iso8859(site->board->encoding, &msg);
   urlencod_msg = http_url_encode(msg,1); assert(urlencod_msg);
   FREE_STRING(msg);
-  snprintf(path, 2048, "%s%s/%s", strlen(site->prefs->site_path) ? "/" : "", site->prefs->site_path, site->prefs->path_board_add);
+  snprintf(path, 2048, "%s", site->prefs->post_url);
 
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
   if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
-  r.referer = str_printf("http://%s:%d/%s/", site->prefs->site_root, site->prefs->site_port, site->prefs->site_path);
+  r.referer = strdup(path); url_au_coiffeur(r.referer, 1);
   url_au_coiffeur(r.referer, 0); 
   if (r.referer[strlen(r.referer)-1] != '/') strcat(r.referer,"/");/*y'a la place pour et comme dlfp impose le slash a la fin.. */
 
   if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
   r.user_agent = strdup(ua);
-  r.post = str_printf(site->prefs->board_post, urlencod_msg);  free(urlencod_msg);
+  r.post = str_printf(site->prefs->post_template, urlencod_msg);  free(urlencod_msg);
 
   http_request_send(&r);
-  BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.error, flag_cancel_task));
+  BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.telnet.error, flag_cancel_task));
   wmcc_log_http_request(site, &r);
-  if (r.error == 0) {
+  if (!http_is_ok(&r)) {
     unsigned char *reponse; 
 
 		reponse = http_read_all(&r, site->prefs->site_name);
@@ -1888,7 +1900,7 @@ block_sigalrm(int bloque)
 #endif
 }
 
-
+/*
 void test_time_functions() {
   time_t time1, time2, time3;
  char *theLocalTime;
@@ -1927,6 +1939,7 @@ void test_time_functions() {
  printf("convert to lmocatime time: %s\n", asctime( localtime( &time3 )));
  exit(0);
 }
+*/
 
 int main(int argc, char **argv)
 {
@@ -1996,7 +2009,8 @@ int main(int argc, char **argv)
   
   dock->sites = sl_create();
 
-  http_init();
+  net_init();
+
   ccqueue_build();
 
   if (Prefs.debug & 1) {
@@ -2006,7 +2020,7 @@ int main(int argc, char **argv)
 
   {
     Site *s;
-    myprintf("Site         Locale     Board\n");
+    myprintf("Site         Locale     Backend type       Pants\n");
     for (s = dock->sites->list; s; s = s->next) {
       myprintf("%<YEL %10s>   \t", s->prefs->site_name);
       switch (s->prefs->locale) {
@@ -2016,15 +2030,22 @@ int main(int argc, char **argv)
       }
       if (s->prefs->check_board) {
 	switch (s->prefs->backend_type) {
-	case REGULAR_BOARD_UNENCODED:  
+	case BACKEND_TYPE_BOARD:
+          myprintf(_("%<YEL BOARD      >")); break;
+        case BACKEND_TYPE_RSS:  
+          myprintf(_("%<YEL RSS        >")); break;
+        case BACKEND_TYPE_POP:
+          myprintf(_("%<YEL POP3       >")); break;          
+	default: myprintf(_("%<YEL prrrrrrt    >")); break;
+	}
+        switch (s->prefs->backend_flavour) {
+        case BACKEND_FLAVOUR_UNENCODED:
           myprintf(_("%<YEL tags not encoded  >")); break;
-	case REGULAR_BOARD_ENCODED:  
+	case BACKEND_FLAVOUR_ENCODED:
           myprintf(_("%<YEL tags encoded      >")); break;
-	case REGULAR_BOARD_NO_PANTS:  
+	case BACKEND_FLAVOUR_NO_PANTS:  
           myprintf(_("%<YEL without underpants>")); break;
-        case RSS_FEED:  
-          myprintf(_("%<YEL RSS               >")); break;
-	default: myprintf(_("%<YEL prrrrrrt          >")); break;
+        default: myprintf(_("%<YEL prrrrrrt    >")); break;
 	}
       } else {
 	myprintf("none              ");

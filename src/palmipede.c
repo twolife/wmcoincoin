@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.20 2004/02/29 19:01:27 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.21 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.21  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.20  2004/02/29 19:01:27  pouaite
   et hop
 
@@ -1948,7 +1951,7 @@ static void floude(Dock *dock, char *s) {
   pp_set_download_info("[all]", "flooding ...");
   if (!s) msg = dock->coin_coin_message;
   for (site = dock->sites->list; site; site = site->next) {
-    if (pp_tabs_is_site_visible(dock,site)) {
+    if (pp_tabs_is_site_visible(dock,site) && board_can_post_messages(site->board)) {
       printf("C'esT PARTI [%s]: UA=\"%s\", MSG=\"%s\"\n", 
              site->prefs->site_name,
              site->board->coin_coin_useragent, 
@@ -2260,7 +2263,7 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
       int i;
       plopup_unmap(dock);
       for (i = 0; i < MAX_SITES; i++) {
-	if (Prefs.site[i] && Prefs.site[i]->check_board && strlen(Prefs.site[i]->path_board_add)) {
+	if (Prefs.site[i] && Prefs.site[i]->check_board && strlen(Prefs.site[i]->post_url)) {
 	  plopup_pushentry(dock, Prefs.site[i]->site_name, i);
 	}
       }

@@ -138,6 +138,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEBOOL(OPT_dock_iconwin,use_iconwin);
   G_SAVEBOOL(OPT_palmipede_override_wmanager, palmipede_override_redirect);
   G_SAVEBOOL(OPT_dock_use_balloons,use_balloons);
+  G_SAVEBOOL(OPT_dock_auto_swallow,auto_swallow);
   G_SAVESTR(OPT_dock_balloons_font_family,balloon_fn_family);
   G_SAVEINT(OPT_dock_balloons_font_size,balloon_fn_size);
 
@@ -153,6 +154,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEINT(OPT_http_inet_ip_version, http_inet_ip_version);
   G_SAVESTR(OPT_pinnipede_font_family,pp_fn_family);
   G_SAVEINT(OPT_pinnipede_font_size,pp_fn_size);
+  G_SAVEBOOL(OPT_dock_disable_xft_antialiasing, disable_xft_antialiasing);
   G_SAVEBOOL(OPT_pinnipede_start_in_transparency_mode,pp_start_in_transparency_mode);
   G_SAVEBOOL(OPT_pinnipede_use_fake_real_transparency,use_fake_real_transparency);
   G_SAVEBOOL(OPT_pinnipede_use_classical_tabs,pp_use_classical_tabs);

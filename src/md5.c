@@ -21,7 +21,7 @@
   ghost@aladdin.com
 
  */
-/* $Id: md5.c,v 1.1 2004/02/29 15:01:19 pouaite Exp $ */
+/* $Id: md5.c,v 1.2 2004/03/07 13:51:12 pouaite Exp $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -368,7 +368,7 @@ md5_finish(md5_state_t *pms, md5_byte_t digest[16])
     };
     md5_byte_t data[8];
     int i;
-
+    memset(digest, 0, 16);
     /* Save the length before padding. */
     for (i = 0; i < 8; ++i)
 	data[i] = (md5_byte_t)(pms->count[i >> 2] >> ((i & 3) << 3));

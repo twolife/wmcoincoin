@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.39 2004/03/03 23:00:39 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.40 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.40  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.39  2004/03/03 23:00:39  pouaite
   commit du soir
 
@@ -579,6 +582,19 @@ md5_digest(const char *s, md5_byte_t md5[16]) {
   md5_init(&ms); md5_append(&ms,s,strlen(s)); md5_finish(&ms,md5);
 }
 
+/* en minuscule ou on pete le APOP */
+const char *
+md5txt(md5_byte_t md5[16]) {         
+  static char md5txt[32];
+  int i;
+  for (i = 0; i < 16; ++i) {
+    md5txt[2*i  ] = "0123456789abcdef"[md5[i]/16];
+    md5txt[2*i+1] = "0123456789abcdef"[md5[i]%16];
+  }
+  return md5txt;
+}
+
+
 unsigned char char_trans[256];
 static int char_trans_init = 0;
 
@@ -779,6 +795,15 @@ str_trim(unsigned char *s) {
   }
 }
 
+void
+str_rtrim_lf(unsigned char *s) {
+  int i,j;
+
+  if (s == NULL) return;
+  j = strlen(s)-1;
+  while (j>=0 && s[j] < ' ') s[j--] = 0;
+}
+
 char *
 str_preencode_for_http(const char *in)
 {
@@ -802,6 +827,16 @@ str_ndup(const char *in, int n)
   strncpy(s, in, l);
   s[l] = 0;
   return s;
+}
+
+char *str_dup_unquoted(const char *s) {
+  int len;
+  if (s == NULL) return NULL;
+  len = strlen(s);
+  if (len < 2 || (s[0] != '"' && s[0] != '\'')) return strdup(s);
+  if (s[0] == '"' && s[len-1] == '"') return str_ndup(s+1,len-2);
+  if (s[0] == '\'' && s[len-1] == '\'') return str_ndup(s+1,len-2);
+  return strdup(s);
 }
 
 char*
@@ -838,6 +873,15 @@ str_ncat(char *s1, const char *s2, int n)
   strncpy(s+l1,s2,l2); s[l1+l2]=0;
   free(s1);
   return s;
+}
+
+void
+str_trunc_nice(char *s, int approx_max_len) {
+  if (s && strlen(s) > approx_max_len - 20) {
+    int i=approx_max_len - 20; 
+    while (s[i] && !isspace(s[i]) && i < approx_max_len+30) ++i;
+    if (s[i] && i < (int)(strlen(s) - 10)) { s[i] = 0; strcat(s, "(...)"); }
+  }
 }
 
 /* une fonction qui n'en veut */
@@ -993,7 +1037,7 @@ void url_au_coiffeur(unsigned char *url, int coupe) {
   assert(j);
   j--;
   if (url[j] == '/') url[j--] = 0;
-  while (coupe) {
+  while (coupe && j > j_path) {
     while (j > j_path) { if (url[j--] == '/') { coupe--; break; } };
   }
   url[j+1] = 0;
@@ -1039,6 +1083,7 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
   /* pour eviter d'ouvrir/fermer un million d'iconv.. */
   static iconv_t cv;
   static char *old_src_encoding = 0, *old_dest_encoding = 0;
+  if (src_encoding == NULL || dest_encoding == NULL) return NULL;
   assert(src_encoding); assert(dest_encoding);
   if (!src || strlen(src) == 0 || src_encoding == NULL) return NULL;
 
@@ -1072,7 +1117,7 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
                  src_encoding, dest_encoding, srce, *srce);
         for (i=0; i < 16 && srce[i]; ++i) printf("%02x ", srce[i]); printf("]\n");
         iconv(cv, NULL, NULL, NULL, NULL);
-        free(out); return;
+        free(out); return NULL;
       }
     }
   } while (cnt == (size_t)(-1));
@@ -1084,12 +1129,119 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
 
 void
 convert_to_iso8859(const char *src_encoding, char **psrc) {
-  char *out = wmcc_iconv("ISO8859-15",src_encoding, *psrc);
+  char *out = wmcc_iconv(src_encoding, "ISO8859-15", *psrc);
   if (out) { free(*psrc); *psrc = out; }
 }
 
 void
-convert_from_iso8859(const char *src_encoding, char **psrc) {
-  char *out = wmcc_iconv(src_encoding, "ISO8859-15", *psrc);
+convert_from_iso8859(const char *dest_encoding, char **psrc) {
+  char *out = wmcc_iconv("ISO8859-15", dest_encoding, *psrc);
   if (out) { free(*psrc); *psrc = out; }
+}
+
+void
+strbuf_init(strbuf *sb, const char *s) {
+  sb->str = NULL;
+  sb->max_sz = 0;
+  if (s == NULL) s = "";
+  strbuf_reserve_len(sb, strlen(s)); 
+  strcpy(sb->str, s);
+  sb->len = strlen(s);
+}
+
+void
+strbuf_reserve_len(strbuf *sb, size_t len) {
+  assert(len < 1000000); /* sinon y'a un truc qui chie dans la colle à 99.9% */
+  if (len+1 > sb->max_sz) {
+    if (sb->max_sz == 0) sb->max_sz = 1;
+    while (len+1 > sb->max_sz) sb->max_sz *= 2;
+    sb->str = realloc(sb->str, sb->max_sz); assert(sb->str);
+  }
+}
+
+void
+strbuf_putc(strbuf *sb, char c) {
+  strbuf_reserve_len(sb, sb->len+1);
+  sb->str[sb->len++] = c; 
+  sb->str[sb->len] = 0;
+}
+
+void strbuf_cat(strbuf *sb, const char *s) {
+  if (s == NULL) return;
+  strbuf_reserve_len(sb, sb->len+strlen(s));
+  strcpy(sb->str+sb->len, s);
+  sb->len += strlen(s);
+  sb->str[sb->len] = 0;
+}
+
+void strbuf_ncat(strbuf *sb, const char *s, size_t n) {
+  if (s == NULL) return;
+  n = MIN(n, strlen(s));
+  strbuf_reserve_len(sb, sb->len+n);
+  strncpy(sb->str+sb->len, s, n);
+  sb->len += strlen(s);
+  sb->str[sb->len] = 0;
+}
+
+void strbuf_free(strbuf *sb) {
+  if (sb->str) free(sb->str); sb->str = NULL;
+  sb->len = sb->max_sz = 0;
+}
+
+/* ben voila.. fionalement je l'ai faite, du coup faudrait updater url au coiffeur */
+int split_url(const char *url, SplittedURL *d) {
+  char *p, *p2, *start, *end;
+  strncpy(d->data, url, 1000); d->data[999] = 0;
+  str_trim(d->data);
+  p = d->data;
+  if (strlen(d->data) == 0) return -1;
+  if (p[0] == '"' && p[strlen(d->data)-1] == '"') { p++; d->data[strlen(d->data)-1] = 0; }
+  start = p;
+  end = d->data + strlen(d->data);
+  p = strstr(p, "://"); if (!p) return -1;
+  *p = 0;
+  if (strcasecmp(start, "http") == 0) {
+    d->type = HTTP_URL; d->port = 80;
+  } else if (strcasecmp(start, "https") == 0) {
+    d->type = HTTPS_URL; d->port = 80;
+  } else if (strcasecmp(start, "pop") == 0 || strcasecmp(d->data, "pop3") == 0) {
+    d->type = POP3_URL; d->port = 110;
+  } else if (strcasecmp(start, "apop") == 0 || strcasecmp(d->data, "apop3") == 0) {
+    d->type = APOP_URL; d->port = 110;
+  } else if (strcasecmp(start, "file") == 0) {
+    d->type = FILE_URL; d->port = -1;
+  } else return -1;
+  p+=3;
+  
+  /* fait pointer d->host sur le debut */
+  d->host = p;
+  if (p[0] == '[' && (p2 = strchr(p, ']')) && p2 > p+1) { /* ipv6 */
+    d->host = p+1;
+    *p2 = 0;
+    p = p2+1;
+  } else {
+    while (*p && *p != ':' && *p != '/') ++p;
+  }
+  if (*p == ':') {
+    *p++ = 0; 
+    d->port = atoi(p);
+    while (*p && isdigit(*p)) ++p;
+  }
+  if (*p && *p != '/') return -1;
+  d->path_len = 0;
+  {int i; for (i=0; i < 50; ++i) d->path[i] = NULL; }
+  if (*p == '/') {
+    *p++ = 0; /* fin du host */
+    while (*p) {
+      while (*p == '/') ++p;
+      if (*p) {
+        d->path[d->path_len] = p;
+      }
+      while (*p && *p != '/') ++p;
+      if (p != d->path[d->path_len]) d->path_len++;
+      if (*p) { *p++ = 0; }
+      if (d->path_len == 100) return 0;
+    }
+  }
+  return 0;
 }

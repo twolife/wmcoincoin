@@ -1,5 +1,26 @@
 2004-02-*  pouaite  <c0in@altern.org>
 	
+	* src/board_pop3.c: ajout extremement goret de la surveillance des
+	mailbox pop3. On peut enfin profiter des 3nlarge Y0ur pEn!s en
+	direct dans le pinnipede.
+
+	Degruikerie des options en conséquence: maintenant il y
+	a trois type de sites: "board_site:", "rss_site:", "pop_site:"
+	dont le param. principal est l'option ".backend.url: http://machin/truc"
+	(ou .backend.url: pop://mail.altern.org).
+	Les infos sensibles (cookies, passwd pop3) sont maintenant stockées (de preference) dans
+	le fichier options.auth , au format:
+	 "nomsite" cookie:"lescookies"
+	 "nomsite" user:"jkevin" pass:"1_0wn_J0o"
+
+	J'ai tenté de conserver la compat avec le format d'options
+	précedent, mais c'est très relatif.
+	
+	je conseille une certaine circonspection par rapport au pop3, le
+	comportement du coincoin n'est aucunement garanti, les mots de
+	passe sont en clairs dans le fichier options.auth ce qui est "pas
+	très bien"(c)
+	
 	* ajout de fontcoincoin, un wrapper d'une puissance rare qui
 	arrache les poils de pango. Du coup wmcc est maintenant dépendant
 	de Xft.

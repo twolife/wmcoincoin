@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.23 2004/02/29 19:01:26 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.24 2004/03/07 13:51:12 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.24  2004/03/07 13:51:12  pouaite
+##   commit du dimanche
+##
 ##   Revision 1.23  2004/02/29 19:01:26  pouaite
 ##   et hop
 ##
@@ -95,7 +98,7 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
 	totoz_bookmark.c \
         palmipede.c \
 	dock.c dock.h \
-        board.c \
+        board_priv.h board.c board_rss.c board_pop3.c \
 	site.c site.h \
         keylist.c keylist.h \
 	scrollcoin.h scrollcoin.c \

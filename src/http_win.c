@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.15 2003/03/06 20:24:17 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.16 2004/03/07 13:51:12 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.16  2004/03/07 13:51:12  pouaite
+  commit du dimanche
+
   Revision 1.15  2003/03/06 20:24:17  pouaite
   cygwin remarche, ou pas
 
@@ -129,7 +132,7 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr *sock, int salen, int t
   return 0;
 }
 
-void http_init (void) {
+void net_init (void) {
   WSADATA wsaData;
 
   global_http_download_cnt = 0;
@@ -137,7 +140,7 @@ void http_init (void) {
   WSAStartup (MAKEWORD (2, 0), &wsaData);
 }
 
-int http_close (SOCKET fd) {     
+int net_close (SOCKET fd) {     
   return closesocket (fd);   
 }
 

@@ -331,9 +331,9 @@ static unsigned long
 pp_tabs_bg_pixel_of_tab(Dock *dock, PinnipedeTab *pt) {
   Pinnipede *pp = dock->pinnipede;
   if (Prefs.pp_use_colored_tabs && pt->selected)
-    return pp->win_bgpixel[pt->site->site_id];
+    return cccolor_pixel(pp->win_bgcolor[pt->site->site_id]);
   else
-    return pp->transparency_mode ? Prefs.pp_buttonbar_bgcolor.transp : Prefs.pp_buttonbar_bgcolor.opaque;
+    return cccolor_pixel(pp->minib_color);
 }
 
 static XPoint * get_grip(int *nb_points, int which) {
@@ -388,7 +388,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
 {
   Pinnipede *pp = dock->pinnipede;
   int w = pt->w, h=pt->h;
-  unsigned long bar_pixel = pp->progress_bar_pixel, bgpixel;
+  unsigned long bar_pixel = cccolor_pixel(pp->progress_bar_color), bgpixel;
   Board *board = pt->site->board;
   int fn_h = ccfont_height(pp->fn_minib);
   int draw_grip = 0; /*  draw_grip : la fleche bleu.  < 0 -> à gauche, > 0 -> à droite*/
@@ -563,7 +563,7 @@ pp_tabs_refresh(Dock *dock)
 
 
     /* efface toute la ligne */
-    XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_color));
     XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
 		   0, 0, pp->win_width, pp->fn_h);
 
@@ -585,7 +585,7 @@ pp_tabs_refresh(Dock *dock)
   } else {
     int i;
     /* efface toute la ligne */
-    XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_color));
     XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
 		   0, 0, pp->tabs[0].w, pp->tabs[0].h);
     for (i=0; i < pp->nb_tabs; i++) {
@@ -903,7 +903,7 @@ pp_minib_refresh(Dock *dock)
   if (pp->use_minibar == 0) return;
 
   /* dessin general */
-  XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+  XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_color));
   XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 1, pp->win_width, MINIB_H-1);
   XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_dark_color));
   XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, 0);
@@ -979,7 +979,7 @@ pp_minib_refresh(Dock *dock)
 
 
 /*     if (pp->mb[i].clicked && pp->mb[i].type != REFRESH_TRIBUNE && pp->mb[i].type != REFRESH_NEWS) { */
-      XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->minib_color));
       XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, 1, pp->mb[i].w-2, pp->mb[i].h-2);
 /*     }     */
     switch (pp->mb[i].type) {
@@ -1083,7 +1083,7 @@ pp_minib_refresh(Dock *dock)
 	int rx, rw, ry, rh;
 
 	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->lnk_pixel[main_site->site_id]);
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->lnk_color[main_site->site_id]));
 	
 	if (pp->filter.filter_mode) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
@@ -1096,7 +1096,7 @@ pp_minib_refresh(Dock *dock)
 	int rx, rw, ry, rh;
 
 	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->plopify_pixel);
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->plopify_color));
 	
 	if (pp->disable_plopify) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
@@ -1109,7 +1109,7 @@ pp_minib_refresh(Dock *dock)
 	int rx, rw, ry, rh;
 
 	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
-	XSetForeground(dock->display, dock->NormalGC, pp->useragent_pixel[main_site->site_id]);
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->useragent_color[main_site->site_id]));
 	
 	XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
 	if (pp->nick_mode == 3) {
@@ -1491,11 +1491,10 @@ pp_check_balloons(Dock *dock, int x, int y)
                            (int)((abs(board->time_shift)/60)%60), 
                            (int)(abs(board->time_shift)%60));
         }
-        msg = str_cat_printf(msg, "backend: <font color=blue>%s%s%s/%s</font><br>"
+        msg = str_cat_printf(msg, "backend: <font color=blue>%s</font><br>"
                              "auto_refresh: %s (use ctrl-clic to switch)<br>"
                              "refresh frequency: <font color=blue>%d</font> sec",
-                             s->prefs->site_root,(strlen(s->prefs->site_path) ? "/" : ""),
-                             s->prefs->site_path, s->prefs->path_board_backend,
+                             s->prefs->backend_url,
                              board->auto_refresh ? "<font color=blue>yes</font>" : "<font color=red>no</font>",
                              board->board_refresh_delay / (1000/WMCC_TIMER_DELAY_MS));
         balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-10, 0, 

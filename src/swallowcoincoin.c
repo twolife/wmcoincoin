@@ -69,7 +69,7 @@ void sw_redraw(Dock *dock) {
   Window ew = sw_hostwin(dock);
   Pinnipede *pp = dock->pinnipede;
   if (pp_ismapped(dock) && pp->use_minibar && pp->tabs_pos == PPT_LEFT && sw->y1 >= sw->y0) {
-    XSetForeground(dock->display, dock->NormalGC, dock->pinnipede->minib_pixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(dock->pinnipede->minib_color));
     XFillRectangle(dock->display, ew, dock->NormalGC, sw->x0, sw->y0, 
                    sw->x1 - sw->x0, sw->y1 - sw->y0 + 1);
     XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(dock->pinnipede->minib_dark_color));
