@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.58 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.59 2002/09/01 23:54:56 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.59  2002/09/01 23:54:56  pouaite
+  completurage du wmc3 et compatibilitation avec new.linuxfr
+
   Revision 1.58  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -499,7 +502,7 @@ exec_coin_coin(Dock *dock)
   r.referer = str_printf("http://%s:%d/%s/", site->prefs->site_root, site->prefs->site_port, site->prefs->site_path);
   if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
   r.user_agent = strdup(dock->real_coin_coin_useragent);
-  r.post = str_printf("message=%s", urlencod_msg);  free(urlencod_msg);
+  r.post = str_printf(site->prefs->board_post, urlencod_msg);  free(urlencod_msg);
 
   
   http_request_send(&r);

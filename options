@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.40 2002/08/31 21:26:46 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.41 2002/09/01 23:54:55 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.41  2002/09/01 23:54:55  pouaite
+#%  completurage du wmc3 et compatibilitation avec new.linuxfr
+#%
 #%  Revision 1.40  2002/08/31 21:26:46  pouaite
 #%  ajout du wmccc
 #%
@@ -279,6 +282,7 @@
 #[.]http.path_news_backend: backend.rdf
 #[.]http.path_end_news_url: ,0,-1,6.html
 #[.]http.path_tribune_add: board/add.php3
+#[.]http.board_post: message=%s
 #[.]http.path_myposts: users/posts.php3?order=id
 #[.]http.path_messages: messages/
 

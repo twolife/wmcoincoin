@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.75 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.76 2002/09/01 23:54:56 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.76  2002/09/01 23:54:56  pouaite
+  completurage du wmc3 et compatibilitation avec new.linuxfr
+
   Revision 1.75  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -1774,10 +1777,13 @@ pp_check_board_updated(Dock *dock)
       if ((!id_type_eq(last_id, pp->last_post_id)) && 
 	  pp->colle_en_bas) { // && pp->decal_base == 0) {
 	//	myprintf("pp_check_board_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
+	
+	pp_pv_destroy(pp); /* force le rafraichissement complet */
 	pp_update_content(dock, last_id, 0, 0, 0);
       } else {
 	/*	if (trib->last_post_id != pp->last_post_id)
 		printf("pp_check_board_updated, on laisse filer de %d à %d (pos=%d/%d)\n", pp->last_post_id, trib->last_post_id, pp->id_base, pp->decal_base);*/
+	pp_pv_destroy(pp); /* force le rafraichissement complet */
 	pp_update_content(dock, pp->id_base, pp->decal_base, 0, 0);
       }
       pp_refresh(dock, pp->win, NULL);

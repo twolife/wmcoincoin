@@ -290,3 +290,96 @@ on_editable_changed                    (GtkEditable     *editable,
 void
 on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
                                         gpointer         user_data);
+
+void
+on_bt_pixmap_clicked                   (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_fileselection_xpm_ok_bt_clicked     (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_fileselection_xpm_cancel_bt_clicked (GtkButton       *button,
+                                        gpointer         user_data);
+
+gboolean
+on_fileselection_delete_event          (GtkWidget       *widget,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
+
+void
+on_optionmenu_site_predefined_clicked  (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_optionmenu_site_predefined_released (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_optionmenu_site_predefined_leave    (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_optionmenu_site_predefined_enter    (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_optionmenu_site_predefined_pressed  (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_editable_changed                    (GtkEditable     *editable,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_up_clicked                 (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_bt_klisth_down_clicked              (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_del_clicked                (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_change_clicked             (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_add_clicked                (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_down_clicked               (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_clist_klist_row_move                (GtkCList        *clist,
+                                        gint             arg1,
+                                        gint             arg2,
+                                        gpointer         user_data);
+
+void
+on_clist_klist_select_row              (GtkCList        *clist,
+                                        gint             row,
+                                        gint             column,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
+
+void
+on_clist_klist_select_row              (GtkCList        *clist,
+                                        gint             row,
+                                        gint             column,
+                                        GdkEvent        *event,
+                                        gpointer         user_data);
+
+void
+on_bt_klist_down_clicked               (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);

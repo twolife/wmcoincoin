@@ -19,7 +19,7 @@
 typedef struct {
   enum {FULL_TRANSPARENCY, SHADING, TINTING} type;
   struct {
-    unsigned long white, black;
+    unsigned white, black;
   } tint;
   struct {
     int luminosite, assombrissement;
@@ -114,6 +114,7 @@ typedef struct _SitePrefs {
   char *path_board_add;  /* "board/add.php3" */
   char *path_myposts; /* users/myposts.php3?order=id" */
   char *path_messages; /* messages */
+  char *board_post; /* ce qu'on envoie pour le post (le %s est remplacé par le message) */
   char *user_cookie;
   char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
 

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.6 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.7 2002/09/01 23:54:56 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.7  2002/09/01 23:54:56  pouaite
+  completurage du wmc3 et compatibilitation avec new.linuxfr
+
   Revision 1.6  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -799,8 +802,10 @@ check_for_horloge_ref(Boards *boards, id_type caller_id,
     snprintf(commentaire, comment_sz, _("I don't fucking know %s"), ww);
     return NULL;
   }
-  return board_find_horloge_ref(board, caller_id.lid, 
+  if (board) {
+    return board_find_horloge_ref(board, caller_id.lid, 
 				  h, m, s, num, commentaire, comment_sz);
+  } else return NULL;
 }
 
 /* appelé discretement par board_check_my_messages dans board.c
@@ -830,36 +835,38 @@ board_msg_find_refs(Board *board, board_msg_info *mi)
 
 	 Board *ref_board = board;
 	 if (sid >= 0) ref_board = board->boards->btab[sid];
-	 
-	 if (mi->nb_refs+1 > max_nb_refs) {
-	   max_nb_refs += 10;
-	   mi->refs = realloc(mi->refs, max_nb_refs*sizeof(board_msg_ref));
-	 }
-
-	 mi->refs[mi->nb_refs].h = h;
-	 mi->refs[mi->nb_refs].m = m;
-	 mi->refs[mi->nb_refs].s = s;
-	 mi->refs[mi->nb_refs].num = num;
-	 mi->refs[mi->nb_refs].nbmi = 0;
-	 mi->refs[mi->nb_refs].mi = NULL;
-
-	 ref_mi = board_find_horloge_ref(ref_board, mi->id.lid, 
-					 h, m, s, num, NULL, 0);
-
-	 if (ref_mi && ((ref_mi->id.lid <= mi->id.lid) || ref_board != board)) {
-	   mi->refs[mi->nb_refs].mi = ref_mi;
-	   mi->refs[mi->nb_refs].nbmi=1;
-	   if (num == -1) {
-	     /* gestion des post multiples */
-	     board_msg_info *ref_mi2;
-	     ref_mi2 = ref_mi->next;
-	     while (ref_mi2 && ref_mi2->timestamp == ref_mi->timestamp) {
-	       mi->refs[mi->nb_refs].nbmi++;
-	       ref_mi2 = ref_mi2->next;
+	 if (ref_board) { /* c'est peut etre une tribune desactivé */
+	   
+	   if (mi->nb_refs+1 > max_nb_refs) {
+	     max_nb_refs += 10;
+	     mi->refs = realloc(mi->refs, max_nb_refs*sizeof(board_msg_ref));
+	   }
+	   
+	   mi->refs[mi->nb_refs].h = h;
+	   mi->refs[mi->nb_refs].m = m;
+	   mi->refs[mi->nb_refs].s = s;
+	   mi->refs[mi->nb_refs].num = num;
+	   mi->refs[mi->nb_refs].nbmi = 0;
+	   mi->refs[mi->nb_refs].mi = NULL;
+	   
+	   ref_mi = board_find_horloge_ref(ref_board, mi->id.lid, 
+					   h, m, s, num, NULL, 0);
+	   
+	   if (ref_mi && ((ref_mi->id.lid <= mi->id.lid) || ref_board != board)) {
+	     mi->refs[mi->nb_refs].mi = ref_mi;
+	     mi->refs[mi->nb_refs].nbmi=1;
+	     if (num == -1) {
+	       /* gestion des post multiples */
+	       board_msg_info *ref_mi2;
+	       ref_mi2 = ref_mi->next;
+	       while (ref_mi2 && ref_mi2->timestamp == ref_mi->timestamp) {
+		 mi->refs[mi->nb_refs].nbmi++;
+		 ref_mi2 = ref_mi2->next;
+	       }
 	     }
 	   }
+	   mi->nb_refs++;
 	 }
-	 mi->nb_refs++;
        }
      }
      p=np;

@@ -541,7 +541,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) +
         G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) +
         G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) +
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor)) {
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor) +
+        G_INT_OPT_COPY_IF_CHANGED(pp_show_sec_mode) +
+        G_INT_OPT_COPY_IF_CHANGED(pp_html_mode)) {
       rebuild_pinni = 1;
     }
 
@@ -611,6 +613,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(path_news_backend);
       SP_STR_OPT_COPY(path_end_news_url);
       SP_STR_OPT_COPY(path_board_add);
+      SP_STR_OPT_COPY(board_post);
       SP_STR_OPT_COPY(path_myposts);
       SP_STR_OPT_COPY(path_messages);
       SP_STR_OPT_COPY(user_cookie);

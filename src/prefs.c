@@ -145,7 +145,7 @@ option_get_transp_val(const char *arg, const char * opt_name,TransparencyInfo *t
     }
   } else if (strncasecmp(arg, "tinting",7)==0) {
     ti->type = TINTING;
-    if (sscanf(arg+7, "%lx %lx", &ti->tint.black, &ti->tint.white) != 2) {
+    if (sscanf(arg+7, "%x %x", &ti->tint.black, &ti->tint.white) != 2) {
       if (ti->tint.white > 0xffffff || ti->tint.black > 0xffffff) {
 	return str_printf(_("Invalid option '%s': you have to specify two RGB colours corresponding the white and the black"), opt_name);
       }
@@ -671,6 +671,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   ASSIGN_STRING_VAL(p->path_news_backend, "backend.rss");
   ASSIGN_STRING_VAL(p->path_end_news_url, ",0,-1,6.html");
   ASSIGN_STRING_VAL(p->path_board_add, "board/add.php3");
+  ASSIGN_STRING_VAL(p->board_post, "message=%s");
   ASSIGN_STRING_VAL(p->path_myposts, "users/posts.php3?order=id");
   ASSIGN_STRING_VAL(p->path_messages,"messages/");
   p->user_cookie = NULL; 
@@ -727,6 +728,7 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
   SPSTRDUP(path_news_backend);
   SPSTRDUP(path_end_news_url);
   SPSTRDUP(path_board_add);
+  SPSTRDUP(board_post);
   SPSTRDUP(path_myposts);
   SPSTRDUP(path_messages);
   SPSTRDUP(user_cookie);
@@ -753,6 +755,7 @@ wmcc_site_prefs_destroy(SitePrefs *p)
   FREE_STRING(p->path_news_backend);
   FREE_STRING(p->path_end_news_url);
   FREE_STRING(p->path_board_add);
+  FREE_STRING(p->board_post);
   FREE_STRING(p->path_myposts);
   FREE_STRING(p->path_messages);
   FREE_STRING(p->user_cookie);
@@ -1168,6 +1171,12 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTSG_http_path_tribune_add: {
     ASSIGN_STRING_VAL(sp->path_board_add, arg); 
   } break; 
+  case OPTSG_http_board_post: {
+    ASSIGN_STRING_VAL(sp->board_post, arg); 
+    if (!strstr(sp->board_post, "%s")) {
+      return strdup("you forgot the %s in the board_post option");
+    }
+  } break; 
   case OPTSG_http_path_myposts: {
     ASSIGN_STRING_VAL(sp->path_myposts, arg); 
   } break; 
@@ -1179,7 +1188,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     
     if (strchr(arg, '=')==NULL) return strdup("you forgot the cookie name (session_id ? or what)");
     if (old == NULL) sp->user_cookie = strdup(arg);
-    else { sp->user_cookie = str_printf("%s\n%s", old, arg); free(old); }
+    else { sp->user_cookie = str_printf("%s;%s", old, arg); free(old); }
   } break; 
   case OPTSG_http_force_fortune_retrieval: {
     CHECK_BOOL_ARG(sp->force_fortune_retrieval);

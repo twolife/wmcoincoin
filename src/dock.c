@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.22 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.23 2002/09/01 23:54:56 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.23  2002/09/01 23:54:56  pouaite
+  completurage du wmc3 et compatibilitation avec new.linuxfr
+
   Revision 1.22  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -978,6 +981,7 @@ char *
 dock_build_pixmap_porte(Dock *dock)
 {
   Pixmap bg_pixmap;
+  char *err = NULL;
   /* debut modif kadreg */
   /* chargement de pix_porte suivant si pixmap de fond */
 
@@ -986,7 +990,8 @@ dock_build_pixmap_porte(Dock *dock)
     int w, h;
     bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.dock_bgpixmap, &w, &h);
     if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
-      return str_printf(_("Error while loading file : '%s' [64x64 pixels XPM, please]"), Prefs.dock_bgpixmap);
+      err= str_printf(_("Error while loading file : '%s' [64x64 pixels XPM, please]"), Prefs.dock_bgpixmap);
+      free(Prefs.dock_bgpixmap); Prefs.dock_bgpixmap = NULL;
     } else {
       RGBAImage *rgba_porte;
       XImage *XiPixPixmap;
@@ -1070,7 +1075,7 @@ dock_build_pixmap_porte(Dock *dock)
     dock->dark_pixel = RGB2PIXEL(MIN(255, (r*97)/128), MIN(255,(g*97)/128), MIN(255,(b*97)/128));
   }
   
-  return NULL;
+  return err;
 }
 
 

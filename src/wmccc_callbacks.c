@@ -10,6 +10,7 @@
 #include "wmccc_support.h"
 #include "wmccc.h"
 
+
 void
 messagebox(char *msg) {
   GtkWidget *wg, *wgtxt;
@@ -138,12 +139,27 @@ on_editable_changed(GtkEditable *editable, gpointer user_data UNUSED) {
     else {
       int i;
       for (i=0; i < (int)strlen(*ppstr); i++) {
-	if ((*ppstr)[i] < ' ') (*ppstr)[i] = ' ';
+	if ((*ppstr)[i] < ' ' && (*ppstr)[i] != '\n') (*ppstr)[i] = ' ';
       }
     }
   }
 }
 
+/*-------------------- OPTION MENU (pas gèré par glade :/) -------------*/
+
+void
+on_optionmenu_selected(GtkMenuShell *menu_shell,
+		       gpointer data UNUSED) {
+  GtkWidget *active_item;
+  
+  int item_index;
+  int *i_ptr, shift;
+  active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
+  item_index = g_list_index(menu_shell->children, active_item);
+  i_ptr = gtk_object_get_data(GTK_OBJECT(menu_shell), IntPtrKey); g_assert(i_ptr);
+  shift = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(menu_shell), ShiftKey));
+  *i_ptr = item_index+shift;
+}
 
 /* --------------------------DOCK PANEL EVENTS --------------------*/
 void
@@ -228,7 +244,7 @@ on_bt_mua_change_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
   clist = lookup_widget(GTK_WIDGET(button), "clist_miniua"); g_assert(clist);
   wg = lookup_widget(GTK_WIDGET(button), "entry_miniua"); g_assert(wg);
-  row = (int)gtk_object_get_data(GTK_OBJECT(wg), "row number");
+  row = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(wg), "row number"));
   s = gtk_editable_get_chars(GTK_EDITABLE(wg), 0, -1);
   if (s) {
     MiniUARule r;
@@ -286,7 +302,7 @@ on_bt_mua_delete_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
   clist = lookup_widget(GTK_WIDGET(button), "clist_miniua"); g_assert(clist);
   wg = lookup_widget(GTK_WIDGET(button), "entry_miniua"); g_assert(wg);
-  row = (int)gtk_object_get_data(GTK_OBJECT(wg), "row number");
+  row = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(wg), "row number"));
   r = gtk_clist_get_row_data(GTK_CLIST(clist), row);
   if (r) {
     miniuarules_destroy(&Prefs->miniuarules, r);
@@ -305,7 +321,7 @@ on_clist_miniua_select_row(GtkCList *clist, gint row, gint column,
   gtk_clist_get_text(GTK_CLIST(clist), row, column, &text);
   wg = lookup_widget(GTK_WIDGET(clist), "entry_miniua"); g_assert(wg);
   gtk_entry_set_text(GTK_ENTRY(wg), text); /* ne PAS liberer text */
-  gtk_object_set_data(GTK_OBJECT(wg), "row number", (gpointer)row);
+  gtk_object_set_data(GTK_OBJECT(wg), "row number", GINT_TO_POINTER(row));
 }
 
 
@@ -387,8 +403,8 @@ on_bt_remove_site_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
 void
 on_bt_save_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
-  quick_message("desactive pour le moment, je veux pas massacrer\nun beau fichier d'options tune à la main");
-  //  save_prefs(glob.options_file);
+  //quick_message("desactive pour le moment, je veux pas massacrer\nun beau fichier d'options tune à la main");
+  save_prefs(glob.options_file);
 }
 
 void
@@ -419,6 +435,7 @@ on_bt_apply_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
 
 void
 on_bt_cancel_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
+  gtk_main_quit();  
 }
 
 gboolean
@@ -448,3 +465,287 @@ on_fileselection_ok_button_clicked(GtkButton *button, gpointer user_data UNUSED)
     g_free(glob.options_file); glob.options_file = strdup(filename);
   }
 }
+
+void
+on_bt_pixmap_clicked(GtkButton *button, gpointer user_data UNUSED) {
+  static GtkWidget *xpm_filesel = NULL;
+  gchar **pxpm;
+  if (xpm_filesel == NULL)
+    xpm_filesel = create_fileselection_xpm();
+
+  gtk_object_set_data(GTK_OBJECT (xpm_filesel), MainWindowKey, glob.main_win);
+  pxpm = gtk_object_get_data(GTK_OBJECT(button), StrPtrKey); g_assert(pxpm);
+  gtk_object_set_data(GTK_OBJECT(xpm_filesel), StrPtrKey, pxpm);
+  gtk_object_set_data(GTK_OBJECT(xpm_filesel), ButtonKey, button);
+  /* If the current document has a filename we use that as the default. */
+  if (*pxpm)
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION (xpm_filesel),
+				    *pxpm);
+  gtk_file_selection_complete(GTK_FILE_SELECTION (xpm_filesel), "*.xpm");
+  gtk_widget_show(xpm_filesel);
+  gdk_window_raise(xpm_filesel->window);
+}
+
+
+void
+on_fileselection_xpm_ok_bt_clicked(GtkButton *button, gpointer user_data UNUSED) {
+  GtkWidget *filesel, *main_window, *pixbutton;
+  int w,h;
+  gchar **pxpm;
+  gchar *filename;
+  filesel = gtk_widget_get_toplevel (GTK_WIDGET (button));
+  main_window = gtk_object_get_data (GTK_OBJECT (filesel), MainWindowKey);
+  pxpm = gtk_object_get_data(GTK_OBJECT(filesel), StrPtrKey); g_assert(pxpm);
+  pixbutton = gtk_object_get_data(GTK_OBJECT(filesel), ButtonKey); g_assert(pixbutton);
+  w = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(pixbutton), WidthKey)); g_assert(w>0);
+  h = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(pixbutton), HeightKey)); g_assert(h>0);
+  gtk_widget_hide (filesel);
+  filename = gtk_file_selection_get_filename (GTK_FILE_SELECTION (filesel));
+  if (filename && strlen(filename)) {
+    if (*pxpm) g_free(*pxpm);
+    *pxpm = strdup(filename);
+    if (!update_widget_bgpixmap(pixbutton, *pxpm)) {
+      g_free(*pxpm); *pxpm = NULL;
+    }
+  }
+}
+
+
+void
+on_fileselection_xpm_cancel_bt_clicked(GtkButton *button, gpointer user_data UNUSED) {
+  gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET (button)));  
+}
+
+
+void
+on_optionmenu_site_selected(GtkMenuShell *menu_shell,
+			    gpointer data UNUSED) {
+  GtkWidget *active_item;
+  SitePrefs *sp;
+  
+  enum { NONE, DLFP, WOOF, DLFP2, GLANDIUM, FCPU} item_index;
+
+  active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
+  item_index = g_list_index(menu_shell->children, active_item);
+
+  if (item_index != NONE && glob.current_site >= 0 && glob.current_site < Prefs->nb_sites) {
+    int i;
+    sp = Prefs->site[glob.current_site];
+
+    if (sp->site_root) g_free(sp->site_root); sp->site_root = NULL;
+    for (i=0; i < 4; i++) {
+      if (sp->all_names[i]) { g_free(sp->all_names[i]); sp->all_names[i] = NULL; }
+    }
+    if (sp->user_cookie) {
+      g_free(sp->user_cookie); sp->user_cookie = NULL;
+    }
+    switch (item_index) {
+    case NONE: break;
+    case DLFP: 
+      sp->site_root = strdup("http://www.linuxfr.org");
+      sp->all_names[0] = strdup("dlfp");
+      sp->all_names[1] = strdup("linuxfr");
+      sp->user_cookie = strdup("session_id=COIN025coin8778PL0p");
+      sp->locale = locFR;
+      sp->use_AM_PM = 0;
+      sp->palmi_msg_max_len = 255;
+      sp->palmi_ua_max_len = 60;
+      sp->check_news = 1;
+      sp->check_board = 1;
+      sp->check_comments = 1;
+      sp->check_messages = 1;
+      break;
+    case WOOF:
+      sp->site_root = strdup("http://www.woof.lu");
+      sp->all_names[0] = strdup("woof");
+      sp->all_names[1] = strdup("wooflu");
+      sp->user_cookie = strdup("session_id=COIN025coin8778PL0p");
+      sp->locale = locEN;
+      sp->use_AM_PM = 0;
+      sp->palmi_msg_max_len = 400;
+      sp->palmi_ua_max_len = 60;
+      sp->check_news = 1;
+      sp->check_board = 1;
+      sp->check_comments = 1;
+      sp->check_messages = 1;
+      break;
+    case DLFP2:
+      sp->site_root = strdup("http://new.linuxfr.org");
+      sp->path_board_add = strdup("board.html");
+      sp->board_post = strdup("message=%d&section=1");
+      sp->all_names[0] = strdup("dlfp2");
+      sp->all_names[1] = strdup("linuxfr2");
+      sp->user_cookie = strdup("unique_id=COIN;md5=PLOP");
+      sp->locale = locFR;
+      sp->use_AM_PM = 0;
+      sp->palmi_msg_max_len = 255;
+      sp->palmi_ua_max_len = 60;
+      sp->check_news = 0;
+      sp->check_board = 1;
+      sp->check_comments = 0;
+      sp->check_messages = 0;      
+    case GLANDIUM:
+      break;
+    case FCPU:
+      break;
+    default:
+      break;
+    }
+    site_panels_update(sp);
+  }
+}
+
+void
+on_optionmenu_transp_selected(GtkMenuShell *menu_shell,
+			    gpointer data UNUSED) {
+  GtkWidget *active_item;
+  int item_index;
+  active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
+  item_index = g_list_index(menu_shell->children, active_item);
+  if (item_index == 0) {
+    Prefs->pp_transparency.type = FULL_TRANSPARENCY;
+  } else if (item_index == 1) {
+    Prefs->pp_transparency.type = SHADING;
+  } else if (item_index == 2) {
+    Prefs->pp_transparency.type = TINTING;
+  }
+  update_transparency_fields_state();
+}
+
+void
+reorder_hk(GtkCList *clist, KeyList **pfirst)
+{
+  KeyList *first = NULL, *hk, *prev;
+  int row;
+  for (row = 0; row < clist->rows; row++) {
+    hk = (KeyList*) gtk_clist_get_row_data(clist, row);
+    if (first == NULL) {
+      first = hk;
+    } else {
+      prev->next = hk;
+    }
+    prev = hk;
+    hk->next = NULL;
+  }
+  *pfirst = first;
+}
+
+
+static int
+get_optionmenu_choice(char *name) {
+  GtkMenu *menu;
+  GtkWidget *active_item;
+  menu = GTK_MENU(gtk_option_menu_get_menu(GTK_OPTION_MENU(lookup_widget(glob.main_win, name)))); 
+  g_assert(menu);
+  active_item = gtk_menu_get_active(menu);
+  g_assert(active_item);
+  return g_list_index (GTK_MENU_SHELL(menu)->children, active_item);
+}
+
+static KeyList *
+get_hk(int isplop) {
+  KeyListType ktype;
+  int iktype, categ;
+  char *key;
+  KeyList *hk;
+  iktype = get_optionmenu_choice(isplop ? "optionmenu_kplop_match" : "optionmenu_kemph_match");
+  
+  switch (iktype) {
+  case 0: ktype = HK_LOGIN; break;
+  case 1: ktype = HK_UA; break;
+  case 2: ktype = HK_WORD; break;
+  case 3: ktype = HK_UA_NOLOGIN; break;
+  default: ktype = HK_WORD;
+  }
+  categ = get_optionmenu_choice(isplop ? "optionmenu_kplop_categ" : "optionmenu_kemph_categ");
+  key = gtk_editable_get_chars(GTK_EDITABLE(lookup_widget(glob.main_win, isplop ? "entry_kplop_key" : "entry_kemph_key")), 0, -1);
+  g_assert(key);
+  hk = key_list_add(NULL, key, ktype, categ, 1);
+  g_free(key);
+  return hk;
+}
+
+
+void
+on_bt_klist_up_clicked(GtkButton *button, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
+  int rownum = clist_selected_row_number(wg);
+  int isplop = strcmp(clname, "clist_kemph");
+  if (rownum >= 1) gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum-1);
+  gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
+  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+}
+
+void
+on_bt_klist_down_clicked(GtkButton *button, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
+  int rownum = clist_selected_row_number(wg);
+  int isplop = strcmp(clname, "clist_kemph");
+  if (rownum >= 0) gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum+1);
+  gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
+  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+}
+
+void
+on_bt_klist_del_clicked(GtkButton *button, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
+  int row = clist_selected_row_number(wg);
+  KeyList *hk = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk);
+  hk->next = NULL;
+  key_list_destroy(hk);
+  gtk_clist_remove(GTK_CLIST(wg), row);
+}
+
+void
+on_bt_klist_change_clicked(GtkButton *button, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
+  int row = clist_selected_row_number(wg);
+  int isplop = strcmp(clname, "clist_kemph");
+  KeyList *hk, *hk_old = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk_old);
+  hk = get_hk(isplop);
+  if (hk_old && hk) {
+    hk_old->next = NULL;
+    key_list_destroy(hk_old);
+    clist_klist_set_row(GTK_CLIST(wg), hk, row);
+    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  }
+}
+
+void
+on_bt_klist_add_clicked(GtkButton *button, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
+  int isplop = strcmp(clname, "clist_kemph");
+  KeyList *hk;
+  hk = get_hk(isplop);
+  if (hk) {
+    char *s[3] = {"","",""};
+    int row = gtk_clist_append(GTK_CLIST(wg), s);
+    clist_klist_set_row(GTK_CLIST(wg), hk, row);
+    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  }
+}
+
+void
+on_clist_klist_row_move(GtkCList *clist, gint arg1, gint arg2, gpointer user_data) {
+  char *clname = (char*)user_data;
+  int rownum = clist_selected_row_number(GTK_WIDGET(clist));
+  
+  g_print("row_move %d %d %s (%d)\n", arg1, arg2,  clname, rownum);
+  reorder_hk(clist, strcmp(clname, "clist_kemph") == 0 ? &Prefs->hilight_key_list : &Prefs->plopify_key_list);
+}
+
+void
+on_clist_klist_select_row(GtkCList *clist, gint row, gint column,
+  GdkEvent *event UNUSED, gpointer user_data) {
+  char *clname = (char*)user_data;
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(clist), clname);
+
+  clist_klist_row_to_entries(GTK_CLIST(wg), row);
+  g_print("select_row %d %d %s (%d)\n", row, column, clname, row);
+}
+
