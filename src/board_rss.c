@@ -239,7 +239,7 @@ rss_board_update(Board *board, char *path) {
   /*if (board->rss_title) free(board->rss_title);
     board->rss_title = str_ndup(xmlb.content, xmlb.content_len);*/
   rss_title = str_ndup(xmlb.content, xmlb.content_len);
-  myprintf("got TITLE: '%<YEL %s>'\n", rss_title);
+  BLAHBLAH(1, myprintf("got TITLE: '%<YEL %s>'\n", rss_title));
 
   if (board->rss_title) {
     free(board->rss_title);
@@ -332,7 +332,7 @@ rss_board_update(Board *board, char *path) {
       if (pubdate) {
         if (str_to_time_t(pubdate, &timestamp)) {
           time_t_to_tstamp(timestamp, stimestamp);
-          myprintf("converted %<YEL %s> to %<YEL %s> !\n", pubdate, stimestamp);
+          BLAHBLAH(3,myprintf("converted %<YEL %s> to %<YEL %s> !\n", pubdate, stimestamp));
         } else BLAHBLAH(0, printf("could not convert '%s' to a valid date..\n", pubdate));
       }
 
@@ -407,7 +407,7 @@ rss_board_update(Board *board, char *path) {
       FREE_STRING(title); FREE_STRING(link); FREE_STRING(description); FREE_STRING(author); 
       FREE_STRING(comments_url); FREE_STRING(msg); FREE_STRING(pubdate); FREE_STRING(fake_ua);
     } else { 
-      printf("fin de '%s'\n", rss_title);
+      BLAHBLAH(1,printf("fin de '%s'\n", rss_title));
       break;
     }
     

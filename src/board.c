@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.27 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: board.c,v 1.28 2004/04/26 20:32:31 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.28  2004/04/26 20:32:31  pouaite
+  roger demande le commit
+
   Revision 1.27  2004/04/18 15:37:28  pouaite
   un deux un deux
 
@@ -220,7 +223,7 @@
 
 */
 #include "board_priv.h"
-
+#include "balltrap.h"
 
 
 
@@ -1303,7 +1306,22 @@ board_get_trollo_rate(const Board *board, float *trollo_rate, float *trollo_scor
 
 }
 
-
+static void
+board_do_balltrap(Board *board, int last_id) {
+ board_msg_info *it = board->msg;
+ BLAHBLAH(1, myprintf("board_call_external, id=%d - %d\n", last_id, board->last_post_id));
+ if (last_id != -1) { /* si ce n'est pas le premier appel.. */
+   it = board_find_id(board, last_id);
+   if (it) it = it->next;
+ } else {
+    //return; /* à l'initialisation, on de lacher un milliard de canards */
+  }
+  while (it) { 
+    balltrap_check_message(it->id, it->msg);
+    it = it->next;
+  }
+  balltrap_launch();
+}
 /*
   merci shift pour ce patch !
 
@@ -1331,7 +1349,6 @@ board_call_external_(Board *board, int last_id, char *cmd) {
     const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r", "$R", "$v","$h"};
     const char *subs[] = {  "",   "",   "",   "",   "",   "",   "", "", VERSION, ""};
 
-    
     //----< Code pour passer les infos d'un post à une commande extérieure >
 
     qlogin = shell_quote(it->login);
@@ -1865,6 +1882,7 @@ board_update(Board *board)
 
   if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     board_call_external(board, old_last_post_id);    
+    if (board_is_regular_board(board)) board_do_balltrap(board, old_last_post_id);
   }
 
 }

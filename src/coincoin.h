@@ -354,6 +354,8 @@ typedef void(*plopup_callback_t)(int);
 #define FLAMOMETRE_XP_DUREE      900      /* 1/4 d'heure */
 #define FLAMOMETRE_TRIB_DUREE    15
 
+typedef struct _Duck Duck;
+
 typedef struct Dock_ {
   Pixmap pix_porte, mask_porte_haut, mask_porte_bas;
   Leds leds;
@@ -506,6 +508,8 @@ typedef struct Dock_ {
   SwallowCoincoin *swallow;
 
   TotozBookmark *totoz_bm;
+  int nb_duck;
+  Duck *duck_lst;
 } Dock;
 
 /* c'est classé par ordre de priorité décroissante */
@@ -533,6 +537,7 @@ void block_sigalrm(int bloque);
 int launch_wmccc(Dock *dock,...);
 void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);
 void wmcc_save_or_restore_state(Dock *dock, int do_restore);
+Dock *get_dock();
 
 /* picohtml.c */
 void picohtml_set_url_path(PicoHtml *ph, const char *s);

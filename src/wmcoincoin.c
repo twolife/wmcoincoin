@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.91 2004/04/18 15:37:29 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.92 2004/04/26 20:32:33 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.92  2004/04/26 20:32:33  pouaite
+  roger demande le commit
+
   Revision 1.91  2004/04/18 15:37:29  pouaite
   un deux un deux
 
@@ -315,6 +318,7 @@
 #include "coincoin.h"
 #include "spell_coin.h"
 #include "scrollcoin.h"
+#include "balltrap.h"
 
 #ifdef __CYGWIN__
 #include <pthread.h>
@@ -345,6 +349,7 @@ int opened_cnt; /* ça c'est de la bonne vieille variable qui date de la v0.9...*
 
 Dock *_dock;
 
+Dock *get_dock() { return _dock; } /* et merde j'ai fini par la faire pour la chasse aux canards */
 /*
    la fonction de la honte ...
 
@@ -993,6 +998,8 @@ wmcoincoin_dispatch_events(Dock *dock)
 	msgbox_dispatch_event(dock, &event);
       } else if (pp_dispatch_event(dock, &event)) {        
 	/* plop */
+      } else if (balltrap_dispatch_event(dock, &event)) {
+        /* pika */
       }
         /*} else if (newswin_is_used(dock)) {
 	if (event.xany.window == newswin_get_window(dock)) {
@@ -1050,9 +1057,14 @@ timer_signal(int signum) {
 */
 void
 sigpipe_signal(int signum UNUSED) {
-  fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n"));
-
-  wmcc_save_or_restore_state(_dock, 0);
+  static volatile int in_sigpipe = 0;
+  if (in_sigpipe == 0) { /* bon finalement je l'ai eu le bug occasionnel de sigpipe infini quand on se delogue..
+                            ça devrait un peu aider */
+    in_sigpipe++;
+    fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n"));
+    wmcc_save_or_restore_state(_dock, 0);
+    in_sigpipe--;
+  }
 }
 /* poreil ! */
 void
@@ -1358,6 +1370,9 @@ void X_loop()
     }
 #endif
   }
+  if ((timer_cnt % 4) == 0) 
+    balltrap_animate(dock);
+
 
   /* le chef est-il dans le bureau ? */
   if (flag_discretion_request == +1 && !Prefs.auto_swallow) {
@@ -2211,6 +2226,7 @@ int main(int argc, char **argv)
   editw_build(dock);
   plopup_build(dock);
   pp_build(dock);
+  balltrap_build(dock);
   if (Prefs.auto_swallow)
     swallower_autoswallow(dock);
   //sw_swallow_win_id(dock,0x3200001);

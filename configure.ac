@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.38  2004/04/26 20:32:15  pouaite
+dnl   roger demande le commit
+dnl
 dnl   Revision 1.37  2004/04/18 15:37:27  pouaite
 dnl   un deux un deux
 dnl
@@ -199,7 +202,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.99999, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.999999, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -436,6 +439,15 @@ if test "x$build_wmcc_player" = "xyes"; then
         WMCOINCOIN_PLAYER="wmcoincoin_player"
         build_wmcc_player="yes"
         AC_DEFINE(HAVE_WMCOINCOIN_PLAYER,1,[wmcoincoin_player is supported])
+  fi
+  AC_CHECK_PROG([CURL_IN_PATH],[curl],[yes],[no])
+  if test "x$CURL_IN_PATH" = "xno"; then
+        echo " *********************** YOU ARE NOT READY FOR THE DESKTOP ***********************"
+        echo " * no arms                     ==> no chocolate                                  *"
+        echo " * curl was not found in path  ==> wmcoincoin-totoz-get won't work               *"
+        echo " *                             ==> wmcoincoin_player will not be built.          *"
+        echo " ************************* Thank you for your attention **************************"
+        build_wmcc_player="no"
   fi
 fi
 AC_SUBST([WMCOINCOIN_PLAYER])

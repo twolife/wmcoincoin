@@ -233,7 +233,7 @@ int change_or_create_site_prefs(int sid, SitePrefs *sp0) {
       return -1;
     }  
     Prefs->site[sid] = g_new0(SitePrefs,1);
-    wmcc_site_prefs_set_default(Prefs->site[sid]);
+    wmcc_site_prefs_set_default(Prefs->site[sid],1);
   }
   wmcc_site_prefs_copy(Prefs->site[sid], sp0);  
   bidouille_prefs_site_name(Prefs->site[sid]);
@@ -743,6 +743,7 @@ static int prepare_or_finalize_conf_dialog_(GtkWidget *dialog, int finalize) {
   PFC_TEXT_ENTRY_S(user_login);
   PFC_TEXT_ENTRY_S(pop3_user);
   PFC_TEXT_ENTRY_S(pop3_pass);
+  PFC_TEXT_ENTRY_S(user_agent);
   PFC_TEXT_ENTRY_G(pp_fn_family);
   PFC_SPIN_BUTTON_G(pp_fn_size);
   PFC_TOGGLE_BUTTON_G(pinnipede_open_on_start);
@@ -752,6 +753,11 @@ static int prepare_or_finalize_conf_dialog_(GtkWidget *dialog, int finalize) {
   PFC_TOGGLE_BUTTON_G(disable_xft_antialiasing);
   PFC_TOGGLE_BUTTON_S(mark_id_gaps);
   PFC_TOGGLE_BUTTON_G(auto_swallow);
+  PFC_TOGGLE_BUTTON_G(enable_troll_detector);
+  PFC_TOGGLE_BUTTON_G(board_enable_hfr_pictures);
+  PFC_TOGGLE_BUTTON_G(board_auto_dl_pictures);
+  PFC_TOGGLE_BUTTON_G(hunt_opened);
+  PFC_SPIN_BUTTON_G(hunt_max_duck);
   PFC_TEXT_ENTRY_G(browser_cmd);
   PFC_TEXT_ENTRY_G(browser2_cmd);
   PFC_COLOR_BUTTON_S(pp_bgcolor);
@@ -790,7 +796,7 @@ static SitePrefs *new_board_sp = 0;
 
 int prepare_new_board_dialog() {
   if (new_board_sp == 0) new_board_sp = g_new0(SitePrefs, 1);
-  wmcc_site_prefs_set_default(new_board_sp);
+  wmcc_site_prefs_set_default(new_board_sp,1);
   bidouille_prefs_site_name(new_board_sp);
   ASSIGN_STRING_VAL(new_board_sp->all_names[0], "dlfp");
   glob.nb_selected_sites = 1; glob.selected_sites[0] = new_board_sp;
@@ -816,7 +822,7 @@ static SitePrefs *new_rss_sp = 0;
 int prepare_new_rss_dialog() {
   if (new_rss_sp == 0) new_rss_sp = g_new0(SitePrefs, 1);
   SitePrefs *sp = new_rss_sp;
-  wmcc_site_prefs_set_default(sp); 
+  wmcc_site_prefs_set_default(sp,1); 
   bidouille_prefs_site_name(sp);
   ASSIGN_STRING_VAL(sp->all_names[0], "dlfpnews");
   ASSIGN_STRING_VAL(sp->backend_url, "http://linuxfr.org/backend.rss");
@@ -843,7 +849,7 @@ static SitePrefs *new_pop_sp = 0;
 int prepare_new_pop_dialog() {
   if (new_pop_sp == 0) new_pop_sp = g_new0(SitePrefs, 1);
   SitePrefs *sp = new_pop_sp;
-  wmcc_site_prefs_set_default(sp); 
+  wmcc_site_prefs_set_default(sp,1); 
   bidouille_prefs_site_name(sp);
   ASSIGN_STRING_VAL(sp->all_names[0], "altern");
   ASSIGN_STRING_VAL(sp->backend_url, "pop://mail.altern.org");
@@ -972,7 +978,8 @@ int edit_dialog_insert_file(const char *fname, gboolean remove_uncommented) {
       is_new_line = 0;
       for (p = rd; *p; ++p) if (*p == '\n') { is_new_line = 1; lcnt++; }
  
-      utf8 = g_locale_to_utf8(rd, -1, NULL, &utf8_len, NULL);
+      //utf8 = g_locale_to_utf8(rd, -1, NULL, &utf8_len, NULL);
+      utf8 = g_convert(rd, -1, "utf8", "iso-8859-15", NULL, &utf8_len, NULL);
       if (!utf8 || utf8_len == 0) {
         if (!got_warning) {
           quick_message("gtk could not convert your option file to utf8 -- "
@@ -1019,7 +1026,6 @@ int prepare_edit_dialog() {
                                    "# You will find there some options that wmccc does not show\n"
                                    "# Everything is commented by default, so just uncomment them\n",
                                    -1);
-  
   edit_dialog_insert_file(WMCCDATADIR "/options", TRUE);
 
   colorize_edit_dialog();
@@ -1412,26 +1418,26 @@ main (int argc, char *argv[])
   glob.modif_widget_color.blue = 000;
   gdk_colormap_alloc_color(gdk_colormap_get_system(), &glob.modif_widget_color, FALSE, TRUE);
 
-  if (argc <= 1) {
-    printf("syntaxe: \n wmccc -o optionfile -wizard\n");
-    exit(1);
-  }
+  glob.wmcc_pid = 0;    
+  glob.options_file = abs_options_filename("options");
+  glob.tmp_options_file = NULL;
 
-  if (strcmp(argv[1], "-wmccpid")==0) {
-    g_print("wmc³ launched from wmc²\n"); g_assert(argc >= 5);
-    glob.wmcc_pid = atoi(argv[2]);
-    glob.options_file = abs_options_filename(argv[3]);
-    glob.tmp_options_file = abs_options_filename(argv[4]);
-    argc-=4; argv+=4;
-  } else {
-    glob.wmcc_pid = 0;    
-    if (argc < 2 || strcmp(argv[1],"-o")) {
-      g_print("missing -o option_file");
-      return -1;
-    } 
-    glob.options_file = abs_options_filename(argv[2]);
-    glob.tmp_options_file = NULL;
-    argc -= 2; argv += 2;
+  if (argc > 1) {
+    if (strcmp(argv[1], "-wmccpid")==0) {
+      g_print("wmc³ launched from wmc²\n"); g_assert(argc >= 5);
+      glob.wmcc_pid = atoi(argv[2]);
+      glob.options_file = abs_options_filename(argv[3]);
+      glob.tmp_options_file = abs_options_filename(argv[4]);
+      argc-=4; argv+=4;
+    } else {
+      glob.wmcc_pid = 0;    
+      if (argc < 2 || strcmp(argv[1],"-o")) {
+        g_print("missing -o option_file");
+        return -1;
+      } 
+      glob.options_file = abs_options_filename(argv[2]);
+      argc -= 2; argv += 2;
+    }
   }
 
   Prefs = NULL;

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.102 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.103 2004/04/26 20:32:31 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -526,7 +526,7 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
     if (mi->troll_score > 0) {
       snprintf(s, PVTP_SZ, "%d", mi->troll_score);
     } else {
-      snprintf(s, PVTP_SZ, " ");
+      snprintf(s, PVTP_SZ, "  ");
     }
 
     tmp = pw_create(s, PWATTR_TROLLSCORE | (mi->troll_score > 2 ? PWATTR_BD : 0), NULL, pv);
@@ -670,11 +670,13 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
     }
     if (add_word) {
       int is_ref;
-      board_msg_info *ref_mi;
+      board_msg_info *ref_mi = NULL;
 
-      ref_mi = check_for_horloge_ref(board->boards, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
-      if (is_ref) {
-	attr |= PWATTR_REF;
+      if ((attr & PWATTR_LNK) == 0) {
+        ref_mi = check_for_horloge_ref(board->boards, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
+        if (is_ref) {
+          attr |= PWATTR_REF;
+        }
       }
 
       if (has_initial_space) {
@@ -2529,7 +2531,7 @@ pp_balloon_help(Dock *dock, int x, int y)
 		 "You can take a 'shot' of the board (the so-called seafood tray), with <font color=blue>Ctrl+Middle Click</font><br><br>"
 		 "In order to understand the display of the <b>useragents</b> activated by the dark red button "
 		 "(about fifteen pixels on your left), you can see "
-		 "the <tt>~/.wmcoincoin/useragents</tt><br> file (hint: the button has 5 different positions)<br><br>"
+		 "the <tt>~/.wmcoincoin/options</tt><br> file (hint: the button has 5 different positions)<br><br>"
 		 "The pinnipede teletype wishes you a nice mouling."), 500);
 }
 
@@ -4086,12 +4088,13 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	zx0 = MIN(zx0, x0); zx1=MAX(zx1, x1);
 	zy0 = MIN(zy0, y0); zy1=MAX(zy1, y1);
       }
-      /*
-	printf("expose_event: x=%d, y=%d, w=%d, h=%d cnt=%d --> z=[%d:%d]x[%d:%d]\n", 
+
+      /*printf("expose_event: x=%d, y=%d, w=%d, h=%d cnt=%d --> z=[%d:%d]x[%d:%d]\n", 
 	event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height, event->xexpose.count,
 	zx0, zx1, zy0, zy1);
       */
       if (event->xexpose.count == 0) {
+        //printf("REFRESH!\n");
 	pp_refresh(dock, pp->win, NULL);
 	flush_expose(dock, pp->win);
       }

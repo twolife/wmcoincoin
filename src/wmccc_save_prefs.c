@@ -136,7 +136,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   memset(&_default_p, 0, sizeof(_default_p));
   memset(&_default_sp, 0, sizeof(_default_sp));
   wmcc_prefs_set_default(&_default_p);
-  wmcc_site_prefs_set_default(&_default_sp);
+  wmcc_site_prefs_set_default(&_default_sp, 1);
   default_p = &_default_p; default_sp = &_default_sp;
 
   coincoin_default_useragent(default_ua, 1024);
@@ -284,7 +284,8 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     SP_SAVESTR(OPTSG_tribune_wiki_emulation, board_wiki_emulation);
     SP_SAVESTR(OPTSG_palmipede_username, user_name);
     SP_SAVESTR(OPTSG_palmipede_userlogin, user_login);
-    if (sp->user_agent == NULL || strcmp(sp->user_agent, default_ua)) {
+    if (sp->user_agent == NULL || 
+        (strcmp(sp->user_agent, default_ua) && strcmp(sp->user_agent, default_sp->user_agent))) {
       SP_SAVESTR(OPTSG_palmipede_useragent, user_agent);
     }
     SP_SAVEINT(OPTSG_palmipede_msg_max_length, palmi_msg_max_len);

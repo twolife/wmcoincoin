@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.22 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.23 2004/04/26 20:32:31 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.23  2004/04/26 20:32:31  pouaite
+  roger demande le commit
+
   Revision 1.22  2004/04/18 15:37:28  pouaite
   un deux un deux
 
@@ -1923,7 +1926,7 @@ editw_next_site(Dock *dock, int dir) {
     if (sc == NULL) sc = dock->sites->list;
     if (sc == s0) break;
     assert(sc);
-    if (sc && sc->prefs->check_board) {
+    if (sc && sc->prefs->check_board && str_is_empty(sc->prefs->post_url)) {
       sb = sc;
       if (dir == +1) break;
     }

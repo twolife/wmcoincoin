@@ -1,5 +1,5 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.62 2004/04/18 15:37:27 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.63 2004/04/26 20:32:15 pouaite Exp $
 
 ###vous pouvez decommenter des options et changer leur valeurs
 
@@ -264,8 +264,8 @@ pinnipede.url_replace: "redhat" => "[rh]"
 pinnipede.url_replace: "rpmfind" => "[rpmfind]"
 pinnipede.url_replace: "gentoo" => "[gentoo]"
 pinnipede.url_replace: "microsoft" => "[MS]"
-pinnipede.url_replace: "wmcoincoin" => "[wmc²]"
-pinnipede.url_replace: "pycoincoin" => "[pyc²]"
+pinnipede.url_replace: "wmcoincoin" => "[wmcc]"
+pinnipede.url_replace: "pycoincoin" => "[pycc]"
 pinnipede.url_replace: ".jpg" => "[img]"
 pinnipede.url_replace: ".jpeg" => "[img]"
 pinnipede.url_replace: ".png" => "[img]"
@@ -329,9 +329,9 @@ board.miniua_rule: ua:"^wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*) - olo" => ua:="olo"
 
 board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
-board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pyc²/\1", color:="#ff8000"
-board.miniua_rule: ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="wmc²/\1", color:="#80ff00"
-board.miniua_rule: ua:"coincoin.net ([0-9.]+)" => ua="c².net/\1"
+board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pycc/\1", color:="#ff8000"
+board.miniua_rule: ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="wmcc/\1", color:="#80ff00"
+board.miniua_rule: ua:"coincoin.net ([0-9.]+)" => ua="cc.net/\1"
 
 ### Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1b) Gecko/20020
 board.miniua_rule:  ua:"Mozilla/5.0.* Linux ([^;]+).*; rv:([[:alnum:].]+)\)" => ua:="Moz\2/Lnx\1"
@@ -420,7 +420,7 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 ###  $s -> troll_score
 ###  $r -> obsolete message type (do not use)
 ###  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message)
-###  $v -> wmc² version
+###  $v -> wmcc version
 ###  $h -> remote host
 ### for example, to hear a duck sound each time you get an answer:
 #tribune.post_cmd: (if [ $(($R & 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav & fi)
@@ -500,9 +500,11 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 
 ### various deprecated options
 #OBSOLETE#news.font_family:
+#OBSOLETE#news.font_size:
 #OBSOLETE#[.]check_news:
 #OBSOLETE#[.]news.delay:
 #OBSOLETE#[.]http.path_end_news_url:
 #OBSOLETE#[.]tribune.backend_type: 
 #OBSOLETE#[.]backend_type: 
+#OBSOLETE#[.]http.path_myposts:
 

@@ -163,7 +163,7 @@ typedef struct _GeneralPrefs{
 
   char *font_encoding; /* 'iso8859-1' ou mieux, 'iso8859-15' */
 
-  /* message poste sur la tribune */
+  /* message par defaut poste sur la tribune */
   char *coin_coin_message;
 
   /* pour mise au point ... */
@@ -210,6 +210,7 @@ typedef struct _GeneralPrefs{
 
   int use_fake_real_transparency;
 
+  /* options totozeuses */
   int board_auto_dl_pictures;
   int board_enable_hfr_pictures;
 
@@ -257,6 +258,9 @@ typedef struct _GeneralPrefs{
 
   int nb_sites;
   SitePrefs *site[MAX_SITES];
+
+  int hunt_opened;   /* la chasse est ouverte ? */
+  int hunt_max_duck; /* y'a des quotas sur le canard d'elevage ? */
 } GeneralPrefs;
 
 
@@ -364,6 +368,7 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 
 #define FREE_STRING(x) { if (x) { free(x); x = NULL; }}
 #define ASSIGN_STRING_VAL(x,v) { FREE_STRING(x); x = strdup(v); assert(x); }
+const char *coincoin_default_useragent_template();
 void coincoin_default_useragent(char *s, int sz);
 char *string_to_miniuarule(unsigned char *str, MiniUARule *r);
 void miniuarule_clear(MiniUARule *r);
@@ -382,7 +387,7 @@ char *wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbati
 char *wmcc_prefs_read_options_auth(GeneralPrefs *p, const char *basefname);
 int wmcc_prefs_find_site_id(GeneralPrefs *p, const char *name);
 SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
-void wmcc_site_prefs_set_default(SitePrefs *p);
+void wmcc_site_prefs_set_default(SitePrefs *p, int verbatim);
 void wmcc_site_prefs_destroy(SitePrefs *p);
 void wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src);
 void option_site_root (const char  *optarg, SitePrefs *prefs, int verbatim);

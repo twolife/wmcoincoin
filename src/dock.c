@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.42 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.43 2004/04/26 20:32:31 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.43  2004/04/26 20:32:31  pouaite
+  roger demande le commit
+
   Revision 1.42  2004/04/18 15:37:28  pouaite
   un deux un deux
 
@@ -168,6 +171,7 @@
 #include "site.h"
 #include "dock.h"
 #include "board_util.h"
+#include "balltrap.h"
 
 /* image */
 #include "../xpms/leds.h"
@@ -175,70 +179,6 @@
 
 /* au max un defilement toutes les 15 secondes */
 #define TROLLO_MAX_SPEED 15
-
-#if 0
-typedef struct _Duck {
-  id_type id;
-  float x,y,vx,vy;
-  int step, age;
-  Window win;
-} Duck;
-
-
-ducks_build(Dock *dock) {
-  dock->nb_duck = 0;
-  
-}
-
-void
-ducks_add(Dock *dock, id_type id) {
-}
-
-void
-ducks_remove(Dock *dock, int i) {
-  assert(i < dock->nb_duck);
-  XDestroyWindow(dock->ducks[i].win);
-  memmove(dock->ducks + i, dock->ducks + i+1, dock->nb_duck-1-i);
-  dock->nb_duck--;
-}
-
-
-static int duck_is_in(Dock *dock, float x, float y) {
-  int i, ix=(int)x, iy=(int)y;
-  for (i=0; i < dock->nb_xiscreen; ++i) {
-    if (ix >= dock->xiscreen[i].x_org && iy >= dock->xiscreen[i].y_org &&
-        ix <= dock->xiscreen[i].x_org + dock->xiscreen[i].width -20 && 
-        iy <= dock->xiscreen[i].y_org + dock->xiscreen[i].height-20) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-static int duck_is_dead(Duck *d) { return (d->step == DUCK_DEAD); }
-
-ducks_animate(Dock *dock) {
-  for (i=0; i < dock->nb_duck; ++i) {
-    Duck *d = &dock->ducks[i];
-    if (!duck_is_dead(d->step)) {
-      d->x += d->vx;
-      d->y += d->vy;
-      d->step = (d->step + 1) % 4;
-      if (!duck_is_in(dock,d->x,d->y)) {
-        if (duck_is_in(dock,d->x-2*d->vx,d->y)) {
-          d->x -= 2*d->vx; d->vx = -d->vx;
-        } else if (duck_is_in(dock,d->x,d->y-2*d->vy)) {
-          d->y -= 2*d->vy; d->vy = -d->vy;
-        } else if (duck_is_in(dock,d->x-2*d->vx,d->y-2*d->vy)) {
-          d->x -= 2*d->vx; d->vx = -d->vx;
-          d->y -= 2*d->vy; d->vy = -d->vy;
-        } else d->step = DUCK_DEAD;
-      }
-    }
-  }
-}
-
-#endif
 
 void
 dock_update_pix_trolloscope(Dock *dock)
@@ -1338,6 +1278,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       } else { id = id_type_invalid_id(); }
       //newswin_show(dock, id); XRaiseWindow(dock->display, newswin_get_window(dock));
 #endif
+      balltrap_add(dock, id_type_invalid_id());
     } else if (IS_INSIDE(x,y,dock->leds.led[0].xpos,dock->leds.led[0].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[0].xpos+8, dock->leds.led[0].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1424,7 +1365,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
   } else if (xbevent->button == Button3) {
     if (IS_INSIDE(x,y,2,2,59,13) && 
 	(dock->door_state == CLOSED)) {
-      /* clic bouton droite sur la zone défilante -> fermeture la fenetre des news */
+      balltrap_airstrike(dock);
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {

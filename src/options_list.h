@@ -93,6 +93,7 @@ OPT_verbosity_underpants,
 OPT_verbosity_http,
 OPT_palmipede_default_message,
 OBSOLETE_OPT_news_font_family,
+OBSOLETE_OPT_news_font_size,
 OBSOLETE_OPTS_http_cookie,
 OPTS_check_board,
 OBSOLETE_OPTSG_http_site_url,
@@ -136,6 +137,7 @@ OBSOLETE_OPTSG_news_delay,
 OBSOLETE_OPTSG_http_path_end_news_url,
 OBSOLETE_OPTSG_tribune_backend_type,
 OBSOLETE_OPTSG_backend_type,
+OBSOLETE_OPTSG_http_path_myposts,
 NB_WMCC_OPTIONS
 } wmcc_options_id;
 
@@ -230,6 +232,7 @@ char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "verbosity.http",
 "palmipede.default_message",
 "news.font_family",
+"news.font_size",
 ".http.cookie",
 ".check_board",
 "!http.site_url",
@@ -273,6 +276,7 @@ char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "!http.path_end_news_url",
 "!tribune.backend_type",
 "!backend_type",
+"!http.path_myposts",
 NULL};
 #else
 extern char *wmcc_options_strings[];

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.25 2004/04/18 15:37:28 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.26 2004/04/26 20:32:31 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.26  2004/04/26 20:32:31  pouaite
+##   roger demande le commit
+##
 ##   Revision 1.25  2004/04/18 15:37:28  pouaite
 ##   un deux un deux
 ##
@@ -103,6 +106,7 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
 	dock.c dock.h \
         board_priv.h board.c board_rss.c board_pop3.c \
 	site.c site.h \
+	balltrap.c balltrap.h \
         keylist.c keylist.h \
 	scrollcoin.h scrollcoin.c \
 	picohtml.c picohtml.h \
@@ -118,7 +122,7 @@ wmcoincoin_CFLAGS = \
 	@XFT_CFLAGS@
 
 wmcoincoin_LDADD = \
-	@XFT_LIBS@
+	@XFT_LIBS@ -lm
 
 wmccc_CFLAGS = \
 	@GTK_CFLAGS@

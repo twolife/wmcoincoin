@@ -35,6 +35,12 @@ void update_prefs_from_obsolete_features(SitePrefs *sp) {
 }
 
 /* construit le useragent par défaut */
+const char *
+coincoin_default_useragent_template()
+{
+  return "wmCoinCoin/$v (palmipede; $s $r $m)";
+}
+
 void
 coincoin_default_useragent(char *s, int sz)
 {
@@ -700,7 +706,7 @@ option_get_url_remplacement(const unsigned char *arg, URLReplacements *urlr) {
 
 /* remplit la structure des prefs de site avec les valeurs par défaut */
 void
-wmcc_site_prefs_set_default(SitePrefs *p) {
+wmcc_site_prefs_set_default(SitePrefs *p, int verbatim) {
   assert(p);
   memset(p, 0, sizeof(SitePrefs));
   p->board_check_delay = 30; /* 2 fois par minute */
@@ -708,7 +714,9 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->board_wiki_emulation = NULL;
   if (p->user_agent) free(p->user_agent); 
   p->user_agent = malloc(USERAGENT_MAXMAX_LEN+1);
-  coincoin_default_useragent(p->user_agent, USERAGENT_MAXMAX_LEN+1);
+  if (!verbatim) {
+    coincoin_default_useragent(p->user_agent, USERAGENT_MAXMAX_LEN+1);
+  } else strcpy(p->user_agent, coincoin_default_useragent_template());
   p->user_name = NULL;
   p->palmi_msg_max_len = 255;
   p->palmi_ua_max_len = 60;
@@ -917,6 +925,10 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   
   p->miniuarules.first = NULL;
   p->url_repl.first = NULL;
+
+  p->hunt_opened = 1;
+  p->hunt_max_duck = 8;
+
   p->nb_sites = 0;
   { 
     int i;
@@ -1089,7 +1101,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     case OPTS_check_board: {
       CHECK_BOOL_ARG(sp->check_board);
     } break; 
+    case OBSOLETE_OPTSG_http_path_myposts:
     case OBSOLETE_OPT_news_font_family:
+    case OBSOLETE_OPT_news_font_size:
     case OBSOLETE_OPTSG_check_news:
     case OBSOLETE_OPTSG_news_delay:
     case OBSOLETE_OPTSG_http_path_end_news_url:
@@ -1672,7 +1686,7 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
   char *error = NULL;
   SitePrefs global_sp;
 
-  wmcc_site_prefs_set_default(&global_sp);
+  wmcc_site_prefs_set_default(&global_sp, verbatim);
   wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error, verbatim);
 
   if (p->nb_sites == 0) {

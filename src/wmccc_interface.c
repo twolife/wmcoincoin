@@ -1012,6 +1012,7 @@ create_global_pinnipede_options_dialog (void)
 {
   GtkWidget *global_pinnipede_options_dialog;
   GtkWidget *dialog_vbox3;
+  GtkWidget *notebook1;
   GtkWidget *vbox5;
   GtkWidget *label15;
   GtkWidget *frame4;
@@ -1044,8 +1045,14 @@ create_global_pinnipede_options_dialog (void)
   GtkWidget *hbox23;
   GtkWidget *auto_swallow;
   GtkWidget *auto_swallow_fb;
+  GtkWidget *hbox32;
+  GtkWidget *enable_troll_detector;
+  GtkWidget *enable_troll_detector_fb;
   GtkWidget *label16;
-  GtkWidget *frame10;
+  GtkWidget *hbox36;
+  GtkWidget *image15;
+  GtkWidget *label95;
+  GtkWidget *label87;
   GtkWidget *vbox17;
   GtkWidget *table6;
   GtkWidget *label81;
@@ -1059,7 +1066,29 @@ create_global_pinnipede_options_dialog (void)
   GtkWidget *browser_cmd_fb;
   GtkWidget *browser2_cmd_fb;
   GtkWidget *label85;
-  GtkWidget *label80;
+  GtkWidget *label88;
+  GtkWidget *vbox19;
+  GtkWidget *hbox33;
+  GtkWidget *image14;
+  GtkWidget *vbox20;
+  GtkWidget *hbox34;
+  GtkWidget *board_enable_hfr_pictures;
+  GtkWidget *board_enable_hfr_pictures_fb;
+  GtkWidget *hbox35;
+  GtkWidget *board_auto_dl_pictures;
+  GtkWidget *board_auto_dl_pictures_fb;
+  GtkWidget *hseparator7;
+  GtkWidget *label94;
+  GtkWidget *label92;
+  GtkWidget *vbox18;
+  GtkWidget *hunt_opened;
+  GtkWidget *hbox31;
+  GtkWidget *label90;
+  GtkObject *hunt_max_duck_adj;
+  GtkWidget *hunt_max_duck;
+  GtkWidget *hseparator6;
+  GtkWidget *label91;
+  GtkWidget *label89;
   GtkWidget *dialog_action_area3;
   GtkWidget *cancel_bt;
   GtkWidget *apply_bt;
@@ -1074,9 +1103,13 @@ create_global_pinnipede_options_dialog (void)
   dialog_vbox3 = GTK_DIALOG (global_pinnipede_options_dialog)->vbox;
   gtk_widget_show (dialog_vbox3);
 
+  notebook1 = gtk_notebook_new ();
+  gtk_widget_show (notebook1);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox3), notebook1, TRUE, TRUE, 0);
+
   vbox5 = gtk_vbox_new (FALSE, 2);
   gtk_widget_show (vbox5);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox3), vbox5, TRUE, TRUE, 0);
+  gtk_container_add (GTK_CONTAINER (notebook1), vbox5);
 
   label15 = gtk_label_new (_("Change pinnipede options"));
   gtk_widget_show (label15);
@@ -1133,7 +1166,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox9);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox9, FALSE, FALSE, 0);
 
-  pinnipede_open_on_start = gtk_check_button_new_with_mnemonic (_("Auto-open on startup"));
+  pinnipede_open_on_start = gtk_check_button_new_with_mnemonic (_("Auto-open on startup "));
   gtk_widget_show (pinnipede_open_on_start);
   gtk_box_pack_start (GTK_BOX (hbox9), pinnipede_open_on_start, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, pinnipede_open_on_start, _("The pinnipede window will show up as soon as wmcoincoin is started"), NULL);
@@ -1146,7 +1179,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox10);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox10, TRUE, TRUE, 0);
 
-  pp_use_classical_tabs = gtk_check_button_new_with_mnemonic (_("Use 'classical' tabs behaviour"));
+  pp_use_classical_tabs = gtk_check_button_new_with_mnemonic (_("Use 'classical' tabs behaviour "));
   gtk_widget_show (pp_use_classical_tabs);
   gtk_box_pack_start (GTK_BOX (hbox10), pp_use_classical_tabs, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, pp_use_classical_tabs, _("if you think that the default behaviour of the tabs sucks.."), NULL);
@@ -1159,7 +1192,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox11);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox11, TRUE, TRUE, 0);
 
-  pp_use_colored_tabs = gtk_check_button_new_with_mnemonic (_("Colored tabs"));
+  pp_use_colored_tabs = gtk_check_button_new_with_mnemonic (_("Colored tabs "));
   gtk_widget_show (pp_use_colored_tabs);
   gtk_box_pack_start (GTK_BOX (hbox11), pp_use_colored_tabs, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, pp_use_colored_tabs, _("if used, the \"tabs\" will be colored accordingly to the background color of the messages in the pinnipede"), NULL);
@@ -1172,7 +1205,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox12);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox12, TRUE, TRUE, 0);
 
-  hungry_boitakon = gtk_check_button_new_with_mnemonic (_("Very Hungry boitakon"));
+  hungry_boitakon = gtk_check_button_new_with_mnemonic (_("Very Hungry boitakon (eats answers to messages in boitakon) "));
   gtk_widget_show (hungry_boitakon);
   gtk_box_pack_start (GTK_BOX (hbox12), hungry_boitakon, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, hungry_boitakon, _("If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled"), NULL);
@@ -1185,7 +1218,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox18);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox18, TRUE, TRUE, 0);
 
-  disable_xft_antialiasing = gtk_check_button_new_with_mnemonic (_("Disable antialiasing"));
+  disable_xft_antialiasing = gtk_check_button_new_with_mnemonic (_("Disable antialiasing "));
   gtk_widget_show (disable_xft_antialiasing);
   gtk_box_pack_start (GTK_BOX (hbox18), disable_xft_antialiasing, FALSE, FALSE, 0);
 
@@ -1197,7 +1230,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (hbox23);
   gtk_box_pack_start (GTK_BOX (vbox6), hbox23, TRUE, TRUE, 0);
 
-  auto_swallow = gtk_check_button_new_with_mnemonic (_("Auto-swallow"));
+  auto_swallow = gtk_check_button_new_with_mnemonic (_("Auto-swallow (disable if you want wmcoincoin as a real dock app) "));
   gtk_widget_show (auto_swallow);
   gtk_box_pack_start (GTK_BOX (hbox23), auto_swallow, FALSE, FALSE, 0);
   gtk_tooltips_set_tip (tooltips, auto_swallow, _("When enabled, the 64x64 dockapp will be embedded into the pinnipede"), NULL);
@@ -1206,18 +1239,42 @@ create_global_pinnipede_options_dialog (void)
   gtk_widget_show (auto_swallow_fb);
   gtk_box_pack_start (GTK_BOX (hbox23), auto_swallow_fb, FALSE, FALSE, 0);
 
+  hbox32 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox32);
+  gtk_box_pack_start (GTK_BOX (vbox6), hbox32, FALSE, FALSE, 0);
+
+  enable_troll_detector = gtk_check_button_new_with_mnemonic (_("Enable the troll-detector "));
+  gtk_widget_show (enable_troll_detector);
+  gtk_box_pack_start (GTK_BOX (hbox32), enable_troll_detector, FALSE, FALSE, 0);
+
+  enable_troll_detector_fb = gtk_label_new (_("enable_troll_detector"));
+  gtk_widget_show (enable_troll_detector_fb);
+  gtk_box_pack_start (GTK_BOX (hbox32), enable_troll_detector_fb, FALSE, FALSE, 0);
+
   label16 = gtk_label_new (_("<b>Global settings</b>"));
   gtk_widget_show (label16);
   gtk_frame_set_label_widget (GTK_FRAME (frame4), label16);
   gtk_label_set_use_markup (GTK_LABEL (label16), TRUE);
 
-  frame10 = gtk_frame_new (NULL);
-  gtk_widget_show (frame10);
-  gtk_box_pack_start (GTK_BOX (vbox5), frame10, TRUE, TRUE, 0);
+  hbox36 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox36);
+  gtk_box_pack_start (GTK_BOX (vbox5), hbox36, TRUE, TRUE, 0);
+
+  image15 = create_pixmap (global_pinnipede_options_dialog, "cbronson.jpg");
+  gtk_widget_show (image15);
+  gtk_box_pack_start (GTK_BOX (hbox36), image15, FALSE, FALSE, 0);
+
+  label95 = gtk_label_new (_("Hello, this is Charles Bronson. I wish you a good coincoin"));
+  gtk_widget_show (label95);
+  gtk_box_pack_start (GTK_BOX (hbox36), label95, FALSE, FALSE, 0);
+
+  label87 = gtk_label_new (_("Appearance"));
+  gtk_widget_show (label87);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 0), label87);
 
   vbox17 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox17);
-  gtk_container_add (GTK_CONTAINER (frame10), vbox17);
+  gtk_container_add (GTK_CONTAINER (notebook1), vbox17);
 
   table6 = gtk_table_new (2, 3, FALSE);
   gtk_widget_show (table6);
@@ -1260,7 +1317,6 @@ create_global_pinnipede_options_dialog (void)
   browser_cmd = GTK_COMBO (combo2)->entry;
   gtk_widget_show (browser_cmd);
   gtk_widget_set_size_request (browser_cmd, 500, -1);
-  gtk_entry_set_text (GTK_ENTRY (browser_cmd), _("galeon -n %s &"));
 
   combo3 = gtk_combo_new ();
   g_object_set_data (G_OBJECT (GTK_COMBO (combo3)->popwin),
@@ -1284,7 +1340,6 @@ create_global_pinnipede_options_dialog (void)
 
   browser2_cmd = GTK_COMBO (combo3)->entry;
   gtk_widget_show (browser2_cmd);
-  gtk_entry_set_text (GTK_ENTRY (browser2_cmd), _("galeon -n %s &"));
 
   browser_cmd_fb = gtk_label_new (_("label83"));
   gtk_widget_show (browser_cmd_fb);
@@ -1304,16 +1359,102 @@ create_global_pinnipede_options_dialog (void)
   gtk_label_set_justify (GTK_LABEL (browser2_cmd_fb), GTK_JUSTIFY_CENTER);
   gtk_misc_set_alignment (GTK_MISC (browser2_cmd_fb), 0, 0.5);
 
-  label85 = gtk_label_new (_("<span size=\"x-small\">These options allows you to launch an external browser from wmcoincoin, this is used for reading the news, the comments detected by the flamophone, the personnal messages, the [url]s of the pinnipede teletype.\n<b>be careful</b>: this kind of 'external' command might be a great source of vulnerability since the urls can contain ANY caracter (think of 'http://plop.org; reboot' ..\nFor this reason, dangerous caracter are carefully escapped by wmcc before calling the external browser\nBy default, no browser is selected. \nIn the command, the <b>%s</b> is remplaced by the <b>escaped URL</b>. <u>Do not quote it</u>, or your browser will have problems to read urls containg character such as '&amp;', '$' etc. Do not forget to put an '&amp;' at the end of the command line or wmcc will freeze until the browser is closed.</span>"));
+  label85 = gtk_label_new (_("<span size=\"medium\">These options allows you to launch an external browser from wmcoincoin, this is used for reading the news, the comments detected by the flamophone, the personnal messages, the [url]s of the pinnipede teletype.\n<b>be careful</b>: this kind of 'external' command might be a great source of vulnerability since the urls can contain ANY caracter (think of 'http://plop.org; reboot' ..\nFor this reason, dangerous caracter are carefully escapped by wmcc before calling the external browser\nBy default, no browser is selected. \nIn the command, the <b>%s</b> is remplaced by the <b>escaped URL</b>. <u>Do not quote it</u>, or your browser will have problems to read urls containg character such as '&amp;', '$' etc. Do not forget to put an '&amp;' at the end of the command line or wmcc will freeze until the browser is closed.</span>"));
   gtk_widget_show (label85);
   gtk_box_pack_start (GTK_BOX (vbox17), label85, FALSE, FALSE, 0);
   gtk_label_set_use_markup (GTK_LABEL (label85), TRUE);
   gtk_label_set_line_wrap (GTK_LABEL (label85), TRUE);
 
-  label80 = gtk_label_new (_("<b>Browser Interaction</b>"));
-  gtk_widget_show (label80);
-  gtk_frame_set_label_widget (GTK_FRAME (frame10), label80);
-  gtk_label_set_use_markup (GTK_LABEL (label80), TRUE);
+  label88 = gtk_label_new (_("Browser"));
+  gtk_widget_show (label88);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 1), label88);
+
+  vbox19 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox19);
+  gtk_container_add (GTK_CONTAINER (notebook1), vbox19);
+
+  hbox33 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox33);
+  gtk_box_pack_start (GTK_BOX (vbox19), hbox33, FALSE, TRUE, 0);
+
+  image14 = create_pixmap (global_pinnipede_options_dialog, "totoz.xpm");
+  gtk_widget_show (image14);
+  gtk_box_pack_start (GTK_BOX (hbox33), image14, FALSE, FALSE, 0);
+
+  vbox20 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox20);
+  gtk_box_pack_start (GTK_BOX (hbox33), vbox20, TRUE, TRUE, 0);
+
+  hbox34 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox34);
+  gtk_box_pack_start (GTK_BOX (vbox20), hbox34, FALSE, FALSE, 0);
+
+  board_enable_hfr_pictures = gtk_check_button_new_with_mnemonic (_("Enable this feature "));
+  gtk_widget_show (board_enable_hfr_pictures);
+  gtk_box_pack_start (GTK_BOX (hbox34), board_enable_hfr_pictures, FALSE, FALSE, 0);
+
+  board_enable_hfr_pictures_fb = gtk_label_new (_("label98"));
+  gtk_widget_show (board_enable_hfr_pictures_fb);
+  gtk_box_pack_start (GTK_BOX (hbox34), board_enable_hfr_pictures_fb, FALSE, FALSE, 0);
+
+  hbox35 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox35);
+  gtk_box_pack_start (GTK_BOX (vbox20), hbox35, TRUE, TRUE, 0);
+
+  board_auto_dl_pictures = gtk_check_button_new_with_mnemonic (_("Automatically download [:totoz] pictures \n(may fill your harddrive with dumb GIFs) "));
+  gtk_widget_show (board_auto_dl_pictures);
+  gtk_box_pack_start (GTK_BOX (hbox35), board_auto_dl_pictures, FALSE, FALSE, 0);
+
+  board_auto_dl_pictures_fb = gtk_label_new (_("label97"));
+  gtk_widget_show (board_auto_dl_pictures_fb);
+  gtk_box_pack_start (GTK_BOX (hbox35), board_auto_dl_pictures_fb, FALSE, FALSE, 0);
+
+  hseparator7 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator7);
+  gtk_box_pack_start (GTK_BOX (vbox19), hseparator7, FALSE, FALSE, 0);
+
+  label94 = gtk_label_new (_("The totoz module requires wmcoincoin_player support. It searches for occurences of [:totoz] etc in the pinnipede, and displays a correspounding picture from the set of smileys of http://forums.hardware.fr\n\nThis pictures may be bookmarked in the pinnipede (via right clic), and the bookmark ( stored in ~/.wmcoincoin/totoz/bookmarks.{txt,html} ) can be opened from the totoz button in the palmipede."));
+  gtk_widget_show (label94);
+  gtk_box_pack_start (GTK_BOX (vbox19), label94, FALSE, FALSE, 0);
+  gtk_label_set_line_wrap (GTK_LABEL (label94), TRUE);
+
+  label92 = gtk_label_new (_("Totoz"));
+  gtk_widget_show (label92);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 2), label92);
+
+  vbox18 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox18);
+  gtk_container_add (GTK_CONTAINER (notebook1), vbox18);
+
+  hunt_opened = gtk_check_button_new_with_mnemonic (_("Enable balltrap"));
+  gtk_widget_show (hunt_opened);
+  gtk_box_pack_start (GTK_BOX (vbox18), hunt_opened, FALSE, FALSE, 0);
+
+  hbox31 = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox31);
+  gtk_box_pack_start (GTK_BOX (vbox18), hbox31, FALSE, FALSE, 0);
+
+  label90 = gtk_label_new (_("Max. number of simultaneous ducks"));
+  gtk_widget_show (label90);
+  gtk_box_pack_start (GTK_BOX (hbox31), label90, FALSE, FALSE, 0);
+
+  hunt_max_duck_adj = gtk_adjustment_new (1, 0, 100, 1, 10, 10);
+  hunt_max_duck = gtk_spin_button_new (GTK_ADJUSTMENT (hunt_max_duck_adj), 1, 0);
+  gtk_widget_show (hunt_max_duck);
+  gtk_box_pack_start (GTK_BOX (hbox31), hunt_max_duck, TRUE, TRUE, 0);
+
+  hseparator6 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator6);
+  gtk_box_pack_start (GTK_BOX (vbox18), hseparator6, FALSE, FALSE, 0);
+
+  label91 = gtk_label_new (_("Hunting is fun.  Everybody enjoys shooting ducks with a bazooka. Lower your stress and improve your productivity with the balltrap module.\n\nNote that since X sucks with respect to moving windows, the balltrap may consume all your CPU, especially when ducks are flying over a slow-refresh window.. "));
+  gtk_widget_show (label91);
+  gtk_box_pack_start (GTK_BOX (vbox18), label91, FALSE, FALSE, 0);
+  gtk_label_set_line_wrap (GTK_LABEL (label91), TRUE);
+
+  label89 = gtk_label_new (_("Balltrap"));
+  gtk_widget_show (label89);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 3), label89);
 
   dialog_action_area3 = GTK_DIALOG (global_pinnipede_options_dialog)->action_area;
   gtk_widget_show (dialog_action_area3);
@@ -1337,6 +1478,7 @@ create_global_pinnipede_options_dialog (void)
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, global_pinnipede_options_dialog, "global_pinnipede_options_dialog");
   GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, dialog_vbox3, "dialog_vbox3");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, notebook1, "notebook1");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox5, "vbox5");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label15, "label15");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, frame4, "frame4");
@@ -1367,8 +1509,14 @@ create_global_pinnipede_options_dialog (void)
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox23, "hbox23");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, auto_swallow, "auto_swallow");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, auto_swallow_fb, "auto_swallow_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox32, "hbox32");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, enable_troll_detector, "enable_troll_detector");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, enable_troll_detector_fb, "enable_troll_detector_fb");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label16, "label16");
-  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, frame10, "frame10");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox36, "hbox36");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, image15, "image15");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label95, "label95");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label87, "label87");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox17, "vbox17");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, table6, "table6");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label81, "label81");
@@ -1380,7 +1528,28 @@ create_global_pinnipede_options_dialog (void)
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser_cmd_fb, "browser_cmd_fb");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, browser2_cmd_fb, "browser2_cmd_fb");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label85, "label85");
-  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label80, "label80");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label88, "label88");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox19, "vbox19");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox33, "hbox33");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, image14, "image14");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox20, "vbox20");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox34, "hbox34");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, board_enable_hfr_pictures, "board_enable_hfr_pictures");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, board_enable_hfr_pictures_fb, "board_enable_hfr_pictures_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox35, "hbox35");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, board_auto_dl_pictures, "board_auto_dl_pictures");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, board_auto_dl_pictures_fb, "board_auto_dl_pictures_fb");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hseparator7, "hseparator7");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label94, "label94");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label92, "label92");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, vbox18, "vbox18");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hunt_opened, "hunt_opened");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hbox31, "hbox31");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label90, "label90");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hunt_max_duck, "hunt_max_duck");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, hseparator6, "hseparator6");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label91, "label91");
+  GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, label89, "label89");
   GLADE_HOOKUP_OBJECT_NO_REF (global_pinnipede_options_dialog, dialog_action_area3, "dialog_action_area3");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, cancel_bt, "cancel_bt");
   GLADE_HOOKUP_OBJECT (global_pinnipede_options_dialog, apply_bt, "apply_bt");
@@ -1688,7 +1857,7 @@ create_sitelist_dialog (void)
   GtkWidget *edit_bt;
   GtkWidget *colors_bt;
   GtkWidget *remove_bt;
-  GtkWidget *image6;
+  GtkWidget *hseparator5;
   GtkWidget *new_site_bt;
   GtkWidget *pinnipede_settings_bt;
   GtkWidget *edit_options_bt;
@@ -1765,9 +1934,9 @@ create_sitelist_dialog (void)
   gtk_widget_show (remove_bt);
   gtk_box_pack_start (GTK_BOX (vbox13), remove_bt, FALSE, FALSE, 0);
 
-  image6 = create_pixmap (sitelist_dialog, "logo.xpm");
-  gtk_widget_show (image6);
-  gtk_box_pack_start (GTK_BOX (vbox13), image6, TRUE, TRUE, 0);
+  hseparator5 = gtk_hseparator_new ();
+  gtk_widget_show (hseparator5);
+  gtk_box_pack_start (GTK_BOX (vbox13), hseparator5, TRUE, TRUE, 0);
 
   new_site_bt = gtk_button_new_with_mnemonic (_("Insert a new site"));
   gtk_widget_show (new_site_bt);
@@ -1836,7 +2005,7 @@ create_sitelist_dialog (void)
   GLADE_HOOKUP_OBJECT (sitelist_dialog, edit_bt, "edit_bt");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, colors_bt, "colors_bt");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, remove_bt, "remove_bt");
-  GLADE_HOOKUP_OBJECT (sitelist_dialog, image6, "image6");
+  GLADE_HOOKUP_OBJECT (sitelist_dialog, hseparator5, "hseparator5");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, new_site_bt, "new_site_bt");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, pinnipede_settings_bt, "pinnipede_settings_bt");
   GLADE_HOOKUP_OBJECT (sitelist_dialog, edit_options_bt, "edit_options_bt");
@@ -2190,6 +2359,8 @@ create_change_board_settings_dialog (void)
   GtkWidget *label68;
   GtkWidget *label70;
   GtkWidget *user_login;
+  GtkWidget *label86;
+  GtkWidget *user_agent;
   GtkWidget *dialog_action_area10;
   GtkWidget *cancelbutton3;
   GtkWidget *apply_bt;
@@ -2382,6 +2553,20 @@ create_change_board_settings_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
+  label86 = gtk_label_new (_("Default useragent:"));
+  gtk_widget_show (label86);
+  gtk_table_attach (GTK_TABLE (table5), label86, 0, 1, 8, 9,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label86), 0, 0.5);
+
+  user_agent = gtk_entry_new ();
+  gtk_widget_show (user_agent);
+  gtk_table_attach (GTK_TABLE (table5), user_agent, 1, 2, 8, 9,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, user_agent, _("$v will be replaced by the wmcoincoin version, and $s, $r, $m will be replaced by the output of the command uname -a"), NULL);
+
   dialog_action_area10 = GTK_DIALOG (change_board_settings_dialog)->action_area;
   gtk_widget_show (dialog_action_area10);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area10), GTK_BUTTONBOX_END);
@@ -2438,6 +2623,8 @@ create_change_board_settings_dialog (void)
   GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label68, "label68");
   GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label70, "label70");
   GLADE_HOOKUP_OBJECT (change_board_settings_dialog, user_login, "user_login");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, label86, "label86");
+  GLADE_HOOKUP_OBJECT (change_board_settings_dialog, user_agent, "user_agent");
   GLADE_HOOKUP_OBJECT_NO_REF (change_board_settings_dialog, dialog_action_area10, "dialog_action_area10");
   GLADE_HOOKUP_OBJECT (change_board_settings_dialog, cancelbutton3, "cancelbutton3");
   GLADE_HOOKUP_OBJECT (change_board_settings_dialog, apply_bt, "apply_bt");

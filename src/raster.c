@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.18 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.19 2004/04/26 20:32:32 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.19  2004/04/26 20:32:32  pouaite
+  roger demande le commit
+
   Revision 1.18  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -349,9 +352,9 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
     s++; if (!(*s == ' ')) { err=3; goto ralala; }
     s++;
     if (strcasecmp(s, "None") != 0) {
-      if (*s != '#') {
+      if (*s != '#' || strlen(s) != 7) {
 	XColor xc;
-	if (XParseColor(rc->dpy, DefaultColormap(rc->dpy, rc->screen_number), s, &xc)) {
+	if (XParseColor(rc->dpy, DefaultColormap(rc->dpy, rc->screen_number), s, &xc) == 0) {
 	  fprintf(stderr, _("Unknown colour in the .xpm: '%s'\n'"), s);
 	  exit(0);
 	}

@@ -572,6 +572,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       redraw_pinni = 1;
     }
 
+    G_INT_OPT_COPY_IF_CHANGED(hunt_opened);
+    G_INT_OPT_COPY_IF_CHANGED(hunt_max_duck);
+
     /* les options plus light se négocient avec un bon gros refresh */
     if (G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) +
         G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) +
