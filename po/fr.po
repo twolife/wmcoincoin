@@ -58,14 +58,14 @@ msgid ""
 "happens. Don't even think of suiciding the coincoin : THE SHOW MUST GO ON\n"
 msgstr ""
 "Avec grande paresse, wmcoincoin va garder ispell vivant, juste pour voir ce "
-"qu'il arrivera. Ne pensez même pas à suicider le coincoin : THE SHOW MUST "
-"GO ON\n"
+"qu'il arrivera. Ne pensez même pas à suicider le coincoin : THE SHOW MUST GO "
+"ON\n"
 
 #: src/http_win.c:90
 msgid "Connected succesfully!\n"
 msgstr "Connexion réussie\n"
 
-#: src/http_win.c:111 src/http_unix.c:136
+#: src/http_unix.c:136 src/http_win.c:111
 #, c-format
 msgid "Connection timed out (timeout=%d sec)!\n"
 msgstr "Timeout de connexion (timeout=%d sec)!\n"
@@ -372,8 +372,7 @@ msgid ""
 "gethostbyname('%s') -> if the network lags, the coincoin can be blocked "
 "here\n"
 msgstr ""
-"gethostbyname('%s') -> si le réseau rame, le coincoin peut être bloqué "
-"ici\n"
+"gethostbyname('%s') -> si le réseau rame, le coincoin peut être bloqué ici\n"
 
 #: src/http.c:558
 #, c-format
@@ -410,7 +409,8 @@ msgstr "http_skip_header a un problème de chaussette ! (%s)"
 #: src/http.c:747
 #, c-format
 msgid "http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"
-msgstr "http_read: requête de longueur %d, pos = %ld, morceau=%d (taille %ld)\n"
+msgstr ""
+"http_read: requête de longueur %d, pos = %ld, morceau=%d (taille %ld)\n"
 
 #: src/http.c:752
 msgid ""
@@ -497,7 +497,8 @@ msgstr ""
 
 #: src/troll_detector.c:645
 msgid " -> unable to use the words left in a troll, this is the end\n"
-msgstr " -> impossible d'utiliser les mots restants dans un troll, c'est la fin\n"
+msgstr ""
+" -> impossible d'utiliser les mots restants dans un troll, c'est la fin\n"
 
 #: src/troll_detector.c:652
 msgid ""
@@ -571,7 +572,8 @@ msgstr ""
 msgid ""
 "[%<YEL %s>] Hmmm, how strange is '%s' ... there is no 'loginfo' field.\n"
 msgstr ""
-"[%<YEL %s>] Hum, comme '%s' est bizarre ... il n'y a pas de champ 'loginfo'.\n"
+"[%<YEL %s>] Hum, comme '%s' est bizarre ... il n'y a pas de champ "
+"'loginfo'.\n"
 
 #: src/comments.c:242
 msgid "not yet a poster???"
@@ -613,7 +615,8 @@ msgstr ""
 msgid ""
 "[%<YEL %s>] error in '%s', the html code must have changes... (err=%d)\n"
 msgstr ""
-"[%<YEL %s>] erreur dans '%s', le code html doit avoir des modifs... (err=%d)\n"
+"[%<YEL %s>] erreur dans '%s', le code html doit avoir des modifs... (err=%"
+"d)\n"
 
 #: src/comments.c:350
 #, fuzzy
@@ -622,7 +625,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr "Erreur d'ouverture de %s\n"
 
-#: src/comments.c:355 src/news.c:836 src/board.c:1491
+#: src/board.c:1491 src/comments.c:355 src/news.c:836
 #, fuzzy
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr "Erreur d'ouverture de %s\n"
@@ -694,7 +697,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:395 src/news.c:652 src/board.c:1347
+#: src/board.c:1347 src/news.c:395 src/news.c:652
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -969,7 +972,7 @@ msgstr "Je ne connais vraiment pas %s"
 msgid "FILTER UNDEFINED"
 msgstr "FILTRE NON DÉFINI"
 
-#: src/pinnipede_widgets.c:827 src/pinnipede.c:2670
+#: src/pinnipede.c:2670 src/pinnipede_widgets.c:827
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font>' from %s"
 msgstr ""
@@ -1194,8 +1197,8 @@ msgid ""
 " %<GRN -l> %<CYA locale>\t: change the default locale (use -l fr to force "
 "wmcoincoin to speak french) (or set LC_MESSAGES properly)\n"
 msgstr ""
-" %<GRN -l> %<CYA locale>\t: change la locale par défaut (utiliser -l fr pour forcer "
-"wmcoincoin à parler français) (ou régler LC_MESSAGES correctement)\n"
+" %<GRN -l> %<CYA locale>\t: change la locale par défaut (utiliser -l fr pour "
+"forcer wmcoincoin à parler français) (ou régler LC_MESSAGES correctement)\n"
 
 #: src/prefs_gestion.c:80
 msgid ""
@@ -1891,8 +1894,8 @@ msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
 msgstr ""
-"on dirait que vous avez foiré le fichier d'options, aucune tribune de définie: pas de tribune, "
-"pas de palmipede"
+"on dirait que vous avez foiré le fichier d'options, aucune tribune de "
+"définie: pas de tribune, pas de palmipede"
 
 #: src/palmipede.c:1266
 msgid "Warning : errot in XCreateIC() !\n"
@@ -2029,8 +2032,8 @@ msgid ""
 "DON'T PANIC, the coincoin handles this well, it only proves I didn't write\n"
 "this bugfix for coconuts.\n"
 msgstr ""
-"%<YEL \\o/ Peut-être qu'il y a seulement eu une 'race condition' dans le backend !"
-"> (id=%d).\n"
+"%<YEL \\o/ Peut-être qu'il y a seulement eu une 'race condition' dans le "
+"backend !> (id=%d).\n"
 "PAS DE PANIQUE, le coincoin s'en charge bien, ça prouve seulement que je\n"
 "n'ai pas écrit ce correctif pour des cacahouette.\n"
 
@@ -2039,8 +2042,8 @@ msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"
 msgstr ""
-"[%<YEL %s>] Il y a un problème dans '%s', je ne peux l'analyser... erreur:%<YEL %"
-"s>\n"
+"[%<YEL %s>] Il y a un problème dans '%s', je ne peux l'analyser... erreur:%"
+"<YEL %s>\n"
 
 #: src/prefs.c:62
 #, c-format
@@ -2234,7 +2237,8 @@ msgstr "Impossible d'ouvrir le fichier '%s' en lecture\n"
 msgid ""
 "line %d: attempt to use a site pref before any 'site:' option has been used\n"
 msgstr ""
-"ligne %d: tentative d'utiliser une préférence de site avant d'avoir précisé une option 'site:'\n"
+"ligne %d: tentative d'utiliser une préférence de site avant d'avoir précisé "
+"une option 'site:'\n"
 
 #: src/prefs.c:1522
 #, c-format

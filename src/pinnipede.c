@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.84 2002/11/20 23:34:40 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.85 2002/11/21 18:53:38 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2790,9 +2790,9 @@ pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int 
 
 
 static void 
-pp_open_url(Dock *dock, char *url, int mx, int my) {
+pp_open_url(Dock *dock, char *url, int mx, int my, int num) {
   Pinnipede *pp = dock->pinnipede;
-  open_url(url, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 2);
+  open_url(url, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, num);
   pp_visited_links_add(pp, url);
   pp_pv_destroy(pp);
   pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
@@ -2838,7 +2838,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
     /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
     if (pw->attr & PWATTR_LNK) {
       if (strlen(pw->attr_s)) {
-	pp_open_url(dock, pw->attr_s, mx, my);
+	pp_open_url(dock, pw->attr_s, mx, my, 1);
       }
     } else if (pw->attr & PWATTR_TSTAMP) {
       /* clic sur l'holorge -> ouverture du palmipede */
@@ -3002,9 +3002,9 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
 	  }
 	}
       } else if (pw && pw->attr & PWATTR_LNK) {
-	/* clic gauche sur une url , on affiche le truc dans le browser externe numero 2 */
+	/* clic milieu sur une url , on affiche le truc dans le browser externe numero 2 */
 	if (strlen(pw->attr_s)) {
-	  pp_open_url(dock, pw->attr_s, mx, my);
+	  pp_open_url(dock, pw->attr_s, mx, my,2);
 	}
       } else if (pw && pw->attr & PWATTR_LOGIN) {
 	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);

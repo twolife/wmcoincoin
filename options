@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.47 2002/11/20 23:34:40 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.48 2002/11/21 18:53:37 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.48  2002/11/21 18:53:37  pouaite
+#%  correction ptit pb d'ouverture d'url
+#%
 #%  Revision 1.47  2002/11/20 23:34:40  pouaite
 #%  paf le patch, par lordOric
 #%
@@ -550,14 +553,20 @@ pinnipede.url_replace: "dtc" => "[dtc]"
 ###    symb="dtri"  (fixe le symbole sauf si il est refixé par une regle suivante) 
 ### et symb:="dtri" (fixe le symbole définitivement, même si une règle suivante 
 ###                  aurait pu le rechanger)
+board.miniua_rule:               => symb="square", color="#ffffff"
+board.miniua_rule:   site:"dlfp" => symb="dtri", color="#ff8000"
+board.miniua_rule:   site:"woof" => symb="square", color="#ffff00"
+board.miniua_rule:   site:"glandium" => symb="rutri", color="#0000ff" 
+board.miniua_rule:  login:"kadreg" => color="#80ff00"
+
 board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:="un bot!",symb:="circ",color:="#ffffff"
 board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#00ff00"
 ### pour faire plaisir à jr :°)
 board.miniua_rule:  ua:"^jr-lamoule$"  => ua:="JR",symb:="cross",color:="#00ff80"
 board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
-board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pyc²/\1"
-board.miniua_rule: ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="wmc²/\1"
+board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pyc²/\1", color:="#ff8000"
+board.miniua_rule: ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="wmc²/\1", color:="#80ff00"
 board.miniua_rule: ua:"coincoin.net ([0-9.]+)" => ua="c².net/\1"
 
 ### Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1b) Gecko/20020
@@ -580,13 +589,8 @@ board.miniua_rule:  ua:"Mozilla/4.0 \(compatible; MSIE ([0-9.]+).*NT ([0-9.]+)" 
 
 ### Mozilla/4.7 [fr] (WinNT; I)
 board.miniua_rule: ua:"Mozilla/([0-9.]+)+.*\(([^;]+); [UI]\)" => ua:="NS\1/\2"
-
-
-board.miniua_rule:               => symb="square", color="#ffffff"
-board.miniua_rule:   site:"dlfp" => symb="dtri", color="#ff8000"
-board.miniua_rule:   site:"woof" => symb="square", color="#ffff00"
-board.miniua_rule:   site:"glandium" => symb="rutri", color="#0000ff" 
-board.miniua_rule:  login:"kadreg" => color="#80ff00"
+board.miniua_rule: ua:".*Win.*" => color:="#0080ff"
+board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker
