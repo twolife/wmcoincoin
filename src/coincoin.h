@@ -233,12 +233,19 @@ struct _Board {
   volatile int update_request;
 };
 
+typedef struct _SiteNameHash {
+  int hash;
+  int sid;
+} SiteNameHash;
 
 struct _Boards {
   board_msg_info *first;
   board_msg_info *last;
   int nb_msg;
   Board *btab[MAX_SITES];
+
+  int nb_aliases;
+  SiteNameHash *aliases;
 };
 
 struct _Site {

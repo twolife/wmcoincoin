@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.66 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.67 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.67  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.66  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -1352,7 +1355,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   return pw;
 }
 
-void pp_refresh_hilight_refs(Pinnipede *pp, Boards *boards, time_t timestamp, int sub_timestamp) {
+void pp_refresh_hilight_refs(Pinnipede *pp, Boards *boards, int sid, time_t timestamp, int sub_timestamp) {
   int l;
 
   for (l=0; l < pp->nb_lignes; l++) {
@@ -1369,10 +1372,12 @@ void pp_refresh_hilight_refs(Pinnipede *pp, Boards *boards, time_t timestamp, in
 
 	  ref2_mi = check_for_horloge_ref(boards, pw->parent->id, pw->w, NULL, 0, &bidon, &ref2_num); assert(bidon);
 	  if (ref2_mi && ref2_mi->timestamp == timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
-	    if (ref2_num == -1                                 /* ref à plusieurs posts */
-		|| (ref2_num==0 && sub_timestamp <= 0) /* au cas on a mis un ¹ inutile par inadvertance */
-		|| (ref2_num == sub_timestamp)) {
-	      pw->attr |= PWATTR_TMP_EMPH;
+	    if (id_type_sid(ref2_mi->id) == sid) {
+	      if (ref2_num == -1                                 /* ref à plusieurs posts */
+		  || (ref2_num==0 && sub_timestamp <= 0) /* au cas on a mis un ¹ inutile par inadvertance */
+		  || (ref2_num == sub_timestamp)) {
+		pw->attr |= PWATTR_TMP_EMPH;
+	      }
 	    }
 	  }
 	}
@@ -1451,7 +1456,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	 -> on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
        */
       mi = ref_mi;
-      while (mi && mi->timestamp == ref_mi->timestamp) {
+      while (mi && mi->timestamp == ref_mi->timestamp && 
+	     id_type_sid(mi->id) == id_type_sid(ref_mi->id)) {
 	ref_in_window = 0;
 	for (l=0; l < pp->nb_lignes; l++) {
 	  if (pp->lignes[l]) {
@@ -1475,10 +1481,12 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	
       /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
 	 temporairement en gras (ça c vraiment pour faire le cakos)*/
-      pp_refresh_hilight_refs(pp, boards, ref_mi->timestamp, ref_mi->sub_timestamp);
+      pp_refresh_hilight_refs(pp, boards, id_type_sid(ref_mi->id), 
+			      ref_mi->timestamp, ref_mi->sub_timestamp);
     }
   } else if (pw_ref && (pw_ref->attr & PWATTR_TSTAMP)) {
-    pp_refresh_hilight_refs(pp, boards, pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
+    pp_refresh_hilight_refs(pp, boards, id_type_sid(pw_ref->parent->id), 
+			    pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
   }
 
 
@@ -1508,7 +1516,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
      
      if (ref_mi) {
        if (ref_num == -1) {
-	 if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
+	 if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window
+	     && id_type_sid(pw->parent->id) == id_type_sid(ref_mi->id)) {
 	   bgpixel = pp->emph_pixel; opaque_bg = 1;
 	 }
        } else {
@@ -1541,7 +1550,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
        on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
     */
     mi = ref_mi;
-    while (mi && mi->timestamp == ref_mi->timestamp) {
+    while (mi && mi->timestamp == ref_mi->timestamp
+	   && id_type_sid(mi->id) == id_type_sid(ref_mi->id)) {
       PostVisual *pv;
       if (mi->in_boitakon == 0 || pp->disable_plopify) {
 	pv = pp_pv_add(pp, boards, mi->id);
@@ -2125,7 +2135,7 @@ pp_count_backrefs(board_msg_info *base_mi)
       for (j = 0, ref_mi = mi->refs[i].mi; j < mi->refs[i].nbmi; j++, ref_mi=ref_mi->next) {
 	/* on notera qu'on fait bien ref_mi->next et pas ref_mi->g_next */
 	assert(ref_mi);
-
+	
 	/* si on pointe vers le bon */
 	if (ref_mi == base_mi) {
 	  nb_backrefs++;

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.1 2002/08/17 18:54:15 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.2  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.1  2002/08/17 18:54:15  pouaite
   ajout des fichiers manquants
 
@@ -1080,16 +1083,6 @@ editw_undo(Dock *dock, EditW *ew) {
   }
 }
 
-/* appelée par editw_show */
-static void
-editw_select_site(Dock *dock, int site_id) {
-  Site *s;
-  s = sl_find_site_id(dock->sites, site_id); assert(s);
-  assert(s->prefs->check_board);
-  dock->coin_coin_site_id = site_id;
-  dock->editw->prefs = s->prefs;
-}
-
 /* changement de buffer edite: message <-> useragent */
 static void
 editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
@@ -1163,6 +1156,17 @@ editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
   //  XMoveWindow(dock->display, ew->win, 1200, 70) ;
   editw_action(dock, ew);
 }
+
+/* appelée par editw_show */
+static void
+editw_select_site(Dock *dock, int site_id) {
+  Site *s;
+  s = sl_find_site_id(dock->sites, site_id); assert(s);
+  assert(s->prefs->check_board);
+  dock->coin_coin_site_id = site_id;
+  dock->editw->prefs = s->prefs;
+}
+
 
 /* declenche l'affichage de la fenetre */
 void
@@ -1839,8 +1843,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 	}
 	assert(s);
 	editw_select_site(dock, s->site_id);
-	editw_draw_frame(dock, ew, ew->pix, &dock->NormalGC, 0);
-	editw_draw(dock, ew, ew->pix);
+	editw_select_buff(dock, ew, ew->buff_num);
       } break;
 
     case XK_KP_Left:

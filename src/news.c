@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.1 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: news.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.2  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.1  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -672,7 +675,7 @@ site_news_dl_and_update(Site *site)
     snprintf(path, 2048, "%s%s/%s", (strlen(site->prefs->site_path) ? "/" : ""), 
 	     site->prefs->site_path, site->prefs->path_news_backend); 
   } else {
-    snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
+    snprintf(path, 2048, "%s/wmcoincoin/test/%s/short.php3", getenv("HOME"), site->prefs->site_name); 
     myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
 

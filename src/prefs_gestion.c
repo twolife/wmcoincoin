@@ -269,7 +269,6 @@ wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p)
   }
   free(options_full_file_name);
   wmcc_prefs_from_cmdline(argc, argv, p);
-
 }
 
 /* man fonction_a_la_con */

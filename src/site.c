@@ -3,6 +3,37 @@
 #include "site.h"
 
 void
+sl_build_site_names_hash(SiteList *sl)
+{
+  Site *site;
+  int cnt;
+  Boards *bds = sl->boards; 
+
+  if (bds->aliases) free(bds->aliases);
+  bds->nb_aliases = 0;
+  for (site = sl->list; site; site = site->next) {
+    bds->nb_aliases += site->prefs->nb_names;    
+  }
+  if (bds->nb_aliases == 0) {
+    bds->aliases = NULL;
+    return;
+  } 
+  ALLOC_VEC(bds->aliases, bds->nb_aliases, SiteNameHash);
+  
+  cnt = 0;
+  for (site = sl->list; site; site = site->next) {
+    int i;
+    for (i=0; i < site->prefs->nb_names; i++) {
+      bds->aliases[cnt].hash = str_hache_nocase(site->prefs->all_names[i], 
+					       strlen(site->prefs->all_names[i]));
+      bds->aliases[cnt].sid = site->site_id;
+      cnt ++;
+    }
+  }
+  assert(cnt == bds->nb_aliases);
+}
+
+void
 boards_init_sites(SiteList *slist) {
   Site *s;
   int i;
@@ -11,6 +42,7 @@ boards_init_sites(SiteList *slist) {
   for (s = slist->list; s; s=s->next) {
     slist->boards->btab[s->site_id] = s->board;
   }
+  sl_build_site_names_hash(slist);
 }
 
 static Boards *
@@ -29,6 +61,7 @@ boards_destroy(Boards *b) {
 }
 
 
+
 /* init de la liste de sites */
 SiteList *
 sl_create() {
@@ -43,6 +76,7 @@ sl_create() {
     }
   }
   boards_init_sites(sl);
+  sl_build_site_names_hash(sl);
   return sl;
 }
 
@@ -102,6 +136,7 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   pp = sl->list; while (pp && pp->next) pp = pp->next;
   if (pp) pp->next = site; else sl->list = site;
 
+  sl_build_site_names_hash(sl);
 }
 
 /* suppression d'un site */
@@ -129,6 +164,7 @@ sl_delete_site(SiteList *sl, Site *site)
   if (site->fortune) free(site->fortune);
 
   free(site);
+  sl_build_site_names_hash(sl);
 }
 
 Site*

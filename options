@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.30 2002/08/17 18:33:38 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.31 2002/08/18 00:29:30 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.31  2002/08/18 00:29:30  pouaite
+#%  en travaux .. prière de porter le casque
+#%
 #%  Revision 1.30  2002/08/17 18:33:38  pouaite
 #%  grosse commition
 #%
@@ -96,14 +99,27 @@
 
 ###vous pouvez décommenter des options et changer leur valeurs
 
-#site: linuxfr
+### A LIRE AVANT D'EDITER:
+### il y a trois type d'options:
+### * les options globales qui commence par une lettre, celles-ci affectent wmcoincoin dans 
+### son ensemble.
+### * les options de site, qui commencent par un point. Celles-ci n'affectent que le site en 
+### cours de definition.
+### * les options de site dont on peut définir la valeur par défaut (indiquée ici par '[.]nom_option')
+### si celles-ci sont utilisées sans point, elle affecteront tous les sites déclarés par la suite
+### (en gros elles définissent une valeur par défaut). Si elle sont utilisées avec le point, alors
+### elle agissent sur le site en cours de définition.
+
+
+### définition d'un nouveau site (le premier mot indiqué choisit le nom principal du site
+### et les suivants définissent des alias)
+#site: "dlfp","linuxfr"
+
+#.http.cookie: <inserez la valeur xxx du cookie 'session_id=xxx' du site ici si vous voulez etre authentifié>
 
 ### indiquez la locale du dacode ("fr" si il vous cause en français, "en" si il
 ### cause en anglais etc.. 
 #[.]locale: fr
-### REMARQUE IMPORTANTE:
-###
-
 
 ### mettre iso8859-15 pour avoir le support de l'euro (il faut avoir installé ces fontes !)
 #font.encoding: iso8859-1
@@ -240,8 +256,6 @@
 #.check_board: on
 #.check_comments: on
 #.check_messages: on
-
-#[.]http.cookie: <inserez la valeur xxx du cookie 'session_id=xxx' de linuxfr ici>
 
 ### si vous ne fournissez pas votre cookie, mais que vous voulez qd meme
 ### voir des fortunes dans le pinnipede, utilisez cette option

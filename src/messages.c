@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.1 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.2  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.1  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -141,7 +144,7 @@ site_msg_dl_and_update(Site *site)
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(site->prefs->site_path) ? "/" : ""), site->prefs->site_path, site->prefs->path_messages);
   } else {
-    snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
+    snprintf(path, 2048, "%s/wmcoincoin/test/%s/messages.html", getenv("HOME"), site->prefs->site_name);
     myprintf(_("DEBUG: opening %<RED %s>\n"), path);
   }
 

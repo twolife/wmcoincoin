@@ -8,7 +8,6 @@ board_msg_info *boards_find_id(const Boards *boards, id_type id);
 id_type boards_last_id(const Boards *b);
 board_msg_info* board_find_previous_from_id(const Board *board, int id);
 board_msg_info *board_find_previous(const Board *board, board_msg_info *mi);
-int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int *ref_s, int *ref_num);
 char *board_get_tok(const unsigned char **p, const unsigned char **np, 
 		    unsigned char *tok, int max_toklen, int *has_initial_space);
 int board_msg_is_ref_to_me(Boards *boards, const board_msg_info *ref_mi);

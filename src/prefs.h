@@ -89,7 +89,10 @@ typedef struct _SitePrefs {
   int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
   enum { locFR, locEN } locale; /* "localisation" du site (pour quelques mots-clefs + problèmes d'horloges AM/PM) */
   int use_AM_PM;
-  char *site_name; /* le nom court du site (argument de l'option 'site:') */
+  char **all_names; /* liste des noms possibles du site (tous les alias) */
+  int  nb_names;
+  char *site_name; /* le nom court du site (premier argument de l'option 'site:'),
+		      le pointeur pointe sur all_names[0] */
   long time_difference; /* decalage horaire du site */
   int check_news;
   int check_board;

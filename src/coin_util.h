@@ -59,6 +59,7 @@ char *str_multi_substitute(const char *src, const char **keys, const char **subs
 char *str_substitute(const char *src, const char *key, const char *substitution);
 char *shell_quote(const char *src);
 int str_hache(const unsigned char *s, int max_len);
+int str_hache_nocase(const unsigned char *s, int max_len);
 unsigned char chr_noaccent_tolower(unsigned char c);
 void str_noaccent_tolower(unsigned char *s);
 unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille);

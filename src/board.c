@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.1 2002/08/17 18:33:38 pouaite Exp $
+  rcsid=$Id: board.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.2  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.1  2002/08/17 18:33:38  pouaite
   grosse commition
 
@@ -228,7 +231,33 @@ void
 board_destroy(Board *board)
 {
   board_msg_info *mi, *nmi;
+  Boards *boards = board->boards;
 
+  boards->btab[board->site->site_id] = NULL;
+  /* 
+     effacage de toutes les refs à des messages de cette board 
+     c'est pas joli joli, mais faut bien faire le sale boulot
+   */
+  mi = board->boards->first;
+  while (mi) {
+    int i;
+    if (mi->nb_refs) {
+      for (i = 0; i < mi->nb_refs; i++) {
+	if (mi->refs[i].mi) {
+	  Board *ref_board = NULL;
+	  ref_board = boards->btab[id_type_sid(mi->refs[i].mi->id)];
+	  if (ref_board == board) mi->refs[i].mi = NULL;
+	}
+      }
+    }
+    mi = mi->g_next;
+  }
+
+  /*
+    j'vais lui montrer qui c'est Raoul. Au 4 coins d'Paris qu'on va l'retrouver 
+    éparpillé par petits bouts façon puzzle... Moi quand on m'en fait trop 
+    j'correctionne plus, j'dynamite... j'disperse... et j'ventile...
+  */
   mi = board->msg;
   while (mi) {
     board_global_unlink_msg(board->boards, mi);
@@ -442,11 +471,14 @@ board_remove_old_msg(Board *board)
     /* on sauve le prochain premier message */
     it = board->msg->next;
 
-    /* nettoyage des references à board->msg */
+
+    /* nettoyage des references à board->msg 
+       on fait ça sur boards pour aussi gerer les ref. cross tribune
+    */
     {
       board_msg_info *mi;
       int i;
-      mi = board->msg->next;
+      mi = board->boards->first;
       while (mi) {
 	for (i=0; i < mi->nb_refs; i++) {
 	  /* si on trouve un ref à ce message ... */
@@ -467,7 +499,7 @@ board_remove_old_msg(Board *board)
 	    }
 	  }
 	}
-	mi = mi->next;
+	mi = mi->g_next;
       }
     }
 
@@ -1010,7 +1042,7 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 
     if (board->time_shift_min == board->time_shift_max) {
       board->time_shift_min--;
-      board->time_shift_max--;
+      board->time_shift_max++;
     }
 
     if (board->time_shift_min >  board->time_shift_max) {
@@ -1124,7 +1156,7 @@ board_update(Board *board)
     snprintf(path, 2048, "%s%s/%s", (strlen(board->site->prefs->site_path) ? "/" : ""), 
 	     board->site->prefs->site_path, board->site->prefs->path_board_backend);
   } else {
-    snprintf(path, 2048, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
+    snprintf(path, 2048, "%s/wmcoincoin/test/%s/remote.xml", getenv("HOME"), board->site->prefs->site_name);
     myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
 
@@ -1274,7 +1306,7 @@ board_update(Board *board)
 
   board->local_time_last_check_end = time(NULL);
 
-  assert(r.host == NULL); /* juste pour vérif qu'on a bien fait le close */
+  assert(r.host == NULL || (Prefs.debug & 2)); /* juste pour vérif qu'on a bien fait le close */
 
   /* cleanup .. */
   flag_updating_board++;

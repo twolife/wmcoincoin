@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.1 2002/08/17 18:33:38 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.2  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.1  2002/08/17 18:33:38  pouaite
   grosse commition
 
@@ -320,13 +323,15 @@ board_key_list_test_mi_num(Boards *boards, board_msg_info *mi, KeyList *klist, i
 
 
    avertissement au lecteur téméraire:
-     cette fonction est un sac de noeuds et ça ne va pas en s'arrangeant
+   cette fonction est un sac de noeuds et ça ne va pas en s'arrangeant
+   
+   (en gros c'est toute une serie de tests pour filtrer les refs invalides tout en
+   etant le plus général possible ..)
 
-     (en gros c'est toute une serie de tests pour filtres les refs invalides tout en
-     etant le plus général possible ..)
+   site_name_hash contient 0 quand il n'est pas fait allusion à un site particulier (du genre 11:11:11@linuxfr)
 */
-int
-check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
+static int
+check_for_horloge_ref_basic_helper(const unsigned char *ww, const char **site_name, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
 {
   int l, h, m, s, num;  /* num est utilise pour les posts multiples (qui on un même timestamp) */
   const unsigned char *p;
@@ -337,8 +342,27 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
   num = -1; h = -1; m = -1; s = -1;
   l = strlen(ww);
 
+  if (l < 4) return 0; /* de qui se moque-t-on ? */
+
+  /* on tente d'abord d'intercepter le nom du site */
+  *site_name = NULL;
+  if (l > 6) {
+    int i;    
+    for (i = 6; i < 10 && ww[i]; i++) {
+      if (ww[i] == '@') {
+	l = i; /* ben oui faut pas affoler tout le monde */
+
+	if (isalpha(ww[i+1]))
+	  *site_name = ww+i+1;
+	
+/* 	printf("--> site_name = '%s'\n",*site_name);  */
+	break;
+      }
+    }
+  }
+
   if (l < 4 || l > 10) return 0; /* on enlimine les cas les plus explicites */
-  strncpy(w, ww, 10); w[10] = 0;
+  strncpy(w, ww, l); w[l] = 0;
 
   use_deuxpt = 0;
   p = w; 
@@ -426,6 +450,34 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
   *ref_h = h; *ref_m = m; *ref_s = s; *ref_num = num;
 
   return 1;
+}
+
+/* 
+   comme au-dessus, mais fait l'effort de recherche le numero du site 
+   attention aux valeurs de retour de site_id 
+*/
+static int
+check_for_horloge_ref_basic(Boards *boards, const unsigned char *ww, int *site_id, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
+{
+  const char *site_name;
+  int ret;
+  
+  *site_id = -1;
+  ret = check_for_horloge_ref_basic_helper(ww, &site_name, ref_h, ref_m, ref_s, ref_num);
+  if (ret && site_name) { /* bon .. ça mérite qu'on cherche le site */
+    int i;
+
+    for (i=0; isalpha(site_name[i]); i++) ;
+    int hash = str_hache_nocase(site_name, i);
+    for (i = 0; i < boards->nb_aliases; i++) {
+      if (boards->aliases[i].hash == hash) {
+	*site_id = boards->aliases[i].sid;
+	break;
+      }
+    }
+    if (*site_id == -1) *site_id = -2; /* pour savoir qu'un @site a été utilisé, mais qu'il est mauvais */
+  }
+  return ret;
 }
 
 /* ceci est un commentaire à la con pour forcer le commit (oui je suis un tocard mais g la flemme de chercher à comprendre */
@@ -532,6 +584,12 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	  break; /* deux caractères non numériques consécutifs, c'est la fin de l'horloge.. */
 	last = *end;
       }
+      if (*end == '@') {
+	do { 
+	  end++;
+	} while (isalpha(*end));
+/* 		{ char c = *end; *end = 0; printf("TOK : %s\n", start); *end = c; } */
+      }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
       if (end-start > 4 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
     } else {
@@ -593,16 +651,20 @@ board_msg_is_ref_to_me(Boards *boards, const board_msg_info *ref_mi) {
 }
 
 
-/* recherche un message par hh:mm:ss^num */
+/*
+  recherche un message par hh:mm:ss^num 
+  /!\ la recherche est local à la board indiquée en parametre
+*/
 static board_msg_info *
 board_find_horloge_ref(Board *board, int caller_id, 
-			 int h, int m, int s, int num, unsigned char *commentaire, int comment_sz)
+		       int h, int m, int s, int num, unsigned char *commentaire, int comment_sz)
 {
   board_msg_info *mi, *best_mi;
   int best_mi_num;
   int previous_mi_was_a_match = 0, match;
 
   mi = board->msg;
+    
   best_mi = NULL;
   best_mi_num = 0;
 
@@ -613,14 +675,14 @@ board_find_horloge_ref(Board *board, int caller_id,
     if (s == -1) {
       if ((mi->hmsf[0] == h || (board->site->prefs->use_AM_PM && 
 				(mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
-	   && mi->hmsf[1] == m && !previous_mi_was_a_match) {
+	   && mi->hmsf[1] == m) {
 	match = 1;
       }
     } else {
       if ((mi->hmsf[0] == h  || (board->site->prefs->use_AM_PM && 
 				 (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
 	  && mi->hmsf[1] == m && mi->hmsf[2] == s) {
-	if ((num == -1 || num == best_mi_num) && !previous_mi_was_a_match) {
+	if (num == -1 || num == best_mi_num) {
 	  match = 1; //break;
 	}
 	best_mi_num++;
@@ -638,7 +700,7 @@ board_find_horloge_ref(Board *board, int caller_id,
       }
     }
     
-    if (match) best_mi = mi;
+    if (match && !previous_mi_was_a_match) best_mi = mi;
     previous_mi_was_a_match = match;
     mi = mi->next;
   }
@@ -697,24 +759,31 @@ board_find_horloge_ref(Board *board, int caller_id,
 }
 
 
+
+/* look for a reference on every board */
 board_msg_info *
 check_for_horloge_ref(Boards *boards, id_type caller_id, 
 		      const unsigned char *ww, unsigned char *commentaire, 
 		      int comment_sz, int *is_a_ref, int *ref_num)
 {
   Board *board;
-  int h, m, s, num; /* num est utilise pour les posts multiples (qui on un même timestamp) */
-
-  assert(!id_type_is_invalid(caller_id));
-  board = boards->btab[caller_id.sid];
+  int site_id, h, m, s, num; /* num est utilise pour les posts multiples (qui on un même timestamp) */
   
+  assert(!id_type_is_invalid(caller_id));
   *is_a_ref = 0;
-  if (check_for_horloge_ref_basic(ww, &h, &m, &s, &num) == 0) return NULL;
+  if (check_for_horloge_ref_basic(boards, ww, &site_id, &h, &m, &s, &num) == 0) return NULL;
   *is_a_ref = 1;
 
   if (ref_num) *ref_num = num;
-  
 
+  if (site_id >= 0) {
+    board = boards->btab[site_id];
+  } else if (site_id == -1) { /* on prend le site par défaut */
+    board = boards->btab[caller_id.sid];
+  } else {
+    snprintf(commentaire, comment_sz, _("I don't fucking know %s"), ww);
+    return NULL;
+  }
   return board_find_horloge_ref(board, caller_id.lid, 
 				  h, m, s, num, commentaire, comment_sz);
 }
@@ -722,7 +791,6 @@ check_for_horloge_ref(Boards *boards, id_type caller_id,
 /* appelé discretement par board_check_my_messages dans board.c
    (oui c pas logique) 
 
-   TODO: refs inter-sites
 */
 void
 board_msg_find_refs(Board *board, board_msg_info *mi)
@@ -741,10 +809,13 @@ board_msg_find_refs(Board *board, board_msg_info *mi)
      
      if (board_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
      if (tok[0] >= '0' && tok[0] <= '9') {
-       int h,m,s,num;
-       if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
+       int sid, h,m,s,num;
+       if (check_for_horloge_ref_basic(board->boards, tok, &sid, &h, &m, &s, &num)) {
 	 board_msg_info *ref_mi;
 
+	 Board *ref_board = board;
+	 if (sid >= 0) ref_board = board->boards->btab[sid];
+	 
 	 if (mi->nb_refs+1 > max_nb_refs) {
 	   max_nb_refs += 10;
 	   mi->refs = realloc(mi->refs, max_nb_refs*sizeof(board_msg_ref));
@@ -757,9 +828,10 @@ board_msg_find_refs(Board *board, board_msg_info *mi)
 	 mi->refs[mi->nb_refs].nbmi = 0;
 	 mi->refs[mi->nb_refs].mi = NULL;
 
-	 ref_mi = board_find_horloge_ref(board, mi->id.lid, 
-					   h, m, s, num, NULL, 0);
-	 if (ref_mi && ref_mi->id.lid <= mi->id.lid) {
+	 ref_mi = board_find_horloge_ref(ref_board, mi->id.lid, 
+					 h, m, s, num, NULL, 0);
+
+	 if (ref_mi && ((ref_mi->id.lid <= mi->id.lid) || ref_board != board)) {
 	   mi->refs[mi->nb_refs].mi = ref_mi;
 	   mi->refs[mi->nb_refs].nbmi=1;
 	   if (num == -1) {

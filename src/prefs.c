@@ -295,6 +295,15 @@ option_browser(const char *optarg,const char *optname,
   return NULL;
 }
 
+void
+destroy_string_list(char ***list, int *nb_elt) {
+  int i;
+  if (*list) { 
+    for (i=0; i < *nb_elt; i++) 
+      free((*list)[i]); 
+    free(*list); *list = NULL; 
+  }
+}
 
 /* lecture d'une liste de chaines, séparées par des virgules */
 char*
@@ -302,9 +311,8 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
 { 
   int pass, cnt;
   char mot[1024];
-  int i;
 
-  if (*list) { for (i=0; i < *nb_elt; i++) free((*list)[i]); free(*list); *list = NULL; }
+  destroy_string_list(list, nb_elt);
   for (pass = 0; pass < 2; pass++) {
     unsigned char *s;
 
@@ -350,7 +358,7 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
 
   return NULL;
  erreur:
-  if (*list) { for (i=0; i < *nb_elt; i++) free((*list)[i]); free(*list); *list = NULL; }
+  if (*list) {   destroy_string_list(list, nb_elt); }
   return str_printf(_("Error for option '%s': a list of word between guillemots, separated by commas, is expected."), optname);
 }
 
@@ -463,7 +471,11 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
   BICOLOR_SET(p->pp_strike_color,0x800000,0x800000);
   p->locale = locFR;
-  ASSIGN_STRING_VAL(p->site_name, "linuxfr");
+  p->site_name = NULL;
+  p->all_names = NULL;
+  p->nb_names = 0;
+  /*  ASSIGN_STRING_VAL(p->site_name, "linuxfr");
+      ASSIGN_STRING_VAL(p->all_names, "linuxfr");*/
   p->time_difference = 0;
   p->check_news = 1;
   p->check_board = 1;
@@ -515,7 +527,8 @@ wmcc_site_prefs_destroy(SitePrefs *p)
   FREE_STRING(p->user_cookie);
   FREE_STRING(p->user_login);
   FREE_STRING(p->user_name);
-  FREE_STRING(p->site_name);
+  /*  FREE_STRING(p->site_name); NON ! c'est detruit dans all_names */
+  destroy_string_list(&p->all_names, &p->nb_names);
 }
 
 /* remplit la structure des prefs generales avec les valeurs par défaut */
@@ -1069,10 +1082,15 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     if (p->nb_sites >= MAX_SITES-1) {
       printf("Too much sites (MAX_SITES = %d), ignoring option 'site: %s'\n", MAX_SITES, arg); 
     } else {
+      SitePrefs *sp;
+      char *err;
       p->nb_sites++; 
-      p->site[p->nb_sites-1] = calloc(1, sizeof(SitePrefs));
-      wmcc_site_prefs_copy(p->site[p->nb_sites-1], global_sp);
-      ASSIGN_STRING_VAL(p->site[p->nb_sites-1]->site_name, arg);
+      sp = calloc(1, sizeof(SitePrefs));
+      p->site[p->nb_sites-1] = sp;
+      wmcc_site_prefs_copy(sp, global_sp);
+      if ((err = option_get_string_list(arg, opt_name, &sp->all_names, &sp->nb_names))) return err;
+      assert(sp->all_names);
+      sp->site_name = sp->all_names[0];
     }
   } break;
   case OPT_pinnipede_auto_open: {

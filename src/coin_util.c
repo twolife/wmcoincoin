@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.28 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.29 2002/08/18 00:29:30 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.29  2002/08/18 00:29:30  pouaite
+  en travaux .. prière de porter le casque
+
   Revision 1.28  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -472,6 +475,27 @@ str_hache(const unsigned char *s, int max_len)
   return CVINT(v[0],v[1],v[2],v[3]);
 }
 
+int
+str_hache_nocase(const unsigned char *s, int max_len)
+{
+  unsigned char v[4];
+  const unsigned char *p;
+  int i, j;
+
+  assert(s);
+  v[0] = 0xAB; v[1] = 0x13; v[2] = 0x9A; v[3] = 0x12;
+  p = s;
+  for (i=0, j=0; i < max_len && s[i]; i++) {
+    unsigned char c,d;
+    d = tolower(p[i]);
+    c = ((d)<<j) + ((d) >> (8-j));
+    v[j] ^= c;
+    j++; if (j == 4) j = 0;
+  }
+  return CVINT(v[0],v[1],v[2],v[3]);
+}
+
+
 unsigned char char_trans[256];
 static int char_trans_init = 0;
 
@@ -526,6 +550,8 @@ str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
   free(a); free(m);
   return res;
 }
+
+
 
 /* un printf pas très fin, mais avec allocation dynamique..
    c'est pratique ces ptites choses */
