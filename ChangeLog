@@ -1,3 +1,8 @@
+2001-01-10 jarjarbinks 
+	* options, src/coincoin_prefs.c, src/global.h, src/wmcoincoin.c
+	patch qui ralentit progresivement les refresh de la tribune en cas de
+	totale inactivité de l'utilisateur
+	
 --------------------------v2.3.3mh4-----------------------------------------
 2001-01-08 glandium <mh@glandium.org>
 

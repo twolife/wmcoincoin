@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.6 2001/12/18 12:43:37 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.7 2002/01/10 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.7  2002/01/10 09:18:23  pouaite
+  patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
+
   Revision 1.6  2001/12/18 12:43:37  pouaite
   ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 
@@ -132,6 +135,18 @@ option_set_news_check_delay (const char *optarg,
     fprintf(stderr, "valeur invalide pour l'option '%s': le delai entre deux check des news est exprime en seconde, et doit etre > 60\n", optname);
     exit(1);
     BLAHBLAH(1, myprintf("delai entre deux check des %<yel news> fixe a: %<YEL %d> secondes\n", The_Prefs->dlfp_news_check_delay));
+  }
+}
+
+static void
+option_set_max_refresh_delay (const char *optarg, 
+                             const char *optname,
+                            structPrefs *The_Prefs) {
+  The_Prefs->dlfp_max_refresh_delay = atoi(optarg);
+  if (The_Prefs->dlfp_max_refresh_delay <= 20 || The_Prefs->dlfp_max_refresh_delay>10000) {
+    fprintf(stderr, "valeur invalide pour l'option '%s': le temps au bout duquel on ne rafraîchit plus est exprime en minutes, et doit etre > 20\n", optname);
+    exit(1);
+    BLAHBLAH(1, myprintf("temps au bout duquel on ne rafraîchit plus les %<yel news> et la %<yel tribune> fixe a: %<YEL %d> minutes\n", The_Prefs->dlfp_max_refresh_delay));
   }
 }
 
@@ -809,6 +824,9 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("tribune.troll_detector:", 1) {
 	The_Prefs->enable_troll_detector = option_get_bool_val(optarg); ok++;
       }
+      TEST_OPTION("tribune.stop_refresh:", 1) {
+	option_set_max_refresh_delay(optarg, optname, The_Prefs); ok++;
+      }
       TEST_OPTION("news.delay:", 1) {
 	option_set_news_check_delay(optarg,optname,The_Prefs); ok++;
       }
@@ -1072,6 +1090,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->options_file_name = strdup("options");
 
   The_Prefs->dlfp_tribune_check_delay = 30; /* 2 fois par minute */
+  The_Prefs->dlfp_max_refresh_delay = 120; /* 2 heures sans évènement */
   The_Prefs->tribune_max_msg = 300;
   The_Prefs->dlfp_news_check_delay = 300; /* 1 fois toutes les 5 min */
   The_Prefs->debug = 0;

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.7 2002/01/10 09:03:06 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.8 2002/01/10 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.8  2002/01/10 09:18:23  pouaite
+  patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
+
   Revision 1.7  2002/01/10 09:03:06  pouaite
   integration du patch de glandium (requetes http/1.1 avec header 'If-Modified-Since' --> coincoin plus gentil avec dacode)
 
@@ -92,6 +95,7 @@
 
 //Pixmap pixmap_letters;
 
+int temps_depuis_dernier_event = 0;
 
 /* ça c'est le tableau du trolloscope */
 TL_item **tribune_load; //[TRIBUNE_LOAD_WIDTH][TRIBUNE_LOAD_HEIGHT];
@@ -1806,7 +1810,8 @@ wmcoincoin_dispatch_events(Dock *dock)
     balloon_check_event(dock, &event);
     
     /* gestion de la souris (pour le declenchement des ballons) 
-       + on ramene le focus dans editw (quand elle est active) */
+       + on ramene le focus dans editw (quand elle est active)
+       + on remet à 0 le temps depuis le dernier déplacement */
     switch (event.type) {
     case EnterNotify: 
       {
@@ -1823,6 +1828,7 @@ wmcoincoin_dispatch_events(Dock *dock)
 	dock->mouse_y = event.xmotion.y;
 	dock->mouse_cnt = 0;
 	dock->mouse_win = event.xany.window;
+	temps_depuis_dernier_event = 0;
       } break;
     case LeaveNotify:
       {
@@ -2384,11 +2390,36 @@ void initx(Dock *dock, int argc, char **argv) {
   XFlush(dock->display);
 }
 
+
+
+static int faut_il_rafraichir(int count,int delay, int offset)
+{
+  if(count<25*delay) // On a déjà rafraîchi récemment
+    return 0;
+  if(temps_depuis_dernier_event > 1500*Prefs.dlfp_max_refresh_delay) // minutes
+    return 0;
+  if(temps_depuis_dernier_event > 150*Prefs.dlfp_max_refresh_delay)
+    {
+      if(temps_depuis_dernier_event % (125*delay) == offset)
+	return 1;
+      else
+	return 0;
+    }
+    // Exemple : au bout de 2 heures on arrête tout => au bout de 12 minutes on commence à ralentir (5 fois moins de refresh).
+
+  if (temps_depuis_dernier_event % (25*delay) == offset)
+    return 1;
+  return 0;
+}
+
+
+
 /* ----------------------------------- */
 /*        Main Network thread          */
 /* ----------------------------------- */
 void *Network_Thread (void *arg) {
-  static int update_cnt = 0;
+  int compteur_news = 1000000;
+  int compteur_tribune = 1000000;
 
   arg = arg;
   strcpy(dock->newstitles, "transfert en cours...");
@@ -2408,14 +2439,16 @@ void *Network_Thread (void *arg) {
     if (dock->news_update_request > 1)
       dock->news_update_request--;
 
-    if (update_cnt % (25*Prefs.dlfp_news_check_delay) == 10 ||
+    if (faut_il_rafraichir(compteur_news,Prefs.dlfp_news_check_delay,10) ||
 	dock->news_update_request == 1) {
+      compteur_news=0;
       dlfp_updatenews(dock->dlfp); ALLOW_X_LOOP;
       dock->news_update_request = 0;
     }
     
-    if (update_cnt % (25*Prefs.dlfp_tribune_check_delay) == 5 || 
+    if (faut_il_rafraichir(compteur_tribune,Prefs.dlfp_tribune_check_delay,5) || 
 	dock->tribune_update_request == 1) {
+      compteur_tribune=0;
       if (dock->tribune_updatable) {
 	//	printf("update\n");
 	dlfp_updatetribune(dock->dlfp); 
@@ -2434,7 +2467,9 @@ void *Network_Thread (void *arg) {
     pause(); 
     ALLOW_X_LOOP;
 #endif
-    update_cnt++;
+    compteur_news++;
+    compteur_tribune++;
+    temps_depuis_dernier_event++;
   }
 }
 

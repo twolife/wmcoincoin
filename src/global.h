@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.4 2001/12/18 12:43:37 pouaite Exp $
+  rcsid=$Id: global.h,v 1.5 2002/01/10 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.5  2002/01/10 09:18:23  pouaite
+  patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
+
   Revision 1.4  2001/12/18 12:43:37  pouaite
   ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 
@@ -40,6 +43,9 @@ typedef struct _structPrefs{
   /* delai (en sec) et assez approximatif entre deux verif de la tribune */
   int dlfp_tribune_check_delay;
   int dlfp_news_check_delay;
+  /* Au bout de combien de temps on arrête lesdites verifications (en min)
+     Note : la fréquence diminue progressivement.*/
+  int dlfp_max_refresh_delay;
 
   /* nb max de messages conserves en memoire */
   int tribune_max_msg;

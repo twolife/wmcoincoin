@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.4 2001/12/18 12:43:36 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.5 2002/01/10 09:18:23 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.5  2002/01/10 09:18:23  pouaite
+#%  patch de jjb (ralentissement progressif des updates de la tribune en cas d'inactivité du coincoin)
+#%
 #%  Revision 1.4  2001/12/18 12:43:36  pouaite
 #%  ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 #%
@@ -20,6 +23,9 @@
 
 ### delai enntre deux verifications de la tribune (en secondes)
 #tribune.delay: 30
+
+### Temps au bout duquel on ne la vérifie plus (en minutes)
+#tribune.stop_refresh: 120
 
 ### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede
 ### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas été conçu pour ça !
