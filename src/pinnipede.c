@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.87 2002/12/20 15:49:51 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.88 2003/02/25 23:10:44 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -1892,7 +1892,7 @@ pp_rebuild(Dock *dock)
   if (pp_ismapped(dock)) {
     pp_update_content(dock, pp->colle_en_bas ? 
 		      get_last_id_filtered(dock->sites->boards, &pp->filter) : 
-		      pp->id_base, 0, 0, 1);  
+		      id_type_invalid_id(), 0, 0, 1);
     pp_refresh(dock, pp->win, NULL);
     printf("refresh!\n");
   }
