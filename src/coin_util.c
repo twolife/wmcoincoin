@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.2 2001/12/02 18:29:46 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.3 2001/12/21 12:21:23 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.3  2001/12/21 12:21:23  pouaite
+  pico bugfix
+
   Revision 1.2  2001/12/02 18:29:46  pouaite
   à la demande des décideurs de tous poils, gestion (toute naze...) de l'EURO !
 
@@ -282,7 +285,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
 	     {"reg;"   , "®"},
 	     {"macr;"  , "¯"},
 	     {"deg;"   , "°"}, // 0xb0
-	     {"plusnm;", "±"},
+	     {"plusmn;", "±"},
 	     {"sup2;"  , "²"},
 	     {"sup3;"  , "³"},
 	     {"acute;" , "´"},
