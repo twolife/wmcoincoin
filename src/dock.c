@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.32 2003/01/12 18:42:17 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.33 2003/02/25 23:04:31 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.33  2003/02/25 23:04:31  pouaite
+  cosmetique stats
+
   Revision 1.32  2003/01/12 18:42:17  pouaite
   et une baguette bien cuite pour le monsieur avec l'ornythorinque
 
@@ -1027,7 +1030,6 @@ float myexp(float x) {
     c *= x/i;
     s += c; 
   }
-  printf("myexp(%f)=%f\n",x,s);
   return MIN(MAX(s,0.),1.);  
 }
 
@@ -1042,7 +1044,7 @@ show_http_stats(Dock *dock) {
     int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
     if (site->http_success_cnt) {
       q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
-      q = q * (site->http_ping_stat<=0. ? 0. :
+      q = q * (site->http_ping_stat<=0. ? 1. :
 	       myexp(-MAX(site->http_ping_stat/3,0.02))/myexp(-0.02));
     }
     if (total) {
