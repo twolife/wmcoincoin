@@ -1,4 +1,4 @@
-fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.3 2001/12/16 01:43:33 pouaite Exp $\n");
+fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.4 2001/12/17 00:26:32 pouaite Exp $\n");
 fprintf(f,"\n");
 fprintf(f,"###vous pouvez décommenter des options et changer leur valeurs\n");
 fprintf(f,"\n");
@@ -60,7 +60,7 @@ fprintf(f,"\n");
 fprintf(f,"### equivalent de l'option '-r' -> url de la page principale\n");
 fprintf(f,"#http.site_url: http://linuxfr.org\n");
 fprintf(f,"#http.path_tribune_backend: board/remote.xml\n");
-fprintf(f,"#http.path_news_backend: short.php3\n");
+fprintf(f,"#http.path_news_backend: backend.rdf\n");
 fprintf(f,"#http.path_end_news_url: ,0,-1,6.html\n");
 fprintf(f,"#http.path_tribune_add: board/add.php3\n");
 fprintf(f,"#http.path_myposts: users/myposts.php3?order=id\n");

@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.5 2001/12/17 00:26:32 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.5  2001/12/17 00:26:32  pouaite
+  ultimes bugfixes avant la v2.3.2
+
   Revision 1.4  2001/12/16 20:28:45  pouaite
   bugfixes divers
 
@@ -1094,7 +1097,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->site_port = 80;
   The_Prefs->site_path = strdup("");
   The_Prefs->path_tribune_backend = strdup("board/remote.xml");
-  The_Prefs->path_news_backend = strdup("short.php3");
+  The_Prefs->path_news_backend = strdup("backend.rdf");
   The_Prefs->path_end_news_url = strdup(",0,-1,6.html");
   The_Prefs->path_tribune_add = strdup("board/add.php3");
   The_Prefs->path_myposts = strdup("users/myposts.php3?order=id");
