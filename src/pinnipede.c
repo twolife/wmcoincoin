@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.48 2002/04/10 22:53:44 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.49 2002/04/11 10:15:28 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.49  2002/04/11 10:15:28  pouaite
+  fix compil
+
   Revision 1.48  2002/04/10 22:53:44  pouaite
   un commit et au lit
 
@@ -2095,10 +2098,11 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
     /* test si on scrolle qutomatiquement pour afficher le nouveau message */
     //    if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
     if (pp->flag_tribune_updated) {
+      int last_id;
       if (pp->sc) { 
 	pp_scrollcoin_update_bounds(dock, trib); 
       }      
-      int last_id = get_last_id(trib, &pp->filter);
+      last_id = get_last_id(trib, &pp->filter);
       if (trib->last_post_id != pp->last_post_id && pp->colle_en_bas) { // && pp->decal_base == 0) {
 	//	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
 	pp_update_content(dock, trib, last_id, 0, 0, 0);
