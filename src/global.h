@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.28 2002/11/11 15:26:39 pouaite Exp $
+  rcsid=$Id: global.h,v 1.29 2002/12/20 17:40:55 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.29  2002/12/20 17:40:55  pouaite
+  ornythorinque en gelée
+
   Revision 1.28  2002/11/11 15:26:39  pouaite
   fix soulignement et strike avec les span
 
@@ -95,8 +98,12 @@
 
 #define USERNAME_MAX_LEN 60 // lg max du username affiché dans la tribune, pour les personnes loggées
 
-#ifdef __GNUC__
-# define UNUSED __attribute((unused))
+#ifndef __APPLE_CC__
+# ifdef __GNUC__
+#  define UNUSED __attribute((unused))
+# else
+#  define UNUSED
+# endif
 #else
 # define UNUSED
 #endif

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.14  2002/12/20 17:40:48  pouaite
+dnl   ornythorinque en gelée
+dnl
 dnl   Revision 1.13  2002/12/20 15:49:51  pouaite
 dnl   prout 2.4.2b ?
 dnl
@@ -270,6 +273,11 @@ case "$host" in
 	  ;;
     *-darwin*)
           echo -e "\n${YELLOW}darwin detected, vilain macounet !${RESET}\n"
+	  echo -e "le preproc 'apple' pue de la bouche .. ajout de -no-cpp-precomp"
+          CFLAGS="$CFLAGS -no-cpp-precomp"
+	  echo -e "IMPORTANT !!!!!\n"
+          echo "Si le make foire (TRES PROBABLE) en disant 'libintl.h: No such file or directory',\n ---> faites: cp intl/libgnuintl.h src/libintl.h ./configure --with-included-gettext; make clean; make"
+	  echo ""
           ;;
     *GNU*)
 	  echo -e "\n${YELLOW}GNU/Hurd ! you need to shave yourself${RESET}\n"

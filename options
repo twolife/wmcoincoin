@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.49 2002/12/20 15:49:51 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.50 2002/12/20 17:40:49 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.50  2002/12/20 17:40:49  pouaite
+#%  ornythorinque en gelée
+#%
 #%  Revision 1.49  2002/12/20 15:49:51  pouaite
 #%  prout 2.4.2b ?
 #%
@@ -504,6 +507,9 @@
 pinnipede.url_replace: "google." => "[google]"
 pinnipede.url_replace: "yahoo" => "[yahoo]"
 pinnipede.url_replace: "lemonde.fr" => "[lemonde]"
+pinnipede.url_replace: "liberation.fr" => "[libé]"
+pinnipede.url_replace: "journaldunet" => "[jdn]"
+pinnipede.url_replace: "01net.com" => "[01net]"
 pinnipede.url_replace: "forum.hardware" => "[hfr]"
 pinnipede.url_replace: "linuxfr.org/" => "[dlfp]"
 pinnipede.url_replace: "goatse" => "[pas cliquer!]"
@@ -514,6 +520,7 @@ pinnipede.url_replace: "slashdot.org" => "[/.]"
 pinnipede.url_replace: "kde" => "[kde]"
 pinnipede.url_replace: "gnome" => "[gnome]"
 pinnipede.url_replace: "osnews" => "[osnews]"
+pinnipede.url_replace: "zdnet" => "[zdnet]"
 pinnipede.url_replace: "kuro5hin" => "[K5]"
 pinnipede.url_replace: "freshmeat" => "[FM]"
 pinnipede.url_replace: "debian" => "[debian]"
