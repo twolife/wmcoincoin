@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.10 2002/06/01 17:54:04 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.11 2002/06/01 20:21:18 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.11  2002/06/01 20:21:18  pouaite
+##   version 2.3.8a
+##
 ##   Revision 1.10  2002/06/01 17:54:04  pouaite
 ##   nettoyage
 ##
@@ -30,7 +33,7 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
-AUTOMAKE_OPTIONS = 1.6 dist-bzip2
+AUTOMAKE_OPTIONS = 1.5 dist-bzip2
 
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
