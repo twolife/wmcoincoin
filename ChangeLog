@@ -1,3 +1,11 @@
+--------------------------v2.3.3mh3-----------------------------------------
+
+2001-12-28 glandium <mh@glandium.org>
+
+	* src/pinnipede.c: redirection des [mots] vers le [wiki] ; reste à
+	faire en sorte que les [expressions complètes] soient prises en
+	compte...
+
 --------------------------v2.3.3--------------------------------------------
 
 2001-12-17 pouaite <c0in@altern.org>
