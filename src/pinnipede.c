@@ -1,3 +1,12 @@
+/*
+  rcsid=$Id: pinnipede.c,v 1.2 2001/12/02 18:20:58 pouaite Exp $
+  ChangeLog:
+  $Log: pinnipede.c,v $
+  Revision 1.2  2001/12/02 18:20:58  pouaite
+  correction (enfin!) du bug d'affichage lorsque plusieurs posts ont le même timestamp
+
+*/
+
 #include <X11/xpm.h>
 #include "coincoin.h"
 #include "time.h"
@@ -40,6 +49,7 @@
 typedef struct _PostVisual PostVisual;
 typedef struct _PostWord PostWord;
 
+/* une liste de mots avec leurs attributs */
 struct _PostWord {
   unsigned char *w; /* non mallocé, stocke dans la même zone que cette structure */
   unsigned short attr;
@@ -49,11 +59,11 @@ struct _PostWord {
   struct _PostVisual *parent;
 };
 
-
+/* liste chainée de posts */
 struct _PostVisual {
   int id; // message id 
   time_t tstamp;
-  PostWord *first;
+  PostWord *first; /* la liste des mots */
   int nblig; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt; // compteur de references
   struct _PostVisual *next;
@@ -98,7 +108,9 @@ struct _Pinnipede {
 };
 
 
-
+/* les deux fonctions suivantes permettent de se balader dans la liste des posts 
+ (de maniere bourrine... c pas pour 25000 messages )
+*/
 int 
 get_next_id(DLFP_tribune *trib, int id, tribune_msg_info **nmi) 
 {
@@ -345,12 +357,12 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
   while (mi) {
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
-      if (mi->hmsf[0] == h && mi->hmsf[1] == m) {
+      if (mi->hmsf[0] == h && mi->hmsf[1] == m && best_mi == NULL) {
 	best_mi = mi;
       }
     } else {
       if (mi->hmsf[0] == h && mi->hmsf[1] == m && mi->hmsf[2] == s) {
-	best_mi = mi;
+	best_mi = mi; break;
       }
     }
     mi = mi->next;
@@ -385,6 +397,7 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
   return best_mi;
 }
 
+/* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
 pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode) {
 #define PVTP_SZ 512
@@ -408,6 +421,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   pv->ref_cnt = 0;
   pv->next = NULL;
   pv->id = mi->id;
+  pv->tstamp = mi->timestamp;
 
   pw = NULL;
 
@@ -604,6 +618,7 @@ pp_find_pv(Pinnipede *pp, int id)
   return NULL;
 }
 
+/* ajout (si necessaire) du message 'id' dans la liste */
 static PostVisual *
 pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
 {
@@ -683,6 +698,7 @@ pp_pv_destroy(Pinnipede *pp) {
   if (pp->lignes) { free(pp->lignes); pp->lignes = NULL; }
 }
 
+/* a appeler quand la fortune est changée */
 static void
 pp_update_fortune(Dock *dock)
 {
@@ -692,7 +708,7 @@ pp_update_fortune(Dock *dock)
   if (!picohtml_isempty(pp->ph_fortune)) {
     picohtml_freetxt(pp->ph_fortune);
   }
-  pp->fortune_h = 0;
+  pp->fortune_h = 0; /* quand pp->fortune_h != 0 => il y a une fortune à afficher */
   pp->fortune_w = 0;
   if (pp->fortune_mode && dock->dlfp->fortune) {
     char *s;
@@ -700,8 +716,9 @@ pp_update_fortune(Dock *dock)
     if (s == NULL) s = "pas de fortune pour l'instant...<br>";
     picohtml_parse(dock, pp->ph_fortune, s, pp->win_width - 6);
     picohtml_gettxtextent(pp->ph_fortune, &pp->fortune_w, &pp->fortune_h);
-    if (!picohtml_isempty(pp->ph_fortune)) { /* a priori ça peut arriver si fortune == "" par ex. .. (et ça declenche l'assert(!isempyt) dans pp_refresh_fortune  */
-      pp->fortune_h += 3;
+    if (!picohtml_isempty(pp->ph_fortune)) { /* on s'arrête si la fortune est vide (s == "" par ex..)
+						(ça peut arriver et ça declenche le assert(!isempty) de refresh_fortune) */
+      pp->fortune_h += 3; 
       pp->fortune_h = MIN(pp->fortune_h, pp->win_height/2); /* faut pas exagerer */
     }
   }
@@ -901,15 +918,26 @@ pp_minib_refresh(Dock *dock)
       else assert(0); /* prends ça gros bug a la con */
       XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx,ry,rw,rh);
 
-      if ((i ==  6 && pp->nick_mode==0) ||
+      if ((i ==  6 && pp->nick_mode != 3) ||
 	  (i ==  7 && pp->nosec_mode) ||
 	  (i ==  8 && pp->html_mode) ||
 	  (i ==  9 && pp->trollscore_mode) ||
 	  (i == 10 && pp->fortune_mode))
       {
 	XSetForeground(dock->display, dock->NormalGC, pp->win_bgpixel);
+	if (i != 6 || pp->nick_mode == 0) {
+	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+2,ry+2,rw-4,rh-4);
+	} else { /* cas particulier pour nick_mode qui a 5 positions */
+	  if (pp->nick_mode == 1) {
+	    XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+2+(rw-4)/2,ry+2,(rw-4)/2,rh-4);
+	  } else if (pp->nick_mode == 2) {
+	    XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+2,ry+2,(rw-4)/2,rh-4);
+	  } else if (pp->nick_mode == 4) {
+	    XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+2,ry+2,3,rh-4);	  
+	    XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+rw-2-3,ry+2,3,rh-4);	  
+	  }
+	}
       }
-      XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx+2,ry+2,rw-4,rh-4);
     }
 
     if (i == pp->minib_pressed) { 
@@ -1012,6 +1040,7 @@ void pp_draw_ua_symbol(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw,
   }
   }*/
 
+/* redessine la fortune */
 void
 pp_refresh_fortune(Dock *dock, Drawable d)
 {
@@ -1042,6 +1071,7 @@ pp_refresh_fortune(Dock *dock, Drawable d)
   }
 }
 
+/* dessine une ligne */
 PostWord *
 pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
 {
@@ -1172,20 +1202,32 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     int bidon;
     ref_mi = check_for_horloge_ref(trib, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon); assert(bidon);
     if (ref_mi) { 
-      /* on verifie que la ref apparait *entierement* dans la fenetre */
-      for (l=0; l < pp->nb_lignes; l++) {
-	if (pp->lignes[l]) {
-	  if (pp->lignes[l]->parent->id == ref_mi->id) {
-	    if (ref_in_window == 0) {
-	      /* sale ruse... si toutes les lignes sont la, a la fin, ref_in_window = 1 */
-	      ref_in_window = pp->lignes[l]->parent->nblig;
-	    } else {
-	      ref_in_window--;
+      tribune_msg_info *mi;
+
+      /* on verifie que la ref apparait *entierement* dans la fenetre 
+	 -> on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
+       */
+      mi = ref_mi;
+      while (mi && mi->timestamp == ref_mi->timestamp) {
+	ref_in_window = 0;
+	for (l=0; l < pp->nb_lignes; l++) {
+	  if (pp->lignes[l]) {
+	    if (pp->lignes[l]->parent->id == ref_mi->id) {
+	      if (ref_in_window == 0) {
+		/* sale ruse... si toutes les lignes sont là, a la fin du FOR on obtient ref_in_window = 1 */
+		ref_in_window = pp->lignes[l]->parent->nblig;
+	      } else {
+		ref_in_window--;
+	      }
 	    }
 	  }
 	}
+	if (ref_in_window != 1) {
+	  ref_in_window = 0;
+	  break;
+	}
+	get_next_id(trib, mi->id, &mi);
       }
-      if (ref_in_window != 1) ref_in_window = 0;
 	
       /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
 	 temporairement en gras (ça c vraiment pour faire le cakos)*/
@@ -1200,7 +1242,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	    if (pw->attr & PWATTR_REF) {
 	      int bidon;
 	      ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon); assert(bidon);
-	      if (ref2_mi == ref_mi) {
+	      if (ref2_mi && ref2_mi->timestamp == ref_mi->timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
 		pw->attr |= PWATTR_TMP_EMPH;
 	      }
 	    }
@@ -1223,7 +1265,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  if (pw->attr & PWATTR_REF) {
 	    int bidon;
 	    ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon); assert(bidon);
-	    if (ref2_mi && ref2_mi->id == pw_ref->parent->id) {
+	    if (ref2_mi && ref2_mi->timestamp == pw_ref->parent->tstamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
 	      pw->attr |= PWATTR_TMP_EMPH;
 	      /*	      if (nb_anti_ref < MAXANTIREF) {
 		anti_ref_id[nb_anti_ref++] = pw->parent->id;
@@ -1236,7 +1278,12 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     }
   }
 
-  /* affichage du contenu de la tribune */
+
+
+  /* 
+     affichage du contenu de la tribune 
+  */
+
   for (l=0; l < pp->nb_lignes; l++) {
     PostWord *pw;
     unsigned long bgpixel;
@@ -1247,7 +1294,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     if (pw) {
       int i;
       if (ref_mi) {
-	if (pw->parent->id == ref_mi->id && ref_in_window) {
+	if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
 	  bgpixel = pp->emph_pixel; 
 	}
       }
@@ -1258,7 +1305,6 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
       }
     }
 
-
     pp_draw_line(dock, pp->lpix, pw, bgpixel);
 
     XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, LINEY0(l));
@@ -1266,10 +1312,18 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 
   if (pw_ref && ref_in_window == 0) {
     int y;
+    tribune_msg_info *mi;
+    
     y = 3;
     /* affichage de la reference tout en haut du pinnipede */
-    if (ref_mi) {
-      PostVisual *pv = pp_pv_add(pp, trib, ref_mi->id);
+
+    /* 
+       on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
+    */
+    mi = ref_mi;
+    while (mi && mi->timestamp == ref_mi->timestamp) {
+      PostVisual *pv;
+      pv = pp_pv_add(pp, trib, mi->id);
       if (pv) {
 	PostWord *pw = pv->first;
 	while (pw) {
@@ -1278,7 +1332,9 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  y += pp->fn_h;
 	}
       }
+      get_next_id(trib, mi->id, &mi);
     }
+
     /* affichage du commentaire (optionnel) */
     if (ref_mi || strlen(ref_comment)) {
       if (strlen(ref_comment)) {
@@ -1441,11 +1497,7 @@ pp_build(Dock *dock)
   pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size);
   pp->use_minibar = Prefs.pp_minibar_on; pp->minib_pressed = -1;
 
-  pp->fn_minib = XLoadQueryFont(dock->display, MINIB_FONT);
-  if (!pp->fn_minib) {
-    myfprintf(stderr, "Impossible de charger la fonte " MINIB_FONT "\n");
-    exit(-1);
-  }
+  pp->fn_minib = dock->fixed_font;
 
   pp->flag_tribune_updated = 0;
   {
@@ -1589,6 +1641,49 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
   return pw;
 }
 
+static void
+pp_popup_show_txt(Dock *dock, unsigned char *txt)
+{
+  Pinnipede *pp = dock->pinnipede;
+  int l,cnt;
+  XFontStruct *fn;
+  char *s;
+  int ry0, ry1;
+ 
+  if (txt == NULL) return;
+  if (strlen(txt) == 0) return;
+
+    
+  fn = pp->fn_bd;
+  XSetFont(dock->display, dock->NormalGC, fn->fid);
+  l = 0; s = txt;
+  while (*s) {
+    cnt = 0;
+    while (s[cnt] && s[cnt] != '\n') {
+      cnt++;
+      if (XTextWidth(fn, s, cnt) > pp->win_width-16) {
+	cnt--; break;
+      }
+    }
+    XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
+    ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - fn->ascent);
+    ry1 = (l+1)*pp->fn_h + fn->descent + (s[cnt]==0 ? 6 : 0);
+    XFillRectangle(dock->display, pp->win, dock->NormalGC, 0, ry0,
+		   pp->win_width, ry1 - ry0+1);
+    if (s[cnt]==0) {
+      XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
+      XDrawLine(dock->display, pp->win, dock->NormalGC, 0, ry1, pp->win_width,ry1);
+    }
+    XSetForeground(dock->display, dock->NormalGC, pp->popup_fgpixel);
+    XSetBackground(dock->display, dock->NormalGC, pp->popup_bgpixel);
+    XDrawImageString(dock->display, pp->win, dock->NormalGC, 8, (l+1)*pp->fn_h,
+		     s, cnt);	    
+    s += cnt;
+    if (*s == '\n') s++;
+    if (*s) l++;
+  }
+}
+
 /* celle la est tordue ...
    il s'agit de verifier si on survole (avec la souris) une info interessante, 
    et d'agir le cas echeant (de maniere un peu désordonnée)
@@ -1606,7 +1701,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
   pw = pp_get_pw_at_xy(pp,x,y);
   survol[0] = 0;
   if (pw) {
-    if (pw->attr_s) {
+    if (pw->attr_s) { /* pour les [url] */
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
     } else if (pw->attr & PWATTR_TSTAMP) {
       tribune_msg_info *mi;
@@ -1633,40 +1728,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
     if (is_a_ref || strlen(survol) == 0) {
       pp_refresh(dock, trib, pp->win, is_a_ref ? pw : NULL);
     }
-    if (strlen(survol)) {
-      int l,cnt;
-      XFontStruct *fn;
-      char *s;
-      int ry0, ry1;
-      
-      fn = pp->fn_bd;
-      XSetFont(dock->display, dock->NormalGC, fn->fid);
-      l = 0; s = survol;
-      while (*s) {
-	cnt = 0;
-	while (s[cnt]) {
-	  cnt++;
-	  if (XTextWidth(fn, s, cnt) > pp->win_width-16) {
-	    cnt--; break;
-	  }
-	}
-	XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
-	ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - fn->ascent);
-	ry1 = (l+1)*pp->fn_h + fn->descent + (s[cnt]==0 ? 6 : 0);
-	XFillRectangle(dock->display, pp->win, dock->NormalGC, 0, ry0,
-		       pp->win_width, ry1 - ry0+1);
-	if (s[cnt]==0) {
-	  XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
-	  XDrawLine(dock->display, pp->win, dock->NormalGC, 0, ry1, pp->win_width,ry1);
-	}
-	XSetForeground(dock->display, dock->NormalGC, pp->popup_fgpixel);
-	XSetBackground(dock->display, dock->NormalGC, pp->popup_bgpixel);
-	XDrawImageString(dock->display, pp->win, dock->NormalGC, 8, (l+1)*pp->fn_h,
-			 s, cnt);	    
-	s += cnt;
-	if (*s) l++;
-      }
-    } 
+    pp_popup_show_txt(dock, survol);
     pp->survol_hash = survol_hash;
   }
 }
@@ -1720,7 +1782,7 @@ pp_balloon_help(Dock *dock, int x, int y)
 	       "<font color=blue>Click Droite</font><tab>: copier cette référence dans le clipboard (d'accord, c'est pas très utile...)<br><br>"
 	       
 	       "Pour comprendre l'affichage des <b>useragents</b> activé par le bouton rouge sombre (à quinze pixels sur votre gauche), se reporter au "
-	       "fichier <tt>~/.wmcoincoin/useragents</tt><br><br>"
+	       "fichier <tt>~/.wmcoincoin/useragents</tt><br><br> (hint: il a 5 positions différentes)"
 	       "Le pinnipède télétype vous souhaite un agréable moulage.", 500);
 }
 
@@ -1857,7 +1919,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       } else if (pw->attr & PWATTR_TSTAMP) {
 	if (editw_ismapped(dock->editw) == 0) {
 	  if (Prefs.user_name) {
-	    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s> %s ",
+	    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
 		     Prefs.user_name, pw->w);
 	  } else {
 	    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
@@ -1943,6 +2005,22 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
   }
 }
 
+int 
+flush_expose(Dock *dock, Window w) {
+  XEvent dummy;
+  int i=0;
+
+  while (XCheckTypedWindowEvent(dock->display, w, Expose, &dummy))
+    i++;
+  return i;
+}
+
+/*
+int
+has_pending_expose_events(Display *dpy, Window w) {
+}
+*/
+
 void
 pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 {
@@ -1957,7 +2035,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
   switch (event->type) {
   case DestroyNotify: 
     {
-      printf("destroy?\n");
+      //      printf("destroy?\n");
     } break;
   case ButtonPress:
     {
@@ -2005,6 +2083,36 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	}
       }
     } break;
+  case ConfigureNotify:
+    {
+      XWindowAttributes wa;
+      Window child;
+
+
+      
+      //printf("ConfigureNotify: w<-%d, h<-%d\n", event->xconfigure.width, event->xconfigure.height);
+
+      XGetWindowAttributes(dock->display, pp->win, &wa);
+      
+      //      printf("expose: width = %d (%d), height=%d (%d)\n", 
+      //	     wa.width,pp->win_width,wa.height,pp->win_height);
+      XTranslateCoordinates(dock->display, pp->win, dock->rootwin, 
+      			    wa.x, wa.y, &pp->win_xpos, &pp->win_ypos, &child);
+      
+      //printf(" -> xpos=%d, ypos=%d\n", pp->win_xpos,pp->win_ypos);
+      if (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height) {
+	pp->win_width = MAX(event->xconfigure.width,80);
+	pp->win_height = MAX(event->xconfigure.height,80);
+	
+	/* eh oui, faut pas oublier ça.... */
+	XFreePixmap(dock->display, pp->lpix);
+	pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
+	
+	
+	pp_pv_destroy(pp);
+	pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0);
+      }
+    } break;
   case EnterNotify:
     {
     } break;
@@ -2013,32 +2121,25 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
     } break;
   case Expose:
     {
-      XWindowAttributes wa;
-      Window child;
+      static int zx0, zy0, zx1, zy1, zinit = 0;
+      int x0, y0, x1, y1;
+
+      x0 = event->xexpose.x;            y0 = event->xexpose.y;
+      x1 = x0 + event->xexpose.width-1; y1 = y0 + event->xexpose.height -1;
+      if (zinit == 0) {
+	zx0 = x0; zy0 = y0; zx1 = x1; zy1 = y1;
+      } else {
+	zx0 = MIN(zx0, x0); zx1=MAX(zx1, x1);
+	zy0 = MIN(zy0, y0); zy1=MAX(zy1, y1);
+      }
+      /*
+	printf("expose_event: x=%d, y=%d, w=%d, h=%d cnt=%d --> z=[%d:%d]x[%d:%d]\n", 
+	event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height, event->xexpose.count,
+	zx0, zx1, zy0, zy1);
+      */
       if (event->xexpose.count == 0) {
-	//      flush_expose(pp->win);
-	XGetWindowAttributes(dock->display, pp->win, &wa);
-	
-	//      printf("expose: width = %d (%d), height=%d (%d)\n", 
-	//	     wa.width,pp->win_width,wa.height,pp->win_height);
-	XTranslateCoordinates(dock->display, pp->win, dock->rootwin, 
-			      wa.x, wa.y, &pp->win_xpos, &pp->win_ypos, &child);
-	
-	//      printf(" -> xpos=%d, ypos=%d\n", pp->win_xpos,pp->win_ypos);
-	if (wa.width != pp->win_width || wa.height != pp->win_height) {
-	  pp->win_width = MAX(wa.width,80);
-	  pp->win_height = MAX(wa.height,80);
-	  
-	  /* eh oui, faut pas oublier ça.... */
-	  XFreePixmap(dock->display, pp->lpix);
-	  pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
-	  
-	  
-	  pp_pv_destroy(pp);
-	  pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0);
-	}
-      //      printf("PP Expose!\n");
 	pp_refresh(dock, trib, pp->win, NULL);
+	flush_expose(dock, pp->win);
       }
     } break;
   case MapNotify:
