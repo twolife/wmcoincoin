@@ -1,4 +1,7 @@
+--------------------------v2.3.7-b-----------------------------------------
 2002-04-26  pouaite  <c0in@altern.org>
+
+	* bugfix du mode horloge pour KDE (ça crashait, merci à gle!)
 
 	* mini bugfixes (autoscroll, bug de survol des horloges,
 	reconnaissances des horloges suivies de points de suspension).
