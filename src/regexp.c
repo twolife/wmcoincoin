@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.4 2001/12/17 00:18:04 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.5 2001/12/17 22:59:26 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.5  2001/12/17 22:59:26  pouaite
+  bugfix débile qui empeche le plantage du coincoin quand /backend.rdf est invalide
+
   Revision 1.4  2001/12/17 00:18:04  pouaite
   changement du format du backend -> on utilise desormais le /backend.rdf
 
@@ -125,7 +128,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
       *p_auteur = strndup(p, p2-p);
     }
   }
-  if (*p_auteur == NULL) { *p_auteur = "???"; }
+  if (*p_auteur == NULL) { *p_auteur = strdup("???"); }
 
   /* recherche de la section */
   p = after_substr(s, "Topic:");
