@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.8 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: global.h,v 1.9 2002/01/16 00:35:26 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.9  2002/01/16 00:35:26  pouaite
+  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+
   Revision 1.8  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -132,7 +135,7 @@ typedef struct _structPrefs{
   int pp_fn_size;
   unsigned pp_bgcolor, pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
     pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
-    pp_trollscore_color, pp_my_msg_bgcolor;
+    pp_trollscore_color, pp_my_msg_bgcolor, pp_answer_my_msg_bgcolor;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;

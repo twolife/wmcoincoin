@@ -113,7 +113,7 @@ typedef struct _tribune_msg_info {
   */
   DLFP_trib_load_rule *tatouage;
   short troll_score; /* le niveau de trollitude du post (cf troll_detector.c) */
-  char is_my_message;
+  char is_my_message, is_answer_to_me;
 } tribune_msg_info;
 
 
@@ -574,6 +574,7 @@ void pp_minib_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_set_tribune_updated(Dock *dock);
+int tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *mi);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

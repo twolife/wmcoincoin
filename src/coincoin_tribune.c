@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.13 2002/01/15 15:30:17 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.14 2002/01/16 00:35:26 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.14  2002/01/16 00:35:26  pouaite
+  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+
   Revision 1.13  2002/01/15 15:30:17  pouaite
   rien d'interessant
 
@@ -407,10 +410,13 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   } else {
     it->is_my_message = !strcmp(it->useragent, my_useragent);
     if (it->is_my_message) {
-      myprintf("my_message: '%<yel %s>' == '<grn %s>'\n", it->useragent, my_useragent);
+      myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
     }
   }
   trib->just_posted_anonymous = 0;
+
+
+  it->is_answer_to_me = 0;
 
   /* essaye d'identifier le user agent */
   tribune_tatouage(trib, it);
@@ -465,7 +471,6 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
 {
   tribune_msg_info *it;
   
-
   if (Prefs.post_cmd == NULL) {
     return;
   } else {
@@ -483,7 +488,11 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     char *qmessage;
     char *qua;
     char sid[20], stimestamp[20], strollscore[20];
-    char *shift_cmd, *s2;
+    char *shift_cmd;
+
+    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s"};
+    const char *subs[] = {"", "", "", "", "", ""};
+
     
     //----< Code pour passer les infos d'un post à une commande extérieure >
 
@@ -494,13 +503,14 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     snprintf(stimestamp, 20, "%ld", it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
 
-    shift_cmd = strdup(Prefs.post_cmd);
-    s2 = str_substitute(shift_cmd, "$l", qlogin); free(shift_cmd); shift_cmd = s2; 
-    s2 = str_substitute(shift_cmd, "$m", qmessage); free(shift_cmd); shift_cmd = s2; 
-    s2 = str_substitute(shift_cmd, "$u", qua); free(shift_cmd); shift_cmd = s2; 
-    s2 = str_substitute(shift_cmd, "$i", sid); free(shift_cmd); shift_cmd = s2; 
-    s2 = str_substitute(shift_cmd, "$t", stimestamp); free(shift_cmd); shift_cmd = s2; 
-    s2 = str_substitute(shift_cmd, "$s", strollscore); free(shift_cmd); shift_cmd = s2; 
+
+    subs[0] = qlogin;
+    subs[1] = qmessage;
+    subs[2] = qua;
+    subs[3] = sid;
+    subs[4] = stimestamp;
+    subs[5] = strollscore;
+    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 6);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
 
@@ -655,6 +665,25 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
   flag_tribune_updated = 1;  
 
   if (dlfp->tribune.last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
-    dlfp_tribune_call_external(&dlfp->tribune, old_last_post_id);
+    tribune_msg_info *it;
+
+    /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
+     */
+    if (old_last_post_id != -1) { /* si ce n'est pas le premier appel.. */
+      it = tribune_find_id(&dlfp->tribune, old_last_post_id);
+      if (it) it = it->next;
+    } else {
+      it = dlfp->tribune.msg;
+    }
+    while (it) {
+      if (tribune_msg_is_ref_to_me(&dlfp->tribune, it)) {
+	flag_updating_tribune++;
+	it->is_answer_to_me = 1;
+	flag_updating_tribune--;
+      }
+      it = it->next;
+    }
+
+    dlfp_tribune_call_external(&dlfp->tribune, old_last_post_id);    
   }
 }

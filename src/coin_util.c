@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.7 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.8 2002/01/16 00:35:26 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.8  2002/01/16 00:35:26  pouaite
+  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+
   Revision 1.7  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -450,39 +453,64 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
   return id;
 }
 
-/* renvoie une chaine (allouée correctement) contenant la substitution de toutes les occurences de 
-   'key' dans 'src' par 'substitution'
+/* recherche la première occurence d'une des chaines 'keys' dans 'src' et renvoie un pointeur vers
+   cette occurence, ainsi que le numéro de la 'keys' trouvée
+
+   bien sûr c'est pas optimal du tout, mais ON S'EN FOUT(tm)
+
+   et oui, effectivement, 'str_multi_str' est un nom à la con
 */
 char *
-str_substitute(const char *src, const char *key, const char *substitution)
+str_multi_str(const char *src, const char **keys, int nb_keys, int *key_idx)
+{
+  int i;
+  const char *res;
+
+  assert(key_idx);
+  *key_idx = 0;
+  res = NULL;
+  for (i=0; i < nb_keys; i++) {
+    const char *p;
+    p = strstr(src, keys[i]);
+    if (p && (res==NULL || p < res)) { res = p; *key_idx = i; }
+  }
+  return (char*)res;
+}
+
+/* renvoie une chaine (allouée correctement) contenant la substitution de toutes les occurences de
+   'key' dans 'src' par 'substitution' (key et substition sont des tableaux de chaines de
+   caractères, car pour faire plusieurs substitutions, mieux vaut les effectuer simultanement que
+   les enchainer pour eviter les effets de bords
+*/
+char *
+str_multi_substitute(const char *src, const char **keys, const char **substitutions, int nkeys)
 {
   const char *p, *p_key;
   char *dest, *p_dest;
-  int dest_sz, subs_len, key_len, p_len;
+  int dest_sz, p_len,j;
 
-  assert(strlen(key)); /* c trop bete */
   if (src == NULL) return NULL;
 
-  subs_len = strlen(substitution);
-  key_len = strlen(key);
   /* calcul de la longueur de la destination.. */
   p = src;
   dest_sz = strlen(src)+1;
-  while ((p_key=strstr(p, key))) {
-    dest_sz += (strlen(substitution) - strlen(key));
-    p = p_key+key_len;
+
+  while ((p_key=str_multi_str(p, keys, nkeys, &j))) {
+    dest_sz += (strlen(substitutions[j]) - strlen(keys[j]));
+    p = p_key+strlen(keys[j]);
   }
+
   dest = malloc(dest_sz);
 
   /* et là PAF ! */
   p = src;
   p_dest = dest;
-  while ((p_key=strstr(p, key))) {
+  while ((p_key=str_multi_str(p, keys, nkeys, &j))) {
     memcpy(p_dest, p, p_key-p);
     p_dest += p_key-p;
-    memcpy(p_dest, substitution, subs_len);
-    p_dest += subs_len;
-    p = p_key + key_len;
+    memcpy(p_dest, substitutions[j], strlen(substitutions[j]));
+    p_dest += strlen(substitutions[j]);
+    p = p_key + strlen(keys[j]);
   }
   p_len = strlen(p);
   if (p_len) {
@@ -491,6 +519,11 @@ str_substitute(const char *src, const char *key, const char *substitution)
   *p_dest = 0;
   assert(p_dest - dest == dest_sz-1); /* capote à bugs */
   return dest;
+}
+
+char *
+str_substitute(const char *src, const char *key, const char *substitution) {
+  return str_multi_substitute(src, &key, &substitution, 1);
 }
 
 /* quotage pour les commandes externes.. à priori c'est comme pour open_url

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.11 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.12 2002/01/16 00:35:26 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.12  2002/01/16 00:35:26  pouaite
+  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+
   Revision 1.11  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -87,7 +90,7 @@ struct _PostVisual {
   PostWord *first; /* la liste des mots */
   int nblig; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt; // compteur de references
-  char is_my_message;
+  char is_my_message, is_answer_to_me;
   struct _PostVisual *next;
 };
 
@@ -105,7 +108,7 @@ struct _Pinnipede {
   Window win;
   unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
     emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
-    popup_fgpixel, popup_bgpixel, minib_pixel, my_msg_bgpixel;
+    popup_fgpixel, popup_bgpixel, minib_pixel, my_msg_bgpixel, answer_my_msg_bgpixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
 
@@ -383,6 +386,56 @@ filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
   }
 }
 
+
+
+/* oh le joli nom en anglais 
+
+  cette fonction n'est pas utilisée ici mais dans coincoin_tribune
+
+  c'est le bordel , ça évoluera surement
+
+  TODO: pb à l'initialisation, il faut l'appeler dans l'ordre des ID, sinon y'a pb
+
+  TODO: CETTE FONCTION EST NAZE MAIS JE SUIS TROP CREVE JE FAIS RIEN QUE DES CONNERIES CE SOIR
+*/
+int
+tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
+  tribune_msg_info *mi;
+
+  mi = trib->msg;
+  
+  printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);
+  while (mi) {
+    const unsigned char *p, *np;
+
+    if (mi->is_my_message) {
+      /* c'est du filtre qui va ramer si y'a 10000 messages en mémoire... */
+      p = ref_mi->msg;
+      while (p) {
+	int has_initial_space = 0; /* inutilisé */
+	unsigned char tok[512];
+	
+	if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
+	if (tok[0] >= '0' && tok[0] <= '9') {
+	  int h,m,s,num;
+	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
+	    //	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);
+	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
+		(mi->hmsf[3] == 0 || mi->hmsf[2] == s)) {
+	      printf("ref au message trouvée !\n");
+	      return 1;
+	    }
+	  }
+	}
+	p=np;
+      }
+    }
+    mi = mi->next;
+  }
+  return 0;
+}
+
+
 /* les deux fonctions suivantes permettent de se balader dans la liste des posts 
  (de maniere bourrine... c pas pour 25000 messages )
 */
@@ -557,6 +610,7 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
   return best_mi;
 }
 
+
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
 pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode) {
@@ -583,6 +637,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   pv->tstamp = mi->timestamp;
   pv->sub_tstamp = mi->sub_timestamp;
   pv->is_my_message = mi->is_my_message;
+  pv->is_answer_to_me = mi->is_answer_to_me;
 
   pw = NULL;
 
@@ -800,6 +855,8 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
     if (pp->nosec_mode) {
       with_seconds = mi->hmsf[3];
     }
+
+    if (mi->is_answer_to_me) printf("polop (%d)\n", id);
 
     //pv = pv_tmsgi_parse(trib, mi, with_seconds, pp->html_mode, pp->nick_mode, pp->trollscore_mode); 
     pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, pp->nick_mode, pp->trollscore_mode); 
@@ -1476,6 +1533,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     if (pw) {
       int i;
 
+      if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel;
       if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;
 
       if (ref_mi) {
@@ -1661,6 +1719,7 @@ pp_build(Dock *dock)
   pp->emph_pixel = IRGB2PIXEL(Prefs.pp_emph_color);
   pp->trollscore_pixel = IRGB2PIXEL(Prefs.pp_trollscore_color);
   pp->my_msg_bgpixel = IRGB2PIXEL(Prefs.pp_my_msg_bgcolor);
+  pp->answer_my_msg_bgpixel = IRGB2PIXEL(Prefs.pp_answer_my_msg_bgcolor);
 
   pp->id_base = -1; pp->decal_base = 0;
 

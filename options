@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.8 2002/01/14 23:54:06 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.9 2002/01/16 00:35:26 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.9  2002/01/16 00:35:26  pouaite
+#%  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+#%
 #%  Revision 1.8  2002/01/14 23:54:06  pouaite
 #%  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 #%
@@ -48,7 +51,7 @@
 ### commande externe executée pour chaque nouveau message
 ### les argument sont soigneusement quotés avant de passer la commande à exécuter au shell
 ### néanmoins il faut rester conscient QUE C'EST DANGEREUX.
-#tribune.post_cmd: echo $l msg=$m ua=$u
+#tribune.post_cmd: (echo $l msg=$m ua=$u ; play coin.wav &)
 
 ### nom du fichier dans lequel sont sauvés les scrinechotes de la tribune
 #tribune.archive: ~/wmcc_tribune_shot.html

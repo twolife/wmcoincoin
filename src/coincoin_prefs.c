@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.10 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.11 2002/01/16 00:35:26 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.11  2002/01/16 00:35:26  pouaite
+  debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
+
   Revision 1.10  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -236,18 +239,21 @@ option_set_useragent(const char *optarg,
   if (optarg == NULL) The_Prefs->user_agent[0] = 0;
   else {
     struct utsname utsn;
-    char *ua, *ua2;
+    char *ua;
+    const char *keys[] = {"$v", "$u", "$s", "$r", "$m"};
+    const char *subs[] = {VERSION,"", ""  , ""  , ""};
+
 
     ua = str_substitute(optarg, "$v", VERSION);
     if (The_Prefs->user_name) {
-      ua2 = str_substitute(ua, "$u", The_Prefs->user_name); free(ua); ua = ua2;
+      subs[1] = The_Prefs->user_name;
     }
     if (uname(&utsn) != -1) {
-      ua2 = str_substitute(ua, "$s", utsn.sysname); free(ua); ua = ua2;
-      ua2 = str_substitute(ua, "$r", utsn.release); free(ua); ua = ua2;
-      ua2 = str_substitute(ua, "$m", utsn.machine); free(ua); ua = ua2;
+      subs[2] = utsn.sysname;
+      subs[3] = utsn.release;
+      subs[4] = utsn.machine;
     }
-    
+    ua = str_multi_substitute(optarg, keys, subs, 5);
     strncpy(The_Prefs->user_agent,ua,USERAGENT_MAX_LEN);
     The_Prefs->user_agent[USERAGENT_MAX_LEN] = 0;
 
@@ -1168,7 +1174,8 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_trollscore_color = 0xff0000;
   The_Prefs->pp_button_color = 0xdae6e6;
   The_Prefs->pp_emph_color = 0xffffff;
-  The_Prefs->pp_my_msg_bgcolor = 0xdae6ff;
+  The_Prefs->pp_my_msg_bgcolor = 0xdae6e6;
+  The_Prefs->pp_answer_my_msg_bgcolor = 0xc0c080;
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;
   The_Prefs->pp_width = 300;
