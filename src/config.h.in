@@ -81,11 +81,11 @@
 /* Define if you have the <windows.h> header file.  */
 #undef HAVE_WINDOWS_H
 
-/* Define if you have the Xpm library (-lXpm).  */
-#undef HAVE_LIBXPM
-
 /* Define if you have the wsock32 library (-lwsock32).  */
 #undef HAVE_LIBWSOCK32
+
+/* Define if you have the Xpm library (-lXpm).  */
+#undef HAVE_LIBXPM
 
 /* Name of package */
 #undef PACKAGE

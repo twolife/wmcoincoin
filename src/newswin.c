@@ -1,7 +1,17 @@
+/*
+  rcsid=$Id: newswin.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: newswin.c,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #include <X11/xpm.h>
 #include "coincoin.h"
 #include "picohtml.h"
 #include "../xpms/fleche.xpm"
+
 /*
   ----------------------------------------------------------------------
   gestion de la fenetre d'affichage du texte des news
@@ -62,7 +72,7 @@ newswin_parsetxt(Dock *dock, DLFP_news *n)
   Newswin *nw = dock->newswin;
   unsigned char *buff;
 
-  BLAHBLAH(2,printf("newswin_parsetxt\n"));
+  //BLAHBLAH(2,printf("newswin_parsetxt\n"));
   if (n->txt == NULL) {
     buff = strdup("Le <b>texte de la news</b> n'a pas encore ete mis a jour...");
   } else {

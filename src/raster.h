@@ -1,3 +1,12 @@
+/*
+  rcsid=$Id: raster.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: raster.h,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #ifndef RASTER_H__
 #define RASTER_H__
 

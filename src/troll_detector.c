@@ -1,3 +1,12 @@
+/*
+  rcsid=$Id: troll_detector.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: troll_detector.c,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #include "config.h"
 #include "coincoin.h"
 

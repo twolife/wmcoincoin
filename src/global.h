@@ -1,4 +1,13 @@
 
+/*
+  rcsid=$Id: global.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: global.h,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
@@ -117,6 +126,8 @@ typedef struct _structPrefs{
   (la cause des bugs bizarres du "mur vert" ?)
 */
 void X_loop();
+void ispell_run_background(const char* spellCmd, const char* spellDict);
+#define ALLOW_ISPELL if (Prefs.ew_do_spell) {ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);}
 #define ALLOW_X_LOOP if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf("%s, ligne %d : X_loop_request=%d!\n", __FILE__, __LINE__, X_loop_request); }X_loop(); }
 #define ALLOW_X_LOOP_MSG(m) if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf(m " : X_loop_request=%d!\n", X_loop_request); }  X_loop(); }
 #else /* utilise les pthreads, pas besoin de protection */
@@ -148,6 +159,8 @@ DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led 
 DECL_GLOB_INIT(volatile int flag_tribune_updated, 0);
 DECL_GLOB_INIT(volatile int flag_http_transfert, 0);
 DECL_GLOB_INIT(volatile int flag_http_error, 0);
+DECL_GLOB_INIT(volatile int flag_spell_request, 0); /* pour le palmipede (ça commence à puer le vilain hack... mais bon, je veux pas de threads alors j'assume) */
+DECL_GLOB_INIT(volatile int flag_spell_finished, 0);
 DECL_GLOB_INIT(volatile int wmcc_tic_cnt,0);
 
 #endif

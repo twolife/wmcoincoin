@@ -18,6 +18,15 @@
 
  */
 
+/*
+  rcsid=$Id: balloon.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: balloon.c,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>

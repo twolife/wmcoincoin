@@ -1,3 +1,24 @@
+2001-12-02  pommier julien  <jul@dr.com>
+
+	* options, useragents: ajout de ces deux fichiers dans les sources, 
+	quelques modifs sur configure.in, makefiles (et http.c qui n'est plus un lien)
+
+	* src/pinnipede.c (pp_refresh): correction du bug d'affichage des
+	post multiples ayant un même timestamp (enfin !!)
+
+	* src/global.h (ALLOW_X_LOOP_AND_ISPELL): 
+	* src/wmcoincoin.c (X_loop): 
+	* src/editwin.c (editw_colorize):
+	* src/spell_coin.c (ispell_run_background): modifs pour avoir le
+	spell_check en background (sinon ça ralentissait trop) -> attention c'est pas 
+	joli-joli
+
+2001-12-01  pommier julien  <jul@dr.com>
+
+	* src/coin_util.c (convert_to_ascii): divers bricolages, modif des
+	regex des news, gestion bancale du char MSEURO (0x80). wmcc devrait
+	à nouveau fonctionner correctement sous BSD
+
 2001-11-26  Frédéric Py <fpy@laas.fr>
 
 	* src/spell_coin.[ch]: Ajout de ces deux fichiers regroupant les 

@@ -20,8 +20,18 @@
 
  */
 
+/*
+  rcsid=$Id: coincoin_prefs.c,v 1.3 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: coincoin_prefs.c,v $
+  Revision 1.3  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
 
+*/
+
+#ifdef __CYGWIN__
 #include <getopt.h>
+#endif
 #include <sys/stat.h>
 #include <sys/utsname.h> /* pour la fonction uname */
 #include <errno.h>
@@ -637,7 +647,6 @@ parse_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     switch (i) {
     case 'h':
       {
-        myprintf("%<GRN wmCoinCoin v" VERSION "> compile le %<GRN " __DATE__ ">\n");
 	myprintf("Home page: %<BLU http:/hules.free.fr/wmcoincoin>\n");
 
 	myprintf("Dock applet pour WindowMaker -- affiche les news de %<GRN D>%<CYA a>%<GRN L>%<CYA inux>%<GRN F>%<CYA rench>%<GRN P>%<CYA age> (%<BLU http://linuxfr.org>)\n");
@@ -1119,7 +1128,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_fortune_fn_family = strdup("helvetica");
   The_Prefs->pp_fortune_fn_size = 10;
 
-  The_Prefs->ew_do_spell = 1;                  /*Ca fonctionne (?)
+  The_Prefs->ew_do_spell = 0;                  /*Ca fonctionne (?)
 						 donc je l'active par defaut
 					       */
   The_Prefs->ew_spell_cmd = strdup("ispell");  /*ispell par defaut car present 

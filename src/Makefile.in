@@ -61,7 +61,6 @@ host_alias = @host_alias@
 host_triplet = @host@
 CC = @CC@
 COIN_ARCH = @COIN_ARCH@
-HTTP_SRC = @HTTP_SRC@
 MAKEINFO = @MAKEINFO@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
@@ -69,12 +68,10 @@ VERSION = @VERSION@
 
 bin_PROGRAMS = wmcoincoin
 
-EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c
+EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
-wmcoincoin_SOURCES =  	myprintf.c myprintf.h defaultrcfile.h defaultoptionsfile.h 	raster.c raster.h troll_detector.c troll_data.h 	pinnipede.c editwin.c newswin.c 	picohtml.c picohtml.h msgbox.c balloon.c 	wmcoincoin.c coincoin.h global.h http.h 	coin_util.c coin_util.h 	coincoin_prefs.c coincoin_prefs.h 	coincoin_news.c coincoin_tribune.c 	regexp.h regexp.c general.h 	spell_coin.c spell_coin.h
+wmcoincoin_SOURCES =  	myprintf.c myprintf.h defaultuseragents.h defaultoptionsfile.h 	raster.c raster.h troll_detector.c troll_data.h 	pinnipede.c editwin.c newswin.c 	picohtml.c picohtml.h msgbox.c balloon.c 	wmcoincoin.c coincoin.h global.h http.c http.h 	coin_util.c coin_util.h 	coincoin_prefs.c coincoin_prefs.h 	coincoin_news.c coincoin_tribune.c 	regexp.h regexp.c general.h 	spell_coin.c spell_coin.h
 
-
-wmcoincoin_LDADD = http.o
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = 
@@ -90,10 +87,11 @@ X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
 wmcoincoin_OBJECTS =  myprintf.o raster.o troll_detector.o pinnipede.o \
-editwin.o newswin.o picohtml.o msgbox.o balloon.o wmcoincoin.o \
+editwin.o newswin.o picohtml.o msgbox.o balloon.o wmcoincoin.o http.o \
 coin_util.o coincoin_prefs.o coincoin_news.o coincoin_tribune.o \
 regexp.o spell_coin.o
-wmcoincoin_DEPENDENCIES =  http.o
+wmcoincoin_LDADD = $(LDADD)
+wmcoincoin_DEPENDENCIES = 
 wmcoincoin_LDFLAGS = 
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -104,7 +102,7 @@ DIST_COMMON =  ./stamp-h.in Makefile.am Makefile.in config.h.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
 SOURCES = $(wmcoincoin_SOURCES) $(EXTRA_wmcoincoin_SOURCES)
 OBJECTS = $(wmcoincoin_OBJECTS)
@@ -233,14 +231,13 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$d/$$file $(distdir)/$$file; \
+	    cp -pr $$/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-
 info-am:
 info: info-am
 dvi-am:
@@ -317,8 +314,15 @@ mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-http.c: @HTTP_SRC@
-	ln -sf @HTTP_SRC@ http.c
+defaultuseragents.h: ../useragents
+	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h
+
+defaultoptionsfile.h: ../options
+	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
+
+wmcoincoin.o: defaultuseragents.h
+
+coincoin_prefs.o: defaultoptionsfile.h
 
 install: install-am
 # petite update merci anvil !

@@ -1,15 +1,15 @@
 /*
-  rcsid=$Id: myprintf.h,v 1.1 2001/11/27 19:17:09 pouaite Exp $
+  rcsid=$Id: myprintf.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
 
   ChangeLog:
   $Log: myprintf.h,v $
-  Revision 1.1  2001/11/27 19:17:09  pouaite
-  Initial revision
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
 
-  Revision 1.2  1999/10/10 18:10:35  jules
-  Ajout du ChangeLog dans tous les fichiers
-
+  Revision 1.1.1.1  2001/11/27 19:17:09  pouaite
+  vraie initialisation
 */
+
 #ifndef __MY_PRINTF_H
 #define __MY_PRINTF_H
 

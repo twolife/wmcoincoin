@@ -17,6 +17,15 @@
  */
 
 /*
+  rcsid=$Id: editwin.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: editwin.c,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
+/*
   ceci est le palmipede editor
 */
 
@@ -650,8 +659,7 @@ editw_colorize(EditW *ew, unsigned char *ctab)
       ctab[i] = EWC_NORMAL;
   } else {
     if( Prefs.ew_do_spell )
-      spelled_faults = spellString(ew->buff, Prefs.ew_spell_cmd, 
-				   Prefs.ew_spell_dict);
+      spelled_faults = spellString(ew->buff);
     else
       spelled_faults = NULL;
     i = 0;
@@ -696,7 +704,7 @@ editw_colorize(EditW *ew, unsigned char *ctab)
 	    }
 	    ++j;
 	    /* Detection des mots pleins de fautes */
-	  } else if( spelled_faults!=NULL && j==spelled_faults->offset ) {
+	  } else if( spelled_faults!=NULL && (unsigned)j==spelled_faults->offset ) {
 	    for(; isalpha(ew->buff[j]); ++j)
 	      ctab[j] = EWC_SPELLWORD;
 	    spelled_faults = spelled_faults->next;

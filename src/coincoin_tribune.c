@@ -18,6 +18,16 @@
 
 
  */
+
+/*
+  rcsid=$Id: coincoin_tribune.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  ChangeLog:
+  $Log: coincoin_tribune.c,v $
+  Revision 1.2  2001/12/02 18:34:54  pouaite
+  ajout de tags cvs Id et Log un peu partout...
+
+*/
+
 #include "coincoin.h"
 #include "http.h"
 #include <sys/types.h>
