@@ -327,8 +327,8 @@ pp_minib_set_pos(Pinnipede *pp)
   pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = TRANSPARENT;     pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = UA;              pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
-  pp->mb[i].type = TSCORE;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  // pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  //  pp->mb[i].type = TSCORE;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = FORTUNE;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = FILTER;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
@@ -579,6 +579,7 @@ pp_minib_refresh(Dock *dock)
       {
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, xc-MINIB_FN_W/2+1, pp->fn_minib->ascent+1, "?", 1);
       } break;
+      /*
     case SECOND:
       {
 	int rx, rw, ry, rh;
@@ -605,6 +606,7 @@ pp_minib_refresh(Dock *dock)
 	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
 	}
       } break;
+      */
     case FORTUNE:
       {
 	int rx, rw, ry, rh;
@@ -772,6 +774,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
 	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, pp->win, NULL);	    
       } break;
+      /*
     case SECOND:
       {
 	pp->show_sec_mode = (1-pp->show_sec_mode);
@@ -779,6 +782,18 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
 	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, pp->win, NULL);	    
       } break;
+    case TSCORE:
+      {
+	if (Prefs.enable_troll_detector) {
+	  pp->trollscore_mode = (1-pp->trollscore_mode);
+	  pp_pv_destroy(pp);
+	  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
+	  pp_refresh(dock, pp->win, NULL);	    	    
+	} else {
+	  msgbox_show(dock, _("Don't click on this button, the troll_detector is deactivated (see the option 'tribune.enable_troll_detector')."));
+	}
+      } break;
+      */
     case FILTER:
       {
 	pp->filter.filter_mode = (1-pp->filter.filter_mode);
@@ -798,17 +813,6 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
 	pp_pv_destroy(pp);
 	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, pp->win, NULL);	    	    
-      } break;
-    case TSCORE:
-      {
-	if (Prefs.enable_troll_detector) {
-	  pp->trollscore_mode = (1-pp->trollscore_mode);
-	  pp_pv_destroy(pp);
-	  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
-	  pp_refresh(dock, pp->win, NULL);	    	    
-	} else {
-	  msgbox_show(dock, _("Don't click on this button, the troll_detector is deactivated (see the option 'tribune.enable_troll_detector')."));
-	}
       } break;
     case FORTUNE:
       {
@@ -906,20 +910,37 @@ void
 pp_update_fortune(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
-  char * fortune = pp->active_tab->site->fortune;
-  
-#warning "s'occuper des fortunes"
-  return;
-  assert(flag_updating_comments == 0);
+  Site *s;
+  int nb_fortunes = 0, fortune_num;
+  static char *fortune = NULL;
+  static int wmcc_tic_cnt_last_chg = 0;
+
+  if (flag_updating_comments) return;
+  if (fortune == NULL || (wmcc_tic_cnt - wmcc_tic_cnt_last_chg) > 45*(1000/WMCC_TIMER_DELAY_MS)) {
+    for (s = dock->sites->list; s; s = s->next)
+      nb_fortunes += (s->fortune && strlen(s->fortune)) ? 1 : 0;
+    if (nb_fortunes > 0) {
+      fortune_num = (rand() % nb_fortunes) + 1;
+      for (s = dock->sites->list; s; s = s->next) {
+	fortune_num -= (s->fortune  && strlen(s->fortune)) ? 1 : 0;
+	if (fortune_num == 0) break;
+      }
+    }
+    if (s && s->fortune) {
+      //      printf("choosing fortune of %s: '%s'\n", s->prefs->site_name, fortune);
+      if (fortune) free(fortune);
+      fortune = strdup(s->fortune);
+      wmcc_tic_cnt_last_chg = wmcc_tic_cnt;
+    }
+  }
   if (!picohtml_isempty(pp->ph_fortune)) {
     picohtml_freetxt(pp->ph_fortune);
   }
   pp->fortune_h = 0; /* quand pp->fortune_h != 0 => il y a une fortune à afficher */
   pp->fortune_w = 0;
 
-
-  if (pp->fortune_mode && fortune) {
-    if (fortune == NULL) fortune = "pas de fortune pour l'instant...<br>";
+  if (pp->fortune_mode) {
+    if (fortune == NULL) fortune = strdup(_("<folop> I have a 61MB file in /proc, is it normal ?<br>"));
     picohtml_parse(dock, pp->ph_fortune, fortune, pp->win_width - 6);
     picohtml_gettxtextent(pp->ph_fortune, &pp->fortune_w, &pp->fortune_h);
     if (!picohtml_isempty(pp->ph_fortune)) { /* on s'arrête si la fortune est vide (s == "" par ex..)
@@ -945,8 +966,8 @@ pp_check_balloons(Dock *dock, int x, int y)
       case SCROLLBAR: msg = _("Bring/hide the scrollcoin"); break;
       case TRANSPARENT: msg = _("Activate/deactivate the pseudo-transparency"); break;
       case UA: msg = _("Change the display mode of the logins/useragents (5 different modes)"); break;
-      case SECOND: msg = _("Bring/hide the seconds (when there are less than two messages in the same minute)"); break;
-      case TSCORE: msg = _("Bring/hide the troll score (the numbers on the left of some messages)"); break;
+	//      case SECOND: msg = _("Bring/hide the seconds (when there are less than two messages in the same minute)"); break;
+	//      case TSCORE: msg = _("Bring/hide the troll score (the numbers on the left of some messages)"); break;
       case FORTUNE: msg = _("Bring/hide the fortune (if appropriate)"); break;
       case FILTER: msg = _("Activate/deactivate the <b>filter</b>. To filter the messages, do a <font color=#0000ff>ctrl+left clic</font> on a word/login/useragent or a clock (to display a thread). To remove the filter, just click here"); break;
       case PLOPIFY: msg = _("Change the plopification type (beware, you will also see the messages in the boitakon!). <p> To plopify a message, <font color=#0000ff>shift+right click</font> on a word/login/useragent/clock (or the zone on the left of the clock to plopify a thread). To unplopify (or let someone out of the boitakon), just click on the same place.<br> To access to the superplopification, do a <font color=#0000ff>Mod1+shift+right click</font><br> To put a login/ua/etc. in the <b>boitakon</b>(tm), you have to use the mega combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right click</font>."); break;
@@ -1006,7 +1027,7 @@ pp_scrollcoin_move_resize(Dock *dock)
   /*  int y;
   y = LINEY0(0);
   scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));*/
-  scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, pp->zmsg_y1, pp->zmsg_h+1);
+  scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, pp->zmsg_y1-1, pp->zmsg_h+2);
 }
 
 

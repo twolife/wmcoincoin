@@ -12,10 +12,13 @@
 /* --------------- gestion des commentaire -------------- */
 
 /*
-  rcsid=$Id: comments.c,v 1.4 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: comments.c,v 1.5 2002/09/03 22:42:17 pouaite Exp $
 
   ChangeLog:
   $Log: comments.c,v $
+  Revision 1.5  2002/09/03 22:42:17  pouaite
+  coin
+
   Revision 1.4  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -168,12 +171,10 @@ site_yc_dl_and_update(Site *site)
     
     /* récuperation du cpu */
     p = strstr(s, "CPU</a>:");
-    flag_updating_comments++;
     if (p) {
       site->CPU = atof(p+8);
       BLAHBLAH(1,printf("cpu=%f\n", site->CPU));
     } else site->CPU = -1.0;
-    flag_updating_comments--;
 
     /* recuperation de la fortune */
     p = strstr(s, "</td><td class=\"newstext\"");
@@ -187,7 +188,6 @@ site_yc_dl_and_update(Site *site)
       *p2 = 0; /* on tronque brutalement, ça ne va pas gener la suite puisqu'on est tout à la fin de la page */
       if (p2-p > 10000) { p[10000] = 0; } /* les fortune de 10ko, non merci */
 
-      flag_updating_comments++;
       if (site->fortune) free(site->fortune);
 	
       /*
@@ -195,7 +195,6 @@ site_yc_dl_and_update(Site *site)
       sprintf(site->fortune, "<p align=center>%s</p>", p);
       */
       site->fortune = strdup(p);
-      flag_updating_comments--;
       
       BLAHBLAH(1, myprintf("[%s] fortune: \"%<yel %s>\"\n", 
 			   site->prefs->site_name, site->fortune));
@@ -207,7 +206,7 @@ site_yc_dl_and_update(Site *site)
     }
 
     /* si on est dans un cas de 'force_fortune_retrieval', on se barre maintenant */
-    if (site->prefs->user_cookie == NULL) goto caroule;
+    if (site->prefs->user_cookie == NULL) goto ouups1;
 
 
     p = strstr(s,"class=\"logoinfo\"");

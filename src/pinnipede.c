@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.76 2002/09/01 23:54:56 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.77 2002/09/03 22:42:17 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.77  2002/09/03 22:42:17  pouaite
+  coin
+
   Revision 1.76  2002/09/01 23:54:56  pouaite
   completurage du wmc3 et compatibilitation avec new.linuxfr
 
@@ -1245,9 +1248,11 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   }
 
 
-  XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
-  XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 5, pp->fn_h);
-  XFillRectangle(dock->display, lpix, dock->NormalGC, pp->win_width-6-(pp->sc ? SC_W : 0), 0, 5, pp->fn_h);
+  if (!use_bg_pixmap) {
+    XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
+    XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 4, pp->fn_h);
+    //    XFillRectangle(dock->display, lpix, dock->NormalGC, pp->win_width-3-(pp->sc ? SC_W : 0), 0, 2, pp->fn_h);
+  }
 
   /* verifie si c'est un nouveau message */
   if (pw) {
@@ -1260,7 +1265,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 		 (((bgpixel & 0x0000ff) + (pixel & 0x0000ff))/2 & 0x0000ff));
       }
       XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(pixel));
-      XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 5, pp->fn_h);
+      XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 4, pp->fn_h);
     }
   }
 
@@ -1503,8 +1508,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
   {
     int y,h;
     /* en haut */
-    y = LINEY0(0);
-    h = LINEY0(0)-pp->zmsg_y1;
+    y = pp->zmsg_y1;
+    h = LINEY0(0)-y;
     if (h>0) {
       pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
     }

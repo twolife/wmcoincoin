@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.19 2002/08/31 21:26:46 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.20 2002/09/03 22:42:16 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.20  2002/09/03 22:42:16  pouaite
+##   coin
+##
 ##   Revision 1.19  2002/08/31 21:26:46  pouaite
 ##   ajout du wmccc
 ##
@@ -67,7 +70,7 @@ EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_mini
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
-             xpms/logo.xpm xpms/bracket.xpm ./wmcoincoin.spec ./wmpanpan \
+             xpms/logo.xpm xpms/badnews.xpm xpms/bracket.xpm ./wmcoincoin.spec ./wmpanpan \
              ./options ./config.rpath
 
 rpm-dist: dist
