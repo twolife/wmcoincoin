@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.1 2002/01/16 21:27:35 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.2 2002/01/31 23:45:00 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.2  2002/01/31 23:45:00  pouaite
+  plop
+
   Revision 1.1  2002/01/16 21:27:35  pouaite
   gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
 
@@ -48,14 +51,25 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
   int tnow;
   int i,j;
   RGBAImage *img;
+  int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb;
+  
+  
 
   /* nombre de minutes regroupees dans une meme colonne du graphique */
   int col_nb_min = 0;
   int trib_nrow, trib_ncol;
 
   if (flag_updating_tribune) return;
-  //  assert(flag_tribune_updated == 1);
-  dock->tribune_updatable = 0;
+
+  dock->tribune_updatable = 0; /* ça c'est des vieux restes de l'époque des threads.. A VIRER UN DE CES QUATRES */
+
+  /* couleur de fond du trolloscope */
+  trolloscope_bgr = (280*(dock->flamometre.comment_change_decnt % FLAMOMETRE_COMMENT_CLIGN_SPEED))/(FLAMOMETRE_COMMENT_CLIGN_SPEED-1);
+  trolloscope_bgg = (280*(dock->flamometre.xp_change_decnt % FLAMOMETRE_XP_CLIGN_SPEED))/(FLAMOMETRE_XP_CLIGN_SPEED-1);
+  trolloscope_bgb = (280*(dock->flamometre.tribune_answer_decnt % FLAMOMETRE_TRIB_CLIGN_SPEED))/(FLAMOMETRE_TRIB_CLIGN_SPEED-1);
+  if (trolloscope_bgr>255) { trolloscope_bgr = ((280-trolloscope_bgr)*255)/(280-255); }
+  if (trolloscope_bgg>255) { trolloscope_bgg = ((280-trolloscope_bgg)*255)/(280-255); }
+  if (trolloscope_bgb>255) { trolloscope_bgb = ((280-trolloscope_bgb)*255)/(280-255); }
 
   if (dock->trolloscope_resolution == 5) {
     col_nb_min = 1*dock->trolloscope_speed;
@@ -122,7 +136,7 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 	b = dock->trolloscope[i][j].tatouage->B;
 	symb = dock->trolloscope[i][j].tatouage->symb;
       } else { 
-	r = dock->trolloscope_bgr; g = dock->trolloscope_bgg; b = dock->trolloscope_bgb; symb = 0;
+	r = trolloscope_bgr; g = trolloscope_bgg; b = trolloscope_bgb; symb = 0;
 	dock->trolloscope[i][j].id = 0;
 	dock->trolloscope[i][j].tatouage = NULL;
       }
@@ -136,9 +150,9 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 	      pixel = &img->data[ TROLLOSCOPE_HEIGHT-1-(i*5+ii) ][ TROLLOSCOPE_WIDTH-1-(j*5+jj) ];
 	      switch (symboles[symb].s[ii][jj]) {
 	      case ' ': 
-		pixel->rgba[0] = dock->trolloscope_bgr; 
-		pixel->rgba[1] = dock->trolloscope_bgg; 
-		pixel->rgba[2] = dock->trolloscope_bgb; 
+		pixel->rgba[0] = trolloscope_bgr; 
+		pixel->rgba[1] = trolloscope_bgg; 
+		pixel->rgba[2] = trolloscope_bgb; 
 		break;
 	      case '.': 
 		pixel->rgba[0] = (r/2); 
@@ -956,7 +970,6 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
 	 SI trolloscope clignote (detection de nouveau commentaire), on l'efface
       */
-	  
       if (flag_updating_comments == 0) {
 	DLFP_comment *com;
 	if ((com = dlfp_yc_find_modified(dock->dlfp,NULL))) {
@@ -967,11 +980,15 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	  open_url(url, -1, -1, 1);
 	  com->modified = 0;
 	  dlfp_yc_clear_modified(dock->dlfp);
-	  if (dlfp_yc_find_modified(dock->dlfp,NULL) == NULL)
-	    dock->trolloscope_clign_step = -2;
-	} else if (dock->dlfp->xp_clign_cnt >= 0) {
-	  dock->dlfp->xp_clign_cnt = -1;
-	  dock->trolloscope_clign_step = -2;
+	  if (dlfp_yc_find_modified(dock->dlfp,NULL) == NULL) {
+	    dock->flamometre.comment_change_decnt = 1;
+	  }
+	} else if (dock->flamometre.comment_change_decnt) { /* bizarre mais bon .. */
+	  dock->flamometre.comment_change_decnt = 1; /* ta gueule , en quelque sorte */
+	} else if (dock->flamometre.xp_change_decnt) {
+	  dock->flamometre.xp_change_decnt = 1;
+	} else if (dock->flamometre.tribune_answer_decnt) {
+	  dock->flamometre.tribune_answer_decnt = 1;
 	}
       }
       if (dock->tl_item_survol) {
@@ -1001,16 +1018,13 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
       /* 
-	     clic bouton de droite dans trolloscope
-	     -> le comportement a été modifié, le chagement de resolution est crétin et inutile
-	     ->nouveau comportement:
-         	     SI trolloscope clignote (detection de nouveau commentaire), on l'efface
-	  */
+	 SI trolloscope clignote (detection de nouveau commentaire), on l'efface
+      */
 	  
       if (flag_updating_comments == 0) {
 	if (dlfp_yc_find_modified(dock->dlfp,NULL)) {
 	  dlfp_yc_clear_modified(dock->dlfp);
-	  dock->trolloscope_clign_step = -2;
+	  dock->flamometre.comment_change_decnt = 1;
 	}
       }
     } else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),

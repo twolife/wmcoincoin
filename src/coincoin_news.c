@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.13 2002/01/20 20:53:22 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.14 2002/01/31 23:45:00 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.14  2002/01/31 23:45:00  pouaite
+  plop
+
   Revision 1.13  2002/01/20 20:53:22  pouaite
   bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
 
@@ -142,7 +145,8 @@ dlfp_create()
   dlfp->com = NULL;
   dlfp->xp_old = -1000;
   dlfp->xp = -1000;
-  dlfp->xp_clign_cnt = -1;
+  dlfp->xp_change_flag = 0;
+  dlfp->comment_change_flag = 0;
   dlfp->votes_max = -1;
   dlfp->votes_cur = -1;
 
@@ -1067,8 +1071,8 @@ dlfp_yc_update_comments(DLFP *dlfp)
     if (p != NULL) {
       int xp;
       if (regexp_extract(p, pat_xp, &xp)) {
-	if (dlfp->xp != xp && dlfp->xp_clign_cnt == -1 && dlfp->xp > -1000) {
-	  dlfp->xp_clign_cnt = 50*3600; /* une heure de clignotement */
+	if (dlfp->xp != xp && dlfp->xp_change_flag == 0 && dlfp->xp > -1000) {
+	  dlfp->xp_change_flag = 1;
 	}
 	if (dlfp->xp != xp) {
 	  dlfp->xp_old = dlfp->xp;
@@ -1151,7 +1155,10 @@ dlfp_yc_update_comments(DLFP *dlfp)
 	if (c->nb_answers != nbcom) {
 	  BLAHBLAH(1,myprintf("il y a eu %d/%d reponses au commentaire %d\n", 
 			      nbcom-c->nb_answers,c->nb_answers,cid));
-	  c->modified = 1;
+	  c->modified = 1;                /* on signale que ce commentaire a été modifié */
+	  dlfp->comment_change_flag = 1;  /* mais c'est CE flag qui déclenche le flamometre 
+					     (et il est remis à zéro dès que le flamometre a été déclenché)
+					   */
 	}
 	c->nb_answers = nbcom;
 	c->old = 0;
@@ -1162,6 +1169,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
 	c->nb_answers = nbcom;
 	c->old = 0;
 	c->modified = (nbcom == 0 || first_run ==1) ? 0 : 1;
+	dlfp->comment_change_flag = c->modified;  /* ce flag qui déclenche le flamometre */
 	BLAHBLAH(1,myprintf("NOUVEAU COMMENTAIRE %d, avec %d reponses\n",
 			    cid, nbcom));
       }

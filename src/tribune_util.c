@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.4 2002/01/20 20:53:22 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.5 2002/01/31 23:45:00 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.5  2002/01/31 23:45:00  pouaite
+  plop
+
   Revision 1.4  2002/01/20 20:53:22  pouaite
   bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
 
@@ -302,7 +305,8 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
 	    //	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);
 	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
-		(mi->hmsf[3] == 0 || mi->hmsf[2] == s)) {
+		(mi->hmsf[3] == 0 || (mi->hmsf[2] == s && 
+				      (num == -1 || (num == 0 && mi->sub_timestamp == -1) || num == mi->sub_timestamp)))) {
 //	      printf("ref au message trouvée !\n");
 	      return 1;
 	    }

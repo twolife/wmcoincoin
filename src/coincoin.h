@@ -203,10 +203,15 @@ typedef struct _DLFP {
   DLFP_comment *com;
   DLFP_message *msg;
 
-  int xp, xp_old, xp_clign_cnt; /* cnt = -1 -> arrete, sinon il est decremente au fur et a mesure du clignotement 
-				   il est active quand on detecte un changement dans les xp pendant la 
-				   lecture de myposts.php3
-				*/
+  int xp, xp_old;
+  /* xp_change_flag est active quand on detecte un changement dans les xp pendant la 
+     lecture de myposts.php3
+     (raz dès que la flamometre commence à clignoter) */
+  int xp_change_flag; 
+
+  /* ce flag déclenche le flamometre 
+     (et il est remis à zéro dès que le flamometre a été déclenché) */
+  int comment_change_flag;   
 
   char *fortune; /* la fortune recuperee sur myposts.php3 */
   float CPU;     /* la charge cpu recuperee sur myposts.php3 */
@@ -354,6 +359,15 @@ typedef struct _Pinnipede Pinnipede;
 #define MAX_NEWSTITLES_LEN 512 /* taille de dock->newstitles */
 #define MAX_MSGINFO_LEN 300 /* taille de dock->msginfo */
 
+/* periode du clignotement (25-> 1 par sec) */
+#define FLAMOMETRE_COMMENT_CLIGN_SPEED 32
+#define FLAMOMETRE_XP_CLIGN_SPEED      32
+#define FLAMOMETRE_TRIB_CLIGN_SPEED    16
+/* duree de clignotement (en secondes) */
+#define FLAMOMETRE_COMMENT_DUREE 3600000  /* c'est long, très long */
+#define FLAMOMETRE_XP_DUREE      900      /* 1/4 d'heure */
+#define FLAMOMETRE_TRIB_DUREE    15
+
 typedef struct _Dock {
   Pixmap pix_porte, mask_porte_haut, mask_porte_bas;
   Leds leds;
@@ -401,8 +415,15 @@ typedef struct _Dock {
   TL_item **trolloscope;
   /* trolloscope_resolution: 5(faible) ou 2(moyenne) ou 1(hires!)*/
   int trolloscope_resolution; /* de retour, à la demande de monsieur 'The Original Palmipède' */
-  int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb; /* couleur de fond du trolloscope (oui c'est tout naze) */
-  int trolloscope_clign_step; /*  -1 -> pas de clignot, -2 -> arret demande */
+  
+  struct {
+    int xp_change_decnt;
+    int comment_change_decnt;
+    int tribune_answer_decnt;
+  } flamometre;
+
+  //  int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb; /* couleur de fond du trolloscope (oui c'est tout naze) */
+  //  int trolloscope_clign_step; /*  -1 -> pas de clignot, -2 -> arret demande */
 
 
   /* si non nul, c'est le compteur de defilement*/

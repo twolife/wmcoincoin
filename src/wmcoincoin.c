@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.15 2002/01/20 22:49:38 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.16 2002/01/31 23:45:00 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.16  2002/01/31 23:45:00  pouaite
+  plop
+
   Revision 1.15  2002/01/20 22:49:38  pouaite
   ça va releaser
 
@@ -617,52 +620,38 @@ void X_loop()
     dock_leds_set_state(dock);
     dock_leds_update(&dock->leds);
 
-    /* clignotement qui signale l'ajout de nouveaux commentaires */
-    if (flag_updating_comments == 0) {
-      int xp_chg, cmt_chg;
-      /* ce qui suit est incompréhensible */
-      xp_chg = (dock->dlfp->xp_clign_cnt>=0);
-      cmt_chg = (dlfp_yc_find_modified(dock->dlfp,NULL) != NULL);
-      if (cmt_chg || xp_chg || flag_tribune_answer_to_me)
-	{
-	  dock->trolloscope_clign_step++;
-	  if (dock->trolloscope_clign_step > 50) {
-	    dock->trolloscope_clign_step = 0;
-	  }
-	  if (cmt_chg) {
-	    dock->trolloscope_bgr = (25 - ABS(dock->trolloscope_clign_step-25))*9;
-	  }
-	  if (xp_chg) {
-	    dock->trolloscope_bgg = (25 - ABS(((dock->trolloscope_clign_step+16)%50)-25))*9;
-	  }
-	  if (flag_tribune_answer_to_me) {
-	    dock->trolloscope_bgb = (25 - ABS(((dock->trolloscope_clign_step+32)%50)-25))*9;
-	    if (dock->trolloscope_clign_step == 18) {
-	      static unsigned cnt = 0;
-	      cnt++;
-	      if (cnt % 8 == 0) {
-		dock->trolloscope_bgb = 0;
-		flag_tribune_answer_to_me = 0;
-	      }
-	    }
-	  }
-	  dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+    /* suivi du clignotement du flamometre */
+    {
+      int clign = 0;
+      if (dock->flamometre.xp_change_decnt) { dock->flamometre.xp_change_decnt--; clign = 1; }
+      if (dock->flamometre.comment_change_decnt) { dock->flamometre.comment_change_decnt--; clign = 1; }
+      if (dock->flamometre.tribune_answer_decnt) { dock->flamometre.tribune_answer_decnt--; clign = 1; }
 
-	  if (dock->dlfp->xp_clign_cnt >=0) {
-	    dock->dlfp->xp_clign_cnt--;
-	    if (dock->dlfp->xp_clign_cnt == -1) {
-	      dock->trolloscope_bgg = 0;
-	    }
-	  }
-	  //	  if (trolloscope_clign_step == 0) {
-	  //	  }
-	} 
-      if (dock->trolloscope_clign_step == -2) {
-	  dock->trolloscope_clign_step = -1;
-	  dock->trolloscope_bgr = 0;
-	  dock->trolloscope_bgg = 0;
-	  dock->dlfp->xp_clign_cnt = -1;
-	  dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+      if (clign) {
+	dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
+      }
+    }
+    /* déclenchement du clignotement du flamometre */
+    if (flag_updating_comments == 0 && flag_updating_tribune == 0) {
+      if (dock->dlfp->xp_change_flag) {
+	dock->dlfp->xp_change_flag = 0;
+
+	/* on s'assure de rajouter une quantité divisible par FLAMOMETRE_XP_CLIGN_SPEED */
+	dock->flamometre.xp_change_decnt += (((FLAMOMETRE_XP_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
+					      FLAMOMETRE_XP_CLIGN_SPEED)*FLAMOMETRE_XP_CLIGN_SPEED);
+      }
+      if (dock->dlfp->xp_change_flag) {
+	dock->dlfp->xp_change_flag = 0;
+	if (dlfp_yc_find_modified(dock->dlfp,NULL)) { /* les inconsistences sont possibles */
+	  dock->flamometre.comment_change_decnt += (((FLAMOMETRE_COMMENT_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
+						     FLAMOMETRE_COMMENT_CLIGN_SPEED)*FLAMOMETRE_COMMENT_CLIGN_SPEED);
+	}
+      }
+
+      if (flag_tribune_answer_to_me) {
+	flag_tribune_answer_to_me;
+	dock->flamometre.tribune_answer_decnt += (((FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
+						   FLAMOMETRE_TRIB_CLIGN_SPEED)*FLAMOMETRE_TRIB_CLIGN_SPEED);
       }
     }
 
@@ -1316,8 +1305,13 @@ main(int argc, char **argv)
 
   dock->tl_item_survol = NULL;
   dock->trolloscope_resolution = 5;
-  dock->trolloscope_bgr = dock->trolloscope_bgb = dock->trolloscope_bgg = 0;
-  dock->trolloscope_clign_step = -1;
+
+  dock->flamometre.xp_change_decnt = 0;
+  dock->flamometre.comment_change_decnt = 0;
+  dock->flamometre.tribune_answer_decnt = 0;
+
+  /*  dock->trolloscope_bgr = dock->trolloscope_bgb = dock->trolloscope_bgg = 0;
+      dock->trolloscope_clign_step = -1;*/
 
   dock->news_update_request = 0;
   dock->tribune_update_request = 0;

@@ -1,3 +1,8 @@
+2002-02-01  pouaite  <c0in@altern.org>
+
+	* src/tribune_util.c, src/pinnipede.c: bugfix pour les refs aux post multiples
+	* src/coincoin.h, src/wmcoincoin.c, src/dock.c: bugfix (définitif j'espère) du flamomètre
+
 --------------------------v2.3.4-----------------------------------------
 
 2002-01-20  pouaite  <c0in@altern.org>
