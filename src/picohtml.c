@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.11 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.12 2002/09/22 23:16:33 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.12  2002/09/22 23:16:33  pouaite
+  i had a friend, but he does not move anymore
+
   Revision 1.11  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -107,7 +110,7 @@ picohtml_additem(PicoHtml *ph, const unsigned char *s, int len, c_attr attrib, i
   }
   it->link_str = link;
   it->special_attr = special_attr;
-  BLAHBLAH(3, myprintf("{%<CYA %s>,x=%d, y=%d, w=%<YEL %d>, h=%d}\n", 
+  BLAHBLAH(5, myprintf("{%<CYA %s>,x=%d, y=%d, w=%<YEL %d>, h=%d}\n", 
 		       it->s, it->x, it->y,it->w,it->h));
   it->next = NULL;
   return it;

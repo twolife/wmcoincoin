@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.8  2002/09/22 23:16:33  pouaite
+dnl   i had a friend, but he does not move anymore
+dnl
 dnl   Revision 1.7  2002/09/08 18:44:07  pouaite
 dnl   mouaissssss
 dnl
@@ -109,7 +112,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.0c, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.0cvs, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)

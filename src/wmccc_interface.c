@@ -856,6 +856,9 @@ create_main_win (void)
   glade_menuitem = gtk_menu_item_new_with_label ("new.linuxfr.org");
   gtk_widget_show (glade_menuitem);
   gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
+  glade_menuitem = gtk_menu_item_new_with_label ("mandrakefr.org");
+  gtk_widget_show (glade_menuitem);
+  gtk_menu_append (GTK_MENU (optionmenu_site_predefined_menu), glade_menuitem);
   gtk_option_menu_set_menu (GTK_OPTION_MENU (optionmenu_site_predefined), optionmenu_site_predefined_menu);
 
   label103 = gtk_label_new ("Check what:");

@@ -606,7 +606,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
   GtkWidget *active_item;
   SitePrefs *sp;
   
-  enum { NONE, DLFP, WOOF, DLFP2} item_index;
+  enum { NONE, DLFP, WOOF, DLFP2, MDKFR} item_index;
 
   active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
   item_index = g_list_index(menu_shell->children, active_item);
@@ -622,19 +622,26 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
     if (sp->user_cookie) {
       g_free(sp->user_cookie); sp->user_cookie = NULL;
     }
+    if (item_index != NONE) {
+      sp->user_cookie = strdup("session_id=COIN025coin8778PL0p");
+      sp->board_post = strdup("message=%s");
+      sp->path_board_add = strdup("board/add.php3");
+      sp->check_news = 0;
+      sp->check_board = 1;
+      sp->check_comments = 0;
+      sp->check_messages = 0;
+      sp->palmi_msg_max_len = 255;
+      sp->palmi_ua_max_len = 60;
+    }
     switch (item_index) {
     case NONE: break;
     case DLFP: 
       sp->site_root = strdup("http://www.linuxfr.org");
       sp->all_names[0] = strdup("dlfp");
       sp->all_names[1] = strdup("linuxfr");
-      sp->user_cookie = strdup("session_id=COIN025coin8778PL0p");
       sp->locale = locFR;
       sp->use_AM_PM = 0;
-      sp->palmi_msg_max_len = 255;
-      sp->palmi_ua_max_len = 60;
       sp->check_news = 1;
-      sp->check_board = 1;
       sp->check_comments = 1;
       sp->check_messages = 1;
       break;
@@ -642,13 +649,11 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->site_root = strdup("http://www.woof.lu");
       sp->all_names[0] = strdup("woof");
       sp->all_names[1] = strdup("wooflu");
-      sp->user_cookie = strdup("session_id=COIN025coin8778PL0p");
       sp->locale = locEN;
       sp->use_AM_PM = 0;
       sp->palmi_msg_max_len = 400;
       sp->palmi_ua_max_len = 60;
       sp->check_news = 1;
-      sp->check_board = 1;
       sp->check_comments = 1;
       sp->check_messages = 1;
       break;
@@ -661,12 +666,13 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->user_cookie = strdup("unique_id=COIN;md5=PLOP");
       sp->locale = locFR;
       sp->use_AM_PM = 0;
-      sp->palmi_msg_max_len = 255;
-      sp->palmi_ua_max_len = 60;
-      sp->check_news = 0;
-      sp->check_board = 1;
-      sp->check_comments = 0;
-      sp->check_messages = 0;      
+    case MDKFR:
+      sp->site_root = strdup("mandrakefr.org");
+      sp->all_names[0] = strdup("mdkfr");
+      sp->all_names[1] = strdup("mandrakefr");
+      sp->locale = locFR;
+      sp->use_AM_PM = 0;
+      sp->check_news = 1;
     default:
       break;
     }

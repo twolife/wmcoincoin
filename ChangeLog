@@ -1,3 +1,7 @@
+2002-09-22  pouaite  <c0in@altern.org>
+
+	* src/pinnipede_pdfm.c: ajout du patch de Shift (css pour le pdfm)
+
 --------------------------v2.4.0-c-----------------------------------------
 2002-09-08  pouaite  <c0in@altern.org>
 

@@ -599,6 +599,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(user_agent);
       SP_STR_OPT_COPY(proxy_auth_user);
       SP_STR_OPT_COPY(proxy_auth_pass);
+      SP_INT_OPT_COPY(locale);
       
       if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) +
 	  SP_STR_OPT_COPY_IF_CHANGED(site_root)) {
