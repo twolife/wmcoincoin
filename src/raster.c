@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.3 2002/03/10 16:07:10 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.4 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.4  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.3  2002/03/10 16:07:10  pouaite
   pseudo transp basique dans le pinnipede (en cours..)
 
@@ -9,7 +12,9 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
-
+#include <assert.h>
+#include <string.h>
+#include <errno.h>
 #include "raster.h"
 #include "coin_util.h"
 /* 
@@ -81,7 +86,7 @@ RGBACreateContext(Display *dpy, int screen_number)
     printf("le visual (depth=%d) est en %s, cool\n", context->depth, 
 	   context->vclass == TrueColor ? "TrueColor" : "DirectColor");
   } else if (context->vclass == PseudoColor || context->vclass == StaticColor) {
-    printf("waou, on est en pseudocolor (depth=%d)... dommage\n", context->depth);
+    printf("waou, on est en pseudocolor (depth=%d)...\n", context->depth);
     free(context); return NULL;
   } else if (context->vclass == GrayScale || context->vclass == StaticGray) {
     printf("incoryable, y'a même po de couleurs !\n");
@@ -197,4 +202,139 @@ RGBAImage2Pixmap(RGBAContext *ctx, RGBAImage *rimg)
   XPutImage(ctx->dpy, pixmap, ctx->copy_gc, ximg, 0, 0, 0, 0, rimg->w, rimg->h);
   XDestroyImage(ximg);
   return pixmap;
+}
+
+/*
+  dans la catégorie des fonctions à ne pas appeler trop souvent, 
+  ni sur des wallpaper 1600x1200 , voici un clone de XpmCreatePixmapFromData ... 
+*/
+Pixmap
+RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
+{
+  int w,h,ncolor,cpp;
+  RGBAImage *rimg;
+  Pixmap pix;
+
+  struct xpm_color {
+    char char_color[4];
+    int r,g,b;
+  } *col_tab;
+  
+  int i, rgb;
+
+  assert(sscanf(xpm[0], "%d %d %d %d", &w, &h, &ncolor, &cpp)==4);
+  assert(w > 0); assert(h>0); assert(ncolor>0); assert(cpp>0 && cpp <= 4);
+  
+  ALLOC_VEC(col_tab, ncolor, struct xpm_color);
+  for (i=0; i < ncolor; i++) {
+    char *s;
+    s = xpm[i+1];
+    strncpy(col_tab[i].char_color, s, cpp); /* copie les caracteres identifiant la couleur */
+
+    s+= cpp;
+    assert(*s == '\t' || *s == ' '); 
+    s++;
+    assert(*s == 'c'); /* seulement les fichiers xpms en couleur */
+
+    s++; assert(*s == ' ');
+    s++;
+    if (strcasecmp(s, "None") != 0) {
+      assert(*s == '#');
+      assert(sscanf(s+1, "%x", &rgb)==1);
+      col_tab[i].r = (rgb & 0xff0000) >> 16;
+      col_tab[i].g = (rgb & 0x00ff00) >> 8;
+      col_tab[i].b = (rgb & 0x0000ff);
+      //printf("couleur %d: %x [s='%s']\n", i, rgb, xpm[i+1]);
+    } else {
+      col_tab[i].r = 0;
+      col_tab[i].g = 0;
+      col_tab[i].b = 0;
+    }
+  }
+
+  rimg = RGBACreateImage(w,h); assert(rimg);
+  for (i=0; i < h; i++) {
+    char *s; 
+    int j;
+    s = xpm[i+1+ncolor];
+    for (j=0; j < w; j++) {
+      int k;
+
+      /* recherche ultra-bourrine de la couleur, pas le temps de finasser ;) */
+      for (k = 0; k < ncolor; k++) {
+	if (memcmp(s+j*cpp, col_tab[k].char_color, cpp) == 0) {
+	  break;
+	}
+      }
+      assert(k < ncolor);
+      
+      //      printf("%d %d --> [%02x,%02x,%02x]\n", i, j, col_tab[k].r, col_tab[k].g, col_tab[k].b);
+      rimg->data[i][j].rgba[0] = col_tab[k].r;
+      rimg->data[i][j].rgba[1] = col_tab[k].g;
+      rimg->data[i][j].rgba[2] = col_tab[k].b;
+    }
+  }
+
+  pix = RGBAImage2Pixmap(ctx, rimg);
+  free(col_tab);  
+  RGBADestroyImage(rimg);
+  
+  return pix;
+}
+
+/* toujours plus con , voici...*/
+Pixmap
+RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
+{
+  FILE *f;
+#define LEN_MAX 4096
+#define NLIG_MAX 2048
+
+  char *l_tab[NLIG_MAX]; /* beurk */
+  char l[LEN_MAX];       /* eeeerk */
+  int lcnt;
+  Pixmap pix;
+
+  *w = 0; *h = 0;
+  f = fopen(xpm_file, "r"); if (f == NULL) {
+    fprintf(stderr, "impossible d'ouvrir '%s' : %s\n", xpm_file, strerror(errno));
+    return None;
+  }
+  
+  lcnt = 0;
+  do {
+    if (ferror(f)) {
+      fprintf(stderr, "erreur pendant la lecture de '%s' !? [%s]\n", xpm_file, strerror(errno));
+    }
+
+    l[0] = 0; fgets(l, LEN_MAX, f);
+    
+    /* on ne prend en compte QUE LES LIGNES QUI COMMENCE PAR '"' et QUI SE TERMINENT PAR '",' */
+    
+    if (l[0] == '"') {
+      int i;
+      i = strlen(l); assert(i > 2);
+      
+      i--;
+      while (l[i] != '"') i--; /* oui, j'ai pas envie de finasser */
+      if (i == 0) {
+	fprintf(stderr, "la ligne '%s' est bizarre\n", l); return None;
+      }
+      l[i] = 0;
+
+      //      printf("ajout de la ligne: '%s'\n", l+1);
+      l_tab[lcnt] = strdup(l+1);
+      lcnt++;
+    }
+  } while (!feof(f));
+  fclose(f);
+  
+  assert(lcnt > 0);
+  sscanf(l_tab[0], "%d %d", w, h);
+  pix = RGBACreatePixmapFromXpmData(ctx, l_tab);
+
+  for (; lcnt >= 0; lcnt--) {
+    free(l_tab[lcnt]);
+  }
+  return pix;
 }

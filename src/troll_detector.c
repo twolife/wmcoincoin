@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.9 2002/03/05 21:04:28 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.10 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.10  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.9  2002/03/05 21:04:28  pouaite
   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
 
@@ -502,6 +505,7 @@ troll_detector(tribune_msg_info *mi) {
 
 
       /* calcul du hash code pour differentes longueurs */
+      hash_codes[0] = hash_codes[1] = 0;
       for (i = 2; i < MAX_WLEN; i++) {
 	hash_codes[i] = str_hache(s, MIN(i, w->len));
       }

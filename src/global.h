@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.17 2002/03/07 18:54:34 pouaite Exp $
+  rcsid=$Id: global.h,v 1.18 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.18  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.17  2002/03/07 18:54:34  pouaite
   raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
 
@@ -84,6 +87,12 @@
 #else
 # define BLAHBLAH(n,x)
 #endif
+
+#ifndef NO_BITFIELDS
+#  define BITFIELD(n) :n
+#else
+#  define BITFIELD(n) 
+#endif 
 
 #define WMCC_TIMER_DELAY_MS 40 /* un bip toutes les 40 millisecondes */
 
@@ -201,6 +210,15 @@ typedef struct _structPrefs{
 
 /* variables communes ici: */
 
+#ifdef USE_VALGRIND
+# define NOSIGNALS
+# include <sys/times.h>
+  DECL_GLOB_INIT(volatile clock_t last_call_X_loop, 0);
+# define VALGRINDCHK { struct tms buf; clock_t t = times(&buf); if (t-last_call_X_loop > 25) { last_call_X_loop = t; X_loop_request++; wmcc_tic_cnt++; }}
+#else
+# define VALGRINDCHK
+#endif
+
 /*
   il faut des protections pour les appels systèmes non reentrant :-( (malloc...)
   (la cause des bugs bizarres du "mur vert" ?)
@@ -208,8 +226,8 @@ typedef struct _structPrefs{
 void X_loop();
 void ispell_run_background(const char* spellCmd, const char* spellDict);
 #define ALLOW_ISPELL if (Prefs.ew_do_spell) {ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);}
-#define ALLOW_X_LOOP if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf("%s, ligne %d : X_loop_request=%d!\n", __FILE__, __LINE__, X_loop_request); }X_loop(); }
-#define ALLOW_X_LOOP_MSG(m) if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf(m " : X_loop_request=%d!\n", X_loop_request); }  X_loop(); }
+#define ALLOW_X_LOOP VALGRINDCHK; if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf("%s, ligne %d : X_loop_request=%d!\n", __FILE__, __LINE__, X_loop_request); }X_loop(); }
+#define ALLOW_X_LOOP_MSG(m) VALGRINDCHK; if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf(m " : X_loop_request=%d!\n", X_loop_request); }  X_loop(); }
 
 /* très très laid, voir wmcoincoin.c/Timer_Thread */
 #ifdef __CYGWIN__

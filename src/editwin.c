@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.14 2002/03/09 00:25:12 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.15 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.15  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.14  2002/03/09 00:25:12  pouaite
   coin coin
 
@@ -1385,14 +1388,12 @@ editw_build(Dock *dock)
 
     editwin_minib_xpm[1] = s_xpm_bgcolor;
 
-    assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
-				   editwin_minib_xpm, &ew->minipix, NULL, NULL) == XpmSuccess);
-
+    
+    ew->minipix = RGBACreatePixmapFromXpmData(dock->rgba_context, editwin_minib_xpm); assert(ew->minipix);
     
     snprintf(s_xpm_bgcolor, 30, " \tc #%06X", (255 << 16) + (231 << 8) + 186);
     clippy_xpm[1] = s_xpm_bgcolor;
-    assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
-				   clippy_xpm, &ew->clippy_pixmap, NULL, NULL) == XpmSuccess);
+    ew->clippy_pixmap = RGBACreatePixmapFromXpmData(dock->rgba_context, clippy_xpm); assert(ew->clippy_pixmap);
 
     sscanf(clippy_xpm[0], "%d %d", &ew->clippy_w, &ew->clippy_h);
   }

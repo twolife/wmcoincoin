@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.35 2002/03/10 22:45:36 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.36 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.36  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.35  2002/03/10 22:45:36  pouaite
   <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
 
@@ -140,14 +143,15 @@ struct _PostVisual {
   PostWord *first; /* la liste des mots */
   time_t tstamp;
   signed char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
-  int nblig:12; // nombre de lignes necessaire pour afficher ce message
-  int ref_cnt:9; // compteur de references
+  int nblig BITFIELD(12); // nombre de lignes necessaire pour afficher ce message
+  int ref_cnt BITFIELD(9); // compteur de references
 
-  int is_my_message:1;
-  int is_answer_to_me:1;
-  int is_hilight_key:1;
-  int is_skipped_id:1; /* non nul si le message (id-1) n'existe pas */
-  int is_plopified:3;  /* non nul si le message a été plopifié
+  int is_my_message BITFIELD(1);
+  int is_answer_to_me BITFIELD(1);
+  int is_hilight_key BITFIELD(1);
+  int is_skipped_id BITFIELD(1); /* non nul si le message (id-1) n'existe pas */
+  int is_plopified BITFIELD(3);
+  /* non nul si le message a été plopifié
 			  =1, le message apparait en gris, tags html enleves
 			  =2, le message est plopifié (mots remplacés par plop, grouik..)
 			*/
@@ -663,12 +667,23 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->next = NULL;
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
+
+  
   pv->sub_tstamp = mi->sub_timestamp;
   pv->is_my_message = mi->is_my_message;
   pv->is_answer_to_me = mi->is_answer_to_me;
+
   pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
   pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list) == NULL ? 0 : 1;
   pv->is_plopified = (tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL) ? 0 : (disable_plopify ? 1 : 2);
+
+  /*
+  printf("pv = %p\n", pv);
+  printf("  pv = %d\n", pv->id);
+  printf("  pv->is_my_message = %d\n", pv->is_my_message);
+  printf("  pv->is_answer = %d\n", pv->is_answer_to_me);
+  printf("  pv->is_high = %d\n", pv->is_hilight_key);
+  */
 
   pw = NULL;
 
@@ -1636,6 +1651,12 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
     
     prev_font = NULL;
     pl = pw->ligne;
+    /*
+      printf("pw->parent = %d\n", pw->parent->id);
+      printf("pw->parent->is_my_message = %d\n", pw->parent->is_my_message);
+      printf("pw->parent->is_answer = %d\n", pw->parent->is_answer_to_me);
+      printf("pw->parent->is_high = %d\n", pw->parent->is_hilight_key);
+    */
     
     /* affichage du petit crochet sur la gauche de certains messages */
     if (pw->parent->is_my_message || 

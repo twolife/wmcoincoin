@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.29 2002/03/10 22:45:36 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.30 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.30  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.29  2002/03/10 22:45:36  pouaite
   <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
 
@@ -982,57 +985,29 @@ void initx(Dock *dock, int argc, char **argv) {
 
 
   /* load interface pixmap */
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, coin_xpm,
-			     &dock->coinpix, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+
+  dock->coinpix = RGBACreatePixmapFromXpmData(dock->rgba_context, coin_xpm);
+  assert(dock->coinpix != None);
   
   createXBMfromXPM(coin_mask, coin_xpm, 64, 64);
   
   dock->coin_pixmask = XCreateBitmapFromData(dock->display, dock->win, 
 					     coin_mask, 64, 64);
 
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, clock_xpm,
-			     &dock->clockpix, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+  dock->clockpix = RGBACreatePixmapFromXpmData(dock->rgba_context, clock_xpm);
   
   createXBMfromXPM(clock_mask, clock_xpm, 64, 64);
   
   dock->clock_pixmask = XCreateBitmapFromData(dock->display, dock->win, 
 					     clock_mask, 64, 64);
   
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, led_xpm,
-			     &dock->led, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+  dock->led = RGBACreatePixmapFromXpmData(dock->rgba_context, led_xpm);assert(dock->led != None);
   
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, month_xpm,
-			     &dock->month, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+  dock->month = RGBACreatePixmapFromXpmData(dock->rgba_context, month_xpm);assert(dock->month != None);
   
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, date_xpm,
-			     &dock->date, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+  dock->date = RGBACreatePixmapFromXpmData(dock->rgba_context, date_xpm); assert(dock->date != None);
   
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, weekday_xpm,
-			     &dock->weekday, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
-  
-  if(XpmCreatePixmapFromData(dock->display, dock->rootwin, month_xpm,
-			     &dock->month, NULL, NULL)!=XpmSuccess) {
-    fprintf(stderr, "Not engough free colorcells (you need at least a 15bit display)\n");
-    exit(1);
-  }
+  dock->weekday = RGBACreatePixmapFromXpmData(dock->rgba_context, weekday_xpm); assert(dock->weekday != None);
   
   if (Prefs.draw_border == 0) {
     /* setup shaped window */
@@ -1096,8 +1071,8 @@ void initx(Dock *dock, int argc, char **argv) {
   }
   
   /* create a graphics context */
-  xgcv.foreground = BlackPixel(dock->display, dock->screennum);
-  xgcv.background = BlackPixel(dock->display, dock->screennum);
+  xgcv.foreground = RGB2PIXEL(0,0,0);
+  xgcv.background = RGB2PIXEL(255,255,255);
 
   dock->NormalGC = XCreateGC(dock->display, dock->win, GCForeground | GCBackground, &xgcv);
   if(!dock->NormalGC) {
@@ -1257,7 +1232,7 @@ void *Net_loop () {
     
     dock->wmcc_state_info = WMCC_IDLE;
     ALLOW_X_LOOP;
-#ifdef __CYGWIN__
+#if (defined(__CYGWIN__) || defined(NOSIGNALS))
     usleep(10000); 
 #else
     pause(); 
@@ -1280,14 +1255,10 @@ prepare_pixmap_porte(Dock *dock)
 
   dock->pix_porte = None;
   if (Prefs.bgpixmap) {
-    XpmAttributes attribs;
-    int res;
-    attribs.valuemask = 0;
-    res = XpmReadFileToPixmap(dock->display, dock->rootwin, 
-				  Prefs.bgpixmap,
-				  &bg_pixmap, NULL, &attribs);
-    if ((res != XpmSuccess) || (attribs.width != 64) || (attribs.height != 64)) {
-      myprintf("Erreur en chargeant le fichier : %<YEL %s>\n", Prefs.bgpixmap);
+    int w, h;
+    bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.bgpixmap, &w, &h);
+    if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
+      myprintf("Erreur en chargeant le fichier : %<YEL %s> [xpm de 64x64 pixels svp]\n", Prefs.bgpixmap);
     } else {
       RGBAImage *rgba_porte;
       XImage *XiPixPixmap;
@@ -1599,7 +1570,9 @@ main(int argc, char **argv)
     dock_refresh_horloge_mode(dock);
   }
 
+#ifndef NOSIGNALS
   install_sighandlers();
+#endif
 
   /* launching the network update thread */
 
@@ -1607,6 +1580,7 @@ main(int argc, char **argv)
   pthread_create (&timer_thread, NULL, Timer_Thread, NULL);
 
 #else
+#  ifndef NOSIGNALS
   {
     struct itimerval the_timer;
     the_timer.it_interval.tv_sec = 0;
@@ -1615,6 +1589,7 @@ main(int argc, char **argv)
 
     setitimer(ITIMER_REAL, &the_timer, NULL);
   }
+#  endif
 #endif  
   Net_loop();
 #ifdef TEST_MEMLEAK

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.3 2002/03/10 16:07:10 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.4 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.4  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.3  2002/03/10 16:07:10  pouaite
   pseudo transp basique dans le pinnipede (en cours..)
 
@@ -37,6 +40,7 @@ typedef struct RGBAContext {
 
   /* decalage à appliquer sur un pixel (apres l'avoir masque avec visual->red_mask etc) pour se retrouver avec une valeur entre 0 et 255 */
   int rdecal, gdecal, bdecal;
+  int rmask, gmask, bmask;
 } RGBAContext;
 
 
@@ -55,4 +59,6 @@ RGBAImage* RGBACreateImage(int width, int height);
 void RGBADestroyImage(RGBAImage *img);
 XImage *RGBAImage2XImage(RGBAContext *ctx, RGBAImage *rimg);
 Pixmap RGBAImage2Pixmap(RGBAContext *ctx, RGBAImage *rimg);
+Pixmap RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm);
+Pixmap RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h);
 #endif

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.23 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.24 2002/03/18 22:46:49 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.24  2002/03/18 22:46:49  pouaite
+  1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
+
   Revision 1.23  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -711,8 +714,9 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	/* nettoyage des codes < 32 dans le message */
 	{
 	  int i = 0;
-	  while (msg[i]) {
-	    if ((unsigned char)msg[i] < ' ') msg[i] = ' ';
+
+	  while (i < TRIBUNE_MSG_MAX_LEN && p[i]) {
+	    if ((unsigned char)p[i] < ' ') p[i] = ' ';
 	    i++;
 	  }
 	}

@@ -130,11 +130,13 @@ struct _tribune_msg_info {
   */
   DLFP_trib_load_rule *tatouage;
 
-  int troll_score:13; /* le niveau de trollitude du post (cf troll_detector.c) */
-  int is_my_message:1;
-  int is_answer_to_me:1;
+  /* le niveau de trollitude du post (cf troll_detector.c) */
+  int troll_score BITFIELD(13); 
+  int is_my_message BITFIELD(1);
+  int is_answer_to_me BITFIELD(1);
 
-  int bidouille_qui_pue:1; /* utilisé par tribune_key_list_test_thread pour éviter de récurser comme un ouf */
+  /* utilisé par tribune_key_list_test_thread pour éviter de récurser comme un ouf */
+  int bidouille_qui_pue BITFIELD(1); 
   short nb_refs;
   tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 };
