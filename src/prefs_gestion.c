@@ -5,7 +5,6 @@
 #include "coincoin.h"
 #include "spell_coin.h"
 #include "site.h"
-#include "newswin.h"
 #include "dock.h"
 
 #include <libintl.h>
@@ -40,10 +39,6 @@ wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
 	myprintf(_(" %<GRN -h>\t\t: mouaif...\n"));
 	//	myprintf(_(" %<GRN -d> %<CYA n>\t\t: fixe le delai entre deux checks de la tribune a %<CYA n> secondes (defaut %<grn %d>)\n"), The_Prefs->tribune_check_delay);
 	//	myprintf(_(" %<GRN -D> %<CYA n>\t\t: fixe le delai entre deux checks des news a %<CYA n> secondes (default %<grn %d>)\n"), The_Prefs->news_check_delay);
-	myprintf(_(" %<GRN -f> %<CYA fn>\t\t: utiliser la fonte de famille %<CYA fn> pour l'affiche des news\n"
-		 "\t\t  (ex: fn = %<grn %s> (defaut), ou fn = clean)\n"), The_Prefs->news_fn_family);
-	myprintf(_(" %<GRN -F> %<CYA n>\t\t: utiliser une taille de fonte de %<CYA n> pixels pour l'affiche des news\n\t\t"
-		 " (defaut = %<grn %d>)\n"), The_Prefs->news_fn_size);
 	//	myprintf(_(" %<GRN -u> %<CYA ua>\t\t: change le user-agent\n"));
 	//	myprintf(_(" %<GRN -P> %<CYA proxy:port>\t: utilise un proxy\n"));
 	//	myprintf(_(" %<GRN -A> %<CYA username:password>: authentification pour le proxy, si necessaire\n"));
@@ -484,7 +479,6 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
   } else {
     int redraw_pinni = 0;
     int rebuild_pinni = 0;
-    int rebuild_newswin = 0;
     int rebuild_palmi = 0;
     int close_palmi = 0;
     int reset_dock_pix = 0;
@@ -541,19 +535,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_color) +
 	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) +
 	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_dark_color)) {
-      rebuild_newswin = 1;
       rebuild_pinni = 1;
-    }
-
-    /* modifs sur l'apparence de la fenêtre des news */
-    if (G_STR_OPT_COPY_IF_CHANGED(news_fn_family) + 
-	G_INT_OPT_COPY_IF_CHANGED(news_fn_size) +
-	G_INT_OPT_COPY_IF_CHANGED(news_bgcolor) + 
-	G_INT_OPT_COPY_IF_CHANGED(news_fgcolor) +
-	G_INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) +
-	G_INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) +
-	G_INT_OPT_COPY_IF_CHANGED(news_emph_color)) {
-      rebuild_newswin = 1;
     }
 
     /* déplacement du dock dans le cas ou la fenetre est en override redirect */
@@ -570,10 +552,6 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     /* test sur les grosses options du pinnipede */
     if (G_STR_OPT_COPY_IF_CHANGED(pp_fn_family) +
 	G_INT_OPT_COPY_IF_CHANGED(pp_fn_size) +
-	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) +
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) +
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) +
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor) +	
         G_INT_OPT_COPY_IF_CHANGED(pp_show_sec_mode) +
         G_INT_OPT_COPY_IF_CHANGED(pp_html_mode)) {
       rebuild_pinni = 1;
@@ -624,9 +602,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       
       SP_INT_OPT_COPY(board_check_delay);
       SP_INT_OPT_COPY(board_max_msg);
-      SP_INT_OPT_COPY(news_check_delay);
-      SP_INT_OPT_COPY(board_backend_type);
-      SP_INT_OPT_COPY(news_max_nb_days);
+      SP_INT_OPT_COPY(backend_type);
       SP_INT_OPT_COPY(proxy_nocache);
       SP_INT_OPT_COPY(use_if_modified_since);
       SP_STR_OPT_COPY(user_agent);
@@ -644,15 +620,10 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(site_path);
       SP_INT_OPT_COPY(site_port);
       SP_STR_OPT_COPY(path_board_backend);
-      SP_STR_OPT_COPY(path_news_backend);
-      SP_STR_OPT_COPY(path_end_news_url);
       SP_STR_OPT_COPY(path_board_add);
       SP_STR_OPT_COPY(board_post);
-      SP_STR_OPT_COPY(path_myposts);
-      SP_STR_OPT_COPY(path_messages);
       SP_STR_OPT_COPY(user_cookie);
       SP_STR_OPT_COPY(user_login);
-      SP_INT_OPT_COPY(force_fortune_retrieval);
       SP_INT_OPT_COPY(board_auto_refresh);
 
       if (SP_INT_OPT_COPY_IF_CHANGED(palmi_msg_max_len) +
@@ -679,26 +650,13 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	rebuild_pinni = 1;
       }
 
-      if (SP_INT_OPT_COPY_IF_CHANGED(check_news) +
-	  SP_INT_OPT_COPY_IF_CHANGED(check_board) +
-	  SP_INT_OPT_COPY_IF_CHANGED(check_comments) +
-	  SP_INT_OPT_COPY_IF_CHANGED(check_messages)) {
+      if (SP_INT_OPT_COPY_IF_CHANGED(check_board)) {
 	Site *site;
 	rebuild_pinni = 1;
-	rebuild_newswin = 1;
 
 	site = sl_find_site_by_name(dock->sites, p->site_name);
 	assert(site);
 
-	if (site->prefs->check_news == 0 && site->news) {
-	  site_news_destroy(site);
-	}
-	if (site->prefs->check_messages == 0 && site->msg) {
-	  site_msg_destroy(site);
-	}
-	if (site->prefs->check_comments == 0 && site->com) {
-	  site_com_destroy(site);
-	}
 	if (site->prefs->check_board == 0 && site->board) {
 	  board_destroy(site->board); site->board = NULL;
 	} else if (site->prefs->check_board && site->board == NULL) {
@@ -723,7 +681,6 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	Prefs.nb_sites--;
 
 	rebuild_pinni = 1;
-	rebuild_newswin = 1;
 	rebuild_palmi = 1;
       }
     }
@@ -752,7 +709,6 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	sl_insert_new_site(dock->sites, sp);
 
 	rebuild_pinni = 1;
-	rebuild_newswin = 1;
       }
     }
 
@@ -778,12 +734,6 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 
 
     /* MISE A JOUR DU COINCOIN */
-    if (rebuild_newswin) {
-      int showed = newswin_is_used(dock);
-      newswin_destroy(dock); newswin_build(dock);
-      if (showed) newswin_show(dock, id_type_invalid_id());
-    }
-  
     if (reset_dock_pix) { 
       if ((errmsg=dock_build_pixmap_porte(dock))) {
 	fprintf(stderr, errmsg);

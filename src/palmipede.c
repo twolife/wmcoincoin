@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.18 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.19 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.19  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.18  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -156,6 +159,7 @@
 #include "coin_util.h"
 #include "coin_xutil.h"
 #include "coincoin.h"
+#include "fontcoincoin.h"
 #include "../xpms/editwin_minib.xpm"
 #include "../xpms/clippy.xpm"
 #include "spell_coin.h" 
@@ -165,8 +169,12 @@
 #define FN_W 6
 #define FN_H 11
 #define FN_BASE_H 9
-#define EW_FONT "-*-fixed-*--10-*"
-#define EW_NCOL 60
+//#define FN_W (ew->fn_w)
+//#define FN_H (ccfont_height(ew->fn))
+//#define FN_BASE_H (ccfont_ascent(ew->fn))
+//#define EW_FONT "-*-fixed-*--10-*"
+#define EW_FONT "monospace:pixelsize=10"
+#define EW_NCOL 64
 #define EW_NROW 4
 
 #define EW_TXT_XBORD_WIDTH 8
@@ -185,18 +193,8 @@
 
 #define EW_MAX_TOTAL_NROW 20
 
-#define BT_CLOSE  0
-#define BT_CHANGE 1
-#define BT_ITAL   2
-#define BT_BOLD   3
-#define BT_STRIKE 4
-#define BT_UNDERLINE 5
-#define BT_UNDO 6
-#define BT_CLEAR 7
-#define BT_DEFAULTUA 8
-#define BT_TT 9
-
-#define NB_MINIBT 10
+enum { BT_CLOSE=0, BT_CHANGE, BT_ITAL, BT_BOLD, BT_STRIKE, BT_UNDERLINE,
+       BT_UNDO, BT_CLEAR, BT_DEFAULTUA, BT_TT, BT_TOTOZBOOKMARK, NB_MINIBT };
 
 #define EWC_NORMAL 0
 #define EWC_LONGWORD 1
@@ -226,7 +224,7 @@ typedef enum {CUTPASTE, INSERT_CHAR, DELETE_CHAR, OTHER} EditWCommandClass;
 struct _EditW {
   Window win;
   Pixmap pix;
-  XFontStruct *fn;
+  CCFontId fn; //XFontStruct *fn;
   XIC input_context;
   unsigned char *buff;
 
@@ -251,11 +249,11 @@ struct _EditW {
   int row_firstchar[EW_MAX_TOTAL_NROW+1]; 
   int nrow_used;
 
-  unsigned long win_bgpixel, dark_pixel, light_pixel;
-  unsigned long txt_fgpixel[EWC_NBATTR], txt_bgpixel;
-  unsigned long cur_fgpixel, cur_bgpixel;
-  unsigned long sel_fgpixel, sel_bgpixel;
-  unsigned long fill_bgpixel;
+  CCColorId win_bgcolor, dark_color, light_color;
+  CCColorId txt_fgcolor[EWC_NBATTR], txt_bgcolor;
+  CCColorId cur_fgcolor, cur_bgcolor;
+  CCColorId sel_fgcolor, sel_bgcolor;
+  CCColorId fill_bgcolor;
   MiniBouton mini[NB_MINIBT];
   Pixmap minipix;
 
@@ -848,9 +846,9 @@ editw_draw_frame(Dock *dock, EditW *ew, Drawable d, GC *gc, int mono)
 
 #define GROUIK_NPTS 19
   static XPoint grouik[GROUIK_NPTS] = 
-    {{200                        , EW_SHAPED_HEIGHT-1},
-     {200                        , EW_HEIGHT-3},
-     {200+7                      , EW_HEIGHT-3-7},
+    {{216                        , EW_SHAPED_HEIGHT-1},
+     {216                        , EW_HEIGHT-3},
+     {216+7                      , EW_HEIGHT-3-7},
      {EW_WIDTH - 8               , EW_HEIGHT-3-7},
      {EW_WIDTH - 4               , EW_HEIGHT-3-7-4},
      {EW_WIDTH - 4               , 15},
@@ -869,7 +867,7 @@ editw_draw_frame(Dock *dock, EditW *ew, Drawable d, GC *gc, int mono)
      {EW_WIDTH + 4               , 36},
      {EW_WIDTH + 4               , EW_SHAPED_HEIGHT-1-7},
      {EW_WIDTH + 4 - 7           , EW_SHAPED_HEIGHT-1},
-     {200                        , EW_SHAPED_HEIGHT-1}};
+     {216                        , EW_SHAPED_HEIGHT-1}};
   
   XPoint grouik2[GROUIK_NPTS];
 
@@ -884,12 +882,12 @@ editw_draw_frame(Dock *dock, EditW *ew, Drawable d, GC *gc, int mono)
 
 
   /* cadres */
-  EWDF_COLOR(ew->win_bgpixel);
+  EWDF_COLOR(cccolor_pixel(ew->win_bgcolor));
   XFillRectangle(dock->display, d, *gc, 
 		 EW_XBORD, 0, EW_XBORD+EW_WIDTH, EW_HEIGHT);
 
   /* partie claire */
-  EWDF_COLOR(ew->light_pixel);
+  EWDF_COLOR(cccolor_pixel(ew->light_color));
   XDrawLine(dock->display, d, *gc, EW_XBORD, 0, EW_XBORD+EW_WIDTH-1, 0);
   XDrawLine(dock->display, d, *gc, EW_XBORD, 0, EW_XBORD, EW_HEIGHT-1);
 
@@ -901,7 +899,7 @@ editw_draw_frame(Dock *dock, EditW *ew, Drawable d, GC *gc, int mono)
   XDrawLine(dock->display, d, *gc, EW_XBORD, 0, EW_XBORD, EW_HEIGHT);
 
   /* partie sombre */
-  EWDF_COLOR(ew->dark_pixel);
+  EWDF_COLOR(cccolor_pixel(ew->dark_color));
   XDrawLine(dock->display, d, *gc, EW_XBORD, EW_HEIGHT-1, EW_XBORD+EW_WIDTH-1, EW_HEIGHT-1);
   XDrawLine(dock->display, d, *gc, EW_XBORD+EW_WIDTH-1, 0, EW_XBORD+EW_WIDTH-1, EW_HEIGHT-1);
   XDrawLine(dock->display, d, *gc, 
@@ -953,9 +951,9 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   editw_colorize(ew, ctab);
   
   /* le texte */
-  XSetFont(dock->display, dock->NormalGC, ew->fn->fid);
+  //XSetFont(dock->display, dock->NormalGC, ew->fn->fid);
   if (!Prefs.pp_use_colored_tabs)
-    XSetForeground(dock->display, dock->NormalGC, ew->txt_bgpixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->txt_bgcolor));
   else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_bgcolor));
   XFillRectangle(dock->display, d, dock->NormalGC, 
 		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
@@ -968,11 +966,13 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   for (i = ew->y_scroll; i < EW_NROW+ew->y_scroll; i++) {
     int j, cnt;
     for (j=ew->row_firstchar[i], cnt=0; j < ew->row_firstchar[i+1]; j++, cnt++) {
-      if (ctab[j] != 0 || Prefs.pp_use_colored_tabs==0)
-	XSetForeground(dock->display, dock->NormalGC, ew->txt_fgpixel[ctab[j]]);
-      else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_fgcolor.opaque));
-      XDrawString(dock->display, d, dock->NormalGC, 
-		  EW_TXT_X0+cnt*FN_W, EW_TXT_Y0 + (i-ew->y_scroll)*FN_H + FN_BASE_H, ew->buff+j, 1);
+      /*if (ctab[j] != 0 || Prefs.pp_use_colored_tabs==0)
+	XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->txt_fgcolor[ctab[j]]));
+        else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_fgcolor.opaque));*/
+      ccfont_draw_string8(ew->fn, ew->txt_fgcolor[ctab[j]], d, EW_TXT_X0+cnt*FN_W, 
+                          EW_TXT_Y0 + (i-ew->y_scroll)*FN_H + FN_BASE_H, ew->buff+j, 1);
+      /*XDrawString(dock->display, d, dock->NormalGC, 
+        EW_TXT_X0+cnt*FN_W, EW_TXT_Y0 + (i-ew->y_scroll)*FN_H + FN_BASE_H, ew->buff+j, 1);*/
     }
 
     if (i >= ew->nrow_used-1) charcnt += EW_NCOL; else charcnt += cnt;
@@ -982,7 +982,7 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     if ((i < ew->nrow_used - 1 && cnt < EW_NCOL)
 	|| charcnt > ew->buff_sz) {
       if (charcnt > ew->buff_sz) cnt = MAX(EW_NCOL - (charcnt - ew->buff_sz+1), 0);
-      XSetForeground(dock->display, dock->NormalGC, ew->fill_bgpixel);
+      XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->fill_bgcolor));
       XFillRectangle(dock->display, d, dock->NormalGC, 
 		     EW_TXT_X0+FN_W*cnt, EW_TXT_Y0 + (i-ew->y_scroll)*FN_H, 
 		     EW_TXT_WIDTH-(FN_W*cnt), FN_H);
@@ -994,18 +994,21 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   if (!editw_has_selection(ew)) {
     int curs_idx;
 
-    XSetForeground(dock->display, dock->NormalGC, ew->cur_bgpixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->cur_bgcolor));
     XFillRectangle(dock->display, d, dock->NormalGC, 
 		   EW_TXT_X0 + FN_W * ew->curs_x, 
 		   EW_TXT_Y0 + FN_H * (ew->curs_y-ew->y_scroll), FN_W, FN_H);
     curs_idx = editw_xy2strpos(ew, ew->curs_x, ew->curs_y);
-    XSetForeground(dock->display, dock->NormalGC, ew->cur_fgpixel);
+    //XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->cur_fgcolor));
     
     if (curs_idx < ew->row_firstchar[ew->curs_y+1]) {
-      XDrawString(dock->display, d, dock->NormalGC, 
+      ccfont_draw_string8(ew->fn, ew->cur_fgcolor, d, EW_TXT_X0 + FN_W * ew->curs_x, 
+                          EW_TXT_Y0 + FN_H * (ew->curs_y-ew->y_scroll) + FN_BASE_H, 
+                          &ew->buff[curs_idx], 1);
+      /*XDrawString(dock->display, d, dock->NormalGC, 
 		   EW_TXT_X0 + FN_W * ew->curs_x, 
 		  EW_TXT_Y0 + FN_H * (ew->curs_y-ew->y_scroll) + FN_BASE_H, 
-		  &ew->buff[curs_idx], 1);
+		  &ew->buff[curs_idx], 1);*/
     }
   } else {
     /* affichage de la selection */
@@ -1030,14 +1033,18 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
       } else x1 = ew->row_firstchar[y+1]-ew->row_firstchar[y] - 1;
 
       /* printf("y=%d, x0=%d, x1=%d, row first=%d row last=%d\n", y, x0, x1, ew->row_firstchar[y], ew->row_firstchar[y+1]); */
-      XSetForeground(dock->display, dock->NormalGC, ew->sel_bgpixel);
+      XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->sel_bgcolor));
       XFillRectangle(dock->display, d, dock->NormalGC, 
 		     EW_TXT_X0 + FN_W * x0, EW_TXT_Y0 + FN_H * (y-ew->y_scroll), FN_W*(x1+1-x0), FN_H);
 
-      XSetForeground(dock->display, dock->NormalGC, ew->sel_fgpixel);
+      ccfont_draw_string8(ew->fn, ew->sel_fgcolor, d, EW_TXT_X0 + FN_W * x0, 
+                          EW_TXT_Y0 + FN_H * (y-ew->y_scroll) + FN_BASE_H, 
+                          &ew->buff[ew->row_firstchar[y]+x0], x1 - x0 + 1);
+      /*XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->sel_fgcolor));
       XDrawString(dock->display, d, dock->NormalGC, 
 		   EW_TXT_X0 + FN_W * x0, EW_TXT_Y0 + FN_H * (y-ew->y_scroll) + FN_BASE_H, 
 		  &ew->buff[ew->row_firstchar[y]+x0], x1 - x0 + 1);
+      */
     }
   }
 
@@ -1052,19 +1059,31 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
 		       ew->buff_num == 0 ? "MSG" : "UA");
     site_name = str_printf("%.8s", ew->prefs->site_name);
     
-    x_title = (ew->dock_side == RIGHT ? EW_TXT_X0 + 8 : 200);
+    x_title = (ew->dock_side == RIGHT ? EW_TXT_X0 + 8 : 216);
     x_name = x_title + strlen(title)*FN_W + 8;
 
     
-
-    XSetForeground(dock->display, dock->NormalGC, ew->light_pixel);
+    ccfont_draw_string8(ew->fn, ew->light_color, d, 
+                        x_title - 1, EW_HEIGHT - 3 -1, 
+                        title, strlen(title));
+    ccfont_draw_string8(ew->fn, ew->light_color, d, 
+                        x_name - 1, EW_HEIGHT - 3 -1, 
+                        site_name, strlen(site_name));
+    ccfont_draw_string8(ew->fn, ew->dark_color, d, 
+                        x_title, EW_HEIGHT - 3, 
+                        title, strlen(title));
+    ccfont_draw_string8(ew->fn, ew->dark_color, d,
+                        x_name, EW_HEIGHT - 3, 
+                        site_name, strlen(site_name));
+    /*
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->light_color));
     XDrawString(dock->display, d, dock->NormalGC, 
 		x_title - 1, EW_HEIGHT - 3 -1, 
 		title, strlen(title));
     XDrawString(dock->display, d, dock->NormalGC, 
 		x_name - 1, EW_HEIGHT - 3 -1, 
 		site_name, strlen(site_name));
-    XSetForeground(dock->display, dock->NormalGC, ew->dark_pixel);
+    XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(ew->dark_color));
     XDrawString(dock->display, d, dock->NormalGC, 
 		x_title, EW_HEIGHT - 3, 
 		title, strlen(title));
@@ -1072,6 +1091,7 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     XDrawString(dock->display, d, dock->NormalGC, 
 		x_name, EW_HEIGHT - 3, 
 		site_name, strlen(site_name));
+    */
     free(title);
     free(site_name);
   }
@@ -1080,10 +1100,11 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     int x,y,w,h;
     x =  ew->mini[i].x; y = ew->mini[i].y;
     w =  ew->mini[i].w; h = ew->mini[i].h;
-
     if (ew->mini[i].visible) {
+      int dx;
+      dx = (i == BT_TOTOZBOOKMARK) ? 1:0;
       XCopyArea(dock->display, ew->minipix, d, dock->NormalGC, ew->mini[i].pix_x, ew->mini[i].pix_y,
-		w,h,x+ew->mini[i].enfonce,y+ew->mini[i].enfonce);
+		w,h,x+ew->mini[i].enfonce+dx,y+ew->mini[i].enfonce+dx);
       
       if (ew->mini[i].enfonce) {
 	XSetForeground(dock->display, dock->NormalGC, dock->dark_pixel);
@@ -1181,7 +1202,7 @@ editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
   
   for (j=0; j < NB_MINIBT; j++) {
     static const int miniorder[NB_MINIBT] = {
-      BT_CLOSE, BT_CHANGE, BT_UNDO, BT_CLEAR, 
+      BT_CLOSE, BT_CHANGE, BT_TOTOZBOOKMARK, BT_UNDO, BT_CLEAR, 
       BT_STRIKE, BT_UNDERLINE, BT_ITAL, BT_BOLD, BT_TT, BT_DEFAULTUA};
     int i;
     
@@ -1198,8 +1219,8 @@ editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
       x += sgn*(ew->mini[i].w+1);
     ew->mini[i].x = x;
     ew->mini[i].y = EW_SHAPED_HEIGHT - 15;
-    if (j == 1) x += sgn*10;
-    if (j == 3) x += sgn*10;
+    if (j == 2) x += sgn*10;
+    if (j == 4) x += sgn*10;
   }
 
   if (ew->undo.buff) free(ew->undo.buff);
@@ -1270,7 +1291,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
   ew->win = XCreateSimpleWindow (
         dock->display, dock->rootwin, 0, 0, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 0,
         WhitePixel(dock->display, dock->screennum),
-        ew->win_bgpixel);
+        cccolor_pixel(ew->win_bgcolor));
   
   //wa.background_pixmap = ButtonBarImage ;
   wa.event_mask =
@@ -1508,33 +1529,61 @@ editw_hide(Dock *dock, EditW *ew) {
   //  ew->action_step = 0;
 }
 
+void editw_init_colors(EditW *ew) {
+  ew->win_bgcolor = ew->dark_color = ew->light_color = 
+    ew->fill_bgcolor = ew->txt_fgcolor[EWC_NORMAL] = 
+    ew->txt_bgcolor = ew->txt_fgcolor[EWC_LONGWORD] = 
+    ew->txt_fgcolor[EWC_BALISE] = ew->txt_fgcolor[EWC_URL] =
+    ew->txt_fgcolor[EWC_SPELLWORD] = ew->cur_bgcolor = 
+    ew->cur_fgcolor = ew->sel_bgcolor = ew->sel_fgcolor = (CCColorId)(-1);
+}
 
+void editw_release_colors(EditW *ew) {
+   cccolor_release(&ew->win_bgcolor);
+   cccolor_release(&ew->dark_color);
+   cccolor_release(&ew->light_color);
+   cccolor_release(&ew->fill_bgcolor);
+   cccolor_release(&ew->txt_fgcolor[EWC_NORMAL]);
+   cccolor_release(&ew->txt_bgcolor);
+   cccolor_release(&ew->txt_fgcolor[EWC_LONGWORD]);
+   cccolor_release(&ew->txt_fgcolor[EWC_BALISE]);
+   cccolor_release(&ew->txt_fgcolor[EWC_URL]);
+   cccolor_release(&ew->txt_fgcolor[EWC_SPELLWORD]);
+   cccolor_release(&ew->cur_bgcolor);
+   cccolor_release(&ew->cur_fgcolor);
+   cccolor_release(&ew->sel_bgcolor);
+   cccolor_release(&ew->sel_fgcolor); 
+ }
 
 void
 editw_reload_colors(Dock *dock, EditW *ew)
 {
   char s_xpm_bgcolor[30];
 
-  ew->win_bgpixel = RGB2PIXEL(200,200,200);
-  ew->dark_pixel = RGB2PIXEL(128, 128, 128);
-  ew->light_pixel = RGB2PIXEL(230, 230, 230);
-  ew->fill_bgpixel = RGB2PIXEL(230, 230, 230);
+  cccolor_reset(&ew->win_bgcolor, 0xC0C0C0); // = RGB2PIXEL(200,200,200);
+  cccolor_reset(&ew->dark_color, 0x808080); // = RGB2PIXEL(128, 128, 128);
+  cccolor_reset(&ew->light_color, 0xD8D8D8); // = RGB2PIXEL(230, 230, 230);
+  cccolor_reset(&ew->fill_bgcolor, 0xD8D8D8); // = RGB2PIXEL(230, 230, 230);
   /* couleurs du texte */
-  ew->txt_fgpixel[EWC_NORMAL] = RGB2PIXEL(0,0,0);
-  ew->txt_bgpixel = RGB2PIXEL(255,255,255);
-  ew->txt_fgpixel[EWC_LONGWORD] = RGB2PIXEL(255,0,0);
-  ew->txt_fgpixel[EWC_BALISE] = RGB2PIXEL(0, 127, 0);
-  ew->txt_fgpixel[EWC_URL] = RGB2PIXEL(0, 0, 255);
-  ew->txt_fgpixel[EWC_SPELLWORD] = RGB2PIXEL(200, 50, 100);
-  ew->cur_bgpixel = RGB2PIXEL(255,0,0);
-  ew->cur_fgpixel = RGB2PIXEL(255,255,255);
-  ew->sel_bgpixel = RGB2PIXEL(255,215,0);
-  ew->sel_fgpixel = RGB2PIXEL(0,0,0);
+  cccolor_reset(&ew->txt_fgcolor[EWC_NORMAL], 0x00000);
+  cccolor_reset(&ew->txt_bgcolor, 0xFFFFFF); // = RGB2PIXEL(255,255,255);
+  cccolor_reset(&ew->txt_fgcolor[EWC_LONGWORD], 0xff0000);// = RGB2PIXEL(255,0,0);
+  cccolor_reset(&ew->txt_fgcolor[EWC_BALISE],0x008000); // = RGB2PIXEL(0, 127, 0);
+  cccolor_reset(&ew->txt_fgcolor[EWC_URL], 0x0000FF); // = RGB2PIXEL(0, 0, 255);
+  cccolor_reset(&ew->txt_fgcolor[EWC_SPELLWORD], 0xC03262);// = RGB2PIXEL(200, 50, 100);
+  cccolor_reset(&ew->cur_bgcolor, 0xff0000);// = RGB2PIXEL(255,0,0);
+  cccolor_reset(&ew->cur_fgcolor, 0xffffff);
+  cccolor_reset(&ew->sel_bgcolor, 0xffe000);// = RGB2PIXEL(255,215,0);
+  cccolor_reset(&ew->sel_fgcolor, 0); // = RGB2PIXEL(0,0,0);
   
   /* on remplace la ligne de la couleur transparente par notre couleur de fond,
      c une ruse de sioux */
   if (ew->minipix) { XFreePixmap(dock->display, ew->minipix); ew->minipix = None; }
-  snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.dock_bgcolor);
+
+/* un jour je m'insulterai en me disant que j'ai du mettre un commentaire
+   instructif et pertinent par rapport à la presence des deux espaces en debut
+   de ligne. */
+  snprintf(s_xpm_bgcolor, 30, "  \tc #%06X", Prefs.dock_bgcolor); 
   editwin_minib_xpm[1] = s_xpm_bgcolor;
   ew->minipix = RGBACreatePixmapFromXpmData(dock->rgba_context, editwin_minib_xpm); assert(ew->minipix);
     
@@ -1561,7 +1610,7 @@ editw_build(Dock *dock)
   ew->win_xpos = ew->win_ypos = 0;
   ew->undo.buff = NULL;
   ew->last_command = OTHER;
-  {
+  /*{
     char fn[512];
     snprintf(fn, 512, "%s-%s", EW_FONT, Prefs.font_encoding);
     ew->fn = XLoadQueryFont(dock->display, fn);
@@ -1574,7 +1623,8 @@ editw_build(Dock *dock)
 	exit(-1);
       }
     }
-  }
+    }*/
+  ew->fn = ccfont_get(EW_FONT); //"monospace-7");
  
 
   ew->sel_anchor = ew->sel_head = -1;
@@ -1589,11 +1639,12 @@ editw_build(Dock *dock)
 
   ew->minipix = None;
   ew->clippy_pixmap = None;
+  editw_init_colors(ew);
   editw_reload_colors(dock, ew);
 
   {
-    static int bt_x[NB_MINIBT] = { 0, 12, 27, 41, 55, 69, 83, 97, 111, 125};
-    static int bt_w[NB_MINIBT] = {11, 15, 14, 14, 14, 14, 14, 14, 14, 14};
+    static int bt_x[NB_MINIBT] = { 0, 12, 27, 41, 55, 69, 83, 97, 111, 125, 139};
+    static int bt_w[NB_MINIBT] = {11, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14};
     int i;
 
     for (i=0; i < NB_MINIBT; i++) {
@@ -1915,9 +1966,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   static XComposeStatus compose_status = { 0, 0 };
   static unsigned ctrl_mem = 0;
   static unsigned lev = 0;
-  //printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
   if (!editw_ismapped(dock->editw) || ew->action != NOACTION) return 0; /* animation encours */
-
   if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
       (ew->input_context && XFilterEvent(event, None))) {
     //printf("forward key: \n");
@@ -1926,11 +1975,10 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   }
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
-
   if (!(event->xkey.state & ControlMask) || !(event->xkey.state & ShiftMask)) { ctrl_mem = 0; lev = 0; }
   else { ctrl_mem ^= ksym; ctrl_mem += (ksym & 0xff) << 4; lev++; }
-
-  /*printf("klen=%2d %08x %c state=%08x %04x lev=%d\n", klen, ksym, ksym, event->xkey.state, ctrl_mem, lev);*/
+  //printf("klen=%2d %08x %c state=%08x %04x lev=%d buff=%02x%02x%02x%02x\n", klen, ksym, ksym, event->xkey.state, ctrl_mem, lev,
+  //buff[0],buff[1],buff[2],buff[3]);
 
   if (lev >= 3) {
     switch (ctrl_mem) {
@@ -2133,6 +2181,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       break;
     default:
       if (ksym <= 0x00ff && (ksym & 0xff)) {
+        //printf("insert ksym=%04x -> car = '%c'", ksym, buff[0]);
 	//editw_insert_char(ew, (unsigned char)(ksym & 0xff));
 	if (buff[0])
 	  editw_insert_char(ew, (unsigned char)buff[0]);
@@ -2208,7 +2257,7 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
       int i;
       plopup_unmap(dock);
       for (i = 0; i < MAX_SITES; i++) {
-	if (Prefs.site[i] && Prefs.site[i]->check_board) {
+	if (Prefs.site[i] && Prefs.site[i]->check_board && strlen(Prefs.site[i]->path_board_add)) {
 	  plopup_pushentry(dock, Prefs.site[i]->site_name, i);
 	}
       }
@@ -2271,6 +2320,12 @@ editw_handle_button_release(Dock *dock, EditW *ew, XButtonEvent *event)
 	  }
 	}
 	break;
+      case BT_TOTOZBOOKMARK:
+        {
+          unsigned char *s = (unsigned char*)totoz_bookmark_filename_html();
+          open_url(s, event->x_root, event->y_root, (event->button == Button1 ? 1 : 2) | URL_YES_I_KNOW_WHAT_I_DO);
+        }
+        break;
       default: assert(0); break;
       }
     }
@@ -2508,6 +2563,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
   //  s[BT_TT] = "Inserer les balises TeleType<p>shortcut: <b>Alt-T</b>";
   s[BT_UNDO] = _("Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>");
   s[BT_CLEAR] = _("Clear");
+  s[BT_TOTOZBOOKMARK] = _("View the [:totoz] picture bookmark in your browser");
   s[BT_DEFAULTUA] = _("Restore the default user-agent");
   for (i = 0; i < NB_MINIBT; i++) {
     if (ew->mini[i].visible) {

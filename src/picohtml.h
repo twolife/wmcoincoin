@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.h,v 1.4 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: picohtml.h,v 1.5 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: picohtml.h,v $
+  Revision 1.5  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.4  2002/10/15 23:17:28  pouaite
   rustinage à la truelle
 
@@ -17,6 +20,7 @@
 #define PICOHTML_H__
 
 #include "coincoin.h"
+#include "fontcoincoin.h"
 
 #define PH_MAX_LINKS 100
 
@@ -32,17 +36,18 @@ struct _PicoHtmlItem {
   short x, y, w, h;
   c_attr attr;
   PicoHtmlItem *next;
-  XFontStruct *fn;
+  CCFontId fn;
   char *link_str; /* pointe (si CATTR_LNK positionné) vers une entree de links_array */
   int special_attr; /* un attribut remplit avec le tag personnel: <!special=xxx> (utilisé pour reconnaitre les news_id dans la liste de titres de newswin) */
-  unsigned long pixel;
+  CCColorId color;
 };
 
 struct _PicoHtml {
   PicoHtmlItem *txt;
-  XFontStruct *fn_base, *fn_ital, *fn_bold, *fn_tt;
-  unsigned long default_pixel_color;
-  unsigned long url_pixel_color;
+  CCFontId fn_base, fn_ital, fn_bold, fn_tt;
+  //XFontStruct *fn_base, *fn_ital, *fn_bold, *fn_tt;
+  CCColorId default_color;
+  CCColorId url_color;
   float parag_fskip, line_fskip;
   int parag_indent, tabul_skip;
 

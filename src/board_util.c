@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.16 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.17 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.17  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.16  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -155,6 +158,7 @@
 #define _(String) gettext (String)
 
 
+/* search an id in the tree : fast */
 board_msg_info *
 board_find_id(const Board *board, int id)
 {
@@ -167,6 +171,22 @@ board_find_id(const Board *board, int id)
     else it = it->right;
   }
   return it;
+}
+
+/* search an md5 in the tree : exhaustive.. */
+static board_msg_info *
+board_find_md5_rec(board_msg_info *it, md5_byte_t md5[16]) {
+  board_msg_info *it2;
+  if (it->ri && memcmp(md5, it->ri->md5, sizeof md5) == 0) return it;
+  else if (it->left && (it2=board_find_md5_rec(it->left, md5))) return it2;
+  else if (it->right && (it2=board_find_md5_rec(it->right, md5))) return it2;
+  return NULL;
+}
+board_msg_info *
+board_find_md5(const Board *board, md5_byte_t md5[16]) {
+  if (board->mi_tree_root) 
+    return board_find_md5_rec(board->mi_tree_root,md5);
+  return NULL;
 }
 
 board_msg_info *

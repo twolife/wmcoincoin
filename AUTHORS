@@ -18,3 +18,6 @@ et d'autres (...) que j'ai oublié car c'est le bordaile dans ma bal
 * woof (compatibilité ipv6, passage à getaddrinfo)
 * choocroot pour son minipatch du wmccc qui corrige le refresh des boutons de couleur
 et aussi de vrais morceaux de wmpinboard, wget, et openssh (fake-*)
+* Dae pour la proxyfication de wmcc-totoz-get
+* 2xplop pour la feuille de style des totoz-bookmarks
+* the files src/md5.[ch] were written by L. Peter Deutsch -- http://libmd5-rfc.sourceforge.net/

@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.10 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.11 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.11  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.10  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -141,40 +144,44 @@ static void
 balloon_draw_frame(Display *dpy, Pixmap pix, GC gc, int x, int y, int w, int h, int side)
 {
   int rad = 6; //h*3/10;
-    XPoint pt[3];
-    
+  XPoint pt[3];
+  
+  /*
     XFillArc(dpy, pix, gc, x, y, rad, rad, 90*64, 90*64);
     XFillArc(dpy, pix, gc, x, y+h-1-rad, rad, rad, 180*64, 90*64);
     
     XFillArc(dpy, pix, gc, x+w-1-rad, y, rad, rad, 0*64, 90*64);
     XFillArc(dpy, pix, gc, x+w-1-rad, y+h-1-rad, rad, rad, 270*64, 90*64);
-    
     XFillRectangle(dpy, pix, gc, x, y+rad/2, w, h-rad);
     XFillRectangle(dpy, pix, gc, x+rad/2, y, w-rad, h);
-
-    if (side & BOTTOM) {
-	pt[0].y = y+h-1;
-	pt[1].y = y+h-1+SPACE;
-	pt[2].y = y+h-1;
-    } else {
-	pt[0].y = y;
-	pt[1].y = y-SPACE;
-	pt[2].y = y;
-    }
-    if (side & RIGHT) {
-	pt[0].x = x+w-h+2*h/16;
-	pt[1].x = x+w-h+11*h/16;
-	pt[2].x = x+w-h+7*h/16;
-    } else {
-	pt[0].x = x+h-2*h/16;
-	pt[1].x = x+h-11*h/16;
-	pt[2].x = x+h-7*h/16;
-    }
-    XFillPolygon(dpy, pix, gc, pt, 3, Convex, CoordModeOrigin);
+  */
+  
+  XFillRectangle(dpy, pix, gc, x, y, w, h);
+  /*
+  if (side & BOTTOM) {
+    pt[0].y = y+h-1;
+    pt[1].y = y+h-1+SPACE;
+    pt[2].y = y+h-1;
+  } else {
+    pt[0].y = y;
+    pt[1].y = y-SPACE;
+    pt[2].y = y;
+  }
+  if (side & RIGHT) {
+    pt[0].x = x+w-h+2*h/16;
+    pt[1].x = x+w-h+11*h/16;
+    pt[2].x = x+w-h+7*h/16;
+  } else {
+    pt[0].x = x+h-2*h/16;
+    pt[1].x = x+h-11*h/16;
+    pt[2].x = x+h-7*h/16;
+  }
+  XFillPolygon(dpy, pix, gc, pt, 3, Convex, CoordModeOrigin);
+  */
 }
 
 static void
-balloon_makepixmap(Dock *dock, Balloon *b, int width, int height, int side, Pixmap *pix, Pixmap *mask)
+balloon_makepixmap(Dock *dock, Balloon *b, int bx, int by, int width, int height, int side, Pixmap *pix, Pixmap *mask)
 {
     Pixmap bitmap;
     Pixmap pixmap;
@@ -185,14 +192,7 @@ balloon_makepixmap(Dock *dock, Balloon *b, int width, int height, int side, Pixm
     if (!b->monoGC) {
       b->monoGC = XCreateGC(dock->display, bitmap, 0, NULL);
     }
-    XSetForeground(dock->display, b->monoGC, 0); 
-    XFillRectangle(dock->display, bitmap, b->monoGC, 0, 0, width+SPACE, height+SPACE);
     
-    pixmap = XCreatePixmap(dock->display, dock->rootwin, width+SPACE, height+SPACE,
-			   DefaultDepth(dock->display,dock->screennum));
-    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display,dock->screennum));
-    XFillRectangle(dock->display, pixmap, dock->NormalGC, 0, 0, width+SPACE, height+SPACE);
-
     if (side & BOTTOM) {
 	y = 0;
     } else {
@@ -200,10 +200,18 @@ balloon_makepixmap(Dock *dock, Balloon *b, int width, int height, int side, Pixm
     }
     x = 0;
 
-    XSetForeground(dock->display, b->monoGC, 1);
-    balloon_draw_frame(dock->display, bitmap, b->monoGC, x, y, width, height, side);
+    XSetForeground(dock->display, b->monoGC, 0); 
+    XFillRectangle(dock->display, bitmap, b->monoGC, 0, 0, width+SPACE, height+SPACE);
+    pixmap = XCreatePixmap(dock->display, dock->rootwin, width+SPACE, height+SPACE,
+			   DefaultDepth(dock->display,dock->screennum));
+                   
+    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display,dock->screennum));
+    XFillRectangle(dock->display, pixmap, dock->NormalGC, 0, 0, width+SPACE, height+SPACE);
     XSetForeground(dock->display, dock->NormalGC, b->bgpixel); //WhitePixel(dock->display,dock->screennum));
     balloon_draw_frame(dock->display, pixmap, dock->NormalGC, x+1, y+1, width-2, height-2, side);
+
+    XSetForeground(dock->display, b->monoGC, 1);
+    balloon_draw_frame(dock->display, bitmap, b->monoGC, x, y, width, height, side);
 
     *mask = bitmap;
     *pix = pixmap;
@@ -291,7 +299,7 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
 
   XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
   
-  balloon_makepixmap(dock, b, width, height, side, &b->pix, &mask);
+  balloon_makepixmap(dock, b, bx, by, width, height, side, &b->pix, &mask);
 
   picohtml_render(dock, b->ph, b->pix, dock->NormalGC, 5+b->imgpix_w, 3+ty);
 

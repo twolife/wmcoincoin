@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.30 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: global.h,v 1.31 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.31  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.30  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -95,6 +98,11 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED /* pour getdate */
+#define _GNU_SOURCE
+
+
 #include "config.h"
 #include "prefs.h"
 #ifndef HAVE_BACKTRACE
@@ -138,7 +146,7 @@ void assertion_failed();
 
 #define WMCC_TIMER_DELAY_MS 40 /* un bip toutes les 40 millisecondes */
 
-#ifndef __WMCCC_C
+#ifndef IN_WMCCC
 /* variables communes ici: */
 
 #ifdef USE_VALGRIND
@@ -183,10 +191,7 @@ DECL_GLOB_INIT(volatile int flag_discretion_request, 0);
   non nul quand on met a jours les donnees:
    -> updates des news, update tribune
 */
-DECL_GLOB_INIT(volatile int flag_updating_news, 0);
-DECL_GLOB_INIT(volatile int flag_updating_messagerie, 0);
 DECL_GLOB_INIT(volatile int flag_news_updated, 0);
-DECL_GLOB_INIT(volatile int flag_updating_comments, 0); /* utilisé aussi pour la maj de la fortune et du CPU */
 DECL_GLOB_INIT(volatile int flag_updating_board, 0);
 DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led si on est dans 'troll_detector' */
 DECL_GLOB_INIT(volatile int flag_gethostbyname,0); /* pour savoir si le coincoin est en plein gethostbyname */
@@ -216,9 +221,9 @@ DECL_GLOB_INIT(char *app_useragent, NULL);
 
 
 typedef struct id_type {
-  int lid BITFIELD(26); /* attention c pas portable, on ne peut pas présumer que le bitfield sera
+  int lid BITFIELD(25); /* attention c pas portable, on ne peut pas présumer que le bitfield sera
 			   effectivement signé :-/ (ex. compiler avec gcc -ftraditionnal) */
-  int sid  BITFIELD(6);
+  int sid  BITFIELD(7);
 } id_type;
 
 inline static int
@@ -279,6 +284,6 @@ inline static void id_type_set_sid(id_type *id, int sid) {
 }
 
 
-#endif /* __WMCCC_C */
+#endif /* IN_WMCCC */
 #endif
 

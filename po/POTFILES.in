@@ -12,10 +12,6 @@ src/keylist.c
 src/msgbox.c
 src/http.c
 src/troll_detector.c
-src/comments.c
-src/messages.c
-src/news.c
-src/newswin.c
 src/picohtml.c
 src/site.c
 src/board_util.c

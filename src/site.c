@@ -51,6 +51,7 @@ boards_create() {
   ALLOC_OBJ(b, Boards);
   b->first = NULL;
   b->last = NULL;
+  b->nb_rss_e = 0; b->max_rss_e = 10; ALLOC_VEC(b->rss_e, b->max_rss_e, RSSBonusInfo*);
   return b;
 }
 
@@ -99,36 +100,10 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   ALLOC_OBJ(site, Site);
   site->prefs = sp;
 
-  site->type = SITE_UNKNOWN;
-  site->news_updated = 0;
-  site->news = NULL;
   if (sp->check_board) site->board = board_create(site, sl->boards);
   else site->board = NULL;
-  site->com = NULL;
-  site->msg = NULL;
 
-  site->news_backend_last_modified = NULL;
-  site->news_backend_dl_cnt = 0;
-  site->nb_newslues = 0;
-  site->newslues_uptodate = 0;
-  
-  site->messages_last_modified = NULL;
-  site->messages_dl_cnt = 0;
-  site->comments_last_modified = NULL;
-  site->comments_dl_cnt = 0;
-  
-  site->xp = site->xp_old = -100000;
-  site->xp_change_flag = 0;
-  site->comment_change_flag = 0;
-  
-  site->fortune = NULL;
-  site->CPU = -1.00;
-  site->votes_max = -1;
-  site->votes_cur = -1;
   site->site_id = -1;
-  site->news_refresh_delay = sp->news_check_delay*(1000/WMCC_TIMER_DELAY_MS);
-  site->news_refresh_cnt = site->news_refresh_delay-100; /* juste pour que le premier check se fasse après
-							    celui de la tribune */
   site->http_error_cnt = site->http_success_cnt = site->http_recent_error_cnt = 0;;
   {
     int i;
@@ -161,14 +136,7 @@ sl_delete_site(SiteList *sl, Site *site)
   } else {
     sl->list = p;
   }
-  site_news_destroy(site);
-  site_com_destroy(site);
-  site_msg_destroy(site);
   if (site->board) board_destroy(site->board);
-  if (site->news_backend_last_modified) free(site->news_backend_last_modified);
-  if (site->messages_last_modified) free(site->messages_last_modified);
-  if (site->comments_last_modified) free(site->comments_last_modified);
-  if (site->fortune) free(site->fortune);
 
   free(site);
   boards_init_sites(sl);
@@ -197,6 +165,7 @@ sl_find_site_id(SiteList *sl, int sid) {
   return NULL;
 }
 
+#if 0
 News*
 sl_find_news(SiteList *sl, id_type id) {
   Site *s;
@@ -254,26 +223,6 @@ sl_find_comment_change(SiteList *sl) {
   }
   return NULL;
 }
-
-/*
-  renvoi un site sur la tribune duquel vous venez d'avoir une réponse à 
-  votre message Ô combien interessant
-*/
-Site*
-sl_find_board_answer_to_me(SiteList *sl) {
-  Site *s;
-  s = sl->list;
-  while (s) {
-    if (s->prefs->check_board) {
-      assert(s->board);
-      if (s->board->flag_answer_to_me)
-	return s;
-    }
-    s = s->next;
-  }
-  return NULL;
-}
-
 Message*
 sl_find_unreaded_msg(SiteList *sl)
 {
@@ -298,28 +247,39 @@ sl_find_modified_comment(SiteList *sl)
   return NULL;
 }
 
+
+#endif
+
+/*
+  renvoi un site sur la tribune duquel vous venez d'avoir une réponse à 
+  votre message Ô combien interessant
+*/
+Site*
+sl_find_board_answer_to_me(SiteList *sl) {
+  Site *s;
+  s = sl->list;
+  while (s) {
+    if (s->prefs->check_board) {
+      assert(s->board);
+      if (s->board->flag_answer_to_me)
+	return s;
+    }
+    s = s->next;
+  }
+  return NULL;
+}
+ 
 void 
 site_save_state(Dock *dock UNUSED, FILE *f, Site *site) {
-  long tmin=LONG_MIN,tmax=LONG_MAX,t=0;
+  assert(f);
   if (site->board) {
-    tmin = site->board->time_shift_min;
-    tmax = site->board->time_shift_max;
-    t = site->board->time_shift;
-    BLAHBLAH(1,myprintf("%<yel site_save_state> %10s : tmin -> %<cya %3ld> tmax -> %<cya %3ld> t -> %<CYA %3ld>\n",
-			site->prefs->site_name, tmin, tmax, t));
+    board_save_state(f, site->board);
   }
-  fprintf(f, "%ld %ld %ld", tmin, tmax, t);
 }
 
 void 
 site_restore_state(Dock *dock UNUSED, FILE *f, Site *site) {
-  long tmin,tmax,t;
-  if (fscanf(f, "%ld %ld %ld\n",&tmin, &tmax, &t) != 3) return;
-  if (tmin <= tmax && tmin <= t && t <= tmax && site->board) {
-    BLAHBLAH(1,myprintf("%<yel site_restore_state> %10s : tmin <- %<cya %3ld> tmax <- %<cya %3ld> t <- %<CYA %3ld>\n",
-			site->prefs->site_name, tmin, tmax, t));
-    site->board->time_shift_min = tmin;
-    site->board->time_shift_max = tmax;
-    site->board->time_shift = t;
+  if (site->board) {
+    board_restore_state(f,site->board);
   }
 }

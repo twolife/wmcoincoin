@@ -4,6 +4,7 @@
 #include "coincoin.h"
 
 board_msg_info *board_find_id(const Board *board, int id);
+board_msg_info *board_find_md5(const Board *board, md5_byte_t md5[16]);
 board_msg_info *boards_find_id(const Boards *boards, id_type id);
 id_type boards_last_id(const Boards *b);
 board_msg_info* board_find_previous_from_id(const Board *board, int id);

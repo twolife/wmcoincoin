@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.57 2003/08/26 21:50:47 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.58 2004/02/29 15:01:18 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.58  2004/02/29 15:01:18  pouaite
+#%  May the charles bronson spirit be with you
+#%
 #%  Revision 1.57  2003/08/26 21:50:47  pouaite
 #%  2.6.4b au mastic
 #%
@@ -194,6 +197,8 @@
 ### et les suivants définissent des alias)
 #site: "dlfp","linuxfr"
 
+#rss_site: lk
+
 ### Attention, dorénavant, le cookie doit être fourni avec son nom
 ### Si plusieurs cookies sont necessaires, répétez cette option autant de fois
 #.http.cookie: session_id=0sDSFdCo1nOF92fPl0p8
@@ -223,7 +228,7 @@
 
 ### permet de desactiver l'auto-refresh sur la tribune (genre pour limiter le nb de hits
 ### sur le proxy de la boite quand on a 15 tribunes dans le coincoin)
-#.board.auto_refresh: on
+#[.]board.auto_refresh: on
 
 ### active la reconnaissance auto des mots du style [:totoz]
 ### pour afficher l'image correspondante trouvée dans les smileys de hfr
@@ -269,7 +274,8 @@
 ### 1 -> backend new style ('<b>' -> '<b>')
 ### 2 -> backend old style ('<b>' -> '&lt;b&gt;')
 ### 3 -> backend without slip ('<b>' -> ça dépend)
-#[.]tribune.backend_type: 1, 2 ou 3
+#[.]backend_type: 1,2,3 ou 4
+#[.]tribune.backend_type: OPTION OBSOLETE
 
 #[.]tribune.wiki_emulation: http://wiki.woof.lu/index.php?
 
@@ -305,28 +311,9 @@
 ### pour démarrer le coincoin en mode horloge
 #dock.start_in_boss_mode: on
 
-### delai entre deux verifications des news, du flamometre, etc... (en secondes)
-#[.]news.delay: 300
-
-### age maximal des news rapartrièes, en jours (1 jour par defaut)
-#[.]news.max_age: 1
-
 ### niveau de verbosité à partir duquel le coincoin râle
 #verbosity.underpants: 0
 #verbosity.http: 1
-
-### la fonte des news ... verdana en 11, c'est plus joli
-#news.font_family: helvetica
-#news.font_size: 12
-#news.bg_color: dae6e6
-#news.fg_color: 000000
-#news.titles.fg_color: 000080
-#news.titles.bg_color: d0d0d0
-#news.emph_color: ffffff
-
-### position et dimensions de la fenêtre d'affichage des news
-#news.location: 100:200
-#news.dimensions: 600:300
 
 ### ce nom apparaitra au début de tous vos posts
 #[.]palmipede.username: plop
@@ -353,21 +340,10 @@
 ### equivalent de l'option '-r' -> url de la page principale
 #[.]http.site_url: http://linuxfr.org
 #[.]http.path_tribune_backend: board/remote.xml
-#[.]http.path_news_backend: backend.rdf
-#[.]http.path_end_news_url: ,0,-1,6.html
 #[.]http.path_tribune_add: board/add.php3
 #[.]http.board_post: message=%s
-#[.]http.path_myposts: users/posts.php3?order=id
-#[.]http.path_messages: messages/
 
-#.check_news: on
 #.check_board: on
-#.check_comments: on
-#.check_messages: on
-
-### si vous ne fournissez pas votre cookie, mais que vous voulez qd meme
-### voir des fortunes dans le pinnipede, utilisez cette option
-#[.]http.force_fortune_retrieval: yes
 
 #[.]http.proxy: proxy:port
 #[.]http.proxy_auth: username:password
@@ -481,10 +457,6 @@
 #pinnipede.hilight.keyword_color3: f000ff
 #pinnipede.hilight.keyword_color4: f08000
 #pinnipede.plopify_color: a0a0a0 a0a0a0
-#pinnipede.fortune_bgcolor: b0b0b0
-#pinnipede.fortune_fgcolor: 000000
-#pinnipede.fortune_font_family: helvetica
-#pinnipede.fortune_font_size: 9
 
 #scrollcoin.bg_color:               cdcdcd cdcdcd
 #scrollcoin.bg_light_color:         ffffff ffffff
@@ -513,7 +485,6 @@
 ###		4: affiche useragent ou login
 #pinnipede.nick_mode: 4
 #pinnipede.show_troll_score: on
-#pinnipede.show_fortune: on
 
 ### pour retrouver un comportement 'classique' des tabs
 #pinnipede.use_classical_tabs: on
@@ -630,7 +601,9 @@ pinnipede.url_replace: "dyndns.org" => "[dyndns]"
 ###    symb="dtri"  (fixe le symbole sauf si il est refixé par une regle suivante) 
 ### et symb:="dtri" (fixe le symbole définitivement, même si une règle suivante 
 ###                  aurait pu le rechanger)
-board.miniua_rule:               => symb="square", color="#ffffff"
+### (new in 2.5.x) : si aucune regle n'est matchee, les symbole/couleur sont
+### choisis en fonction du nom du site/des ua etc pour avoir qd meme
+### quelque chose d'un peu chattoyant
 board.miniua_rule:   site:"dlfp" => symb="dtri", color="#ff8000"
 board.miniua_rule:   site:"woof" => symb="square", color="#ffff00"
 board.miniua_rule:   site:"glandium" => symb="rutri", color="#0000ff" 

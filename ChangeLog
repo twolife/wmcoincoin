@@ -1,3 +1,31 @@
+2004-02-*  pouaite  <c0in@altern.org>
+	* lecture de l'encoding des backends et conversion en iso8859 à
+	grands coups de iconv
+	
+	* src/wmccc*: passage en gtk2 -- le vieux wmccc est mis à la
+	casse.
+
+	* l'ancienne fenetre des news, la gestion des messages et des
+	commentaires: à la casse.  wmcc n'accepte plus que des backends
+	xml et affiche tout dans le pinni
+	
+	* src/board.c etc: gestion des rss avec un parseur XML en bois.
+	
+	* scripts/wmcoincoin-totoz-get: patch de dae pour la gestion du
+	proxy.
+
+	* scripts/wmcoincoin-search-cookies: script de recherche de
+	cookies dans les rep de mozilla, kde, etc.
+	
+	* src/swallowcoincoin.c: sorte de bidouille pour l'auto-avalage de
+	dockapps. marche mal.
+	
+	* src/pinnipede*: changement orientation de la liste des tabs.
+	
+	* src/totoz_bookmark.c: bookmarks pour les [:totoz]
+
+	* src/palmipede.c: enlargement du palmipede (de 16 pixels)
+
 --------------------------v2.4.6-b-----------------------------------------
 2003-08-26  pouaite  <c0in@altern.org>
 

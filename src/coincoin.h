@@ -14,7 +14,7 @@
 #include "raster.h"
 #include "coin_util.h"
 #include "myprintf.h"
-
+#include "fontcoincoin.h"
 #ifndef WMCCDATADIR
 #define WMCCDATADIR "."
 #endif
@@ -38,31 +38,10 @@ typedef struct _PicoHtml PicoHtml;
 typedef long long int64;
 typedef unsigned long long uint64;
 
-typedef struct _Newswin Newswin;
-typedef struct _Comment Comment;
-typedef struct _News News;
-typedef struct _Message Message;
-typedef struct _Board Board;
-typedef struct _Boards Boards;
-typedef struct _Site Site;
-typedef struct _SiteList SiteList;
-
-struct _News {
-  unsigned char *titre;
-  unsigned char *txt;
-  unsigned char *auteur;
-  unsigned char *topic;
-  unsigned char *mail;
-  unsigned char *url; /* tronquee (cad moins le http://, le port, et le ,0,-1,7.html) */
-unsigned char *url_path; /* pour pouvoir résoudre les urls relatives */
-  char date[11];
-  int heure; /* en nombre de minutes depuis minuit */
-  id_type id;
-  int nb_comment; /* pas très utile... */
-  int dl_nb_tries; /* nombre d'essais de d/l du texte de la news */
-  struct _News *next;  
-  Site *site;
-};
+typedef struct Board_ Board;
+typedef struct Boards_ Boards;
+typedef struct Site_ Site;
+typedef struct SiteList_ SiteList;
 
 #define trollo_log_extent 5 /* minutes */
 
@@ -81,23 +60,6 @@ unsigned char *url_path; /* pour pouvoir résoudre les urls relatives */
 #define TROLLOSCOPE_X 4
 #define TROLLOSCOPE_Y 25
 
-
-struct _Comment {
-  int news_id;
-  int com_id;
-  int nb_answers;
-  int old;
-  int modified;
-  struct _Comment *next;
-  Site *site;
-};
-
-struct _Message {
-  int mid;
-  int unreaded, tooold;
-  struct _Message *next;
-  Site *site;
-};
 
 #define MINIUA_SZ 20
 typedef struct _MiniUA {
@@ -128,6 +90,20 @@ typedef struct _board_msg_ref {
 			*/
 } board_msg_ref;
 
+/* liste de message ID qui peuvent etre identifiés par une url
+   (en gros les messages provenant de rss) 
+   ne jamais deplacer les instances de cette structure, les board_msg_info pointent dessus
+*/
+typedef struct RSSBonusInfo_ {
+  md5_byte_t linkmd5[16]; /* c'est la mode du md5 j'en met partout */
+  char *link; /* l'url en question */
+  id_type id;
+  md5_byte_t md5[16]; /* pour une "regular board", le md5 est calculé sur la concatenation de
+                           stimestamp + useragent + login + msg
+                         pour un feed rss, il est la concat de
+                           title + link + description
+                      */  
+} RSSBonusInfo;
 
 
 /* ne pas déplacer ce genre de structure après son allocation
@@ -140,6 +116,7 @@ struct _board_msg_info {
   signed char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
 			 (-1 -> pas (encore) d'autre post avec le meme tstamp)
 		       */
+  RSSBonusInfo *ri; /* non-nul si le message provient d'un rss */
   /* (year-2000)|month|day|h|m|s */
   signed char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
   char *useragent; /* pointe dans la zone mémoire allouée pour board_msg_info -> ne pas faire de free(useragent) !!! */
@@ -175,7 +152,14 @@ struct _board_msg_info {
   struct _board_msg_info *g_next, *g_prev;
 };
 
-struct _Board {
+typedef struct md5_and_time_ {
+  char tstamp[15];
+  md5_byte_t md5[16];
+  int viewed;
+  struct md5_and_time_ *next;
+} md5_and_time;
+
+struct Board_ {
   unsigned char last_post_time[5];
 
   int last_post_timestamp; /* en secondes */
@@ -193,6 +177,10 @@ struct _Board {
   int nbsec_since_last_msg;
 
   int nb_msg_at_last_check; /* ne compte pas les posts boitakonnés */
+
+  /* le dernier id qui a ete affiche sur la tribune, 
+     le nb de messages (non vus, donc) qui ont ete recus depuis */
+  int last_viewed_id, nb_msg_since_last_viewed;
 
   /* date a laquelle le dernier check a ete fait
      (c'est pas redondant, je part du principe que l'horloge locale
@@ -214,7 +202,7 @@ struct _Board {
   board_msg_info *mi_tree_root; /* rooh un arbre binaire ..
 				     c'est utilisé par board_find_id */
   char *last_modified; /* pour les requetes http */
-  struct _Site *site;
+  struct Site_ *site;
   Boards *boards; /* pointeur vers la structure multi-site 
 		     il est juste là par commodité
 		   */
@@ -227,65 +215,30 @@ struct _Board {
   int board_refresh_cnt, board_refresh_delay;
 
   volatile int auto_refresh; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
+
+  md5_and_time *oldmd5; /* utilise de maniere transitoire par les feeds rss */
 };
 
-typedef struct _SiteNameHash {
+typedef struct SiteNameHash_ {
   int hash;
   int sid;
 } SiteNameHash;
 
-struct _Boards {
+struct Boards_ {
   board_msg_info *first;
   board_msg_info *last;
   Board *btab[MAX_SITES];
-
+  int nb_rss_e, max_rss_e;
+  RSSBonusInfo **rss_e;
   int nb_aliases;
   SiteNameHash *aliases;
 };
 
 
-struct _Site {
-  int news_updated;
-
-  News *news;
+struct Site_ {
   Board *board;
-  Comment *com;
-  Message *msg;
-
-  enum { DACODE14, DACODE2, SITE_UNKNOWN } type;
-  
-  char *news_backend_last_modified; /* a init en NULL */
-  int news_backend_dl_cnt; 
-  char *messages_last_modified; /* a init en NULL */
-  int messages_dl_cnt;
-  char *comments_last_modified;
-  int comments_dl_cnt;
-  
-#define MAX_NEWS_LUES 100 /* "ought to be enough for anybody" */
-  int newslues[MAX_NEWS_LUES];
-  int nb_newslues;
-  int newslues_uptodate;
-
-  /* les xp & fortunes & votes ne sont valides que si monitor_com != 0 */
-  int xp, xp_old;
-  /* xp_change_flag est active quand on detecte un changement dans les xp pendant la 
-     lecture de myposts.php3
-     (raz dès que la flamometre commence à clignoter) */
-  int xp_change_flag; 
-
-  /* ce flag déclenche le flamometre 
-     (et il est remis à zéro dès que le flamometre a été déclenché) */
-  int comment_change_flag;   
-
-  char *fortune; /* la fortune recuperee sur myposts.php3 */
-  float CPU;     /* la charge cpu recuperee sur myposts.php3 */
-  int votes_max, votes_cur;
-
-  /* compteurs mis à jour dans Net_loop (25 fois/sec) */
-  int news_refresh_cnt, news_refresh_delay;
-
   SitePrefs *prefs;
-  struct _Site *next;
+  struct Site_ *next;
 
   int site_id; /*
 		 un numéro unique au site,
@@ -308,16 +261,47 @@ struct _Site {
   float http_ping_stat; /* moyenne judicieusement pondérée */
 };
 
-struct _SiteList {
+struct SiteList_ {
   Site *list;
   Boards *boards;
 };
 
+/* le docker qui est dans le pinni qui sert à docker le dock, tout simplement 
+   inspiré par le concept des autofuck que j'avais vu à la telé dans ma jeunesse
+ */
+typedef struct SwallowedApp {
+  Window win;
+  int winx, winy;
+  int winw, winh;
+  int framex, framey;
+  int framew, frameh;
+  char *name;
+  struct SwallowedApp *next;
+} SwallowedApp;
 
+typedef struct SwallowCoincoin {
+  Window hostwin;
+  int x0, x1, y0, y1; /* position de la zone d'avalage dans hostwin */
+  int nb_swallowed;
+  int layout_dirty;
+  SwallowedApp *self;
+  SwallowedApp *apps;
+} SwallowCoincoin;
+
+typedef struct TotozBookmarkItem_ {
+  char *name;
+  int popularity;
+  struct TotozBookmarkItem_ *next;
+} TotozBookmarkItem;
+
+typedef struct TotozBookmark_ {
+  time_t last_modif;
+  TotozBookmarkItem *first;
+} TotozBookmark;
 
 typedef enum {OFF=0, BLUE=1, GREENLIGHT=2, YELLOW=3, VIOLET=4, CYAN=5, RED=6, GREEN=7,BIGREDLIGHT=7, BIGRED=8} LedColor;
 
-typedef struct _Led {
+typedef struct Led_ {
   LedColor coul[3];
   int delay[3];
   
@@ -337,7 +321,7 @@ typedef struct Leds {
 #define DOCK_WIN(d) ((Prefs.use_iconwin ? (d)->iconwin : (d)->win))
 
 
-typedef struct _TL_item {
+typedef struct TL_item_ {
   id_type id;
   unsigned char R,G,B,symb;
 } TL_item;
@@ -365,7 +349,7 @@ typedef void(*plopup_callback_t)(int);
 #define FLAMOMETRE_XP_DUREE      900      /* 1/4 d'heure */
 #define FLAMOMETRE_TRIB_DUREE    15
 
-typedef struct _Dock {
+typedef struct Dock_ {
   Pixmap pix_porte, mask_porte_haut, mask_porte_bas;
   Leds leds;
   /* le pixmap du load de la board (il n'est regenere que
@@ -433,6 +417,8 @@ typedef struct _Dock {
      clavier qwerty, par exemple.. */
   XIM input_method;
 
+  int fuck_utf8; /* non nul si la locale est utf */
+
   Atom atom_WM_DELETE_WINDOW; /* oh les bon gros atomes  */
   Atom atom_WM_SAVE_YOURSELF;
   Atom atom_WM_TAKE_FOCUS;
@@ -461,21 +447,22 @@ typedef struct _Dock {
   Window iconwin,win;
 
   Window msgwin;
+
+  Window pp_win; /* == pinnipede->win quand le pinnipede est mappe */
   Pixmap pix_msgwin;
   int msgwin_visible;
   GC msgwin_GC;
 
   /* les trois couleurs de base du dock */
   unsigned long bg_pixel,light_pixel,dark_pixel;
-
+  CCColorId bg_color, light_color, dark_color;
+  CCColorId white_color, black_color, green_color, blue_color, red_color, gray_colors[16];
   int screennum;
   Pixmap coinpix, coin_pixmask;
   Pixmap clockpix, clock_pixmask;
   Pixmap led, month, date, weekday;
 
   RGBAContext *rgba_context;
-
-  Newswin* newswin;
 
   Balloon *balloon;
 
@@ -490,7 +477,6 @@ typedef struct _Dock {
   int trolloscope_speed; /* vitesse de defilement du trolloscope (1,2,4 ou 8), defaut:2 */
 
   struct {
-    int newswin_used;
     int palmipede_used;
     int pinnipede_used;
 
@@ -501,7 +487,7 @@ typedef struct _Dock {
 
   float trib_trollo_rate, trib_trollo_score;
 
-  Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
+  Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede) */
   pid_t wmccc_pid;
 
   /* multi-head support */
@@ -513,12 +499,15 @@ typedef struct _Dock {
     short height;
   } *xiscreen;
   int nb_xiscreen;
+
+  SwallowCoincoin *swallow;
+
+  TotozBookmark *totoz_bm;
 } Dock;
 
 /* c'est classé par ordre de priorité décroissante */
 typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, 
-	       Q_NEWSLST_UPDATE, Q_COMMENTS_UPDATE, Q_MESSAGES_UPDATE, 
-	       Q_NEWSTXT_UPDATE } ccqueue_elt_type;
+	       Q_NEWSLST_UPDATE } ccqueue_elt_type;
 
 typedef struct _ccqueue_elt {
   ccqueue_elt_type what;
@@ -532,6 +521,7 @@ typedef struct _ccqueue_elt {
 
 
 /* wmcoincoin.c */
+#define URL_YES_I_KNOW_WHAT_I_DO 16384
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
@@ -553,8 +543,8 @@ void picohtml_set_parag_indent(PicoHtml *ph, int parag_indent);
 void picohtml_set_parag_skip(PicoHtml *ph, float parag_skip);
 void picohtml_set_line_skip(PicoHtml *ph, float line_skip);
 void picohtml_set_tabul_skip(PicoHtml *ph, int tabul_skip);
-XFontStruct *picohtml_get_fn_base(PicoHtml *ph);
-XFontStruct *picohtml_get_fn_bold(PicoHtml *ph);
+CCFontId picohtml_get_fn_base(PicoHtml *ph);
+CCFontId picohtml_get_fn_bold(PicoHtml *ph);
 PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int white_txt);
 void picohtml_destroy(Display *display, PicoHtml *ph);
 void picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix);
@@ -567,7 +557,6 @@ void ccqueue_push_board_update(int sid);
 void ccqueue_push_comments_update(int sid);
 void ccqueue_push_messages_update(int sid);
 void ccqueue_push_newslst_update(int sid);
-void ccqueue_push_newstxt_update(int sid, int nid);
 int ccqueue_state();
 void ccqueue_print();
 const ccqueue_elt *ccqueue_doing_what();
@@ -579,34 +568,6 @@ void ccqueue_loop(Dock *dock);
 int useragents_file_reread(Dock *dock, Site*dlfp);
 int useragents_file_read_initial(Dock *dock, Site*dlfp);
 
-
-/* news.c */
-void site_newslues_add(Site *site, int lid);
-int site_newslues_find(Site *site, int lid);
-void site_news_restore_state(Site *site);
-void site_news_save_state(Site *site);
-void site_news_dl_and_update(Site* dlfp);
-int site_news_update_txt(Site *site, id_type id);
-Site* site_news_create();
-void site_news_destroy(Site *dlfp);
-News *site_news_find_id(Site *dlfp, id_type id);
-News *site_news_find_prev(Site *dlfp, id_type id);
-News *site_news_find_next(Site *dlfp, id_type id);
-void site_news_unset_unreaded(Site *site);
-int site_news_count(Site *dlfp);
-FILE * open_site_file(Site *site, char *base_name);
-/* comments.c */
-void site_yc_printf_comments(Site *dlfp);
-Comment *site_yc_find_modified(Site *dlfp);
-void site_yc_clear_modified(Site *dlfp);
-void site_yc_dl_and_update(Site *dlfp);
-void site_com_destroy(Site *site);
-/* messages.c */
-void site_msg_printf_messages(Site *dlfp);
-Message *site_msg_find_unreaded(Site *dlfp);
-void site_msg_dl_and_update(Site *dlfp);
-void site_msg_destroy(Site *site);
-void site_msg_save_state(Site *site);
 /* palmipede.c  */
 void editw_show(Dock *dock, SitePrefs *sp, int useragent_mode);
 void editw_hide(Dock *dock, EditW *ew); /* rentrer le palmipede */
@@ -616,6 +577,7 @@ void editw_build(Dock *dock);
 void editw_rebuild(Dock *dock);
 void editw_set_kbfocus(Dock *dock, EditW *ew, int get_it);
 int editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event);
+void editw_handle_keyrelease(Dock *dock, EditW *ew, XEvent *event);
 void editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event);
 Window editw_get_win(EditW *ew);
 int editw_get_site_id(Dock *dock);
@@ -682,7 +644,6 @@ Window pp_get_win(Dock *dock);
 void pp_check_board_updated(Dock *dock);
 void pp_animate(Dock *dock);
 void pp_set_board_updated(Dock *dock);
-void pp_set_prefs_colors(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);
 void pp_set_ua_filter(Dock *dock, char *ua);
 void pp_set_word_filter(Dock *dock, char *word);
@@ -694,7 +655,7 @@ void pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s);
 void pp_set_download_info(char *site, char *what);
 void pp_unset_kbnav(Dock *dock);
 void pp_totoz_check_updates(Dock *dock);
-
+char *pp_totoz_realfname(unsigned char *name, int with_path);
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
 void wmcc_prefs_initialize(int argc, char **argv, GeneralPrefs *p);
@@ -716,4 +677,26 @@ void board_get_trollo_rate(const Board *trib, float *trate, float *tscore);
 void boards_update_boitakon(Boards *boards);
 void board_update(Board* board);
 void board_destroy(Board *board);
+void board_save_state(FILE *f, Board *board);
+void board_restore_state(FILE *f, Board *board);
+void board_set_viewed(Board *board, int id);
+int board_is_rss_feed(Board *b);
+int board_is_regular_board(Board *b);
+RSSBonusInfo *rss_find_from_link(Boards *boards, char *link);
+RSSBonusInfo *rss_find_from_id(Boards *boards, id_type id); /* slow */
+
+/* coincoinswallow.c */
+void swallower_init(Dock *dock);
+int swallower_is_autoswallowed(Dock *dock);
+void sw_layout_dockapps(Dock *dock, int x0, int y0, int x1, int y1);
+void sw_redraw(Dock *dock);
+
+/* totoz_bookmark.c */
+const char *totoz_bookmark_filename();
+const char *totoz_bookmark_filename_html();
+TotozBookmarkItem* totoz_bookmark_search(Dock *dock, const char *name);
+TotozBookmarkItem* totoz_bookmark_insert(Dock *dock, const char *name);
+void totoz_bookmark_load(Dock *dock);
+void totoz_bookmark_save(Dock *dock, int merge_first);
+void totoz_bookmark_save_html(Dock *dock);
 #endif

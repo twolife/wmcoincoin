@@ -212,7 +212,7 @@ pp_totoz_dispatch_event(Dock *dock, XEvent *event)
   entree: "[:totoz plop]"
   sortie: "totoz%20plop"
 */
-static char *
+char *
 pp_totoz_realfname(unsigned char *name, int with_path) {
   int i;
   unsigned char *realname;

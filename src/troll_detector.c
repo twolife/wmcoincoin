@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.18 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.19 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.19  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.18  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -111,7 +114,7 @@ typedef struct _Word {
 } Word;
 
 int cnt_anti_blocage; /* anti recursions qui se comportent en O(n!) (genre avec 30 coins..)*/
-#define MAX_CNT_ANTI_BLOCAGE 600000
+#define MAX_CNT_ANTI_BLOCAGE 300000
 
 
 static Word*

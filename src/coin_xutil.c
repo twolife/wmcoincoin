@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.11 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.12 2004/02/29 15:01:19 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.12  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.11  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -99,7 +102,10 @@ rimage_create_from_raw_with_tint(int w, int h, int bpp, const unsigned char *dat
   for (i=0; i < w*h; i++) {
     float v;
     v =  (data[i*bpp] + data[i*bpp+1] + data[i*bpp+2])/(3.*128);
-    v = 1. + (v-1.)/2.5; // les couleurs de la porte sont un peu trop contrastees a mon gout
+    if (v < 1)
+      v = 1. + (v-1.)/4; // les couleurs de la porte sont un peu trop contrastees a mon gout
+    else 
+      v = 1. + (v-1.)/12; // les couleurs de la porte sont un peu trop contrastees a mon gout
     rimg->data[0][i].rgba[0] = (unsigned char)MIN(v*r, 255);
     rimg->data[0][i].rgba[1] = (unsigned char)MIN(v*g, 255);
     rimg->data[0][i].rgba[2] = (unsigned char)MIN(v*b, 255);
@@ -244,7 +250,7 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
     XTranslateCoordinates(display, win, root_win,
 			  -win_attr.border_width, -win_attr.border_width, screen_x, screen_y,
 			  &child_win);
-  } 
+  }
 }
 
 void 
@@ -257,6 +263,14 @@ get_window_pos_without_decor(Display *display, Window root_win, Window win, int 
   XTranslateCoordinates(display, win, root_win,
 			win_attr.x, win_attr.y, screen_x, screen_y,
 			&child_win);
+}
+
+void get_window_dimensions(Display *display, Window win, int *pw, int *ph) {
+  Window root;
+  int x,y;
+  unsigned depth, border;
+  XGetGeometry(display, win, &root, &x, &y, pw, ph, 
+               &border, &depth);
 }
 
 /* volée dans les sources de aterm :) 

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.22 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: board.c,v 1.23 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.23  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.22  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -204,7 +207,7 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
-
+#include "global.h"
 #include <libintl.h>
 #define _(String) gettext (String)
 
@@ -215,6 +218,7 @@
 #include "coincoin.h"
 #include "http.h"
 #include "board_util.h"
+#include "xmlcoincoin.h"
 
 /* utilise tres localement, c'est la longueur DANS remote.xml, la longueur réelle sera moindre
    (remplacement de &eacute par 'é' etc... ) */
@@ -222,6 +226,130 @@
 #define BOARD_MSG_MAX_LEN 15000 /* on peut y arriver avec un bon gros message plein de [][][][]... */
 #define BOARD_LOGIN_MAX_LEN 60
 
+
+
+static md5_and_time *
+load_md5_array(FILE *f) {
+  md5_and_time *m = NULL;
+  if (f) {
+    char tstamp[15];
+    unsigned char md5txt[33];
+    int viewed;
+    while (fscanf(f, " MD5:%s %s %d", md5txt, tstamp, &viewed) == 3) {
+      if (strlen(md5txt) == 32 && strlen(tstamp)==14) {
+        BLAHBLAH(2, myprintf("loaded md5 %<grn %s> tstamp %<cya %s> viewed=%d\n", md5txt, tstamp,viewed));
+        int i;
+        md5_and_time *n; ALLOC_OBJ(n,md5_and_time);
+        n->next = m; m = n;
+        strcpy(m->tstamp,tstamp);
+        for (i=0; i < 16; ++i) {
+          int j;
+          sscanf(md5txt+2*i,"%02x",&j); m->md5[i] = j;
+        }
+        m->viewed = viewed;
+      }
+    }
+  }
+  return m;
+}
+
+static void release_md5_array(Board *b) {
+  if (b) {
+    md5_and_time *m = b->oldmd5;
+    while (m) {
+      md5_and_time *n = m->next; free(m); m = n;
+    }
+    b->oldmd5 = NULL;
+  }
+}
+
+static md5_and_time *
+find_md5_in_md5_array(md5_byte_t md5[16], md5_and_time *m) {
+  while (m) {
+    if (memcmp(md5, m->md5,16) == 0)
+      return m;
+    m = m->next;
+  }
+  return NULL;
+}
+
+
+static void save_md5_and_time(FILE *f, md5_byte_t md5[16], char tstamp[15], int viewed) {
+  char md5txt[33];
+  int i;
+  for (i = 0; i < 16; ++i) {
+    md5txt[2*i  ] = "0123456789ABCDEF"[md5[i]/16];
+    md5txt[2*i+1] = "0123456789ABCDEF"[md5[i]%16];
+  }
+  md5txt[32] = 0;
+  fprintf(f, "MD5:%s %s %d\n", md5txt, tstamp, viewed);
+}
+
+static void save_md5_array_recurs(FILE *f, Board *b, board_msg_info *mi) {
+  char tstamp[15];
+  if (!mi) return;
+  time_t_to_tstamp(mi->timestamp, tstamp);
+
+  if (mi->ri) save_md5_and_time(f,mi->ri->md5,tstamp, id_type_lid(mi->id) <= b->last_viewed_id);
+
+  save_md5_array_recurs(f, b, mi->left);
+  save_md5_array_recurs(f, b, mi->right);
+}
+
+int board_is_rss_feed(Board *b) {
+  return b->site->prefs->backend_type == RSS_FEED;
+}
+
+int board_is_regular_board(Board *b) {
+  return b->site->prefs->backend_type != RSS_FEED;
+}
+
+void board_save_state(FILE *f, Board *board) {
+  long tmin=LONG_MIN,tmax=LONG_MAX,t=0;
+  tmin = board->time_shift_min;
+  tmax = board->time_shift_max;
+  t = board->time_shift;
+  BLAHBLAH(1,myprintf("%<yel site_save_state> %10s : tmin -> %<cya %3ld> tmax -> %<cya %3ld> t -> %<CYA %3ld>\n",
+                      board->site->prefs->site_name, tmin, tmax, t));
+  fprintf(f, "time_shift_min=%ld time_shift_max=%ld time_shift=%ld\n", (long)tmin, (long)tmax, (long)t);
+  fprintf(f, "last_viewed_id=%d\n", board->last_viewed_id);
+  if (board_is_rss_feed(board)) {
+    if (board->mi_tree_root) {
+      save_md5_array_recurs(f, board, board->mi_tree_root);
+    } else { /* on n'a pas fait un seul refresh, ça serait bete de tout ecraser
+                et comme le fichier a dejà ete ouvert en ecriture .. */
+      md5_and_time *m = board->oldmd5;
+      while (m) {
+        save_md5_and_time(f, m->md5, m->tstamp, m->viewed); m = m->next;
+      }
+    }
+  }
+}
+
+void board_restore_state(FILE *f, Board *board) {
+  long tmin,tmax,t;
+  if (fscanf(f, "time_shift_min=%ld time_shift_max=%ld time_shift=%ld\n",&tmin, &tmax, &t) != 3) return;
+  if (tmin <= tmax && tmin <= t && t <= tmax && board) {
+    BLAHBLAH(1,myprintf("%<yel site_restore_state> %10s : tmin <- %<cya %3ld> tmax <- %<cya %3ld> t <- %<CYA %3ld>\n",
+			board->site->prefs->site_name, tmin, tmax, t));
+    board->time_shift_min = tmin;
+    board->time_shift_max = tmax;
+    board->time_shift = t;
+  }
+  fscanf(f, "last_viewed_id=%d", &board->last_viewed_id);    
+  if (board_is_rss_feed(board)) {
+    board->last_viewed_id = -1; /* on dispose d'une liste de md5 */
+    release_md5_array(board);
+    board->oldmd5 = load_md5_array(f);
+  } else board->oldmd5 = NULL;
+}
+
+
+void
+board_set_viewed(Board *board, int id) {
+  board->last_viewed_id = MAX(id,board->last_viewed_id);
+  board->nb_msg_since_last_viewed = MAX(board->last_post_id - board->last_viewed_id,0);
+}
 
 
 Board *
@@ -239,6 +367,7 @@ board_create(Site *site, Boards *boards)
   board->wmcc_tic_cnt_last_check = 0;
   board->last_post_timestamp = 0;
   board->nbsec_since_last_msg = 0;
+  board->last_viewed_id = -1; board->nb_msg_since_last_viewed = 0;
   board->nb_msg_at_last_check = 0;
   board->local_time_last_check = time(NULL);
   //board->rules = NULL;
@@ -257,6 +386,7 @@ board_create(Site *site, Boards *boards)
   board->time_shift_max = LONG_MAX;
   board->time_shift = 0;
   board->auto_refresh = sp->board_auto_refresh;
+  board->oldmd5 = NULL;
   return board;
 }
 
@@ -330,8 +460,10 @@ board_destroy(Board *board)
 
   board->msg = NULL;
   if (board->last_modified) free(board->last_modified);
+  release_md5_array(board);
   free(board);
 }
+
 
 /*
   statistique à la noix sur le nombre de personnes sur la tribune
@@ -399,16 +531,39 @@ miniua_eval_from_ua(MiniUARules *rules, board_msg_info *mi)
   MiniUA *mua;
   int sid, matched;
   int color_done = 0, ua_done = 0, symb_done = 0;
+  static unsigned default_colors[] = { 
+    0x82e734, /*joli vert*/
+    0xd2262f, /*rouge qui claque*/
+    0xedd92e, /*jaune*/
+    0xed992c, /*orange*/
+    0xed610d, /*tres orange*/
+    0x526bed, /*bleu electrique*/
+    0x9c9c9c, /*gris*/
+    0xed6b52, /*rose*/
+    0x23b6ff, /*joli bleu*/
+    0xd264ed, /*violet*/
+    0x9523ff, /*plus violet*/
+    0xd5008b, /*encore plus*/
+    0x1Feda7, /*bleu-vert*/
+    0xd5e734, /*jaune-vert*/
+  };
 
   assert(mi);
   mua = &mi->miniua;
   sid = id_type_sid(mi->id);
 
-  /* valeur par defaut */
-  mua->R = 0x80;
-  mua->G = 0x80;
-  mua->B = 0x80;
-  mua->symb = 0;
+  /* valeur par defaut -- on essaye de prendre quelque chose d'un peu chattoyant */
+  int coul = default_colors[((unsigned)str_hache(Prefs.site[id_type_sid(mi->id)]->site_name,-1)>>4) 
+                            % (sizeof default_colors / sizeof default_colors[0])];
+  //printf("coul = %06x mx=%d\n", coul, (sizeof default_colors / sizeof default_colors[0]));
+  mua->R = coul >> 16;
+  mua->G = (coul >> 8) & 0xff;
+  mua->B = coul & 0xff;
+  if (Prefs.site[id_type_sid(mi->id)]->backend_type > 3) { mua->symb = 1; }
+  else if (mi->login && strlen(mi->login)) { mua->symb = (((unsigned)str_hache(mi->login, -1)>>5) % 8)+2; }
+  else if (mi->useragent && strlen(mi->useragent)) { mua->symb = (((unsigned)str_hache(mi->useragent, -1)>>5) % 8)+2; }
+  else { mua->symb = 13; }
+
   make_short_name_from_ua(mi->useragent, mua->name, MIN(MINIUA_SZ,15));
 
   for (r = rules->first; r; r = r->next) {
@@ -622,19 +777,6 @@ board_remove_old_msg(Board *board)
 /*
   prout
 */
-static time_t
-timestamp_str_to_time_t(char *sts) 
-{
-  struct tm t;
-
-  assert(strlen(sts) == 14);
-  
-  sscanf(sts, "%4d%2d%2d%2d%2d%2d", &t.tm_year,&t.tm_mon,&t.tm_mday,&t.tm_hour,&t.tm_min,&t.tm_sec);
-  t.tm_mon = t.tm_mon - 1;
-  t.tm_year = t.tm_year - 1900; 
-  t.tm_isdst = -1;
-  return mktime(&t);
-}
 
 /* verifie pour chaque message, si il est necessaire d'afficher les secondes, ou bien
    si le poste peut etre identifie sans ambiguite par hh:ss 
@@ -924,7 +1066,8 @@ assert_boards_ok(Boards *boards) {
   enregistre un nouveau message
 */
 static board_msg_info *
-board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
+board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, 
+              const unsigned char *my_useragent)
 {
   board_msg_info *nit, *pit, *ppit, *it;
   board_msg_info *g_it, *pg_it;
@@ -947,7 +1090,16 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
 #ifdef WMCC_EXTRA_CHECKS
   assert_boards_ok(boards);
 #endif
-  BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
+  /*if (Prefs.verbosity >= 0) {
+    int i; 
+    printf("log new message MD5="); 
+    for (i=0; i < 16; ++i) myprintf("%<CYA %02X>", md5[i]);
+    printf(") tstamp = %s login=%s", stimestamp, login);
+    if (Prefs.verbosity > 3) {
+      printf(_(" content: '%s'\n"), message);
+    } else printf("\n");
+  }
+  */
   nit = board->msg;
   pit = NULL;
   ppit = NULL;
@@ -961,11 +1113,12 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   }
 
   it = (board_msg_info*) malloc(sizeof(board_msg_info)+strlen(ua)+1+strlen(message)+1+strlen(login)+1);
-  it->timestamp = timestamp_str_to_time_t(stimestamp);
+  assert(str_to_time_t(stimestamp, &it->timestamp));
   it->sub_timestamp = -1;
   it->useragent = ((char*)it) + sizeof(board_msg_info);
   it->msg = ((char*)it) + sizeof(board_msg_info) + strlen(ua) + 1;
   it->login = it->msg + strlen(message) + 1;
+  it->ri = NULL;
   it->in_boitakon = 0; /* voir plus bas */
   it->left = NULL; it->right = NULL;
 
@@ -1049,7 +1202,7 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   } else {
     /* special pour les sites qui rajoutent des trucs à la fin,
        on limite la longueur de la comparaison */
-    it->is_my_message = !strncmp(my_useragent, it->useragent, board->site->prefs->palmi_ua_max_len-1);
+    it->is_my_message = my_useragent && !strncmp(my_useragent, it->useragent, board->site->prefs->palmi_ua_max_len-1);
 /*    if (it->is_my_message) {
       myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
     }*/
@@ -1066,7 +1219,6 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   if (id_type_lid(it->id) == 9348) {
     printf("attention chérie ça va couper\n");
   }
-  troll_detector(it);
 
   mi_check_boitakon(board->boards, it);
   if (it->in_boitakon) { /* bienvenu dans la boitakon */
@@ -1083,6 +1235,12 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
      celle d'arbre */
      
   board_build_tree(board);
+
+  /* attention le troll detector prend du temps .. du coup on vire le flag de toute
+     façon il n'a aucun impact ici */
+  flag_updating_board--;
+  troll_detector(it);
+  flag_updating_board++;
 
   free(message);
   return it;
@@ -1262,7 +1420,9 @@ cctime(const time_t* t, char *s)
 */
 static void
 board_update_time_shift(Board *board, int old_last_post_id) { 
-  if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+  if (board_is_rss_feed(board)) {
+    board->time_shift_min = board->time_shift_max = 0; // fait chier sinon
+  } else if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     char s1[15],s2[15];
     board_msg_info *it;
     time_t t_min = 0, t_max = 0;
@@ -1339,18 +1499,20 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 void
 board_decode_message(Board *board, char *dest, const char *src) {
   strncpy(dest, src, BOARD_MSG_MAX_LEN); dest[BOARD_MSG_MAX_LEN-1] = 0;
-  if (board->site->prefs->board_backend_type == 1) {
+  if (board->site->prefs->backend_type == REGULAR_BOARD_UNENCODED) {
     mark_html_tags(dest, BOARD_MSG_MAX_LEN);
   }
   convert_to_ascii(dest, dest, BOARD_MSG_MAX_LEN);
-  if (board->site->prefs->board_backend_type == 2) {
+  if (board->site->prefs->backend_type == REGULAR_BOARD_ENCODED ||
+      board->site->prefs->backend_type == RSS_FEED) {
     mark_html_tags(dest, BOARD_MSG_MAX_LEN);    
     convert_to_ascii(dest, dest, BOARD_MSG_MAX_LEN);
   }
 
   /* cette partie est destinée a etre modifiée à chaque fois que le backend 
-     sera dans un état "non-coherent" */
-  if (board->site->prefs->board_backend_type == 3) {
+     sera dans un état pas presentable à un validator, 
+     par ex. un backend avec des poils qui depassent du string */
+  if (board->site->prefs->backend_type == REGULAR_BOARD_NO_PANTS) {
     char *s, *s2;
     
     s = strdup(dest); assert(s);
@@ -1375,68 +1537,65 @@ board_decode_message(Board *board, char *dest, const char *src) {
   BLAHBLAH(4,myprintf(_("Decoded message: '%<MAG %s>'\n"), dest));
 }
 
-/*
-  lecture des nouveaux messages reçus
+/* bou comme c'est laid */
+int 
+http_get_line_and_convert(HttpRequest *r, char *s, size_t sz, const char *encoding) {
+  int cnt = http_get_line_trim(r, s, sz);
+  if (cnt) {
+    char *w = strdup(s); assert(w);
+    convert_to_iso8859(encoding, &w);
+    strncpy(s,w,sz); s[sz-1] = 0;
+    free(w);
+  }
+  return cnt;
+}
 
-  my_useragent: useragent dernièrement utilisé, sert à reconnaitre si on est 
-  l'auteur d'un post, ou non
-*/
-void
-board_update(Board *board)
-{
+int 
+regular_board_update(Board *board, char *path) {
   HttpRequest r;
+  int http_err_flag = 0;
+  char *errmsg = NULL;
   char s[16384]; /* must be large enough to handle very long lines
 		    (especially with broken backends, yes it happens sometimes) */
-  char path[2048];
-
-  char *errmsg;
-  int old_last_post_id;
 
   const char *board_sign_posttime = "<post time=";
   const char *board_sign_info = "<info>";
   const char *board_sign_msg = "<message>";
   const char *board_sign_login = "<login>";
-  const char * my_useragent = board->coin_coin_useragent;
-
-  int http_err_flag = 0;
-
-  errmsg = NULL;
-  /* maj du nombre de secondes ecoulees depuis le dernier message recu
-     (pour pouvoir calculer l'age des message -> on part du principe
-     que l'horloge locale et l'horloge de linuxfr ne sont pas synchrones)
-  */
-
-  old_last_post_id = board->last_post_id;
-
-  board->local_time_last_check_old = board->local_time_last_check;
-  board->local_time_last_check = time(NULL);
-
-  /* ça c'est pour le pinni */
-  board->wmcc_tic_cnt_last_check = wmcc_tic_cnt;
-  board->last_post_id_prev = old_last_post_id;
-
-  board->nbsec_since_last_msg += difftime(board->local_time_last_check, board->local_time_last_check_old);
-  /* des fois qu'une des 2 horloges soit modifie a l'arrache */
-  board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
-  board->nb_msg_at_last_check = 0;
-  pp_set_download_info(board->site->prefs->site_name, "updating board");
-
-  if ((Prefs.debug & 2) == 0) {
-    snprintf(path, 2048, "%s%s/%s", (strlen(board->site->prefs->site_path) ? "/" : ""), 
-	     board->site->prefs->site_path, board->site->prefs->path_board_backend);
-  } else {
-    snprintf(path, 2048, "%s/wmcoincoin/test/%s/remote.xml", getenv("HOME"), board->site->prefs->site_name);
-    myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
-  }
+  const char *my_useragent = board->coin_coin_useragent;
+  char *encoding = NULL;
   wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   wmcc_log_http_request(board->site, &r);
 
+  /* 
+     première ligne : on essaye de chopper l'encoding -- du coup, ça devrait assurer une
+     relative compatibilité avec les tribunes en UTF-8 ou autre.
+  */
+  if (http_get_line_trim(&r, s, 16384)) {
+    XMLBlock xmlb;
+    int pos;
+    clear_XMLBlock(&xmlb);
+    if ((pos = get_XMLBlock(s, strlen(s), "?xml", &xmlb))>=0) {
+      XMLAttr *a;
+      for (a = xmlb.attr; a; a = a->next) {
+        if (str_case_startswith(a->name, "encoding")) {
+          encoding = str_ndup(a->value,a->value_len);
+          printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, encoding);
+          break;
+        }
+      }
+    }
+    destroy_XMLBlock(&xmlb);
+  }
+
+
   if (r.error == 0) {
     int roll_back_cnt = 0;
-    while (http_get_line_trim(&r, s, 16384) > 0 && r.error == 0) {
+    while (http_get_line_and_convert(&r, s, 16384,encoding) > 0 && r.error == 0) {
       if (strncasecmp(s,board_sign_posttime, strlen(board_sign_info)) == 0) {
+        md5_byte_t md5[16]; md5_state_t md5_state;
 	char stimestamp[15];
 	char ua[BOARD_UA_MAX_LEN];
 	char msg[BOARD_MSG_MAX_LEN];
@@ -1444,8 +1603,15 @@ board_update(Board *board)
 	int id;
 	char *p;
 
+
+        md5_init(&md5_state);
 	p = s + strlen(board_sign_posttime) + 1;
 	strncpy(stimestamp, p, 14); stimestamp[14] = 0;
+        md5_append(&md5_state,stimestamp,14);
+
+        /* de nombreux coincoins sont morts sur le champ d'honneur, ci-dessous un petit bugfix à leur mémoire.
+           Qu'ils reposent en paix */
+        if (strlen(stimestamp) < 14) { fprintf(stderr,"timestamp POURRI: '%s'\n",stimestamp); errmsg = "slip woof?"; goto err; }
 	p += 14;
 	p = strstr(p, "id=");
 	if (p == NULL) { errmsg = "id="; goto err; }
@@ -1487,15 +1653,20 @@ board_update(Board *board)
 	  }
 	}
 
-	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(info)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(info)"; goto err; }
+
 	if (strncasecmp(s, board_sign_info,strlen(board_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
 	s[strlen(s)-7] = 0; /* vire le /info */
 	p = s + strlen(board_sign_info);
 
+        //myprintf("UA = '%<GRN %s>'\n", p);
+        md5_append(&md5_state,p,strlen(p));
+
         convert_to_ascii(ua, p, BOARD_UA_MAX_LEN);
 
-	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(message)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(message)"; goto err; }
+
 	if (strncasecmp(s, board_sign_msg,strlen(board_sign_msg))) { errmsg="messagesign"; goto err; }
 	
 	//	myprintf("message: '%<YEL %s>'\n\n", s); 
@@ -1505,7 +1676,7 @@ board_update(Board *board)
 	  int l;
 	  l = strlen(s);
 	  while (strncasecmp("</message>", s+l-10,10)) {
-	    if (http_get_line_trim(&r, s+l, 16384 - l) <= 0) {
+	    if (http_get_line_and_convert(&r, s+l, 16384 - l, encoding) <= 0) {
 	      errmsg="</message>"; goto err; 
 	    }
 	    l = strlen(s);
@@ -1516,6 +1687,8 @@ board_update(Board *board)
 
 	s[strlen(s)-10] = 0; /* vire le </message> */
 	p = s + strlen(board_sign_msg);
+
+        md5_append(&md5_state,p,strlen(p));
 
 	/* nettoyage des codes < 32 dans le message */
 	{
@@ -1530,12 +1703,15 @@ board_update(Board *board)
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
 	board_decode_message(board, msg, p);
 
-	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(login)"; goto err; }
+	if (http_get_line_and_convert(&r, s, 16384, encoding) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, board_sign_login,strlen(board_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 
 	s[strlen(s)-8] = 0; 
 	p = s + strlen(board_sign_login);
+
+        md5_append(&md5_state,p,strlen(p));
+
 	if (strcasecmp(p, "Anonyme") != 0) {
 	  convert_to_ascii(login, p, BOARD_LOGIN_MAX_LEN);
 	} else {
@@ -1548,9 +1724,15 @@ board_update(Board *board)
 		     "DON'T PANIC, the coincoin handles this well, it only proves I didn't write\n"
 		     "this bugfix for coconuts.\n"), id);
 	  }
+          md5_finish(&md5_state,md5);
 	  flag_updating_board++;
-	  if (!board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent)->in_boitakon)
+	  if (!board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent)->in_boitakon) {
             board->nb_msg_at_last_check++;
+            if (id > board->last_viewed_id) {
+              //printf("last_viewed_id = %d, id=%d\n", board->last_viewed_id, id);
+              board->nb_msg_since_last_viewed++;
+            }
+          }
 	  flag_updating_board--;
 	}
 
@@ -1559,35 +1741,7 @@ board_update(Board *board)
 	if (roll_back_cnt > 1) roll_back_cnt--;
 	else if (roll_back_cnt == 1) break;
       }
-    } /*else if (strncasecmp(s,board_sign_board, strlen(board_sign_info)) == 0) {
-      char *attr;
-      if ((attr = find_xml_attribute(s, "posturl"))) {
-	convert_to_ascii(attr, attr, strlen(attr)+1);
-	if (strlen(attr)) {
-	  ASSIGN_STRING_VAL(board->prefs->path_board_add, attr);
-	}
-	free(attr);
-      }
-      if ((attr = find_xml_attribute(s, "postdata"))) {
-	convert_to_ascii(attr, attr, strlen(attr)+1);	
-	char *tmp = strstr(attr, "%");
-	if (tmp && strstr(tmp, "%s") && !strstr(tmp+1, "%")) { // verifie qu'il n'y a qu'un %s
-	  ASSIGN_STRING_VAL(board->prefs->path_board_data, attr);
-	}
-      }
-      if ((attr = find_xml_attribute(s, "msgmaxlen"))) {
-	int l = atoi(attr);
-	if (l > 1 && l < 4096 && board->prefs->palmi_msg_max_len != l)
-	  board->prefs->palmi_msg_max_len = l;editw_rebuild(dock);
-	}
-      }
-      if ((attr = find_xml_attribute(s, "uamaxlen"))) {
-	int l = atoi(attr);
-	if (l > 1 && l < 4096 && board->prefs->palmi_ua_max_len != l)
-	  board->prefs->palmi_ua_max_len = l;editw_rebuild(dock);
-	}
-      }    
-    }*/
+    }
     if (r.error) { http_err_flag = 1; }
   err:
     if (errmsg) {
@@ -1602,7 +1756,416 @@ board_update(Board *board)
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      board->site->prefs->site_name, path, http_error());
   }
+  if (encoding) free(encoding);
+  return http_err_flag;
+}
 
+
+/* pinaise j'en ai marre de faire ce genre de fonctions */
+void rss_nettoie_la_soupe_de_tags(char *src) {
+  char *dest = src, *p, *p2;
+  while (src[0]) {
+    int skip;
+    skip = 0;
+    if (*src == '\t') {
+      p = src+1;
+      if (*p == '<') {
+        p++;
+        while (*p && (isspace(*p) || *p == '/')) ++p;
+        p2 = p;
+        while (*p2 && !isspace(*p2) && *p2 != '/' && *p2 != '>') ++p2;
+        if (*p2) {
+          if ((strncasecmp(p, "br", 2)==0 && p2-p == 2) ||
+              (strncasecmp(p, "p", 1)==0 && p2-p == 1) ||
+              (strncasecmp(p, "div", 3)==0 && p2-p == 3) ||
+              (strncasecmp(p, "table", 5)==0 && p2-p == 5) ||
+              (strncasecmp(p, "tr", 2)==0 && p2-p == 2) ||
+              (strncasecmp(p, "td", 2)==0 && p2-p == 2)
+              ) {
+            skip = 1;
+          }
+        }
+      }
+      if (skip) {
+        p = strchr(src+1,'\t'); 
+        if (p) { src = p+1; if (*src) src++; *dest++ = ' '; }
+        else { *dest = 0; return; }
+      }
+    }
+    if (!skip) *dest++ = *src++;
+  }
+  *dest = 0;
+} 
+
+
+RSSBonusInfo *rss_register(Boards *boards, md5_byte_t mimd5[16], char *link, board_msg_info *mi) {
+  RSSBonusInfo *ri;
+  int i;
+  ALLOC_OBJ(ri, RSSBonusInfo); 
+  ri->link = NULL;
+  ri->id = mi->id;
+
+  if (link && strlen(link)) {
+    ri->link = strdup(link);
+  } else { 
+    ri->link = strdup("(none)");
+  }
+  md5_digest(link,ri->linkmd5);
+
+  //printf("reghister = '%s', md5 = %02x%02x..%02x\n", link, ri->linkmd5[0], ri->linkmd5[1], ri->linkmd5[15]);
+
+  memcpy(ri->md5,mimd5,16);
+  if (boards->nb_rss_e == boards->max_rss_e) {
+    boards->max_rss_e *= 2; 
+    boards->rss_e = realloc(boards->rss_e, sizeof(RSSBonusInfo*)*boards->max_rss_e); 
+    assert(boards->rss_e);
+  }
+  boards->rss_e[boards->nb_rss_e++] = ri;
+  for (i = boards->nb_rss_e - 1; i; --i) {
+    if (memcmp(boards->rss_e[i-1]->linkmd5, boards->rss_e[i]->linkmd5, 16) > 0) {
+      RSSBonusInfo *tmp = boards->rss_e[i];
+      boards->rss_e[i] = boards->rss_e[i-1]; 
+      boards->rss_e[i-1] = tmp;
+    } else break;
+  }
+  /*for (i=0; i < boards->nb_rss_e; ++i) {
+    printf(" rss %d/%d : %02x%02x..%02x\n", i, boards->nb_rss_e, boards->rss_e[i]->linkmd5[0], boards->rss_e[i]->linkmd5[1], boards->rss_e[i]->linkmd5[15]);
+    }*/
+  return ri;
+}
+
+RSSBonusInfo *
+rss_find_from_link(Boards *boards, char *link) {
+  int i0, i1;
+  md5_byte_t md5[16];
+  md5_digest(link,md5);
+  //printf("link = '%s', md5 = %02x%02x..%02x\n", link, md5[0], md5[1], md5[15]);
+  i0 = 0; i1 = boards->nb_rss_e-1;
+  while (i1>=i0) {
+    int i = (i0 + i1)/2;
+    //printf("i0=%d, i1=%d, compare with %02x%02x..%02x\n", i0, i1, boards->rss_e[i]->linkmd5[0], boards->rss_e[i]->linkmd5[1], boards->rss_e[i]->linkmd5[15]);
+    int cmp = memcmp(boards->rss_e[i]->linkmd5, md5, 16);
+    if (i1 <= i0 && cmp) return NULL;        
+    if (cmp < 0) {
+      i0 = i+1;
+    } else if (cmp > 0) {
+      i1 = i-1;
+    } else return boards->rss_e[i];
+  }
+  return NULL;
+}
+
+RSSBonusInfo *
+rss_find_from_id(Boards *boards, id_type id) {
+  int i;
+  for (i=0; i < boards->nb_rss_e; ++i) {
+    if (id_type_eq(boards->rss_e[i]->id, id)) return boards->rss_e[i];
+  }
+  return NULL;
+}
+
+
+int
+rss_board_update(Board *board, char *path) {
+  HttpRequest r;
+  //int http_err_flag = 0;
+  //char *errmsg = NULL;
+  char *rsstxt = NULL, *p;
+  char *rss_title = NULL;
+  XMLBlock xmlb;
+  int pos, count, count_dir, refresh_request = -1, cest_bon_je_connais_la_suite = 0;
+  time_t temps_debut = time(NULL), temps_last_modified;
+  clear_XMLBlock(&xmlb);
+  wmcc_init_http_request(&r, board->site->prefs, path);
+  if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
+  http_request_send(&r);
+  if (r.error) return 1;
+  wmcc_log_http_request(board->site, &r);
+  rsstxt = http_read_all(&r, path);
+  if (r.error) goto ratai;
+  http_request_close(&r);
+  if (!rsstxt || r.error) return 1; /* "not modified" */
+  
+  if (strlen(rsstxt)==0) goto RAS;
+
+  /* tentative de conversion vers iso8859-15 */
+  if ((pos = get_XMLBlock(rsstxt, strlen(rsstxt), "?xml", &xmlb))>=0) {
+    XMLAttr *a;
+    for (a = xmlb.attr; a; a = a->next) {
+      if (str_case_startswith(a->name, "encoding")) {
+        char *encoding = str_ndup(a->value,a->value_len);
+        printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, encoding);
+        convert_to_iso8859(encoding, &rsstxt); 
+        break;
+      }
+    }
+  }
+
+  pos = get_XMLBlock(rsstxt, strlen(rsstxt), "title", &xmlb);
+  if (pos < 0 || xmlb.content_len == 0) goto ratai;
+  /*if (board->rss_title) free(board->rss_title);
+    board->rss_title = str_ndup(xmlb.content, xmlb.content_len);*/
+  rss_title = str_ndup(xmlb.content, xmlb.content_len);
+  myprintf("got TITLE: '%<YEL %s>'\n", rss_title);
+
+  if (get_XMLBlock(rsstxt, strlen(rsstxt), "ttl", &xmlb) >= 0) {
+    refresh_request = atoi(xmlb.content) * 60; /* en minutes */
+    printf("ttl detected, %d\n", refresh_request);
+  } if (get_XMLBlock(rsstxt, strlen(rsstxt), "*:updatePeriod", &xmlb) >= 0) {
+    int period = 1;
+    if (str_case_startswith(xmlb.content, "hour")) period = 3600;
+    else if (str_case_startswith(xmlb.content, "min")) period = 60;
+    if (get_XMLBlock(rsstxt, strlen(rsstxt), "*:updateFrequency", &xmlb) >= 0) {
+      refresh_request = period * atoi(xmlb.content);
+    }
+  }
+  if (refresh_request != -1 && board->site->prefs->board_check_delay < refresh_request) {
+    BLAHBLAH(0, myprintf("Changing update frequency for %<grn %s> to %<MAG %d> sec.\n", rss_title, refresh_request));
+    board->site->prefs->board_check_delay = refresh_request;
+  }
+
+  p = rsstxt;
+  
+  if (board->last_post_id == -1) {
+    count = 1000; count_dir = -1;
+  } else {
+    count = board->last_post_id+1;
+    count_dir = +1;
+  }
+
+  temps_last_modified = temps_debut;
+  if (board->last_modified) {
+    str_to_time_t(board->last_modified, &temps_last_modified);
+    printf("last_modified='%s' -> time_t = %ld\n", board->last_modified, temps_last_modified);
+  }
+  do {
+    int pos_next_item;
+    pos_next_item = get_XMLBlock(p, strlen(p), "item", &xmlb);
+    if (pos_next_item >= 0) {
+      XMLBlock b2;
+      char *title, *link, *description, *msg, *author, *comments_url, *pubdate, *fake_ua;
+      char msgd[BOARD_MSG_MAX_LEN];
+      char stimestamp[15];
+      time_t timestamp = time(NULL);
+      title = link = description = msg = author = comments_url = pubdate = fake_ua = NULL;
+
+      //time_t_to_tstamp(temps_debut, stimestamp); 
+
+      //temps_debut--; /* pour eviter d'avoir un paquet de news avec le meme tstamp */
+      clear_XMLBlock(&b2);
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "title", &b2) &&  b2.content_len) {
+        title = str_ndup(b2.content, b2.content_len);
+        //printf("found title: '%s'\n", title);        
+      }
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "link", &b2) &&  b2.content_len) {
+        link = str_ndup(b2.content, b2.content_len);
+        //printf("found link: '%s'\n", link);
+      }
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "description", &b2) &&  b2.content_len) {
+        description = str_ndup(b2.content, b2.content_len);
+      }
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "author", &b2) &&  b2.content_len) {
+        author = str_ndup(b2.content, b2.content_len);
+        //printf("found author: '%s'\n", author);
+      }
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "comments", &b2) &&  b2.content_len) {
+        comments_url = str_ndup(b2.content, b2.content_len);
+      }
+      /* format date: http://www.w3.org/TR/NOTE-datetime */
+      if (get_XMLBlock(xmlb.content, xmlb.content_len, "pubDate", &b2) &&  b2.content_len) {
+        pubdate = str_ndup(b2.content, b2.content_len);
+      }
+      if (pubdate == NULL && get_XMLBlock(xmlb.content, xmlb.content_len, "*:date", &b2) &&  b2.content_len) {
+        pubdate = str_ndup(b2.content, b2.content_len);        
+      }
+
+      /* une petite remarque pour poser la problematique calmement:
+         Comment determiner raisonnablement la date de publication d'une news
+          - <pubDate>date_format_rfc_822</pubDate>
+
+          - <dc:date>date_iso_8601</dc:date>
+
+          - sinon :
+            . si la news était connue par wmcc lors de sa precedente execution,
+            on reprend la meme date sans paniquer.
+
+            . sinon, on prend l'heure courante.
+               * si  le serveur web a renvoye un last-modified, on prend cette valeur.
+
+         Pour un fun toujours plus extreme, il faut bien gérer tous les
+         problemes de timezone:
+           PUTAIN DE BORDERL DE MARDE
+      */
+
+      /* c'est trop la merde avec les decalages horaires.. */
+      if (pubdate) {
+        time_t tt; 
+        if (str_to_time_t(pubdate, &tt)) {
+          time_t_to_tstamp(tt, stimestamp);
+          myprintf("converted %<YEL %s> to %<YEL %s> !\n", pubdate, stimestamp);
+        } else BLAHBLAH(0, printf("could not convert '%s' to a valid date..\n", pubdate));
+      }
+
+      timestamp = MIN(timestamp, temps_debut);
+      timestamp = MIN(timestamp, temps_last_modified);
+      time_t_to_tstamp(timestamp, stimestamp);
+
+      destroy_XMLBlock(&b2);
+
+      if (description && strlen(description) > 512) {
+        /* on risque de tronquer dans un tag html ... sniff */
+        int i=512; while (description[i] && !isspace(description[i]) && i < 1024) ++i;
+        if (description[i] && i < (int)(strlen(description) - 10)) { description[i] = 0; strcat(description, "(...)"); }
+      }
+      if (link) {
+        char *p = strstr(link, "*http://"); // enleve une couche de merde dans les liens yahoo
+        if (p) { p++; memmove(link, p, strlen(p)+1); }
+      }
+
+      msg = NULL;
+      if (title && link) msg = str_cat_printf(msg, "{&lt;a href=&quot;%s&quot;&gt;&lt;u&gt;&lt;b&gt;%s&lt;/b&gt;&lt;/u&gt;&lt;/a&gt;}", link, title);
+      else if (title) msg = str_cat_printf(msg, "{&lt;b&gt;%s&lt;/b;&gt}", title);
+      else if (link) msg = str_cat_printf(msg, "{&lt;a href=&quot;%s&quot;&gt;[News]&lt;/a&gt;}", link);
+      if (description) msg = str_cat_printf(msg, " %s", description);
+      if (comments_url) msg = str_cat_printf(msg, " &lt;a href=&quot;%s&quot;&gt;[comments]&lt;/a&gt;", comments_url);
+      if (msg) {
+        md5_byte_t md5[16];
+        md5_state_t ms; md5_init(&ms);
+        char md5txt[32];
+        int was_already_viewed = 0;
+        if (title) md5_append(&ms, title, strlen(title));
+        if (link) md5_append(&ms, link, strlen(link));
+        if (description) md5_append(&ms, description, strlen(description));
+        md5_finish(&ms,md5);
+
+        /* cherche le news dans le cache (au premier dl uniquement) */
+        if (board->oldmd5) {
+          md5_and_time *m = find_md5_in_md5_array(md5,board->oldmd5);
+          if (m && strlen(m->tstamp) == 14) {
+            was_already_viewed = m->viewed;
+            strcpy(stimestamp, m->tstamp);
+            BLAHBLAH(0, myprintf("the news '%<GRN %s>' was found in the cache!\n", title));
+          }
+        }
+
+        { int i;
+          for (i = 0; i < 16; ++i) {
+            md5txt[2*i  ] = "0123456789ABCDEF"[md5[i]/16];
+            md5txt[2*i+1] = "0123456789ABCDEF"[md5[i]%16];
+          }
+        }
+        /* cherche dans la liste des news dejà lues (après le premier dl) */
+        if (board_find_md5(board, md5)) {
+          int i;
+          myprintf("the news %<MAG %s>/", rss_title); for (i=0; i < 16; ++i) myprintf("%<CYA %02x>",md5[i]); printf(" is already known\n");
+          //cest_bon_je_connais_la_suite = 1; // si on suppose que les rss se remplissent toujours par le haut..
+        } else {
+          board_msg_info *mi;
+          id_type id;
+          id_type_set_lid(&id, count);
+          id_type_set_sid(&id, board->site->site_id);
+          board_decode_message(board, msgd, msg);
+
+
+          /* nettoyage des codes < 32 dans le message */
+          {
+            int i; 
+            for (i=0; i < BOARD_MSG_MAX_LEN && msg[i]; ++i)
+              if ((unsigned char)msg[i] < ' ') msg[i] = ' ';
+          }
+          
+          fake_ua = str_printf("%s", rss_title ? rss_title : "?");
+          if (pubdate) { fake_ua = str_cat_printf(fake_ua, " pubDate: %s", pubdate); }
+
+          /* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
+          board_decode_message(board, msgd, msg);
+          rss_nettoie_la_soupe_de_tags(msgd);
+          assert(board_find_id(board,id_type_lid(id)) == NULL);
+          flag_updating_board++;
+          if (author && strlen(author)) {
+            author = str_cat_printf(author, "@%s", rss_title);
+            mi = board_log_msg(board, fake_ua, author, stimestamp, msgd, id_type_lid(id), NULL);
+          } else 
+            mi = board_log_msg(board, fake_ua, rss_title, stimestamp, msgd, id_type_lid(id), NULL);
+          board->nb_msg_at_last_check++;
+          if (!was_already_viewed) board->nb_msg_since_last_viewed++;
+          mi->ri = rss_register(board->boards, md5, link, mi);
+          flag_updating_board--;
+          count += count_dir;
+        }
+      }
+      FREE_STRING(title); FREE_STRING(link); FREE_STRING(description); FREE_STRING(author); 
+      FREE_STRING(comments_url); FREE_STRING(msg); FREE_STRING(pubdate); FREE_STRING(fake_ua);
+    } else { 
+      printf("fin de '%s'\n", rss_title);
+      break;
+    }
+    
+    p += pos_next_item;
+  } while (!cest_bon_je_connais_la_suite);
+
+ RAS:
+  if (board->oldmd5 && board->last_post_id > 0) release_md5_array(board);
+  destroy_XMLBlock(&xmlb);
+  FREE_STRING(rss_title);
+  FREE_STRING(rsstxt); 
+  return 0;
+ ratai:
+  if (board->oldmd5 && board->last_post_id > 0) release_md5_array(board);
+  destroy_XMLBlock(&xmlb);
+  FREE_STRING(rss_title);
+  FREE_STRING(rsstxt);
+  return 1;
+}
+
+/*
+  lecture des nouveaux messages reçus
+
+  my_useragent: useragent dernièrement utilisé, sert à reconnaitre si on est 
+  l'auteur d'un post, ou non
+*/
+void
+board_update(Board *board)
+{
+  char path[2048];
+
+  int old_last_post_id;
+
+  int http_err_flag = 0;
+
+  /* maj du nombre de secondes ecoulees depuis le dernier message recu
+     (pour pouvoir calculer l'age des message -> on part du principe
+     que l'horloge locale et l'horloge de linuxfr ne sont pas synchrones)
+  */
+
+  old_last_post_id = board->last_post_id;
+
+  board->local_time_last_check_old = board->local_time_last_check;
+  board->local_time_last_check = time(NULL);
+
+  /* ça c'est pour le pinni */
+  board->wmcc_tic_cnt_last_check = wmcc_tic_cnt;
+  board->last_post_id_prev = old_last_post_id;
+
+  board->nbsec_since_last_msg += difftime(board->local_time_last_check, board->local_time_last_check_old);
+  /* des fois qu'une des 2 horloges soit modifie a l'arrache */
+  board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
+  board->nb_msg_at_last_check = 0;
+  pp_set_download_info(board->site->prefs->site_name, "updating board");
+
+  if ((Prefs.debug & 2) == 0) {
+    snprintf(path, 2048, "%s%s/%s", (strlen(board->site->prefs->site_path) ? "/" : ""), 
+	     board->site->prefs->site_path, board->site->prefs->path_board_backend);
+  } else {
+    snprintf(path, 2048, "%s/wmcoincoin/test/%s/remote.xml", getenv("HOME"), board->site->prefs->site_name);
+    myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
+  }
+
+  if (board_is_regular_board(board)) {
+    http_err_flag = regular_board_update(board, path);
+  } else if (board_is_rss_feed(board)) {
+    http_err_flag = rss_board_update(board,path);
+  }
   if (http_err_flag) {
     board->site->http_error_cnt++;
     board->site->http_recent_error_cnt++;
@@ -1612,8 +2175,6 @@ board_update(Board *board)
   }
 
   board->local_time_last_check_end = time(NULL);
-
-  assert(r.host == NULL || (Prefs.debug & 2)); /* juste pour vérif qu'on a bien fait le close */
 
   /* cleanup .. */
   flag_updating_board++;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.16 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.17 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.17  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.16  2003/01/11 17:44:10  pouaite
   ajout de stats/coinping sur les sites
 
@@ -94,7 +97,7 @@ picohtml_unset_url_path(PicoHtml *ph) {
 /* ajoute un mot dans la liste */
 static PicoHtmlItem *
 picohtml_additem(PicoHtml *ph, const unsigned char *s, int len, c_attr attrib, int x, int y, 
-	       XFontStruct *fn, unsigned long pixel, char *link, int special_attr)
+	       CCFontId fn, CCColorId color, char *link, int special_attr)
 {
   PicoHtmlItem *it, *pit;
   int i;
@@ -118,15 +121,15 @@ picohtml_additem(PicoHtml *ph, const unsigned char *s, int len, c_attr attrib, i
   for (i=0; i < len; i++) it->s[i] = s[i];
   it->x = x; 
   it->y = y; 
-  it->w = XTextWidth(fn, s, len);
-  it->h = fn->ascent + fn->descent;
+  it->w = ccfont_text_width8(fn, s, len);
+  it->h = ccfont_height(fn);
   it->attr = attrib;
   it->fn = fn;
   if (attrib & CATTR_LNK) {
-    it->pixel = ph->url_pixel_color;
+    it->color = ph->url_color;
     //    printf("ajout item CATTR_LNK\n");
   } else {
-    it->pixel = pixel;
+    it->color = color;
   }
   it->link_str = link;
   it->special_attr = special_attr;
@@ -226,14 +229,14 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
   int htext, space_width, parag_skip, line_skip, parag_align, next_parag_align;
   int flag_debut_ligne, flag_item_to_add;
   int x,y,w;
-  XFontStruct *cur_fn=NULL;
+  CCFontId cur_fn=(CCFontId)(-1);
 
-  unsigned long cur_pixel_color;
+  CCColorId cur_color;
 
-	int isListe = 0;
-	int isOrderedListe = 0;
-	int indexListe = 0;
-	int isBlockquote = 0;
+  int isListe = 0;
+  int isOrderedListe = 0;
+  int indexListe = 0;
+  int isBlockquote = 0;
 
   if (buff == NULL) {
     fprintf(stderr, _("Bug! calling picohtml(NULL)!"));
@@ -241,9 +244,9 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
   } 
 
   p = buff;
-  htext  = ph->fn_base->ascent + ph->fn_base->descent;
+  htext  = ccfont_height(ph->fn_base);
 
-  space_width = XTextWidth(ph->fn_base, " ", 1);
+  space_width = ccfont_text_width8(ph->fn_base, "  ", 2);
   parag_skip = (int)(htext * ph->parag_fskip+.5);
   line_skip = (int)(htext * ph->line_fskip+.5);
   
@@ -264,7 +267,7 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
   y = 0; //parag_skip;
 
   xpos_debut_ligne = x;
-  cur_pixel_color = ph->default_pixel_color;
+  cur_color = ph->default_color;
   while (*p) {
     flag_item_to_add = 0;
 
@@ -363,12 +366,17 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       attrib &= ~CATTR_TT;
     } else if (strncasecmp(tok, "<font color=", 12) == 0) {
       char *col, *c2;
-      XColor screen_col, exact_col;
+      //XColor screen_col, exact_col;
       col = tok; while (*col != '=' && *col) col++; if (*col) col++;
       c2 = col; while (*c2 != '>' && *c2) c2++;
       *c2 = 0;
       if (strlen(col)) {
-	if (XAllocNamedColor(dock->display, DefaultColormap(dock->display, dock->screennum), 
+	if ((cur_color = cccolor_from_name(col)) == (CCColorId)(-1)) {
+	  BLAHBLAH(2,myprintf(_("Allocation of '%s' failed\n"), col));
+          cur_color = ph->default_color;
+        }
+#if 0
+        if (XAllocNamedColor(dock->display, DefaultColormap(dock->display, dock->screennum), 
 			     col, &screen_col, &exact_col)) {
 	  /* faudrait-il que je fasse des XFreeColor ?... */
 	  BLAHBLAH(2,myprintf(_("Allocation of '%s' OK\n"), col));
@@ -377,9 +385,10 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 	  BLAHBLAH(2,myprintf(_("Allocation of '%s' failed\n"), col));
 	  cur_pixel_color = ph->default_pixel_color;
 	}
+#endif
       }
     } else if (strcasecmp(tok, "</font>") == 0) {
-      cur_pixel_color = ph->default_pixel_color;
+      cur_color = ph->default_color;
     } else if (strncasecmp(tok, "<img",4) == 0) {
       BLAHBLAH(1, myprintf(_("we forget '%<YEL %s>'\n"), tok));
       /*} else if (tok[0] == '<') {
@@ -401,20 +410,20 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       parag_align = next_parag_align;
       new_parag = 0;
       flag_debut_ligne = 1;
-			if ( isListe )
-			{
-				char str[5];
-
-				if ( isOrderedListe )
-					/* je défie quiconque de poster une news avec une liste de plus de 99 éléments */
-					snprintf(str,5,"%2d.", indexListe); 
-				else
-					strcpy(str,"-");
-				
-				it_debut_ligne = picohtml_additem(ph,str, strlen( str ), attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
-				flag_debut_ligne = 0;
-				x+=ph->parag_indent;
-			}
+      if ( isListe )
+        {
+          char str[5];
+          
+          if ( isOrderedListe )
+            /* je défie quiconque de poster une news avec une liste de plus de 99 éléments */
+            snprintf(str,5,"%2d.", indexListe); 
+          else
+            strcpy(str,"-");
+          
+          it_debut_ligne = picohtml_additem(ph,str, strlen( str ), attrib, x, y, cur_fn, cur_color, cur_link, special_attr);
+          flag_debut_ligne = 0;
+          x+=ph->parag_indent;
+        }
     }
 
     if (flag_item_to_add) {
@@ -434,7 +443,7 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       /* ca c'est recent (v2.2) et c'est Bien(tm) */
       len = convert_to_ascii(tok, tok, MAX_TOK_LEN);
       
-      w = XTextWidth(cur_fn, tok, len);
+      w = ccfont_text_width8(cur_fn, tok, len);
       
       if (x + w + (space_width)*(1-new_parag) >= width) {
 	//justif_ligne(ph, it_debut_ligne, xpos_debut_ligne, width, parag_align);
@@ -445,12 +454,12 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 		x = 0;
 	y += line_skip; 
 	xpos_debut_ligne = x;
-	it_debut_ligne = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
+	it_debut_ligne = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_color, cur_link, special_attr);
 	x += w;
       } else {
 	PicoHtmlItem *it;
 	x += (space_width)*(1-flag_debut_ligne);
-	it = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
+	it = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_color, cur_link, special_attr);
 	if (flag_debut_ligne) it_debut_ligne = it;
 	x += w;
       }
@@ -500,9 +509,11 @@ picohtml_render(Dock *dock, PicoHtml *ph, Drawable d, GC gc, int x, int y)
   
   it = ph->txt;
   while (it) {
-    XSetFont(dock->display, gc, it->fn->fid);
+    /*    XSetFont(dock->display, gc, it->fn->fid);
     XSetForeground(dock->display, gc, it->pixel);
     XDrawString(dock->display, d, gc, x + it->x, y + it->y, it->s, strlen(it->s));
+    */
+    ccfont_draw_string8(it->fn, it->color, d, x + it->x, y + it->y, it->s, -1);
     it = it->next;
   }
 }
@@ -546,12 +557,12 @@ void picohtml_set_tabul_skip(PicoHtml *ph, int tabul_skip) {
   ph->tabul_skip = tabul_skip;
 }
 
-XFontStruct *picohtml_get_fn_base(PicoHtml *ph)
+CCFontId picohtml_get_fn_base(PicoHtml *ph)
 {
   return ph->fn_base;
 }
 
-XFontStruct *picohtml_get_fn_bold(PicoHtml *ph)
+CCFontId picohtml_get_fn_bold(PicoHtml *ph)
 {
   return ph->fn_bold;
 }
@@ -565,6 +576,16 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   char bold_name[512];
   char tt_name[512];
 
+  snprintf(base_name, 512, "%s:pixelsize=%d", fn_family, fn_size);
+  snprintf(ital_name, 512, "%s:pixelsize=%d:slant=italic,oblique", fn_family, fn_size);
+  snprintf(bold_name, 512, "%s:pixelsize=%d:bold", fn_family, fn_size);
+  snprintf(tt_name, 512, "%s:pixelsize=%d:monospace", fn_family, fn_size);
+  ph->fn_base = ccfont_get(base_name);
+  ph->fn_ital = ccfont_get(ital_name);
+  ph->fn_bold = ccfont_get(bold_name);
+  ph->fn_tt = ccfont_get(tt_name);
+
+#if 0
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
   snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
   ph->fn_base = XLoadQueryFont(display, base_name);
@@ -608,6 +629,7 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
     myfprintf(stderr, _("We'll use the base font.\n"));
     ph->fn_tt = XLoadQueryFont(display, base_name); assert(ph->fn_tt);
   }
+#endif
   return 0;
 }
 
@@ -635,11 +657,11 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
   ALLOC_OBJ(ph,PicoHtml);
   ph->txt = NULL;
   if (white_txt) {
-    ph->default_pixel_color = WhitePixel(dock->display, dock->screennum);
+    ph->default_color = cccolor_get(0xffffff); //WhitePixel(dock->display, dock->screennum);
   } else {
-    ph->default_pixel_color = BlackPixel(dock->display, dock->screennum);
+    ph->default_color = cccolor_get(0x000000); //BlackPixel(dock->display, dock->screennum);
   }
-  ph->url_pixel_color = RGB2PIXEL(0x00, 0x00, 0xff);
+  ph->url_color = dock->blue_color;
   picohtml_loadfonts(ph, dock->display, base_family, base_size);
   ph->parag_fskip = 1.3;
   ph->line_fskip = 1.0;
@@ -650,19 +672,20 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
   ph->url_path = NULL;
   return ph;
 }
-
+/*
 void
 picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix)
 {
   ph->default_pixel_color = pix;
 }
-
+*/
 void picohtml_destroy(Display *display, PicoHtml *ph)
 {
-  XFreeFont(display, ph->fn_base);
-  XFreeFont(display, ph->fn_ital);
-  XFreeFont(display, ph->fn_bold);
-  XFreeFont(display, ph->fn_tt);
+  ccfont_release(&ph->fn_base);
+  ccfont_release(&ph->fn_ital);
+  ccfont_release(&ph->fn_bold);
+  ccfont_release(&ph->fn_tt);
+  cccolor_release(&ph->default_color);
   COND_FREE(ph->url_path);
   if (ph->txt) picohtml_freetxt(ph);
   free(ph);

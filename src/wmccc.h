@@ -1,6 +1,11 @@
-#ifndef WMCCC
-#define WMCCC
+#ifndef WMCCC_H
+#define WMCCC_H
+
+#define IN_WMCCC
+#include <gtk/gtk.h>
 #include "prefs.h"
+#include "options_list.h"
+#include "coin_util.h"
 
 
 #ifdef __GNUC__
@@ -19,6 +24,9 @@ typedef struct _strucGlob {
   pid_t wmcc_pid;
   char *options_file;
   char *tmp_options_file;
+  int nb_selected_sites;
+  SitePrefs *selected_sites[MAX_SITES];
+  GdkColor modif_widget_color;
 } strucGlob;
 
 #ifndef GLOBALS_HERE
@@ -46,7 +54,6 @@ void update_widget_bgcolor(GtkWidget *w, int icol);
 int update_widget_bgpixmap(GtkWidget *w, char *pixname);
 void update_transparency_fields_state();
 void update_miniua_clist(MiniUARules *urs);
-void quick_message(char *msg);
 void site_panels_update(SitePrefs *sp);
 void global_panels_update(GeneralPrefs *p);
 void site_notebook_update_labels(GeneralPrefs *p);
@@ -59,4 +66,6 @@ void clist_klist_set_row(GtkCList *clist, KeyList *hk, int row);
 void clist_klist_row_to_entries(GtkCList *clist, int row);
 void on_bt_color_draw(GtkWidget *widget, GdkRectangle *area, gpointer user_data);
 gboolean on_bt_color_expose_event(GtkWidget *widget, GdkEventExpose  *event, gpointer user_data UNUSED);
+void quick_message(gchar *message_fmt, ...);
+void prefs_write_to_file(GeneralPrefs *p, FILE *f);
 #endif

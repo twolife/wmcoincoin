@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.21 2003/06/29 23:58:35 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.22 2004/02/29 15:01:19 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.22  2004/02/29 15:01:19  pouaite
+##   May the charles bronson spirit be with you
+##
 ##   Revision 1.21  2003/06/29 23:58:35  pouaite
 ##   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 ##
@@ -76,22 +79,23 @@ EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c fake-getaddrinfo.c fake-getnam
 DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
 wmcoincoin_SOURCES = cc_queue.c plopup.c \
+	md5.c md5.h \
         board_util.c board_util.h \
+	xmlcoincoin.c xmlcoincoin.h \
 	regexp.h regexp.c general.h \
 	myprintf.c myprintf.h \
 	raster.c raster.h \
+	fontcoincoin.c fontcoincoin.h \
+	swallowcoincoin.c \
         troll_detector.c troll_data.h \
 	pinnipede.c pinnipede_widgets.c pinnipede_pdfm.c pinnipede_totoz.c pinnipede.h \
+	totoz_bookmark.c \
         palmipede.c \
 	dock.c dock.h \
         board.c \
-	news.c \
-	comments.c \
-	messages.c \
 	site.c site.h \
         keylist.c keylist.h \
 	scrollcoin.h scrollcoin.c \
-	newswin.c newswin.h \
 	picohtml.c picohtml.h \
         msgbox.c balloon.c \
 	wmcoincoin.c coincoin.h global.h \
@@ -109,8 +113,9 @@ wmccc_SOURCES = \
 	wmccc_support.c wmccc_support.h \
 	wmccc_interface.c wmccc_interface.h \
 	wmccc_callbacks.c wmccc_callbacks.h \
+	wmccc_save_prefs.c \
 	myprintf.c myprintf.h \
-	prefs.c prefs.h \
+	prefs.c prefs.h md5.h md5.c \
 	coin_util.c coin_util.h \
 	options_list.h \
 	keylist.c keylist.h \

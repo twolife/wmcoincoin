@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.25 2003/08/26 21:50:47 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.26 2004/02/29 15:01:18 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.26  2004/02/29 15:01:18  pouaite
+##   May the charles bronson spirit be with you
+##
 ##   Revision 1.25  2003/08/26 21:50:47  pouaite
 ##   2.6.4b au mastic
 ##
@@ -86,7 +89,7 @@ EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_mini
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
             xpms/badnews.xpm  xpms/bracket.xpm  xpms/logo.xpm xpms/totoz.xpm ./wmcoincoin.spec \
-             ./options ./config.rpath
+             ./options ./config.rpath wmccc.glade
 
 rpm-dist: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz $(HOME)/rpm/SOURCES

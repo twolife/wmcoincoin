@@ -9,6 +9,7 @@
 #include "time.h"
 #include "scrollcoin.h"
 #include "coin_xutil.h"
+#include "fontcoincoin.h"
 
 /* chuis con, les bitfields c pas pour les chiens */
 #define PWATTR_BD 1
@@ -47,7 +48,9 @@ struct _PostWord {
   unsigned char *w; /* non mallocé, stocke dans la même zone que cette structure */
   unsigned char *attr_s;
   unsigned int attr;
-  short xpos, xwidth, ligne;
+  short xpos, xwidth; /* boite englobante */
+  short xdraw;        /* le x passé a xft */
+  short ligne;
   struct _PostWord *next;
   struct _PostVisual *parent;
 };
@@ -100,21 +103,25 @@ typedef struct _PinnipedeLignesSel {
 } PinnipedeLignesSel;
 
 typedef struct _PPMinib {
-#define NB_MINIB 9
+#define NB_MINIB 10
 #define MINIB_H 12
-#define MINIB_FN_W 6
+  //#define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, /* SECOND, TSCORE, */ FORTUNE, FILTER, PLOPIFY, TRANSPARENT, PREFS, CANCEL } type;
-  int x, y;
-  int w, h;
+  enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, /* SECOND, TSCORE, FORTUNE, */ FILTER, PLOPIFY, TRANSPARENT, PREFS, MB_RSS, MB_BOARDS, CANCEL } type;
+  int x, y, w, h;
   int clicked;
 } PPMinib;
   
-#define PPT_H 12
+#define PPT_BASE_H 12
+#define PPT_MAX_H 24 /* hauteur max d'un tab .. pp->lpix est suffisament haut */
+
+/* renvoye par pp_tabs_at_xy */
+typedef enum { PPT_MAY_SET_MAIN_TAB, PPT_MAY_UNSELECT_TAB, 
+               PPT_NORMAL_ACTION } ppt_survol_actions;
 
 typedef struct _PinnipedeTab {
   Site *site;
-  int selected;
+  int selected, was_selected;
   int x,y,w,h;
   int clicked;
   int clign_decnt;
@@ -124,19 +131,26 @@ struct pp_totoz;
 
 struct _Pinnipede {
   Window win;
-  unsigned long win_bgpixel[MAX_SITES], timestamp_pixel[MAX_SITES], nick_pixel[MAX_SITES], 
+  unsigned long win_bgpixel[MAX_SITES], timestamp_pixel[MAX_SITES], useragent_pixel[MAX_SITES], 
     login_pixel[MAX_SITES], lnk_pixel[MAX_SITES], visited_lnk_pixel[MAX_SITES], 
     txt_pixel[MAX_SITES], strike_pixel[MAX_SITES], trollscore_pixel[MAX_SITES],  emph_pixel, 
     popup_fgpixel, popup_bgpixel, sel_bgpixel,
     hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
     plopify_pixel, 
-    minib_pixel, minib_dark_pixel, minib_msgcnt_pixel, 
+    minib_pixel, minib_msgcnt_pixel, 
     minib_updlcnt_pixel, progress_bar_pixel;
+  CCColorId timestamp_color[MAX_SITES], useragent_color[MAX_SITES], login_color[MAX_SITES], 
+    lnk_color[MAX_SITES], visited_lnk_color[MAX_SITES], txt_color[MAX_SITES], 
+    trollscore_color[MAX_SITES], popup_fgcolor, plopify_color, 
+    totoz_unknown_color, totoz_downloading_color, totoz_found_color, minib_dark_color;
   int mapped;
   int win_width, win_height, win_decor_xpos, win_decor_ypos, win_real_xpos, win_real_ypos;
 
-  int zmsg_y1, zmsg_y2, zmsg_h; /* zone d'affichage des messages */
-  XFontStruct *fn_base, *fn_it, *fn_bd, *fn_itbd, *fn_minib;
+  int zmsg_y1, zmsg_y2, zmsg_h, zmsg_x1, zmsg_x2, zmsg_w; /* zone d'affichage des messages */
+  CCFontId fn_base, fn_it, fn_bd, fn_itbd, fn_mono;
+  CCFontId fn_minib;
+  int fn_base_space_w;
+  CCColorId ccc_black;
   int fn_h;
   //  Pixmap minipix;
 
@@ -161,6 +175,9 @@ struct _Pinnipede {
 
   int colle_en_bas; /* pour savoir si on scrolle lors de nouveaux messages */
 
+  int flag_pp_update_request; /* si non nul, on fait pp_pv_destroy + pp_update_content(last_id_filtered) + pp_refresh
+                                 des que possible */
+
   id_type kbnav_current_id;
   int kbnav_current_tstamp; /* navigation au clavier : indique le message actuellement selectionné, et le numéro de l'horloge dans ce message qui est actuellement activée */
 
@@ -173,7 +190,6 @@ struct _Pinnipede {
   int show_sec_mode; /* supprime les secondes sur les posts ou c'est possible */
   int trollscore_mode;
   int survol_hash; /* pour determiner (a peu pres) si on affcihe une nouvelle info de survol... (apprixmatif...) */
-  int fortune_mode;
   int disable_plopify;
 
   int hilight_my_message_mode;
@@ -182,11 +198,14 @@ struct _Pinnipede {
 
   
   volatile int flag_board_updated;
-  int lpix_h0;
-  Pixmap lpix; /* stocke aussi le bg_pixmap (après les lpix_h0 premieres lignes) */
-
-  PicoHtml *ph_fortune;
-  int fortune_h, fortune_w;
+  int lpix_h0; /* hauteur de lpix reservee pour les operations diverses (en
+                  general c'est la taille totale de lpix, sauf si un bg_pixmap
+                  est utilisé et il est alors sauve en dessous) 
+                  
+                  ah ben merde c'etait juste marque en dessous..
+               */
+  Pixmap lpix; /* stocke aussi le bg_pixmap (après les lpix_h0 premieres
+                  lignes) */
 
   struct _PinnipedeFilter filter;
 
@@ -201,11 +220,12 @@ struct _Pinnipede {
   int mb_buttonbar_width; /* largeur du bloc de boutons */
   int mb_x0;  /* position x de la minibar (non nul qd les tabs sont au même niveau, a gauche) */
 
-  enum {PPT_UP, PPT_DOWN} tabs_pos; /* position des tabs */
+  enum {PPT_UP, PPT_DOWN, PPT_LEFT} tabs_pos; /* position des tabs */
   int nb_tabs; /* == nb de sites avec une tribune */
   PinnipedeTab *tabs; /* tableau de tabs (une par site avec tribune) */
   PinnipedeTab *active_tab;  
-  int tabs_width;
+  PinnipedeTab *survol_tab; ppt_survol_actions survol_tab_part;
+  int tabs_width, tabs_x0, tabs_y0, tabs_w, tabs_h;
 
 #define MAX_VISITED_LINKS 200
   int visited_links[MAX_VISITED_LINKS]; /* hash des urls deja visitées */
@@ -237,21 +257,24 @@ void pp_minib_hide(Dock *dock);
 void pp_tabs_build(Dock *dock);
 //void pp_tabs_set_position(Pinnipede *pp);
 void pp_tabs_destroy(Pinnipede *pp);
+void pp_tabs_save_state(Dock *dock, FILE *f);
+void pp_tabs_restore_state(Dock *dock, FILE *f);
 void pp_tabs_refresh(Dock *dock);
 void pp_tabs_set_visible_sites(Pinnipede *pp);
-void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt);
+void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt, ppt_survol_actions where);
+void pp_tabs_switch_all_selected(Pinnipede *pp);
 void pp_tabs_changed(Dock *dock);
 void pp_change_active_tab(Dock *dock, int dir);
 void pp_scrollcoin_update_bounds(Dock *dock);
+void pp_scrollcoin_set(Dock *dock, int show_sc);
 void pp_widgets_set_pos(Dock *dock);
 void pp_widgets_refresh(Dock *dock);
 int  pp_widgets_handle_button_press(Dock *dock, XButtonEvent *ev);
 int  pp_widgets_handle_button_release(Dock *dock, XButtonEvent *event);
 int  pp_widgets_handle_motion(Dock *dock, XMotionEvent *event);
 
-void pp_update_fortune(Dock *dock);
-void pp_refresh_fortune(Dock *dock, Drawable d);
 void pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
+void pp_update_and_redraw(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
 
 int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite, int use_js);
 

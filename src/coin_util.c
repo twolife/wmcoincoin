@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.37 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.38 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.38  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.37  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -115,6 +118,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <time.h>
+#include <iconv.h>
+#include <errno.h>
 #ifdef HAVE_BACKTRACE
 # include <execinfo.h>
 #endif
@@ -178,117 +184,127 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz)
   static const struct {
     char *sign;
     char *c;
-  } tab[] = {{"amp;", "&"},
-	     {"quot;", "\"",},
-	     {"gt;",">",},
-	     {"lt;","<",},
-	     {"acute;", "\'"},
+    int num;
+  } tab[] = {{"amp;", "&", 0},
+	     {"quot;", "\"", 8220},
+             {"quot;", "\"", 8221},
+             {"apos;","'",8217},
+	     {"gt;", ">", 0},
+	     {"lt;", "<", 0},
+	     {"acute;", "\'", 0},
+	     {"nbsp;"  , " ", 0},  // 0xa0 /* ouais bon, du coup il va etre breakable l'espace.. */
+	     {"iexcl;" , "¡", 0},
+	     {"cent;"  , "¢", 0},
+             {"pound;" , "£", 0},
+             {"curren;", "¤", 0},  // 0xa4
+	     {"yen;"   , "¥", 0},
+	     {"brvbar;", "¦", 0},
+	     {"sect;"  , "§", 0},
+             {"uml;"   , "¨", 0},
+	     {"copy;"  , "©", 0},
+	     {"ordf;"  , "ª", 0},
+	     {"laquo;" , "«", 0},
+	     {"not;"   , "¬", 0},
+	     {"shy;"   , "­", 0},
+	     {"reg;"   , "®", 0},
+	     {"macr;"  , "¯", 0},
+	     {"deg;"   , "°", 0}, // 0xb0
+	     {"plusmn;", "±", 0},
+	     {"sup2;"  , "²", 0},
+	     {"sup3;"  , "³", 0},
+	     {"acute;" , "´", 0},
+	     {"micro;" , "µ", 0},
+	     {"para;"  , "¶", 0},
+	     {"middot;", "·", 0},
+             {"cedil;" , "¸", 0},
+	     {"sup1;"  , "¹", 0},
+	     {"ordm;"  , "º", 0},
+	     {"raquo;", "»", 0},
 
-	     {"nbsp;"  , " "},  // 0xa0 /* ouais bon, du coup il va etre breakable l'espace.. */
-	     {"iexcl;" , "¡"},
-	     {"cent;"  , "¢"},
-             {"pound;" , "£"},
-             {"curren;", "¤"},  // 0xa4
-	     {"yen;"   , "¥"},
-	     {"brvbar;", "¦"},
-	     {"sect;"  , "§"},
-             {"uml;"   , "¨"},
-	     {"copy;"  , "©"},
-	     {"ordf;"  , "ª"},
-	     {"laquo;" , "«"},
-	     {"not;"   , "¬"},
-	     {"shy;"   , "­"},
-	     {"reg;"   , "®"},
-	     {"macr;"  , "¯"},
-	     {"deg;"   , "°"}, // 0xb0
-	     {"plusmn;", "±"},
-	     {"sup2;"  , "²"},
-	     {"sup3;"  , "³"},
-	     {"acute;" , "´"},
-	     {"micro;" , "µ"},
-	     {"para;"  , "¶"},
-	     {"middot;", "·"},
-             {"cedil;" , "¸"},
-	     {"sup1;"  , "¹"},
-	     {"ordm;"  , "º"},
-	     {"raquo;", "»"},
+	     {"frac14;", "¼", 0},
+	     {"frac12;", "½", 0},
+	     {"frac34;", "¾", 0},
+	     {"iquest;", "¿", 0},
 
-	     {"frac14;", "¼"},
-	     {"frac12;", "½"},
-	     {"frac34;", "¾"},
-	     {"iquest;", "¿"},
-
-	     {"Agrave;", "À"}, // 0xc0
-	     {"Aacute;", "Á"},
-	     {"Acirc;" , "Â"},
-	     {"Atilde;", "Ã"},
-	     {"Auml;"  , "Ä"},
-	     {"Aring;" , "Å"},
-	     {"AElig;" , "Æ"},
-	     {"Ccedil;", "Ç"},
-	     {"Egrave;", "È"},
-	     {"Eacute;", "É"},
-	     {"Ecirc;" , "Ê"},
-	     {"Euml;"  , "Ë"}, 
-	     {"Igrave;", "Ì"},
-	     {"Iacute;", "Í"},
-	     {"Icirc;" , "Î"},
-	     {"Iuml;"  , "Ï"},
-	     {"ETH;"   , "Ð"}, // 0xd0
-	     {"Ntilde;", "Ñ"},
-	     {"Ograve;", "Ò"},
-	     {"Oacute;", "Ó"},
-	     {"Ocirc;" , "Ô"},
-	     {"Otilde;", "Õ"},
-	     {"Ouml;"  , "Ö"},
-	     {"times;" , "×"},
-	     {"Oslash;", "Ø"},
-	     {"Ugrave;", "Ù"},
-	     {"Uacute;", "Ú"},
-	     {"Ucirc;" , "Û"},
-	     {"Uuml;"  , "Ü"},
-	     {"Yacute;", "Ý"},
-	     {"THORN;" , "Þ"},
-	     {"szlig;" , "ß"},
-	     {"agrave;", "à"}, // 0xe0
-	     {"aacute;", "á"},
-	     {"acirc;" , "â"},
-	     {"atilde;", "ã"},
-	     {"auml;"  , "ä"},
-	     {"aring;" , "å"},
-	     {"aelig;" , "æ"},
-	     {"ccedil;", "ç"},
-	     {"egrave;", "è"},
-	     {"eacute;", "é"},
-	     {"ecirc;" , "ê"},
-	     {"euml;"  , "ë"},
-	     {"igrave;", "ì"},
-	     {"iacute;", "í"},
-	     {"icirc;" , "î"},
-	     {"iuml;"  , "ï"},
-	     {"eth;"   , "ð"}, // 0xf0
-	     {"ntilde;", "ñ"},
-	     {"ograve;", "ò"},
-	     {"oacute;", "ó"},
-	     {"ocirc;" , "ô"},
-	     {"otilde;", "õ"},
-	     {"ouml;"  , "ö"},
-	     {"divide;", "÷"},
-	     {"oslash;", "ø"},
-	     {"uacute;", "ú"},
-	     {"ugrave;", "ù"},
-	     {"ucirc;" , "û"},
-	     {"uuml;"  , "ü"}, 
-	     {"yacute;", "ý"}, // 0xfd
-	     {"thorn;" , "þ"}, // 0xfe
-	     {"yuml;"  , "ÿ"}, // 0xff
+	     {"Agrave;", "À", 0}, // 0xc0
+	     {"Aacute;", "Á", 0},
+	     {"Acirc;" , "Â", 0},
+	     {"Atilde;", "Ã", 0},
+	     {"Auml;"  , "Ä", 0},
+	     {"Aring;" , "Å", 0},
+	     {"AElig;" , "Æ", 0},
+	     {"Ccedil;", "Ç", 0},
+	     {"Egrave;", "È", 0},
+	     {"Eacute;", "É", 0},
+	     {"Ecirc;" , "Ê", 0},
+	     {"Euml;"  , "Ë", 0}, 
+	     {"Igrave;", "Ì", 0},
+	     {"Iacute;", "Í", 0},
+	     {"Icirc;" , "Î", 0},
+	     {"Iuml;"  , "Ï", 0},
+	     {"ETH;"   , "Ð", 0}, // 0xd0
+	     {"Ntilde;", "Ñ", 0},
+	     {"Ograve;", "Ò", 0},
+	     {"Oacute;", "Ó", 0},
+	     {"Ocirc;" , "Ô", 0},
+	     {"Otilde;", "Õ", 0},
+	     {"Ouml;"  , "Ö", 0},
+	     {"times;" , "×", 0},
+	     {"Oslash;", "Ø", 0},
+	     {"Ugrave;", "Ù", 0},
+	     {"Uacute;", "Ú", 0},
+	     {"Ucirc;" , "Û", 0},
+	     {"Uuml;"  , "Ü", 0},
+	     {"Yacute;", "Ý", 0},
+	     {"THORN;" , "Þ", 0},
+	     {"szlig;" , "ß", 0},
+	     {"agrave;", "à", 0}, // 0xe0
+	     {"aacute;", "á", 0},
+	     {"acirc;" , "â", 0},
+	     {"atilde;", "ã", 0},
+	     {"auml;"  , "ä", 0},
+	     {"aring;" , "å", 0},
+	     {"aelig;" , "æ", 0},
+	     {"ccedil;", "ç", 0},
+	     {"egrave;", "è", 0},
+	     {"eacute;", "é", 0},
+	     {"ecirc;" , "ê", 0},
+	     {"euml;"  , "ë", 0},
+	     {"igrave;", "ì", 0},
+	     {"iacute;", "í", 0},
+	     {"icirc;" , "î", 0},
+	     {"iuml;"  , "ï", 0},
+	     {"eth;"   , "ð", 0}, // 0xf0
+	     {"ntilde;", "ñ", 0},
+	     {"ograve;", "ò", 0},
+	     {"oacute;", "ó", 0},
+	     {"ocirc;" , "ô", 0},
+	     {"otilde;", "õ", 0},
+	     {"ouml;"  , "ö", 0},
+	     {"divide;", "÷", 0},
+	     {"oslash;", "ø", 0},
+	     {"uacute;", "ú", 0},
+	     {"ugrave;", "ù", 0},
+	     {"ucirc;" , "û", 0},
+	     {"uuml;"  , "ü", 0}, 
+	     {"yacute;", "ý", 0}, // 0xfd
+	     {"thorn;" , "þ", 0}, // 0xfe
+	     {"yuml;"  , "ÿ", 0}, // 0xff
+             // les horreurs ms
 	     //   {"Scaron;",{352,0}},
 	     //	     {"scaron;",{353,0}},
-	     {"trade;", "(tm)"}, // non iso8859-1
-	     {"euro;", "¤"},   // il faut iso8859-15 pour que ça fasse le bon char
-	     {"OElig;" , "OE"},
-	     {"oelig;" , "oe"},
-	     {NULL, "*"}};
+	     {"trade;", "(tm)", 153}, // non iso8859-1
+	     {"euro;", "¤", 8364},   // il faut iso8859-15 pour que ça fasse le bon char
+	     {"OElig;" , "OE", 140},
+	     {"oelig;" , "oe", 156},
+             {"ldots", "...", 133},
+             {"hellip", "...", 133},
+             {"bull", "*", 149},
+             {"ndash", "--", 150},
+             {"endash", "--", 150},
+             {"mdash", "--", 151},
+             {"emdash", "--", 151},
+	     {NULL, "*", 0}};
 
 
   /* detection du cas ou les chaines se supperposent */
@@ -301,26 +317,53 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz)
   id = 0; is = 0;
   while (id < dest_sz-1 && src[is]) {
     if (src[is] == '&') {
-      int i;
-      int found;
-
+      int i, found;
       i = 0; found = -1;
-      while (tab[i].sign) {
-	if (strncmp(tab[i].sign, src+is+1, strlen(tab[i].sign))==0) {
-	  is += strlen(tab[i].sign)+1;
-	  found = i;
-	  break;
-	}
-	i++;
+      if (src[is+1] == '#' && src[is+2] >= '0' && src[is+2] <= '9') {
+        long n; char *end;
+        n = strtol(src+is+2, &end, 10);
+        if (n >= 32) {
+          while (tab[i].sign) {
+            if (tab[i].num && tab[i].num == n) {
+              is += strlen(tab[i].sign)+1;
+              found = i;
+              break;
+            }
+            i++;
+          }
+          if (found == -1 && n < 256) {
+            dest[id++] = (unsigned char)n; 
+            is += (end - (src+is)); 
+            if (src[is] == ';') ++is;
+            found = 1;
+          } else {
+            int j;
+            j = 0;
+            while (id < dest_sz-1 && tab[i].c[j]) {
+              dest[id++] = tab[i].c[j++];
+            }
+            is += (end - (src+is));if (src[is] == ';') ++is;
+          }
+        }
       }
       if (found == -1) {
-	dest[id++] = '&'; is++;
-      } else {
-	int j;
-	j = 0;
-	while (id < dest_sz-1 && tab[i].c[j]) {
-	  dest[id++] = tab[i].c[j++];
-	}
+        while (tab[i].sign) {
+          if (strncmp(tab[i].sign, src+is+1, strlen(tab[i].sign))==0) {
+            is += strlen(tab[i].sign)+1;
+            found = i;
+            break;
+          }
+          i++;
+        }
+        if (found == -1) {
+          dest[id++] = '&'; is++;
+        } else {
+          int j;
+          j = 0;
+          while (id < dest_sz-1 && tab[i].c[j]) {
+            dest[id++] = tab[i].c[j++];
+          }
+        }
       }
     } else if ((unsigned char)src[is] == 0x80 && id < dest_sz-2) { // cas particulier pour l'odieux EURO (encodage windows) 
       dest[id++] = '¤';
@@ -495,6 +538,7 @@ str_hache(const unsigned char *s, int max_len)
   int i, j;
 
   assert(s);
+  if (max_len == -1) max_len = strlen(s);
   v[0] = 0xAB; v[1] = 0x13; v[2] = 0x9A; v[3] = 0x12;
   p = s;
   for (i=0, j=0; i < max_len && s[i]; i++) {
@@ -526,6 +570,11 @@ str_hache_nocase(const unsigned char *s, int max_len)
   return CVINT(v[0],v[1],v[2],v[3]);
 }
 
+void
+md5_digest(const char *s, md5_byte_t md5[16]) {
+  md5_state_t ms;
+  md5_init(&ms); md5_append(&ms,s,strlen(s)); md5_finish(&ms,md5);
+}
 
 unsigned char char_trans[256];
 static int char_trans_init = 0;
@@ -580,6 +629,45 @@ str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
   res = strstr(m, a); if (res) pos = res-m;
   free(a); free(m);
   return ((pos >= 0) ? (unsigned char*)meule+pos : NULL);
+}
+
+unsigned char *
+str_case_str(const unsigned char *meule, const unsigned char *aiguille) {
+  unsigned char c0 = tolower(aiguille[0]);
+  assert(meule); assert(aiguille);
+  if (aiguille[0] == 0) return (unsigned char*)meule;
+  do {
+    while (*meule && tolower(*meule) != c0) ++meule;
+    if (*meule) {
+      int i=1;
+      for (i = 1; aiguille[i] && meule[i]; ++i) {
+        if (tolower(aiguille[i]) != tolower(meule[i])) break;
+      }
+      if (aiguille[i] == 0) return (unsigned char*)meule;
+      else ++meule;
+    }
+  } while (*meule);
+  return NULL;
+}
+
+int str_ncasecmp(const unsigned char *a, const unsigned char *b, unsigned n) {
+  assert(a); assert(b); assert(n < 10000000);
+  while (n && *a && *b) {
+    if (tolower(*a) < tolower(*b)) return -1;
+    else if (tolower(*a) > tolower(*b)) return +1;
+    --n; ++a; ++b;
+  }
+  if (*a == 0 && *b) return -1;
+  else if (*b && *a == 0) return +1;
+  else return 0;
+}
+
+int str_case_startswith(const unsigned char *a, const unsigned char *b) {
+  return (str_ncasecmp(a,b,strlen(b)) == 0 && strlen(a) >= strlen(b));
+}
+
+int str_startswith(const unsigned char *a, const unsigned char *b) {
+  return (strncmp(a,b,strlen(b)) == 0 && strlen(a) >= strlen(b));
 }
 
 void
@@ -749,6 +837,118 @@ str_ncat(char *s1, const char *s2, int n)
   return s;
 }
 
+/* une fonction qui n'en veut */
+int
+str_to_time_t(const char *s, time_t *tt) {
+  char sday[10], smon[10], stz[20];
+  float fracsec = 0;
+  int apply_tzshift = 1;
+  int tzshift_h = 0, tzshift_m = 0;
+  struct tm t;
+  int ok = 0;
+
+  sday[0] = smon[0] = stz[0] = 0;
+  memset(&t, 0, sizeof(t));
+  
+  if (sscanf(s, "%4d%2d%2d%2d%2d%2d", &t.tm_year,&t.tm_mon,&t.tm_mday,&t.tm_hour,&t.tm_min,&t.tm_sec) == 6) {
+    ok = 1; apply_tzshift = 0;
+  }
+  /* test format RFC-822 */
+  if (!ok && (sscanf(s,"%10s %d %10s %d %d:%d:%d %s", 
+                     sday, &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, &t.tm_sec, stz) >= 7 ||
+              sscanf(s,"%10s %d %10s %d %d:%d %s", 
+                     sday, &t.tm_mday, smon, &t.tm_year, &t.tm_hour, &t.tm_min, stz) >= 6)) {
+    /*
+      date-time   =  [ day "," ] date time        ; dd mm yy
+                                                 ;  hh:mm:ss zzz
+
+     day         =  "Mon"  / "Tue" /  "Wed"  / "Thu"
+                 /  "Fri"  / "Sat" /  "Sun"
+
+     date        =  1*2DIGIT month 2DIGIT        ; day month year
+                                                 ;  e.g. 20 Jun 82
+
+     month       =  "Jan"  /  "Feb" /  "Mar"  /  "Apr"
+                 /  "May"  /  "Jun" /  "Jul"  /  "Aug"
+                 /  "Sep"  /  "Oct" /  "Nov"  /  "Dec"
+
+     time        =  hour zone                    ; ANSI and Military
+
+     hour        =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
+                                                 ; 00:00:00 - 23:59:59
+
+     zone        =  "UT"  / "GMT"                ; Universal Time
+                                                 ; North American : UT
+                 /  "EST" / "EDT"                ;  Eastern:  - 5/ - 4
+                 /  "CST" / "CDT"                ;  Central:  - 6/ - 5
+                 /  "MST" / "MDT"                ;  Mountain: - 7/ - 6
+                 /  "PST" / "PDT"                ;  Pacific:  - 8/ - 7
+                 /  1ALPHA                       ; Military: Z = UT;
+                                                 ;  A:-1; (J not used)
+                                                 ;  M:-12; N:+1; Y:+12
+                 / ( ("+" / "-") 4DIGIT )        ; Local differential
+                                                 ;  hours+min. (HHMM)
+    */
+    static char *monthnames[12] = {"Jan",  "Feb",  "Mar",  "Apr",  "May", "Jun", 
+                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    if (strlen(smon) && smon[strlen(smon)-1] == ',') smon[strlen(smon)-1] = 0;
+    int i; for (i = 0; i < 12; ++i) 
+      if (str_ncasecmp(smon, monthnames[i], 3)==0) {
+        t.tm_mon = i+1;
+        ok = 1; break;
+      }
+    
+    if (sscanf(stz, "%2d%2d", &tzshift_h, &tzshift_m) == 2) { /* plop */ } 
+    else if (strcasecmp(stz, "EST")==0) { tzshift_h = -5; }
+    else if (strcasecmp(stz, "EDT")==0) { tzshift_h = -4; }
+    else if (strcasecmp(stz, "CST")==0) { tzshift_h = -6; }
+    else if (strcasecmp(stz, "CDT")==0) { tzshift_h = -5; }
+    else if (strcasecmp(stz, "MST")==0) { tzshift_h = -7; }
+    else if (strcasecmp(stz, "MDT")==0) { tzshift_h = -6; }
+    else if (strcasecmp(stz, "PST")==0) { tzshift_h = -8; }
+    else if (strcasecmp(stz, "PDT")==0) { tzshift_h = -7; }
+  } 
+  /* test format ISO 8601 http://www.w3.org/TR/NOTE-datetime -- 6 possiblités
+      YYYY (eg 1997)
+      YYYY-MM (eg 1997-07)
+      YYYY-MM-DD (eg 1997-07-16)
+      YYYY-MM-DDThh:mmTZD (eg 1997-07-16T19:20+01:00)
+      YYYY-MM-DDThh:mm:ssTZD (eg 1997-07-16T19:20:30+01:00)
+      YYYY-MM-DDThh:mm:ss.sTZD (eg 1997-07-16T19:20:30.45+01:00)
+   */
+  if (!ok && sscanf(s, "%4d-%2d-%2dT%2d:%2d:%f%d:%d", &t.tm_year, &t.tm_mon, &t.tm_mday, 
+                    &t.tm_hour, &t.tm_min, &fracsec, &tzshift_h, &tzshift_m) == 8) {
+    t.tm_sec = (int)fracsec;
+    ok = 1;
+  }
+  if (!ok && sscanf(s, "%4d-%2d-%2dT%2d:%2d%d:%d", &t.tm_year, &t.tm_mon, &t.tm_mday, 
+                    &t.tm_hour, &t.tm_min, &tzshift_h, &tzshift_m) == 7) {
+    t.tm_sec = (int)fracsec;
+    ok = 1;
+  }
+  if (!ok && sscanf(s, "%4d-%2d-%2dT%2d%d:%d", &t.tm_year, &t.tm_mon, &t.tm_mday, 
+                    &t.tm_hour, &tzshift_h, &tzshift_m) == 6) {
+    t.tm_sec = (int)fracsec;
+    ok = 1;
+  }
+  if (ok && t.tm_year >= 0 && t.tm_year < 3000 && t.tm_mon > 0 && t.tm_mon <= 12 && t.tm_mday > 0 && t.tm_mday < 32 && 
+      t.tm_hour >= 0 && t.tm_hour < 24 && t.tm_min >= 0 && t.tm_min < 60 && t.tm_sec >= 0 && t.tm_sec < 60) {
+    if (t.tm_year < 50) t.tm_year += 100; else if (t.tm_year > 1900) t.tm_year -= 1900;
+    t.tm_mon--; 
+    t.tm_isdst = -1;
+    /*printf("str_to_time_t(%s): %04d %02d %02d %02d:%02d:%02d%+02d:%02d\n", s, 
+      t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, tzshift_h,tzshift_m);*/
+    *tt = mktime(&t);    
+    *tt -= (tzshift_h*60+(tzshift_h < 0 ? -1 : 1)*tzshift_m)*60;
+  }
+  return ok;
+}
+
+void time_t_to_tstamp(time_t tim, char tstamp[15]) {
+  struct tm *t = localtime(&tim);
+  snprintf(tstamp, 15, "%04d%02d%02d%02d%02d%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+}
+
 FILE*
 open_wfile(const char *fname) {
   int fd;
@@ -825,4 +1025,55 @@ void assertion_failed(const char *fun, const char *ass) {
   myfprintf(stderr,"assertion failed in function %<MAG %s>: %<YEL %s>\n", fun, ass); 
   dump_backtrace(); 
   abort();
+}
+
+struct cv_bloc {
+  char s[1024];
+  struct cv_bloc *next;
+};
+
+void
+convert_to_iso8859(const char *src_encoding, char **psrc) {
+  size_t inbytesleft, outbytesleft, outsz = 16384;
+  size_t cnt, len;
+  char       *srce;
+  char *out, *oute;
+  /* pour eviter d'ouvrir/fermer un million d'iconv.. */
+  static iconv_t cv;
+  static char *oldencoding;
+  if (!*psrc || strlen(*psrc) == 0 || src_encoding == NULL) return;
+
+  if (oldencoding == NULL || strcmp(oldencoding,src_encoding)) {
+    if (oldencoding) { free(oldencoding); iconv_close(cv); }
+    oldencoding = strdup(src_encoding);    
+    cv = iconv_open("ISO8859-15", src_encoding);
+    if (cv == (iconv_t)(-1)) { 
+      fprintf(stderr, "iconv_open(%s,%s) failed : %s\n", "ISO8859-15", src_encoding, strerror(errno)); 
+      return;
+    }
+  } else iconv(cv, NULL, NULL, NULL, NULL); /* reinitialisation au cas où */
+  out = malloc(outsz); assert(out);
+  do {
+    errno = 0;
+    inbytesleft = strlen(*psrc);
+    outbytesleft = outsz;
+    srce = *psrc; oute = out;
+    cnt = iconv(cv, &srce, &inbytesleft, &oute, &outbytesleft);
+    if (cnt == (size_t)(-1)) {
+      if (errno == E2BIG) {
+        outsz *= 2; out = realloc(out, outsz); assert(out);
+      } else {
+        printf("convert_to_iso8859: invalid %s sequence here: %.30s %02x\n", src_encoding, srce, *srce);
+        iconv(cv, NULL, NULL, NULL, NULL);
+        //iconv_close(cv);
+        free(out); return;
+      }
+    }
+  } while (cnt == (size_t)(-1));
+  free(*psrc); 
+  len = oute - out;
+  out = realloc(out, len + 1); assert(out);
+  out[len] = 0;
+  *psrc = out;
+  //iconv_close(cv);
 }

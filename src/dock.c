@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.37 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.38 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.38  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.37  2003/08/26 21:50:48  pouaite
   2.6.4b au mastic
 
@@ -150,11 +153,9 @@
 #include <sys/time.h>
 #include "coin_xutil.h"
 #include "http.h"
-#include "newswin.h"
 #include "site.h"
 #include "dock.h"
 #include "board_util.h"
-#include "newswin.h"
 
 /* image */
 #include "../xpms/leds.h"
@@ -391,7 +392,7 @@ dock_update_pix_trolloscope(Dock *dock)
 static void
 refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
 {
-  int cx, cnt, dec;
+  int cx;
   XRectangle xr;
 
   xr.x = x; xr.y = y; xr.width = w; xr.height = 11;
@@ -409,7 +410,10 @@ refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
     cx = x + (56-strlen(minimsg)*DOCK_FIXED_FONT_W)/2; /* super centrage..*/
     XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, minimsg, strlen(minimsg));
 
-  } else if (id_type_is_invalid(dock->view_id_in_newstitles)) {
+  } 
+#if 0
+  else if (id_type_is_invalid(dock->view_id_in_newstitles)) {
+    int  cnt, dec;
     dec = dock->newstitles_char_dec;
     cx = x - dec;
     cnt = dock->newstitles_pos;
@@ -421,7 +425,9 @@ refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
       cnt++; if (msg[cnt] == 0) cnt = 0;
       dec = 0;
     } while (cx < x+w);
-  } else {
+  } 
+#endif
+  else {
     unsigned char minimsg[10];
     minimsg[0] = 0;
     if (dock->view_id_timer_cnt % 40 > 15) {
@@ -503,6 +509,7 @@ textout_msginfo(Dock *dock, int x, int y)
 void
 dock_checkout_newstitles(Dock *dock)
 {
+#if 0
   SiteList *sites = dock->sites;
   if (flag_updating_news == 0) {
     int news_updated = 0;
@@ -556,6 +563,7 @@ dock_checkout_newstitles(Dock *dock)
       }
     }
   }
+#endif
 }
 
 static void
@@ -867,10 +875,7 @@ dock_leds_set_state(Dock *dock)
   } else if (flag_http_error) {
     led_color(&dock->leds.led[0], OFF, OFF, RED);
   } else if (ccqueue_state() == Q_NEWSLST_UPDATE || 
-	     ccqueue_state() == Q_NEWSTXT_UPDATE || 
-	     ccqueue_state() == Q_BOARD_UPDATE ||
-	     ccqueue_state() == Q_COMMENTS_UPDATE ||
-	     ccqueue_state() == Q_MESSAGES_UPDATE) {
+	     ccqueue_state() == Q_BOARD_UPDATE) {
     led_color(&dock->leds.led[0], CYAN, CYAN, CYAN);
   } else {
     led_color(&dock->leds.led[0], OFF, OFF, OFF);
@@ -886,19 +891,12 @@ dock_leds_set_state(Dock *dock)
     led_color(&dock->leds.led[1], OFF, OFF, OFF);
   }
 
-  if (sl_get_nth_unreaded_news(dock->sites, 1)) {
+  /*if (sl_get_nth_unreaded_news(dock->sites, 1)) {
     led_color(&dock->leds.led[2], OFF, GREENLIGHT, GREEN);
-  } else {
-    led_color(&dock->leds.led[2], OFF, OFF, OFF);
-  }
+    } else*/
+  led_color(&dock->leds.led[2], OFF, OFF, OFF);
 
-  if (ccqueue_state() == Q_MESSAGES_UPDATE) {
-    led_color(&dock->leds.led[3], VIOLET, VIOLET, VIOLET);
-  } else if (sl_find_unreaded_msg(dock->sites)) {
-    led_color(&dock->leds.led[3], OFF, GREENLIGHT, GREEN);
-  } else {
-    led_color(&dock->leds.led[3], OFF, OFF, OFF);
-  }
+  led_color(&dock->leds.led[3], OFF, OFF, OFF);
 
   /* rapidite du clignotement du trollometre */
   trollo_hrate = ((int)(dock->trib_trollo_rate*60));
@@ -1238,8 +1236,21 @@ dock_build_pixmap_porte(Dock *dock)
     dock->bg_pixel   = RGB2PIXEL(r,g,b);
     dock->light_pixel = RGB2PIXEL(MIN(255, (r*170)/128), MIN(255,(g*170)/128), MIN(255,(b*170)/128));
     dock->dark_pixel = RGB2PIXEL(MIN(255, (r*97)/128), MIN(255,(g*97)/128), MIN(255,(b*97)/128));
+    dock->bg_color = cccolor_get(Prefs.dock_bgcolor);
+    dock->light_color = cccolor_get_rgb((r*170)/128, (g*170)/128, (b*170)/128);
+    dock->dark_color = cccolor_get_rgb((r*97)/128, (g*97)/128, (b*97)/128);
   }
-  
+  dock->white_color = cccolor_get(0xffffff);
+  dock->black_color = cccolor_get(0x000000);
+  dock->red_color = cccolor_get(0xff0000);
+  dock->green_color = cccolor_get(0x00ff00);
+  dock->blue_color = cccolor_get(0x0000ff);
+  {
+    int i;
+    for (i = 0; i < 16; ++i) {
+      dock->gray_colors[i] = cccolor_get_rgb(i*16,i*16,i*16);
+    }
+  }
   return err;
 }
 
@@ -1299,7 +1310,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	pos = (dock->newstitles_pos + ((xbevent->x - 7)+3)/6) % strlen(dock->newstitles);
 	id = dock->newstitles_id[pos];
       } else { id = id_type_invalid_id(); }
-      newswin_show(dock, id); XRaiseWindow(dock->display, newswin_get_window(dock));
+      //newswin_show(dock, id); XRaiseWindow(dock->display, newswin_get_window(dock));
     } else if (IS_INSIDE(x,y,dock->leds.led[0].xpos,dock->leds.led[0].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[0].xpos+8, dock->leds.led[0].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1322,15 +1333,18 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	click bouton 1 sur la 3eme led -> 
 	voir les news non lues
       */
+#if 0
       News *n;
       n = sl_get_nth_unreaded_news(dock->sites, 1);
       if (n) {
 	newswin_show(dock, n->id);
       }
+#endif
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
-	       && flag_updating_messagerie == 0) {
+               ) {
       /* clic gauche sur la 4eme led -> voir les nouveaux messages (avec le browser 1)*/
+#if 0
       Message *m;
       m = sl_find_unreaded_msg(dock->sites);
       if (m) {
@@ -1344,6 +1358,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       } else {
 	msgbox_show(dock, _("No new messages."));
       }
+#endif
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
@@ -1357,41 +1372,8 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       */
 
 
-      /* pour le debuggage, ça peut tj servir .. */
-      Site *s;
-      for (s = dock->sites->list; s; s = s->next) {
-	if (s->prefs->check_comments) {
-	  BLAHBLAH(1, site_yc_printf_comments(s));
-	}
-	if (s->prefs->check_messages) {
-	  BLAHBLAH(1, site_msg_printf_messages(s));
-	}
-      }
-
-
-      if (flag_updating_comments == 0) {
-	Comment *com;
-	if ((com = sl_find_modified_comment(dock->sites))) {
-	  char url[1024];
-	  snprintf(url, 1024, "http://%s:%d/%s%scomments/thread.php3?news_id=%d&com_id=%d&res_type=1",
-		   com->site->prefs->site_root, 
-		   com->site->prefs->site_port, 
-		   com->site->prefs->site_path, 
-		   strlen(com->site->prefs->site_path) ? "/" : "", 
-		   com->news_id, com->com_id);
-	  open_url(url, -1, -1, 1);
-	  com->modified = 0;
-	  site_yc_clear_modified(com->site);
-	  if (sl_find_modified_comment(dock->sites) == NULL) {
-	    dock->flamometre.comment_change_decnt = 1;
-	  }
-	} else if (dock->flamometre.comment_change_decnt) { /* bizarre mais bon .. */
-	  dock->flamometre.comment_change_decnt = 1; /* ta gueule , en quelque sorte */
-	} else if (dock->flamometre.xp_change_decnt) {
-	  dock->flamometre.xp_change_decnt = 1;
-	} else if (dock->flamometre.board_answer_decnt) {
-	  dock->flamometre.board_answer_decnt = 1;
-	}
+      if (dock->flamometre.board_answer_decnt) {
+        dock->flamometre.board_answer_decnt = 1;
       }
 
       if (dock->tl_item_survol) {
@@ -1416,23 +1398,12 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
     if (IS_INSIDE(x,y,2,2,59,13) && 
 	(dock->door_state == CLOSED)) {
       /* clic bouton droite sur la zone défilante -> fermeture la fenetre des news */
-      if (newswin_is_used(dock)) {
-	newswin_unmap(dock);
-      } else newswin_show(dock, id_type_invalid_id()); /* avant, on avait id=-2 .. */
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
       /* 
 	 SI trolloscope clignote (detection de nouveau commentaire), on l'efface
       */
-	  
-      if (flag_updating_comments == 0) {
-	Comment *c;
-	if ((c = sl_find_modified_comment(dock->sites))) {
-	  site_yc_clear_modified(c->site);
-	  dock->flamometre.comment_change_decnt = 1;
-	}
-      }
     } else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1446,21 +1417,25 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
     }  else if (IS_INSIDE(x,y,dock->leds.led[2].xpos,dock->leds.led[2].ypos - MIN(dock->door_state_step,13),
 			  dock->leds.led[2].xpos+8, dock->leds.led[2].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
-	    click bouton droite sur la 3eme led -> 
-	     eteindre la diode
-	  */
+        click bouton droite sur la 3eme led -> 
+        eteindre la diode
+      */
+#if 0
       if (flag_updating_news == 0) {
 	Site *s;
 	for (s = dock->sites->list; s; s=s->next) 
 	  site_news_unset_unreaded(s);
 	if (newswin_is_used(dock)) { newswin_update_content(dock, 0); newswin_draw(dock); }
       }
+#endif
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
-	       && flag_updating_messagerie == 0) {
+	       ) {
       /* clic droite sur la 4eme led -> annuler les nouveaux messages */
+#if 0
       Message *m;
       while ((m = sl_find_unreaded_msg(dock->sites))) m->unreaded = 0;
+#endif
     } else  if (IS_INSIDE(x,y,50,18,60,22) && 
 		(dock->door_state == CLOSED)) {
       /* bouton 3 sur le trollometre:
@@ -1485,7 +1460,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	(dock->door_state == CLOSED)) {
 
       /* rafraichissement des news */
-      Site *site;
+      /*Site *site;
       for (site = dock->sites->list; site; site = site->next) {
 	if (site->prefs->check_news) 
 	  ccqueue_push_newslst_update(site->site_id);
@@ -1495,6 +1470,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	  ccqueue_push_messages_update(site->site_id);
 	site->news_refresh_cnt = 0;
       }
+      */
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
 	       dock->door_state == CLOSED) {
@@ -1525,8 +1501,9 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       dock_update_pix_trolloscope(dock);
     } else if (IS_INSIDE(x,y,dock->leds.led[3].xpos,dock->leds.led[3].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[3].xpos+8, dock->leds.led[3].ypos +3 - MIN(dock->door_state_step,13))
-	       && flag_updating_messagerie == 0) {
+	       ) {
       /* clic milieu sur la 4eme led -> voir les nouveaux messages (avec le browser 2)*/
+#if 0
       Message *m;
       m = sl_find_unreaded_msg(dock->sites);
       if (m) {
@@ -1540,6 +1517,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       } else {
 	msgbox_show(dock, _("No new messages."));
       }
+#endif
     } else if (IS_INSIDE(x,y,50,18,60,22) && 
 	       (dock->door_state == CLOSED)) {
       if ((xbevent->state & ShiftMask) == 0) {

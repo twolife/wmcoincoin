@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.34  2004/02/29 15:01:18  pouaite
+dnl   May the charles bronson spirit be with you
+dnl
 dnl   Revision 1.33  2003/08/26 21:50:47  pouaite
 dnl   2.6.4b au mastic
 dnl
@@ -187,7 +190,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.6b, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.6c, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -246,8 +249,8 @@ dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)
 
-LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
-CFLAGS="$CFLAGS $X_CFLAGS"
+LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS} -lXft"
+CFLAGS="$CFLAGS $X_CFLAGS -I/usr/include/X11/Xft -I/usr/include/freetype2"
 
 dnl XINERAMA support (stolen from wmaker)
 dnl ================
@@ -273,6 +276,16 @@ AC_ARG_ENABLE(wmccc,
    fi
  ], [build_wmccc="yes"])
 
+build_wmcc_player="yes"
+AC_ARG_ENABLE(wmcoincoin_player,
+ [  --enable-wmcoincoin_player Builds the wmcoincoin_player (requires imlib2) (viewer for hfr pictures)
+  --disable-wmcoincoin_player  Do not build wmcoincoin_player],
+ [ if   test "x$enableval" = "xno" ; then
+	build_wmcc_player="no"
+	echo you disabled wmcoincoin_player
+   fi
+ ], [build_wmcc_player="yes"])
+
 if test "x$build_wmccc" = "xno"; then
   echo wmccc disabled...
   WMCCC=""
@@ -283,8 +296,19 @@ dnl GTK_CFLAGS="`gtk-config --cflags`"
 dnl GTK_LIBS="`gtk-config --libs`"
 dnl AC_SUBST(GTK_CFLAGS)
 dnl AC_SUBST(GTK_LIBS)
+  pkg_modules="gtk+-2.0 >= 2.0.0"
+  PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
-  AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you dont have gtk you wont be able to build the wmccc try running configure with --disable-wmccc))
+  GTK_CFLAGS=$PACKAGE_CFLAGS;
+  GTK_LIBS=$PACKAGE_LIBS;
+  AC_SUBST(GTK_CFLAGS)
+  AC_SUBST(GTK_LIBS)
+
+  dnl Add the languages which your application supports here.
+        dnl  ALL_LINGUAS=""
+        dnl  AM_GLIB_GNU_GETTEXT
+
+  dnl AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you dont have gtk you wont be able to build the wmccc try running configure with --disable-wmccc))
   WMCCC="wmccc"
 fi
 AC_SUBST(WMCCC)
@@ -383,20 +407,22 @@ if test "x$ac_have_backtrace" = "xyes"; then
         AC_DEFINE(HAVE_BACKTRACE,1,[glibc backtrace function])
 fi;     
 
-AC_CHECK_PROG([IMLIB2_CONFIG_IN_PATH],[imlib2-config],[yes],[no])
-if test "x$IMLIB2_CONFIG_IN_PATH" = "xno"; then
+WMCOINCOIN_PLAYER=""
+if test "x$build_wmcc_player" = "xyes"; then
+  AC_CHECK_PROG([IMLIB2_CONFIG_IN_PATH],[imlib2-config],[yes],[no])
+  if test "x$IMLIB2_CONFIG_IN_PATH" = "xno"; then
         echo " *********************** YOU ARE NOT READY FOR THE DESKTOP ***********************"
         echo " * no arms                              ==> no chocolate                         *"
         echo " * imlib2-config was not found in path  ==> wmcoincoin_player will not be built. *"
         echo " ************************* Thank you for your attention **************************"
-        WMCOINCOIN_PLAYER=""
         build_wmcc_player="no"
-else
+  else
         AC_DEFINE(HAVE_IMLIB2,1,[use imlib2 for the player])
         WMCOINCOIN_PLAYER="wmcoincoin_player"
         build_wmcc_player="yes"
         AC_DEFINE(HAVE_WMCOINCOIN_PLAYER,1,[wmcoincoin_player is supported])
-fi;
+  fi
+fi
 AC_SUBST([WMCOINCOIN_PLAYER])
 
 YELLOW="\\033\\1331;33m"

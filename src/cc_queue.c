@@ -25,10 +25,7 @@ ccqueue_elt_type_2_str(ccqueue_elt_type t) {
   case Q_PREFS_UPDATE: return "PREFS_UPDATE"; break;
   case Q_BOARD_POST: return "BOARD_POST"; break;
   case Q_BOARD_UPDATE: return "BOARD_UPDATE"; break;
-  case Q_COMMENTS_UPDATE: return "COMMENTS_UPDATE"; break;
-  case Q_MESSAGES_UPDATE: return "MESSAGES_UPDATE"; break;
   case Q_NEWSLST_UPDATE: return "NEWSLST_UPDATE"; break;
-  case Q_NEWSTXT_UPDATE: return "NEWSTXT_UPDATE"; break;
   default: return "Oups BUG"; break;
   }
   return NULL;
@@ -89,21 +86,9 @@ void ccqueue_push_board_update(int sid)
 {
   ccqueue_push(&queue, Q_BOARD_UPDATE, sid, NULL, NULL, -1);
 }
-void ccqueue_push_comments_update(int sid)
-{
-  ccqueue_push(&queue, Q_COMMENTS_UPDATE, sid, NULL, NULL, -1);
-}
-void ccqueue_push_messages_update(int sid)
-{
-  ccqueue_push(&queue, Q_MESSAGES_UPDATE, sid, NULL, NULL, -1);
-}
 void ccqueue_push_newslst_update(int sid)
 {
   ccqueue_push(&queue, Q_NEWSLST_UPDATE, sid, NULL, NULL, -1);
-}
-void ccqueue_push_newstxt_update(int sid, int nid)
-{
-  ccqueue_push(&queue, Q_NEWSTXT_UPDATE, sid, NULL, NULL, nid);
 }
 ccqueue_elt*
 ccqueue_find_next(ccqueue_elt_type what, int sid, ccqueue_elt *q) {
@@ -182,7 +167,7 @@ void ccqueue_loop(Dock *dock) {
   int nb_news_site = 0;
   Site *s;
   for (s = dock->sites->list; s; s = s->next) {
-    if (s->prefs->check_news) nb_news_site++;
+    //    if (s->prefs->check_news) nb_news_site++;
   }
   if (nb_news_site)
     strcpy(dock->newstitles, _("Transfer in progress..."));
@@ -213,34 +198,30 @@ void ccqueue_loop(Dock *dock) {
 	Site *s = sl_find_site_id(dock->sites, q->sid);
 	if (s && s->board) {
 	  board_update(s->board);
-	}
-      } break;
-      case Q_COMMENTS_UPDATE: {
-	Site *s = sl_find_site_id(dock->sites, q->sid);
-	if (s) {
-	  site_yc_dl_and_update(s);
-	}
-      } break;
-      case Q_MESSAGES_UPDATE: {
-	Site *s = sl_find_site_id(dock->sites, q->sid);
-	if (s) {
-	  site_msg_dl_and_update(s);
+          /*
+          {
+            board_msg_info *mi = dock->sites->boards->first;
+            printf("SUMMARY OF GLOBAL BOARDS\n");
+            while (mi) {
+              printf("%20s id=%05d tstamp=%10ld corrected=%10ld\n", 
+                     sl_find_site_id(dock->sites, id_type_sid(mi->id))->prefs->site_name,
+                     id_type_lid(mi->id), mi->timestamp, mi->timestamp + dock->sites->boards->btab[mi->id.sid]->time_shift);
+              mi = mi->g_next;
+            }
+            char s[15];
+            time_t t0 = time(NULL);
+            time_t_to_tstamp(t0,s);
+            printf("t0 = %ld -> s=%s ->",t0,s);
+            str_to_time_t(s,&t0); printf("t1=%ld\n", t0);
+          }
+          */
 	}
       } break;
       case Q_NEWSLST_UPDATE: {
-	Site *s = sl_find_site_id(dock->sites, q->sid);
+	/*Site *s = sl_find_site_id(dock->sites, q->sid);
 	if (s) {
 	  site_news_dl_and_update(s);
-	}
-      } break;
-      case Q_NEWSTXT_UPDATE: {
-	Site *s = sl_find_site_id(dock->sites, q->sid);
-	if (s) {
-	  id_type id;
-	  id_type_set_lid(&id, q->nid);
-	  id_type_set_sid(&id, q->sid);
-	  site_news_update_txt(s, id);
-	}
+          }*/
       } break;
       }
       if (flag_cancel_task) {

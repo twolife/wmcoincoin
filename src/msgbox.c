@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.9 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.10 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.10  2004/02/29 15:01:19  pouaite
+  May the charles bronson spirit be with you
+
   Revision 1.9  2003/06/25 20:18:21  pouaite
   support xinerama qui marche
 
@@ -63,7 +66,7 @@ struct _MsgBox {
   PicoHtml *ph;
   int w,h;
   int mapped;
-  unsigned long bg_pixel, dark_pixel, light_pixel, bg_title_pixel;
+  CCColorId bg_color, dark_color, light_color, bg_title_color;
 };
 
 
@@ -87,22 +90,23 @@ msgbox_refresh(Dock *dock, Drawable d)
   if (m->mapped == 0) return;
   //printf("refresh!\n");
   
-  tw = XTextWidth(picohtml_get_fn_bold(m->ph), title, strlen(title));
- 
+  tw = ccfont_text_width8(picohtml_get_fn_bold(m->ph), title, -1);
 
-  XSetForeground(dock->display, dock->NormalGC, m->bg_pixel);
+  XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(m->bg_color));
   XFillRectangle(dock->display, d, dock->NormalGC, 1, 13, m->w-1, m->h-1);
 
-  XSetForeground(dock->display, dock->NormalGC, m->bg_title_pixel);
+  XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(m->bg_title_color));
   XFillRectangle(dock->display, d, dock->NormalGC, 1, 1, m->w-2, 12);
-  XSetForeground(dock->display, dock->NormalGC, WhitePixel(dock->display, dock->screennum));
-  XSetFont(dock->display, dock->NormalGC, picohtml_get_fn_bold(m->ph)->fid);
-  XDrawString(dock->display, d, dock->NormalGC, m->w/2-tw/2, 11, title, strlen(title)); 
+  //XSetForeground(dock->display, dock->NormalGC, WhitePixel(dock->display, dock->screennum));
+  //XSetFont(dock->display, dock->NormalGC, picohtml_get_fn_bold(m->ph)->fid);
+  //XDrawString(dock->display, d, dock->NormalGC, m->w/2-tw/2, 11, title, strlen(title)); 
+  ccfont_draw_string8(picohtml_get_fn_bold(m->ph), dock->white_color,
+                      d, m->w/2-tw/2, 11, title, strlen(title));
 
-  XSetForeground(dock->display, dock->NormalGC, m->dark_pixel);
+  XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(m->dark_color));
   XDrawLine(dock->display, d, dock->NormalGC, 0, m->h-1, m->w-1, m->h-1);
   XDrawLine(dock->display, d, dock->NormalGC, m->w-1, 0, m->w-1, m->h-1);
-  XSetForeground(dock->display, dock->NormalGC, m->light_pixel);
+  XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(m->light_color));
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, m->w-1, 0);
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, 0, m->h-1);
   picohtml_render(dock, m->ph, d, dock->NormalGC, 5, 13);
@@ -117,10 +121,10 @@ msgbox_build(Dock *dock)
 
   ALLOC_OBJ(m, MsgBox);
 
-  m->bg_pixel = dock->bg_pixel;
-  m->dark_pixel = dock->dark_pixel;
-  m->light_pixel = dock->light_pixel;
-  m->bg_title_pixel = RGB2PIXEL(0, 50, 200);
+  m->bg_color = dock->bg_color;
+  m->dark_color = dock->dark_color;
+  m->light_color = dock->light_color;
+  m->bg_title_color = cccolor_get_rgb(0, 50, 200);
   m->mapped = 0;
   m->ph = NULL;
   dock->msgbox = m;
@@ -173,8 +177,8 @@ msgbox_show(Dock *dock, char *text)
   /* creation fenetre (une bonne fois pour toutes) */
   m->win = XCreateSimpleWindow (dock->display, RootWindow(dock->display,dock->screennum), 
 				mx, my, m->w, m->h, 0,
-				m->dark_pixel,
-				m->bg_pixel);
+				cccolor_pixel(m->dark_color),
+				cccolor_pixel(m->bg_color));
   
   //wa.background_pixmap = ButtonBarImage ;
   wa.event_mask =

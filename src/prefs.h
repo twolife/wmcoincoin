@@ -90,31 +90,29 @@ typedef struct _FontStyle {
 
 /* les preferences sont stockees dans ces structures */
 
+typedef enum { REGULAR_BOARD_UNENCODED=1, REGULAR_BOARD_ENCODED, REGULAR_BOARD_NO_PANTS, RSS_FEED } 
+  backend_type_enum;
+
 typedef struct _SitePrefs {
   /* delai (en sec) et assez approximatif entre deux verif de la tribune */
   int board_check_delay;
-  int news_check_delay;
-  int board_backend_type; /* pour gerer les variations saisonnières du format de backend..
-			   peut prendre 3 valeurs: 
-			   1: les tags apparaissent sous la forme '<b>'
-			   2: les tags sont du type '&lt;b;&gt'
-			   3: le backend est en vrac, on a les deux types de tags :-/ 
-			*/
+  backend_type_enum backend_type; /* pour gerer les variations saisonnières du format de backend..
+                                     peut prendre 3 valeurs: 
+                                     1: les tags apparaissent sous la forme '<b>'
+                                     2: les tags sont du type '&lt;b;&gt'
+                                     3: le backend est en vrac, on a les deux types de tags :-/ 
+                                     4: rss feed
+                                  */
   /* nb max de messages conserves en memoire */
   int board_max_msg;
   char *board_wiki_emulation; /* non nul => émulation des wiki-urls */
-  /* on ne conserve que les news aui ont ete postees il y a 
-     moins de 'news_max_nb_days' jours */
-  int news_max_nb_days;
+
   /* user_agent (defaut: wmCoinCoin) */
   char *user_agent;
   char *proxy_auth_user; /* default: NULL */
   char *proxy_auth_pass; /* default: NULL */
   char *proxy_name; /* default: NULL */
   int   proxy_port; /* default: 1080 */
-
-  /* pour forcer le download de myposts.php3 même si on n'a pas fourni le cookie */
-  int force_fortune_retrieval; 
 
   /* indique si on veut utiliser un nom d'utilisateur (genre 'mmu>' ) */
   char *user_name;
@@ -127,11 +125,7 @@ typedef struct _SitePrefs {
   char *site_path; /* par defaut: "" */
   int site_port; /* le port http (defaut 80) */
   char *path_board_backend; /* par defaut: "board/remote.xml" */
-  char *path_news_backend; /* "short.php3" */
-  char *path_end_news_url; /* ",0,-1,6.html" */
   char *path_board_add;  /* "board/add.php3" */
-  char *path_myposts; /* users/myposts.php3?order=id" */
-  char *path_messages; /* messages */
   char *board_post; /* ce qu'on envoie pour le post (le %s est remplacé par le message) */
   char *user_cookie;
   char *user_login; /* le login (optionnel, peut etre NULL), utilisé pour la reconnaissance des messages que vous avez posté */
@@ -151,15 +145,12 @@ typedef struct _SitePrefs {
 		      le pointeur pointe sur all_names[0] */
   long time_difference; /* decalage horaire du site */
   int mark_id_gaps; /* la ligne rouge pointillée */
-  int check_news;
   int check_board;
-  int check_comments;
-  int check_messages;
   int board_auto_refresh;
 
 } SitePrefs;
 
-#define MAX_SITES 30 /* au-dela, faut vraiment songer à consulter */
+#define MAX_SITES 126 /* au-dela, faut vraiment songer à consulter */
 #define NB_BIGORNO 2
 typedef struct _GeneralPrefs{
   /* en cas d'inactivité les delais vont être progressivement augmentés
@@ -173,15 +164,6 @@ typedef struct _GeneralPrefs{
 
   /* message poste sur la tribune */
   char *coin_coin_message;
-
-  /* fonte utilisee pour l'affichages des news */
-  char *news_fn_family;
-  int news_fn_size;
-
-  int news_titles_fgcolor, news_emph_color;
-  int news_bgcolor, news_fgcolor; /* couleur d'affichage de la fenetre des news */
-  int news_titles_bgcolor;
-  int news_xpos, news_ypos, news_width, news_height; /* dimensions,positions de cette fenetre */
 
   /* pour mise au point ... */
   int debug;
@@ -199,6 +181,8 @@ typedef struct _GeneralPrefs{
   /* indique si la bordure est a la charge du windowmanager (ie si le WM a un dock:
      WMaker, KDE..) ou si wmcoincoin doit dessiner lui meme sa bordure */
   int draw_border;
+
+  int auto_swallow; /* tres experimental */
   
   int palmipede_override_redirect;
 
@@ -239,10 +223,7 @@ typedef struct _GeneralPrefs{
     pp_buttonbar_msgcnt_color, pp_buttonbar_updlcnt_color,
     pp_buttonbar_progressbar_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
-  int pp_show_sec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
-  unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;
-  char *pp_fortune_fn_family;
-  int pp_fortune_fn_size;
+  int pp_show_sec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode;
   int enable_troll_detector;
   int pp_use_classical_tabs;
   int pp_use_colored_tabs;
@@ -304,11 +285,6 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 				      "xXXX#",
 				      "xXXX#",
 				      "X####"},"square"},
-				    {{" ::: ",
-				      ":X##X",
-				      ":# :#",
-				      ":#::#",
-				      " X##."},"circ"},
 				    {{"  x  ",
 				      " :X: ",
 				      " XXX ",
@@ -329,21 +305,6 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 				      "XXXXX",
 				      " :XXX",
 				      "   XX"},"rtri"},
-				    {{"   :X",
-				      "  :X#",
-				      " :X# ",
-				      ":X#  ",
-				      "X#   "},"antislash"},
-				    {{"Xx   ",
-				      "xXx  ",
-				      " xXx ",
-				      "  xXx",
-				      "   xX"},"slash"}
-,				    {{"X. .X",
-				      ".X.X.",
-				      " .X. ",
-				      ".X.X.",
-				      "X. .X"},"cross"},
 				    {{"x    ",
 				      "xX   ",
 				      "xXX  ",
@@ -364,6 +325,27 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 				      "  XX#",
 				      "   X#",
 				      "    X"},"rutri"},
+				    {{" ::: ",
+				      ":X##X",
+				      ":# :#",
+				      ":#::#",
+				      " X##."},"circ"},
+				    {{"   :X",
+				      "  :X#",
+				      " :X# ",
+				      ":X#  ",
+				      "X#   "},"antislash"},
+				    {{"Xx   ",
+				      "xXx  ",
+				      " xXx ",
+				      "  xXx",
+				      "   xX"},"slash"}
+,				    {{"X. .X",
+				      ".X.X.",
+				      " .X. ",
+				      ".X.X.",
+				      "X. .X"},"cross"},
+
 				    {{"  X  ",
 				      "  X  ",
 				      "XXXXX",
@@ -399,4 +381,5 @@ SitePrefs * wmcc_prefs_find_site(GeneralPrefs *p, const char *name);
 void wmcc_site_prefs_set_default(SitePrefs *p);
 void wmcc_site_prefs_destroy(SitePrefs *p);
 void wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src);
+void option_site_root (const char  *optarg, SitePrefs *prefs, int verbatim);
 #endif

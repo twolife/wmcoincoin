@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.97 2003/08/26 21:50:48 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.98 2004/02/29 15:01:19 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -233,7 +233,7 @@ pw_create(const unsigned char *w, unsigned attr, const unsigned char *attr_s, Po
     strcpy(pw->attr_s, attr_s);
   } else pw->attr_s = NULL;
   pw->next = NULL;
-  pw->xpos = -1; pw->ligne=-1; pw->xwidth = 0; 
+  pw->xpos = pw->xdraw = -1; pw->ligne=-1; pw->xwidth = 0; 
   pw->attr = attr;
   pw->parent = parent;
   return pw;
@@ -719,10 +719,10 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
   return pv;
 }
 
-static XFontStruct *
+static CCFontId
 pv_get_font(Pinnipede *pp, unsigned attr)
 {
-  XFontStruct *fn;
+  CCFontId fn;
   if ((attr & PWATTR_BD) && (attr & PWATTR_IT)) {
     fn = pp->fn_itbd;
   } else if (attr & PWATTR_IT) {
@@ -730,7 +730,7 @@ pv_get_font(Pinnipede *pp, unsigned attr)
   } else if (attr & (PWATTR_BD)) {
     fn = pp->fn_bd;
   } else if (attr & (PWATTR_TT)) {
-    fn = pp->fn_minib;
+    fn = pp->fn_mono;
   } else {
     fn = pp->fn_base;
   }
@@ -741,8 +741,9 @@ static void
 pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
   int x, start_of_line;
   PostWord *pw;
-  XFontStruct *fn;
+  CCFontId fn;
   int trollscore_width = 0;
+  short xoffset;
 
   pw = pv->first;
   start_of_line = 1;
@@ -752,7 +753,7 @@ pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
 
   if (pp->trollscore_mode) {
     fn = pv_get_font(pp, PWATTR_BD);
-    trollscore_width = XTextWidth(fn, "0", 1);
+    trollscore_width = ccfont_text_width8(fn, "0", 1);
   } else {
     trollscore_width = 0;
   }
@@ -760,18 +761,21 @@ pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
   while (pw) {
     if (start_of_line) {
       pv->nblig++; 
-    } else x += (pw->attr & PWATTR_HAS_INITIAL_SPACE) ? 4 : 0;
+    } else x += (pw->attr & PWATTR_HAS_INITIAL_SPACE) ? pp->fn_base_space_w : 0;
     fn = pv_get_font(pp, pw->attr);
     assert(pw->w); assert(strlen(pw->w));
-    pw->xwidth = XTextWidth(fn, pw->w, strlen(pw->w));
+
+    pw->xwidth = ccfont_text_xbox(fn, pw->w, strlen(pw->w), &pw->xpos, &xoffset);
+    //pw->xwidth = ccfont_text_width8(fn, pw->w, strlen(pw->w));
     
     if (pw->attr & PWATTR_TROLLSCORE) {
-      pw->xwidth = MAX(XTextWidth(fn, pw->w, strlen(pw->w)),trollscore_width);
+      pw->xwidth = MAX(pw->xwidth,trollscore_width);
     }
 
     pw->ligne = pv->nblig;
-    pw->xpos = x;
-    x += pw->xwidth;
+    pw->xdraw = x;
+    pw->xpos += x; 
+    x += xoffset;
     if (x > width-3 && start_of_line == 0) { 
       x = 13; start_of_line = 1;       
     } else {
@@ -820,8 +824,7 @@ pp_pv_add(Pinnipede *pp, Boards *boards, id_type id)
 			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify,
 			board_key_list_test_mi(boards, mi, Prefs.plopify_key_list),
 			board_key_list_test_mi(boards, mi, Prefs.hilight_key_list)); 
-
-    pv_justif(pp, pv, 11, pp->win_width - (pp->sc ? SC_W-1 : 0));
+    pv_justif(pp, pv, 11, pp->zmsg_w); // ZL win_width - (pp->sc ? SC_W-1 : 0));
     assert(pv);
     pv->next = pp->pv;
     pp->pv = pv;
@@ -937,7 +940,7 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
   id_type id;
   PostVisual *pv;
 
-  if (flag_updating_board) return;
+  if (flag_updating_board) return; // on repousse un peu le refresh
 
 
   if (pp->lignes_sel) {
@@ -946,10 +949,6 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
   if (pp->last_selected_text) {
     free(pp->last_selected_text); pp->last_selected_text = NULL;
   }
-
-  pp_update_fortune(dock);
-
-  
 
   //  printf("[colle_en_bas=%d] ..", pp->colle_en_bas);
   if (id_type_is_invalid(id_base) ||
@@ -1056,7 +1055,7 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
   if (pp->sc) {
     if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock); }
 /*     else { pp_scrollcoin_move_resize(dock); } */
-     scrollcoin_setpos(pp->sc, get_id_count_filtered(boards, &pp->filter, pp->id_base)); 
+     scrollcoin_setpos(pp->sc, get_id_count_filtered(boards, &pp->filter, pp->id_base));
   } 
 }
 
@@ -1083,7 +1082,8 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   Pinnipede *pp = dock->pinnipede;
   int pl;
   int old_pos;
-  unsigned long pixel, old_pixel;
+  unsigned long pixel; //, old_pixel;
+  CCColorId color;
   int y;
   int site_num = -1;
 
@@ -1098,9 +1098,9 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
   XSetForeground(dock->display, dock->NormalGC, bgpixel);
   if (use_bg_pixmap == 0) {
-    XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
+    XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h);
   } else {
-    XCopyArea(dock->display, pp->lpix, pp->lpix, dock->NormalGC, 0, dest_y+pp->lpix_h0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, 0);
+    XCopyArea(dock->display, pp->lpix, pp->lpix, dock->NormalGC, pp->zmsg_x1, dest_y+pp->lpix_h0, pp->zmsg_w, pp->fn_h, 0, 0);
   }
 
 
@@ -1114,14 +1114,21 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   if (pw) {
     Board *board = dock->sites->boards->btab[id_type_sid(pw->parent->id)];
     if (id_type_lid(pw->parent->id) > board->last_post_id_prev) {
-      unsigned long pixel = 0x8080ff;
+      /*unsigned long pixel = 0x8080ff;
       if ((wmcc_tic_cnt - board->wmcc_tic_cnt_last_check) > 10*(1000/WMCC_TIMER_DELAY_MS)) {
 	pixel = ((((bgpixel & 0xff0000) + (pixel & 0xff0000))/2 & 0xff0000) + 
 		 (((bgpixel & 0x00ff00) + (pixel & 0x00ff00))/2 & 0x00ff00) + 
 		 (((bgpixel & 0x0000ff) + (pixel & 0x0000ff))/2 & 0x0000ff));
       }
       XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(pixel));
-      XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 4, pp->fn_h);
+      XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 4, pp->fn_h);*/
+      unsigned long pixel = 0x106fe5; // un bleu qui claque
+      int y = 0 - dest_y%4;
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(pixel));
+      while (y < pp->fn_h) {
+        XFillRectangle(dock->display, lpix, dock->NormalGC, 2, y, 2, 2);
+        y += 4;
+      }
     }
   }
 
@@ -1143,22 +1150,19 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
     xgc.line_style = LineOnOffDash;
     
     XChangeGC(dock->display, dock->NormalGC, GCForeground | GCLineStyle, &xgc);
-    XDrawLine(dock->display, lpix, dock->NormalGC, 0, 0, pp->win_width-1, 0);
+    XDrawLine(dock->display, lpix, dock->NormalGC, 5, 0, pp->zmsg_w, 0);
     xgc.line_style = LineSolid;
     XChangeGC(dock->display, dock->NormalGC, GCLineStyle, &xgc);
   }
 
   XSetBackground(dock->display, dock->NormalGC, bgpixel);
-  old_pixel = bgpixel;
+  //  old_pixel = bgpixel;
 
   pixel = 0L;
-  y = pp->fn_base->ascent;
+  y = ccfont_ascent(pp->fn_base)-1;
   old_pos = 0;
   if (pw) {
-    XFontStruct *fn;
-    XFontStruct *prev_font;
-    
-    prev_font = NULL;
+    CCFontId fn;
     pl = pw->ligne;
     /*
       printf("pw->parent = %d\n", pw->parent->id);
@@ -1181,7 +1185,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
       
       if (pw->parent->is_my_message && pp->hilight_my_message_mode) { 
-	pixel = pp->hilight_my_msg_pixel; 
+	pixel = pp->hilight_my_msg_pixel;
       } else if (pw->parent->is_answer_to_me && pp->hilight_answer_to_me_mode) { 
 	pixel = pp->hilight_answer_my_msg_pixel;
       } else if (pw->parent->is_hilight_key && pp->hilight_key_mode) { 
@@ -1206,7 +1210,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	  }
 	}
 
-	old_pixel = pixel;
+	//old_pixel = pixel;
       }
     }
 
@@ -1214,59 +1218,55 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
     while (pw && pw->ligne == pl) {
       int force_bold = 0;
       if (pw->attr & PWATTR_TSTAMP) {
-	pixel = pp->timestamp_pixel[site_num];
+	color = pp->timestamp_color[site_num];
 //	if (pw->parent->is_my_message) { pixel = IRGB2PIXEL(0x000080); }
       } else if (pw->attr & (PWATTR_LNK|PWATTR_REF)) {
 	if ((pw->attr & PWATTR_VISITED) == 0) {
-	  pixel = pp->lnk_pixel[site_num];
+	  color = pp->lnk_color[site_num];
 	} else {
-	  pixel = pp->visited_lnk_pixel[site_num];
+	  color = pp->visited_lnk_color[site_num];
 	}
       } else if (pw->attr & PWATTR_NICK) {
-	pixel = pp->nick_pixel[site_num];
+	color = pp->useragent_color[site_num];
       } else if (pw->attr & PWATTR_LOGIN) {
-	pixel = pp->login_pixel[site_num];
+	color = pp->login_color[site_num];
       } else if (pw->attr & PWATTR_TROLLSCORE) {
-	pixel = pp->trollscore_pixel[site_num];
+	color = pp->trollscore_color[site_num];
       } else {
-	pixel = pp->txt_pixel[site_num];
+	color = pp->txt_color[site_num];
       }
 
       if (pw->attr & (PWATTR_TOTOZ_UNKNOWN)) {
-        pixel = IRGB2PIXEL(0xa00000);
+        color = pp->totoz_unknown_color; 
       } else if (pw->attr & (PWATTR_TOTOZ_DOWNLOADING)) {
-        pixel = IRGB2PIXEL(0x00a000);
+        color = pp->totoz_downloading_color; 
       } else if (pw->attr & (PWATTR_TOTOZ_NOTFOUND)) {
-        pixel = pp->plopify_pixel;
+        color = pp->plopify_color;
       } else if (pw->attr & (PWATTR_TOTOZ_FOUND)) {
-        pixel = IRGB2PIXEL(0x0000a0);
-        //pixel = pp->trollscore_pixel[site_num];
+        color = pp->totoz_found_color; 
       }
 
       if (pw->parent->is_plopified) {
-	pixel = pp->plopify_pixel;
+	color = pp->plopify_color;
       }
 
       if (pw->attr & (PWATTR_TMP_EMPH)) {
 	XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
 	XFillRectangle(dock->display, lpix, dock->NormalGC,pw->xpos, 1, pw->xwidth, pp->fn_h-1);
-	pixel = pp->popup_fgpixel;
-	XSetForeground(dock->display, dock->NormalGC, pixel);
+	color = pp->popup_fgcolor;
+	//XSetForeground(dock->display, dock->NormalGC, pixel);
       }
 
-      if (pixel != old_pixel) {
+      /*if (pixel != old_pixel) {
 	XSetForeground(dock->display, dock->NormalGC, pixel);
 	old_pixel = pixel;
-      }
+        }*/
 
       fn = pv_get_font(pp, pw->attr | (force_bold ? PWATTR_BD : 0));
-      if (fn != prev_font) {
-	XSetFont(dock->display, dock->NormalGC, fn->fid);
-	prev_font = fn;
-      }
 
 
-      XDrawString(dock->display, lpix, dock->NormalGC, pw->xpos, y, pw->w, strlen(pw->w));
+      //XDrawString(dock->display, lpix, dock->NormalGC, pw->xpos, y, pw->w, strlen(pw->w));
+      ccfont_draw_string8(fn, color, lpix, pw->xpos, y, pw->w, -1);
 
       if (pw->attr & PWATTR_U) {
 	int x1;
@@ -1275,9 +1275,11 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	} else {
 	  x1 = pw->xpos+pw->xwidth-1;
 	}
+        XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(color));
 	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y+1, x1, y+1);
       }
       if (pw->attr & (PWATTR_TMP_EMPH)) {
+        XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(pp->popup_fgcolor));
 	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y+1,  pw->xpos+pw->xwidth-1, y+1);
 	if (pw->xwidth > 2) {
 	  XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos+1, y+2, pw->xpos+pw->xwidth-2, y+2);
@@ -1287,13 +1289,13 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
       if (pw->attr & PWATTR_S) {	  
 	int x1;
 	pixel = pp->strike_pixel[site_num]; 
-	XSetForeground(dock->display, dock->NormalGC, pixel); old_pixel = pixel;
+	XSetForeground(dock->display, dock->NormalGC, pixel);
 	if (pw->next && pw->next->ligne == pw->ligne && (pw->next->attr & PWATTR_S)) {
 	  x1 = pw->next->xpos;
 	} else {
 	  x1 = pw->xpos+pw->xwidth-1;
 	}
-	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y-fn->ascent/2+fn->descent/2, x1, y-fn->ascent/2+fn->descent/2);
+	XDrawLine(dock->display, lpix, dock->NormalGC, pw->xpos, y-ccfont_height(fn)/2, x1, y-ccfont_height(fn)/2);
       }
       pw->attr &= ~PWATTR_TMP_EMPH;
       old_pos = pw->xpos + pw->xwidth;
@@ -1364,15 +1366,18 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
   int nb_anti_ref;
   int ref_num; /* utilise pour les ref précises dans les post multiples (ie qui ont le meme timestamp) 
 		  par defaut, vaut -1 (cad désactivé)
+                  peut valoir -2 : la ref est précise, mais on ne se sert que de l'id, pas des timestamps
 		*/
-
   if (pp->lignes == NULL) return; /* ça peut arriver pendant que flag_updating_board != 0 */
 
+  /*  {
+    time_t t=time(NULL);
+    printf("%02d:%02d:%02d in pp_refresh...\n", (t/3600)%24, (t/60)%60, t%60);
+    dump_backtrace();
+  }
+  */
   ref_num = -1;
   ref_comment[0] = 0;
-
-  pp_refresh_fortune(dock, d);
-
 
   /* effacage des bandes blanches */
   {
@@ -1381,14 +1386,14 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
     y = pp->zmsg_y1;
     h = LINEY0(0)-y;
     if (h>0) {
-      pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
+      pp_clear_win_area(dock, pp->zmsg_x1, y, pp->zmsg_w, h);
     }
 
     /* en bas */
     y = LINEY0(pp->nb_lignes);
     h = (pp->zmsg_y2 - y) + 1;
     if (h>0) {
-      pp_clear_win_area(dock, 0, y, pp->win_width-(pp->sc ? SC_W-1:0), h);
+      pp_clear_win_area(dock, pp->zmsg_x1, y, pp->zmsg_w, h);
     }
   }
 
@@ -1399,49 +1404,57 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
   /* premier cas: on survole une reference */
   if (pw_ref && (pw_ref->attr & PWATTR_REF)) {
     int bidon;
-
     ref_mi = check_for_horloge_ref(boards, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon, &ref_num); assert(bidon);
-    if (ref_mi) { 
-      board_msg_info *mi;
-
-      /* on verifie que la ref apparait *entierement* dans la fenetre 
-	 -> on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
-       */
-      mi = ref_mi;
-      while (mi && mi->timestamp == ref_mi->timestamp && 
-	     id_type_sid(mi->id) == id_type_sid(ref_mi->id)) {
-	ref_in_window = 0;
-	for (l=0; l < pp->nb_lignes; l++) {
-	  if (pp->lignes[l]) {
-	    if (id_type_eq(pp->lignes[l]->parent->id, ref_mi->id)) {
-	      if (ref_in_window == 0) {
-		/* sale ruse... si toutes les lignes sont là, a la fin du FOR on obtient ref_in_window = 1 */
-		ref_in_window = pp->lignes[l]->parent->nblig;
-	      } else {
-		ref_in_window--;
-	      }
-	    }
-	  }
-	}
-	if (ref_in_window != 1) {
-	  ref_in_window = 0;
-	  break;
-	}
-	get_next_id_filtered(boards, mi->id, &mi, NULL);
-	if (ref_num != -1) break; /* si c'est pas une ref à un multipost sans précision, break (chuis pas clair) */
-      }
-	
-      /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
-	 temporairement en gras (ça c vraiment pour faire le cakos)*/
-      pp_refresh_hilight_refs(pp, boards, id_type_sid(ref_mi->id), 
-			      ref_mi->timestamp, ref_mi->sub_timestamp);
-    }
+  } else if (pw_ref && (pw_ref->attr & PWATTR_LNK)) {
+    char *link = strdup(pw_ref->attr_s);
+    char *anchor = strrchr(link, '#');
+    if (anchor && anchor > strrchr(link, '/')) *anchor = 0;
+    RSSBonusInfo *ri = rss_find_from_link(boards, link);
+    if (ri) {
+      ref_mi = boards_find_id(boards, ri->id); 
+      ref_num = -2; // pour eviter les multiples hilights
+      if (ref_mi) pw_ref->attr |= PWATTR_TMP_EMPH;
+    } else printf("this is not possible\n");
+    free(link);
   } else if (pw_ref && (pw_ref->attr & PWATTR_TSTAMP)) {
     pp_refresh_hilight_refs(pp, boards, id_type_sid(pw_ref->parent->id), 
 			    pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
   }
-
-
+  if (ref_mi) { 
+    board_msg_info *mi;
+    
+    /* on verifie que la ref apparait *entierement* dans la fenetre 
+       -> on boucle pour les situation ou il y a plusieurs messages qui ont le meme timestamp 
+    */
+    mi = ref_mi;
+    while (mi && mi->timestamp == ref_mi->timestamp && 
+           id_type_sid(mi->id) == id_type_sid(ref_mi->id)) {
+      ref_in_window = 0;
+      for (l=0; l < pp->nb_lignes; l++) {
+        if (pp->lignes[l]) {
+          if (id_type_eq(pp->lignes[l]->parent->id, ref_mi->id)) {
+            if (ref_in_window == 0) {
+              /* sale ruse... si toutes les lignes sont là, a la fin du FOR on obtient ref_in_window = 1 */
+		ref_in_window = pp->lignes[l]->parent->nblig;
+            } else {
+              ref_in_window--;
+            }
+          }
+        }
+      }
+      if (ref_in_window != 1) {
+        ref_in_window = 0;
+        break;
+      }
+      get_next_id_filtered(boards, mi->id, &mi, NULL);
+      if (ref_num >= 0) break; /* si c'est pas une ref à un multipost sans précision, break (chuis pas clair) */
+    }
+    
+    /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
+       temporairement en gras (ça c vraiment pour faire le cakos)*/
+    pp_refresh_hilight_refs(pp, boards, id_type_sid(ref_mi->id), 
+                            ref_mi->timestamp, ref_mi->sub_timestamp);
+  }
 
   /* 
      affichage du contenu de la tribune 
@@ -1491,7 +1504,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
     pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
 		 pp->transparency_mode && !opaque_bg, LINEY0(l));
 
-    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
+    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, LINEY0(l));
   }
 
   if (pw_ref && ref_in_window == 0) {
@@ -1514,7 +1527,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	  PostWord *pw = pv->first;
 	  while (pw) {
 	    pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); 
-	    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
+	    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, y);
 	    y += pp->fn_h;
 	  }
 	}
@@ -1529,21 +1542,36 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
 	XSetBackground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
-	XSetFont(dock->display, dock->NormalGC, pp->fn_it->fid);
-	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel[pp->active_tab->site->site_id]);
-	XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_base->ascent, ref_comment, strlen(ref_comment));
-	XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
+	//XSetFont(dock->display, dock->NormalGC, pp->fn_it->fid);
+        ccfont_draw_string8(pp->fn_it, pp->timestamp_color[pp->active_tab->site->site_id], 
+                            pp->lpix, 5, ccfont_ascent(pp->fn_it), ref_comment, strlen(ref_comment));
+	//XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_base->ascent, ref_comment, strlen(ref_comment));
+	XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, y);
 	y += pp->fn_h;
       }
       XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
-      XFillRectangle(dock->display, pp->win, dock->NormalGC, 0, 0, pp->win_width, 3);
-      XFillRectangle(dock->display, pp->win, dock->NormalGC, 0, y, pp->win_width, 3);
+      XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, 0, pp->win_width, 3);
+      XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, y, pp->win_width, 3);
       y+=3;
       XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
-      XDrawLine(dock->display, pp->win, dock->NormalGC, 0, y, pp->win_width, y);
+      XDrawLine(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, y, pp->win_width, y);
     }
   }
 
+  /* toutes les boards affichées à l'ecran sont marquées comme completement lues */
+  /*{
+    int sid = -1;
+    for (l=0; l < pp->nb_lignes; l++) {
+      PostWord *pw = pp->lignes[l];
+      if (pw && pw->parent) {
+        if (id_type_sid(pw->parent->id) != sid) {
+          sid = id_type_sid(pw->parent->id);
+          if (sid >= 0 && boards->btab[sid]) board_set_viewed(boards->btab[sid]);
+        }
+      }
+    }
+  }
+  */
   pp_widgets_refresh(dock);
 }
 
@@ -1681,6 +1709,24 @@ pp_animate(Dock *dock)
       pp_tabs_refresh(dock);
     }
   }
+  if (pp->flag_pp_update_request && !flag_updating_board) {
+    pp->flag_pp_update_request = 0;
+    pp_pv_destroy(pp);
+    pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
+    pp_refresh(dock, pp->win, NULL);   
+  }
+}
+
+void pp_update_and_redraw(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds) 
+{
+  Pinnipede *pp = dock->pinnipede;
+  if (!flag_updating_board) {
+    pp_pv_destroy(pp);
+    pp_update_content(dock, id_base, decal, adjust, update_scrollbar_bounds);
+    pp_refresh(dock, pp->win, NULL);
+    pp->flag_pp_update_request = 0; /* a tout hasard */
+  }
+  else pp->flag_pp_update_request = 1; 
 }
 
 void
@@ -1693,7 +1739,7 @@ pp_update_bg_pixmap(Dock *dock)
     XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
   }
   
-  pp->lpix_h0 = MAX(MINIB_H, pp->fn_h);
+  pp->lpix_h0 = MAX(MAX(MINIB_H, pp->fn_h), PPT_MAX_H);
 
   if (pp->transparency_mode) {
     int xpos, ypos;
@@ -1720,12 +1766,15 @@ pp_update_bg_pixmap(Dock *dock)
 static int
 pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
 {
+#if 0
   char base_name[512];
   char ital_name[512];
   char bold_name[512];
   char itbd_name[512];
 
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
+  pp->font_base = ccfont_get("times-12");
+
   snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_base = XLoadQueryFont(display, base_name);
   if (!pp->fn_base) {
@@ -1777,6 +1826,21 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
     }
   }
   pp->fn_h = pp->fn_base->ascent + pp->fn_base->descent+1;
+
+
+#endif
+  pp->fn_base = ccfont_get("verdana-8"); 
+  pp->fn_base_space_w = ccfont_text_width8(pp->fn_base, "  ", 2);
+  printf("fn_base_space_w = %d\n", pp->fn_base_space_w);
+  pp->fn_it = ccfont_get("verdana-8:slant=italic,oblique");
+  pp->fn_bd = ccfont_get("verdana-8:bold");
+  pp->fn_itbd = ccfont_get("verdana-8:slant=italic,oblique:bold");
+  pp->fn_mono = ccfont_get("monospace-8");
+  pp->fn_minib = ccfont_get("sans-7");
+  pp->fn_h = ccfont_height(pp->fn_base)+1;
+  pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_it));
+  pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_bd));
+  pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_itbd));
   return 0;
 }
 
@@ -1784,6 +1848,13 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
 static void
 pp_free_fonts(Pinnipede *pp, Display *display)
 {
+  ccfont_release(&pp->fn_base);
+  ccfont_release(&pp->fn_it);
+  ccfont_release(&pp->fn_bd);
+  ccfont_release(&pp->fn_itbd);
+  ccfont_release(&pp->fn_mono);
+  ccfont_release(&pp->fn_minib);
+  /*
   if (pp->fn_base)
     XFreeFont(display, pp->fn_base); 
   pp->fn_base = NULL;
@@ -1796,17 +1867,47 @@ pp_free_fonts(Pinnipede *pp, Display *display)
   if (pp->fn_itbd)
     XFreeFont(display, pp->fn_itbd);
   pp->fn_itbd = NULL;
+  */
+}
+
+static void 
+pp_free_colors(Pinnipede *pp) {
+  int i;
+  cccolor_release(&pp->ccc_black);
+  cccolor_release(&pp->popup_fgcolor);
+  cccolor_release(&pp->plopify_color);
+  cccolor_release(&pp->totoz_unknown_color);
+  cccolor_release(&pp->totoz_found_color);
+  cccolor_release(&pp->totoz_downloading_color);
+  cccolor_release(&pp->minib_dark_color);
+  for (i=0; i <MAX_SITES; i++) {
+    cccolor_release(&pp->timestamp_color[i]);
+    cccolor_release(&pp->useragent_color[i]);
+    cccolor_release(&pp->login_color[i]);
+    cccolor_release(&pp->lnk_color[i]);
+    cccolor_release(&pp->visited_lnk_color[i]);
+    cccolor_release(&pp->txt_color[i]);
+    cccolor_release(&pp->trollscore_color[i]);
+  }
 }
 
 
 #define GET_BICOLOR(x) (pp->transparency_mode ? IRGB2PIXEL(x.transp) : IRGB2PIXEL(x.opaque))
 
-void
+static void
 pp_set_prefs_colors(Dock *dock) 
 {
   Pinnipede *pp = dock->pinnipede;
   int i;
   
+  cccolor_reset(&pp->ccc_black, 0);
+  cccolor_reset(&pp->popup_fgcolor, GET_BICOLOR(Prefs.pp_popup_fgcolor));
+  cccolor_reset(&pp->plopify_color, GET_BICOLOR(Prefs.pp_plopify_color));
+  cccolor_reset(&pp->totoz_unknown_color, 0xa00000);
+  cccolor_reset(&pp->totoz_found_color, 0x0000a0);
+  cccolor_reset(&pp->totoz_downloading_color, 0x00a000);
+  cccolor_reset(&pp->minib_dark_color, GET_BICOLOR(Prefs.pp_buttonbar_fgcolor));
+
   for (i=0; i <MAX_SITES; i++) {
     if (Prefs.site[i] == NULL) continue;
     pp->win_bgpixel[i] = IRGB2PIXEL(Prefs.site[i]->pp_bgcolor);
@@ -1815,14 +1916,20 @@ pp_set_prefs_colors(Dock *dock)
     pp->visited_lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_visited_url_color);
     pp->strike_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_strike_color);
     pp->txt_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_fgcolor);
-    pp->nick_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_useragent_color);
+    pp->useragent_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_useragent_color);
     pp->login_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_login_color);
     pp->trollscore_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_trollscore_color);
+    cccolor_reset(&pp->timestamp_color[i], GET_BICOLOR(Prefs.site[i]->pp_tstamp_color));
+    cccolor_reset(&pp->useragent_color[i], GET_BICOLOR(Prefs.site[i]->pp_useragent_color));
+    cccolor_reset(&pp->login_color[i], GET_BICOLOR(Prefs.site[i]->pp_login_color));
+    cccolor_reset(&pp->lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_url_color));
+    cccolor_reset(&pp->visited_lnk_color[i], GET_BICOLOR(Prefs.site[i]->pp_visited_url_color));
+    cccolor_reset(&pp->txt_color[i], GET_BICOLOR(Prefs.site[i]->pp_fgcolor));
+    cccolor_reset(&pp->trollscore_color[i], GET_BICOLOR(Prefs.site[i]->pp_trollscore_color));
   }
   pp->popup_fgpixel = GET_BICOLOR(Prefs.pp_popup_fgcolor);
   pp->popup_bgpixel = GET_BICOLOR(Prefs.pp_popup_bgcolor);
   pp->minib_pixel = GET_BICOLOR(Prefs.pp_buttonbar_bgcolor);
-  pp->minib_dark_pixel = GET_BICOLOR(Prefs.pp_buttonbar_fgcolor);
   pp->minib_msgcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color);
   pp->minib_updlcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_updlcnt_color);
   pp->progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
@@ -1854,18 +1961,30 @@ void
 pp_build(Dock *dock) 
 {
   Pinnipede *pp;
-
+  int i;
   ALLOC_OBJ(pp, Pinnipede);
   dock->pinnipede = pp;
 
-
   pp->mapped = 0;
+
+  pp->fn_base = pp->fn_it = pp->fn_itbd = pp->fn_bd = pp->fn_mono = pp->fn_minib = (CCFontId)(-1);
+  pp->ccc_black = (CCColorId)(-1);
+  pp->popup_fgcolor = pp->plopify_color = pp->totoz_unknown_color = 
+    pp->totoz_found_color = pp->totoz_downloading_color = 
+    pp->minib_dark_color = (CCColorId)(-1);
+  for (i=0;i <MAX_SITES; i++) {
+    pp->timestamp_color[i] = pp->useragent_color[i] = pp->login_color[i] = 
+      pp->lnk_color[i] = pp->visited_lnk_color[i] = pp->txt_color[i] = 
+      pp->trollscore_color[i] = (CCColorId)(-1);
+  }
 
   pp->lpix_h0 = 0;
   pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
 
   pp->id_base = id_type_invalid_id(); pp->decal_base = 0;
   pp->colle_en_bas = 1;
+
+  pp->flag_pp_update_request = 0;
 
   pp->win_width = Prefs.pp_width;
   pp->win_height = Prefs.pp_height;
@@ -1904,16 +2023,6 @@ pp_build(Dock *dock)
   pp->filter.nid = 0; pp->filter.id = NULL;
   pp->filter.filter_boitakon = 1;
 
-  pp->fortune_mode = Prefs.pp_fortune_mode; 
-  pp->fortune_h = 0;
-  pp->ph_fortune = picohtml_create(dock, Prefs.pp_fortune_fn_family, Prefs.pp_fortune_fn_size, 0);
-  picohtml_set_default_pixel_color(pp->ph_fortune, IRGB2PIXEL(Prefs.pp_fortune_fgcolor));
-  picohtml_set_parag_indent(pp->ph_fortune, 5);
-  picohtml_set_parag_skip(pp->ph_fortune, 1.0);
-  picohtml_set_line_skip(pp->ph_fortune, 1.0);
-
-  
-
   pp->pv = NULL;
   pp->survol_hash = 0;
 
@@ -1922,7 +2031,7 @@ pp_build(Dock *dock)
   //  if (pp->use_minibar)
   //    pp_minib_initialize(pp);
 
-  pp->fn_minib = dock->fixed_font;
+  //pp->fn_minib = dock->fixed_font;
 
   pp_totoz_build(dock);
   pp_rebuild(dock);
@@ -1937,8 +2046,8 @@ pp_destroy(Dock *dock)
   if (pp->mapped) pp_unmap(dock);
   assert(pp->pv == NULL); assert(pp->sc == NULL); 
   assert(pp->lignes_sel == NULL); assert(pp->lignes == NULL);
-  picohtml_destroy(dock->display, pp->ph_fortune);
   pp_free_fonts(pp, dock->display);
+  pp_free_colors(pp);
   pp_tabs_destroy(pp);
   pp_totoz_destroy(dock);
   free(pp); dock->pinnipede = NULL;
@@ -1959,9 +2068,9 @@ pp_rebuild(Dock *dock)
   }
   pp_set_prefs_colors(dock);
   if (pp_ismapped(dock)) {
-    if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
+    pp_scrollcoin_set(dock,0);
     pp_update_bg_pixmap(dock);
-    pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20, pp->transparency_mode);
+    pp_scrollcoin_set(dock,1);
   }
   pp_tabs_destroy(pp);
   pp_tabs_build(dock);
@@ -2028,11 +2137,18 @@ pp_show(Dock *dock)
   }
   
 
-  
-  pp->win = XCreateSimpleWindow (dock->display, dock->rootwin, 
-				 xpos, ypos, pp->win_width,pp->win_height, 0,
-				 WhitePixel(dock->display, dock->screennum),
-				 pp_get_win_bgcolor(dock));
+  if (dock->pp_win) { /* on recycle tjs la meme fenetre ? 
+                         inconvenient: (avec wmaker) la fenetre est toujours remappée dans le même workspace :/
+                       */
+    pp->win = dock->pp_win;
+  } else {
+    pp->win = XCreateSimpleWindow (dock->display, dock->rootwin, 
+                                   xpos, ypos, pp->win_width,pp->win_height, 0,
+                                   WhitePixel(dock->display, dock->screennum),
+                                   pp_get_win_bgcolor(dock));
+  }
+  XMoveResizeWindow(dock->display, pp->win, xpos, ypos, pp->win_width, pp->win_height);
+
   wa.event_mask =
     ButtonPressMask | 
     ButtonReleaseMask | 
@@ -2102,7 +2218,7 @@ pp_show(Dock *dock)
 
   assert(pp->sc == NULL);
 
-  pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W+1, 0, pp->win_height-20, pp->transparency_mode);
+  pp_scrollcoin_set(dock,1);
 
   //  XMoveWindow(dock->display, pp->win, 100, 100);
   pp->mapped = 1;
@@ -2111,6 +2227,8 @@ pp_show(Dock *dock)
 		    pp->id_base, 0, 0, 1);
     
   pp->survol_hash = 0;
+
+  //XReparentWindow(dock->display, DOCK_WIN(dock), pp->win, 5, 5);
 }
 
 
@@ -2119,7 +2237,7 @@ pp_find_message_at_xy(Dock *dock, int x, int y) {
   Pinnipede *pp = dock->pinnipede;
   board_msg_info *mi = NULL;
   if (y >= pp->zmsg_y1 && y <= pp->zmsg_y2 && 
-      x >= 0 && x < (pp->win_width - (pp->sc ? SC_W : 0))) {
+      x >= pp->zmsg_x1 && x <= pp->zmsg_x2) {
     int l;
     for (l=0; l < pp->nb_lignes; l++) {
       if (y >= LINEY0(l) && y <= LINEY1(l) && pp->lignes[l]) {
@@ -2137,6 +2255,7 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
   PostWord *pw;
   int l;
   pw = NULL;
+  x -= pp->zmsg_x1;
   if (y >= pp->zmsg_y1 && y <= pp->zmsg_y2) {
     int trouve = 0;
     for (l=0; l < pp->nb_lignes; l++) {
@@ -2164,7 +2283,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
 {
   Pinnipede *pp = dock->pinnipede;
   int l,cnt;
-  XFontStruct *fn;
+  CCFontId fn;
   char *s;
   int ry0, ry1;
  
@@ -2172,29 +2291,27 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
   if (strlen(txt) == 0) return;
 
   fn = pp->fn_bd;
-  XSetFont(dock->display, dock->NormalGC, fn->fid);
+  //XSetFont(dock->display, dock->NormalGC, fn->fid);
   l = 0; s = txt;
   while (*s) {
     cnt = 0;
     while (s[cnt] && s[cnt] != '\n') {
       cnt++;
-      if (XTextWidth(fn, s, cnt) > pp->win_width-16) {
+      if (ccfont_text_width8(fn, s, cnt) > pp->zmsg_w-16) {
 	cnt--; break;
       }
     }
     XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
-    ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - fn->ascent);
-    ry1 = (l+1)*pp->fn_h + fn->descent + (s[cnt]==0 ? 6 : 0);
-    XFillRectangle(dock->display, pp->win, dock->NormalGC, 0, ry0,
-		   pp->win_width, ry1 - ry0+1);
+    ry0 = (l == 0 ? 0 : (l+1)*pp->fn_h - ccfont_ascent(fn));
+    ry1 = (l+1)*pp->fn_h + ccfont_descent(fn) + (s[cnt]==0 ? 6 : 0);
+    XFillRectangle(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry0,
+		   pp->zmsg_w, ry1 - ry0+1);
     if (s[cnt]==0) {
       XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
-      XDrawLine(dock->display, pp->win, dock->NormalGC, 0, ry1, pp->win_width,ry1);
+      XDrawLine(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry1, pp->zmsg_x1+pp->zmsg_w-1, ry1);
     }
-    XSetForeground(dock->display, dock->NormalGC, pp->popup_fgpixel);
-    XSetBackground(dock->display, dock->NormalGC, pp->popup_bgpixel);
-    XDrawImageString(dock->display, pp->win, dock->NormalGC, 8, (l+1)*pp->fn_h,
-		     s, cnt);	    
+    ccfont_draw_string8(pp->fn_bd, pp->popup_fgcolor, pp->win, pp->zmsg_x1+8, (l+1)*pp->fn_h,
+                        s, cnt);
     s += cnt;
     if (*s == '\n') s++;
     if (*s) l++;
@@ -2268,6 +2385,12 @@ pp_check_survol(Dock *dock, PostWord *pw, int force_refresh)
   if (pw) {
     if (pw->attr_s && (pw->attr & PWATTR_REF)==0) { /* pour les [url] */
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
+      RSSBonusInfo *ri;
+      if ((ri=rss_find_from_link(boards, survol))) {
+        if (!id_type_eq(ri->id,pw->parent->id)) {
+          survol[0] = 0; is_a_ref = 1;
+        }
+      }
     } else if (pw->attr & PWATTR_TSTAMP) {
       board_msg_info *mi;
       char blah[1024], snrep[1024];
@@ -2361,15 +2484,17 @@ pp_unmap(Dock *dock)
   /* on sauve la position de la fenetre (en prenant en compte les decorations du WM ) */
   get_window_pos_with_decor(dock->display, pp->win, &pp->win_decor_xpos, &pp->win_decor_ypos);
 
-
-  XDestroyWindow(dock->display, pp->win);
   if (pp->lpix != None) XFreePixmap(dock->display, pp->lpix); 
   pp->lpix = None;
+
+  if (dock->pp_win) {
+    XUnmapWindow(dock->display, pp->win);
+  } XDestroyWindow(dock->display, pp->win);
   pp->win = None;
 
   pp->mapped = 0;
 
-  if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
+  pp_scrollcoin_set(dock,0);
   if (pp->last_selected_text) { free(pp->last_selected_text); pp->last_selected_text = NULL; }
 
   pp_pv_destroy(pp);
@@ -2652,7 +2777,8 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   enum { WORD, UA_WITH_LOGIN, UA_NO_LOGIN, LOGIN, TSTAMP, THREAD, NOTHING } what_clicked;
   int hk_what_clicked = -1, plop_lvl, emph_lvl;
   enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
-	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, PUP_DO_TOTOZ, 
+	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
+         PUP_DO_TOTOZ, PUP_DO_TOTOZ_BOOKMARK, PUP_DO_TOTOZ_UNBOOKMARK, 
 	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
 	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
 	 };
@@ -2759,6 +2885,8 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   }
   if (pw && (pw->attr & PWATTR_TOTOZ)) {
     plopup_pushentry(dock, _("Try to download the correspounding picture"), PUP_DO_TOTOZ);
+    plopup_pushentry(dock, _("Bookmark this picture"), PUP_DO_TOTOZ_BOOKMARK);
+    plopup_pushentry(dock, _("Remove this picture from bookmarks"), PUP_DO_TOTOZ_UNBOOKMARK);
   }
 
   plopup_pushsepar(dock);
@@ -2857,6 +2985,14 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     assert(pw);
     pp_totoz_download(dock, pw->w);
   } break;
+  case PUP_DO_TOTOZ_BOOKMARK:
+  case PUP_DO_TOTOZ_UNBOOKMARK: {
+    if (pw && strlen(pw->w)) {
+      totoz_bookmark_insert(dock, pw->w);
+      totoz_bookmark_save(dock, 1);
+      totoz_bookmark_save_html(dock);
+    }
+  } break;
   case PUP_TOGGLE_MINIB: {
     if (pp->use_minibar == 0) {
       pp_minib_show(dock);
@@ -2897,9 +3033,8 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   if (descr) free(descr);
   key_list_destroy(hk_plop); key_list_destroy(hk_emph);
   if (redraw) {
-    pp_pv_destroy(pp); /* force le rafraichissement complet */
-    pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
-    pp_refresh(dock, pp->win, NULL);
+    /* force le rafraichissement complet */
+    pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,0);
   }
 }
 
@@ -2923,27 +3058,32 @@ pp_open_url(Dock *dock, char *url, int mx, int my, int num) {
   Pinnipede *pp = dock->pinnipede;
   open_url(url, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, num);
   pp_visited_links_add(pp, url);
-  pp_pv_destroy(pp);
-  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
-  pp_refresh(dock, pp->win, NULL);
+  pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);
 }
 
 static void
 pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
-  char s_ts[11];
-  char s_subts[3];
+  char s_ts[300];
+  int is_rss = 0;
   assert(pw->attr & PWATTR_TSTAMP);
-  s_subts[0] = s_subts[1] = s_subts[2] = 0;
-  switch(pw->parent->sub_tstamp) {
-  case -1: break;
-  case 0: s_subts[0] = '¹'; break;
-  case 1: s_subts[0] = '²'; break;
-  case 2: s_subts[0] = '³'; break;
-  default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
+  s_ts[0] = 0;
+  is_rss = board_is_rss_feed(dock->sites->boards->btab[id_type_sid(pw->parent->id)]);
+  if (is_rss) {
+    RSSBonusInfo *ri = rss_find_from_id(dock->sites->boards, pw->parent->id);
+    if (ri) snprintf(s_ts, sizeof s_ts, "%s", ri->link);
   }
-	
-  snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
-	
+  if (s_ts[0] == 0) {
+    char s_subts[3];
+    s_subts[0] = s_subts[1] = s_subts[2] = 0;
+    switch(pw->parent->sub_tstamp) {
+    case -1: break;
+    case 0: s_subts[0] = '¹'; break;
+    case 1: s_subts[0] = '²'; break;
+    case 2: s_subts[0] = '³'; break;
+    default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
+    }
+    snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
+  }
   if (editw_ismapped(dock->editw) == 0) {
     char *username = Prefs.site[id_type_sid(pw->parent->id)]->user_name;
     if (username) {
@@ -2956,15 +3096,15 @@ pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
     //	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
     // strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
     dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
-    editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
+    editw_show(dock, is_rss ? NULL : Prefs.site[id_type_sid(pw->parent->id)], 0);
     editw_move_end_of_line(dock->editw, 0);
     editw_refresh(dock, dock->editw);
   } else {
-    char s[60];
+    char s[300];
     if (editw_get_site_id(dock) == id_type_sid(pw->parent->id)) {
-      snprintf(s, 60, "%s ", s_ts);
+      snprintf(s, sizeof s, "%s ", s_ts);
     } else { 
-      snprintf(s, 60, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
+      snprintf(s, sizeof s, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
     }
     editw_insert_string(dock->editw, s);
     editw_refresh(dock, dock->editw);
@@ -2998,9 +3138,8 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
 	}
       } else changed = 0;
       if (changed) {
-	pp_pv_destroy(pp); /* force le rafraichissement complet */
-	pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
-	pp_refresh(dock, pp->win, NULL);
+	/* force le rafraichissement complet */
+	pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,0);
       }
     }
   }
@@ -3215,12 +3354,12 @@ flush_consecutive_mouse_motions(Dock *dock, Window w, XEvent *ev_init) {
    pour la selection (reperer quel mots sont à tel position, et quel caractère précisement.. )
 */
 int
-pp_selection_find_pos(Dock *dock, PostWord *first_pw, int x, PostWord **sel_pw, int *sel_pw_char_num)
+pp_selection_find_pos(Dock *dock, PostWord *first_pw, int mouse_x, PostWord **sel_pw, int *sel_pw_char_num)
 {
   Pinnipede *pp = dock->pinnipede;
   PostWord *pw = first_pw;
   int x_sel;
-
+  int x = mouse_x - pp->zmsg_x1;
   if (sel_pw) *sel_pw = NULL;
   if (sel_pw_char_num) *sel_pw_char_num = 0;
   x_sel = 0;
@@ -3234,13 +3373,13 @@ pp_selection_find_pos(Dock *dock, PostWord *first_pw, int x, PostWord **sel_pw, 
       break;
     if (x < pw->xpos + pw->xwidth) {
       int i, len;
-      XFontStruct *fn;
+      CCFontId fn;
 
       fn = pv_get_font(pp, pw->attr);
       len = strlen(pw->w);
       for (i = 1; i <= len; i++) {
 	int xx;
-	xx = pw->xpos+XTextWidth(fn, pw->w, i);
+	xx = pw->xpos+ccfont_text_width8(fn, pw->w, i);
 	if (x < xx) {
 	  break;
 	}
@@ -3350,7 +3489,7 @@ pp_selection_refresh(Dock *dock)
       pp_draw_line(dock, pp->lpix, pp->lignes[l], bgpixel, 
 		   &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));
       XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, 
-		pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
+		pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, pp->zmsg_x1, LINEY0(l));
     }
   }
 }
@@ -3506,6 +3645,24 @@ static void switch_search_mode(Dock *dock) {
   }
   pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
   pp_refresh(dock, pp->win, NULL);
+}
+
+static void pp_update_viewed_messages(Dock *dock, int x, int y) {
+  Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
+  int l;
+  if (x >= pp->zmsg_x1 && x <= pp->zmsg_x2) {    
+    for (l=0; l < pp->nb_lignes; l++) {
+      if (y > LINEY0(l) && y <= LINEY1(l)) {
+        PostWord *pw = pp->lignes[l];
+        if (pw && pw->parent) {
+          int sid = id_type_sid(pw->parent->id);
+          if (sid >= 0 && boards->btab[sid]) 
+            board_set_viewed(boards->btab[sid], id_type_lid(pw->parent->id));
+        }
+      }
+    }
+  }
 }
 
 /* /!\ spaghettis */
@@ -3666,7 +3823,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     } break;
     /* "tab" : switch entre un seul tab et tous les tabs simultanés */
     case XK_Tab: if (!editw_ismapped(dock->editw)) {
-      pp_tabs_cliquouille(pp, pp->active_tab); pp_tabs_changed(dock);
+        pp_tabs_switch_all_selected(pp); pp_tabs_changed(dock);
     } break;
     /* "R" : active/desactive l'autorefresh */
     case 'R':
@@ -3751,7 +3908,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     case '9': if (!editw_ismapped(dock->editw)) {
       int c = ksym - '1';
       if (c < pp->nb_tabs) {
-        pp_tabs_cliquouille(pp, pp->tabs+c); pp_tabs_changed(dock);
+        pp_tabs_cliquouille(pp, pp->tabs+c, PPT_MAY_SET_MAIN_TAB); pp_tabs_changed(dock);
       }
       ret++;
     } break;
@@ -3784,7 +3941,11 @@ pp_dispatch_event(Dock *dock, XEvent *event)
   if (event->xany.window == None || event->xany.window != pp->win) return 0;
 
   /* le pinnipede ne fait RIEN quand la tribune est en cours de mise à jour ... */
-  if (flag_updating_board) return 0;
+  if (flag_updating_board) {
+    printf("%s et merde .. event type %d pendant que flag_updating_board = %d\n", ctime(time(NULL)), event->type, flag_updating_board);
+    dump_backtrace();
+    return 0;
+  }
 
   switch (event->type) {
   case DestroyNotify: 
@@ -3868,6 +4029,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
         pp_check_totoz(dock, pw, event->xmotion.x, event->xmotion.y);/*event->xmotion.x_root, event->xmotion.y_root);*/
 	old_mouse_x = event->xmotion.x;
 	old_mouse_y = event->xmotion.y;
+        pp_update_viewed_messages(dock, event->xmotion.x, event->xmotion.y);
       }
     } break;
   case ConfigureNotify:
@@ -3897,9 +4059,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	/* eh oui, faut pas oublier ça.... */
 	if (Prefs.use_fake_real_transparency == 0)
           pp_update_bg_pixmap(dock);
-	pp_pv_destroy(pp);
-	pp_update_content(dock, pp->id_base, pp->decal_base, 0,1);
-	pp_refresh(dock, pp->win, NULL);
+	pp_update_and_redraw(dock, pp->id_base, pp->decal_base, 0,1);
       }
     } break;
   case EnterNotify:
@@ -3980,6 +4140,7 @@ pp_save_state(Dock *dock, FILE *f) {
   fprintf(f, "LINKS %d\n", pp->nb_visited_links);
   for (i=0; i < pp->nb_visited_links; i++)
     fprintf(f, "%d\n", pp->visited_links[i]);
+  pp_tabs_save_state(dock,f);
 }
 
 
@@ -4014,5 +4175,6 @@ pp_restore_state(Dock *dock, FILE *f) {
 	fscanf(f, "%d\n", &pp->visited_links[i]);
       }
     }
+    pp_tabs_restore_state(dock,f);
   }  
 }

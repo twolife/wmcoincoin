@@ -4,6 +4,13 @@
 imgrep="$HOME/.wmcoincoin/totoz"
 mkdir -p "$imgrep" && cd "$imgrep"
 
+# Recupere le proxy (micropatch de dae)
+option_file="$HOME/.wmcoincoin/options"
+proxy=$(sed -ne 's/\(^.http.proxy: \)\(.*$\)/\2/p' $option_file | head -1)
+if [ -n "$proxy" ]; then
+  proxy_option="-x "$proxy
+fi
+
 siteroot="http://forum.hardware.fr/images/perso/"
 extlist="gif,png"
 
@@ -75,7 +82,7 @@ dowget()
   for ext in $extlist; do
     echo -n "[$ext] "
     test -f "$img.$ext" && rm -f "$img.$ext";
-    if curl -s -f -o "$img.$ext" "$siteroot$img.$ext" && test -f "$img.$ext"; then
+    if curl -s -f $proxy_option -o "$img.$ext" "$siteroot$img.$ext" && test -f "$img.$ext"; then
       mime=$(file -ib "$img.$ext" 2>/dev/null);
       if test $? -ne 0; then
         rm -f "$img.$ext";
@@ -84,7 +91,7 @@ dowget()
       fi
     fi
   done
-  if test ! -z $fgot; then
+  if test ! -z "$fgot"; then
 #    h=$(identify "$fgot");
 #    h=$(echo $h | grep -o "[0-9]\+x[0-9]\++[0-9]\++[0-9]\+")
     # pour les images dont l'origine n'est pas 0,0 , et pour les animations
@@ -100,6 +107,7 @@ dowget()
     echo " not found.."
   fi;
   echo "NOTFOUND" > "$img.desc";
+  test -f "$img.$ext" && rm -f "$img.$ext";
   return 1;
 }
 
