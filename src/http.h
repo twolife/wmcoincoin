@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.15 2002/12/20 15:49:51 pouaite Exp $
+  rcsid=$Id: http.h,v 1.16 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.16  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.15  2002/12/20 15:49:51  pouaite
   prout 2.4.2b ?
 
@@ -99,7 +102,9 @@ typedef struct {
   int        error;
 
   int        response; /* 404, 200, 502 etc.. */
-
+  int        tic_cnt_tstamp; /* -1 si le resolv n'a pas marché, 
+				sinon contient la valeur de wmcc_tic_cnt
+				à l'instant ou le connect a été tenté */
   char * post;
 } HttpRequest;
 

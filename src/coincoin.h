@@ -295,6 +295,15 @@ struct _Site {
 		  (ce numero est compris entre 0 et MAX_SITES-1, et represente l'indice
 		  du pointeur 'prefs' dans la structure globale Prefs.site[] )
 	       */
+  int http_error_cnt;    /* increment quand il y a eu une erreur http sur le site */
+  int http_success_cnt;  /* et inversement */
+  int http_recent_error_cnt; /* incrementé à chaque erreur, et remis à zero à chaque
+				succes */
+
+#define NB_HTTP_PING_STAT 10
+  float http_ping_stat_buf[NB_HTTP_PING_STAT];
+  int http_ping_stat_i;
+  float http_ping_stat;
 };
 
 struct _SiteList {
@@ -515,6 +524,7 @@ typedef struct _ccqueue_elt {
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 void wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path);
 void wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path);
+void wmcc_log_http_request(Site *s, HttpRequest *r);
 void block_sigalrm(int bloque);
 int launch_wmccc(Dock *dock);
 void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);

@@ -197,14 +197,14 @@ pp_tabs_refresh(Dock *dock)
 		       x+1, 1, w-3, h-1);
 	*/
       }
-    
 
       XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
       XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 
 		0, pt->x+pt->w-1, PPT_H-1);
       
       if (pt->site->board->auto_refresh) {
-	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
+	XSetForeground(dock->display, dock->NormalGC, 
+		      pp->minib_dark_pixel);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-5, x+w-2, h-1);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-1, x+w-2, h-5);
       }
@@ -216,6 +216,24 @@ pp_tabs_refresh(Dock *dock)
 	//	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
 	if (zw > 0) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x, h-4, zw, 4);
+	}
+      }
+
+      if (pt->site->http_recent_error_cnt) {
+	int x0 = x+3;
+	int j;
+	XSetForeground(dock->display, dock->NormalGC, 
+		       pt->selected ? 
+		       IRGB2PIXEL(0xf04040) : IRGB2PIXEL(0xd0a0a0));
+	for (j=0; j < 4; ++j)
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+		    x,h-1-j,x+3-j,h-1-j);
+	for (j=1; j < pt->site->http_recent_error_cnt && x0+10 < x+w; ++j) {
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+		    x0,h-4,x0+3,h-1);
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
+		    x0+1,h-4,x0+4,h-1);
+	  x0 += 4;
 	}
       }
 

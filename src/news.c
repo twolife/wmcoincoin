@@ -20,7 +20,7 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.11 2002/11/20 23:34:40 pouaite Exp $
+  rcsid=$Id: news.c,v 1.12 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   Revision 1.11  2002/11/20 23:30  pouaite
   virage du log qui bave
@@ -521,7 +521,6 @@ site_news_dl_and_update(Site *site)
   HttpRequest r;
   char path[2048];
   int transfert_ok = 0;
-
   BLAHBLAH(3,printf("[%s] site update_news...\n", site->prefs->site_name));
 
   /* on se protege */
@@ -538,6 +537,7 @@ site_news_dl_and_update(Site *site)
   wmcc_init_http_request(&r, site->prefs, path);
   if (site->prefs->use_if_modified_since) r.p_last_modified = &site->news_backend_last_modified;
   http_request_send(&r);
+  wmcc_log_http_request(site, &r);
 
   if (r.error == 0) {
     const char *news_item_sign = "<item>";
@@ -719,6 +719,15 @@ site_news_dl_and_update(Site *site)
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      site->prefs->site_name, site->prefs->path_news_backend, http_error());
   }
+
+  if (transfert_ok == 0) {
+    site->http_error_cnt++;
+    site->http_recent_error_cnt++;
+  } else {
+    site->http_success_cnt++;
+    site->http_recent_error_cnt = 0;
+  }
+
   /* elimine les eventuelles news trop vielles, et qui ne sont plus
      dans short.php3 */
   site_news_remove_old(site);

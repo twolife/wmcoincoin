@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.29 2003/01/11 14:10:07 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.30 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.30  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.29  2003/01/11 14:10:07  pouaite
   fix du palmi pour xf 4.3
 
@@ -962,7 +965,7 @@ dock_red_button_check(Dock *dock) {
 
 /* statistique à la noix */
 
-static void
+void
 dock_show_tribune_frequentation(Dock *dock)
 {
   /*
@@ -1010,7 +1013,33 @@ dock_show_tribune_frequentation(Dock *dock)
   msgbox_show(dock, "desactive");
 }
 
-
+void
+show_http_stats(Dock *dock) {
+  char *err_msg;
+  Site *site;
+  err_msg = http_complete_error_info();
+  err_msg = str_cat_printf(err_msg, "<br><br><b>statistiques générales sur les d/l:</b><br> (qualité, erreurs, err. récentes, succès, temps de réponse)");
+  for (site = dock->sites->list; site; site = site->next) {
+    float q = 0.0;
+    int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
+    if (site->http_success_cnt) {
+      q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
+    }
+    if (total) {
+      err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s :<tab7><b>%1.2f</b><tab2> %d<tab2> %d<tab2> %d<tab2> %4.0fms.",
+			       q < .2 ? "<b>" : "",
+			       q > .5 ? "#000080" : "#e00000",
+			       site->prefs->site_name, 
+			       q < .2 ? "</b>" : "",
+			       q, site->http_error_cnt,
+			       site->http_recent_error_cnt, 
+			       site->http_success_cnt,
+			       site->http_ping_stat*1000);
+    } else  err_msg = str_cat_printf(err_msg, "<br><tab>%.10s :<tab7>aucun d/l", site->prefs->site_name);
+  }
+  msgbox_show(dock, err_msg);
+  free(err_msg);
+}
 
 /* (c)(tm)(r) kadreg qui n'aime pas le jaune (pourtant moi j'aime bien le jaune) */
 char *
@@ -1177,10 +1206,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	clic bouton 1 sur la 1ere led ->
 	voir la derniere erreur http
       */
-      char *err_msg;
-      err_msg = http_complete_error_info();
-      msgbox_show(dock, err_msg);
-      free(err_msg);
+      show_http_stats(dock);
     }else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 			dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1339,7 +1365,8 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 		(dock->door_state == CLOSED)) {
       /* bouton 3 sur le trollometre:
 	     on montre la frequentation de la tribune */
-      dock_show_tribune_frequentation(dock);
+      //dock_show_tribune_frequentation(dock);
+      show_http_stats(dock);
     } else if (IS_INSIDE(x,y,3,49,3+57,49+12) && 
 	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
       /* montre le pinnipede teletype */

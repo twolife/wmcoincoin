@@ -141,7 +141,7 @@ http_url_encode(const char *string)
 }
 
 
-static SOCKET http_connect(const char *host_name, int port);
+static SOCKET http_connect(const char *host_name, int port, int* tic_cnt);
 
 char*
 http_complete_error_info()
@@ -527,7 +527,7 @@ http_resolv_name(const char *host_name, int force_dns_query)
 
 /* -1 => erreur */
 static SOCKET
-http_connect(const char *host_name, int port)
+http_connect(const char *host_name, int port, int *connect_tic_cnt)
 {
   SOCKET sockfd = INVALID_SOCKET;
 
@@ -559,6 +559,8 @@ http_connect(const char *host_name, int port)
 	  return INVALID_SOCKET;
 	}
       }
+      if (connect_tic_cnt && *connect_tic_cnt == -1)
+	*connect_tic_cnt = wmcc_tic_cnt;
 
       assert(h->host_addr[0]); /* ben oui */
 
@@ -727,7 +729,7 @@ http_skip_header(HttpRequest *r)
     r->error = 2;
     return;
   }
-  r->error = 0;
+  //  r->error = 0;
   return;
 }
 
@@ -752,7 +754,7 @@ http_read(HttpRequest *r, char *buff, int len)
       printf(_("Damned, the chunk_encoding has gone down the tubes on the following request:\n"));
       http_print_request(r);
     }
-    if (r->chunk_num == -1 || r->chunk_pos == r->chunk_size) {
+    if (r->chunk_num == -1 || (r->chunk_pos == r->chunk_size && r->chunk_size != 0)) {
       char s_chunk_size[512];
       int i;
       int lcnt;
@@ -842,7 +844,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
       s[i] = 0;
     }
 
-    if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN && !LASTERR_ESUCCESS) {
+    if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN && !LASTERR_ESUCCESS && (!(r->is_chunk_encoded && r->chunk_size == 0))) {
       printf(_("http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"), (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
     }
   } while (got == 0 && LASTERR_EAGAIN && r->error == 0 && r->chunk_pos != r->content_length);
@@ -995,9 +997,9 @@ http_request_send(HttpRequest *r)
   
 
   if (r->proxy_name) {
-    r->fd = http_connect(r->proxy_name, r->proxy_port);
+    r->fd = http_connect(r->proxy_name, r->proxy_port, &r->tic_cnt_tstamp);
   } else {
-    r->fd = http_connect(r->host, r->port);
+    r->fd = http_connect(r->host, r->port, &r->tic_cnt_tstamp);
   }
   if (r->fd == INVALID_SOCKET) goto error_close;
 
@@ -1034,6 +1036,7 @@ http_request_init(HttpRequest *r) {
   memset(r, 0, sizeof(HttpRequest));
   r->content_length = -1;
   r->is_chunk_encoded = 0;
+  r->tic_cnt_tstamp = -1;
 }
 
 void http_request_close (HttpRequest *r) {

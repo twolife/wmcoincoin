@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.16 2002/12/20 18:11:46 pouaite Exp $
+  rcsid=$Id: board.c,v 1.17 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.17  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.16  2002/12/20 18:11:46  pouaite
   bon...
 
@@ -1329,6 +1332,9 @@ board_update(Board *board)
   const char *board_sign_msg = "<message>";
   const char *board_sign_login = "<login>";
   const char * my_useragent = board->coin_coin_useragent;
+
+  int http_err_flag = 0;
+
   errmsg = NULL;
   /* maj du nombre de secondes ecoulees depuis le dernier message recu
      (pour pouvoir calculer l'age des message -> on part du principe
@@ -1357,10 +1363,10 @@ board_update(Board *board)
     snprintf(path, 2048, "%s/wmcoincoin/test/%s/remote.xml", getenv("HOME"), board->site->prefs->site_name);
     myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
-
   wmcc_init_http_request(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
+  wmcc_log_http_request(board->site, &r);
 
   if (r.error == 0) {
     int roll_back_cnt = 0;
@@ -1517,6 +1523,7 @@ board_update(Board *board)
 	}
       }    
     }*/
+    if (r.error) { http_err_flag = 1; }
   err:
     if (errmsg) {
       myfprintf(stderr, _("[%<YEL %s>] There is a problem in '%s',  I can't parse it... "
@@ -1526,8 +1533,17 @@ board_update(Board *board)
     }
     http_request_close(&r);
   } else {
+    http_err_flag = 1;
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      board->site->prefs->site_name, path, http_error());
+  }
+
+  if (http_err_flag) {
+    board->site->http_error_cnt++;
+    board->site->http_recent_error_cnt++;
+  } else {
+    board->site->http_success_cnt++;
+    board->site->http_recent_error_cnt = 0;
   }
 
   board->local_time_last_check_end = time(NULL);

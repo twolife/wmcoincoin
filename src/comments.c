@@ -12,10 +12,13 @@
 /* --------------- gestion des commentaire -------------- */
 
 /*
-  rcsid=$Id: comments.c,v 1.6 2002/11/20 23:34:40 pouaite Exp $
+  rcsid=$Id: comments.c,v 1.7 2003/01/11 17:44:10 pouaite Exp $
 
   ChangeLog:
   $Log: comments.c,v $
+  Revision 1.7  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.6  2002/11/20 23:34:40  pouaite
   paf le patch, par lordOric
 
@@ -177,7 +180,7 @@ site_yc_parse_dacode14(Site *site, char *s)
 {
   char *p, *p2, *p3;
   int err = 0;
-    
+
   /* récuperation du cpu */
   p = strstr(s, "CPU</a>:");
   if (p) {
@@ -361,6 +364,7 @@ void
 site_yc_dl_and_update(Site *site) {
   HttpRequest r;
   char path[2048];
+  int http_err_flag = 0;
 
   if (site->prefs->user_cookie == NULL && site->prefs->force_fortune_retrieval == 0) return;
 
@@ -383,9 +387,11 @@ site_yc_dl_and_update(Site *site) {
   
   pp_set_download_info(site->prefs->site_name, "updating comments");
 
+  http_err_flag = 0;
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
   if (site->prefs->use_if_modified_since) { r.p_last_modified = &site->comments_last_modified; }
   http_request_send(&r);
+  wmcc_log_http_request(site, &r);
 
   if (r.error == 0) {
     char *s;
@@ -405,8 +411,17 @@ site_yc_dl_and_update(Site *site) {
 		site->prefs->site_name, path, err);
     }
   } else {
+    http_err_flag = 1;
     myfprintf(stderr, _("[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"), 
 	      site->prefs->site_name, path, http_error());
+  }
+  
+  if (http_err_flag) {
+    site->http_error_cnt++;
+    site->http_recent_error_cnt++;
+  } else {
+    site->http_success_cnt++;
+    site->http_recent_error_cnt = 0;
   }
 }
 

@@ -1,3 +1,24 @@
+--------------------------v2.4.2-c-----------------------------------------
+
+2003-01-11  pouaite  <c0in@altern.org>
+
+	* src/palmipede.c src/pinnipede_widgets.c src/pinnipede.c: modif
+	du comportement du palmipede, qui devrait être un peu plus
+	conforme au "bon sens". Le palmipede devrait maintenant permettre
+	à shift< de retrouver son bras gauche (i.e. la touche altgr
+	refonctionne avec xfree 4.3 mais je maintiens qu'il y a quelque
+	chose de louche dans le keymap par défaut de xfree). On peut
+	ouvrir le palmi sur un site particulier et changer le site courant
+	du palmi avec un clic droit sur une des tabs du pinni.
+
+	Le coincoin ne bronche plus quand il se prend un 302 Found dans la
+	face après avoir posté (ce qui arrive sur les tribune hebergées
+	par free.fr).
+		
+	Des petites stats à la noix sur les sites sont accessibles par
+	clic gauche sur la première led, ou bien clic droit sur la led du
+	trollo.
+
 --------------------------v2.4.2-b-----------------------------------------
 2002-12-20  pouaite  <c0in@altern.org>
 

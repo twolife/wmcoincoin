@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.72 2003/01/11 14:10:07 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.73 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.73  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.72  2003/01/11 14:10:07  pouaite
   fix du palmi pour xf 4.3
 
@@ -497,6 +500,27 @@ wmcc_init_http_request_with_cookie(HttpRequest *r, SitePrefs *sp, char *url_path
   }
 }
 
+void
+wmcc_log_http_request(Site *s, HttpRequest *r)
+{
+  if (r->tic_cnt_tstamp != -1) {
+    int i,cnt=0;
+    float sum =0.;
+    s->http_ping_stat_buf[s->http_ping_stat_i] = 
+      (wmcc_tic_cnt - r->tic_cnt_tstamp)*0.001*WMCC_TIMER_DELAY_MS;
+    s->http_ping_stat_i = (s->http_ping_stat_i+1)%NB_HTTP_PING_STAT;
+    for (i = 0; i < NB_HTTP_PING_STAT; ++i) {
+      int ii = (s->http_ping_stat_i+i)%NB_HTTP_PING_STAT;
+      if (s->http_ping_stat_buf[ii] >= 0.) {
+	sum += s->http_ping_stat_buf[ii]; cnt++;
+      }
+    }
+    if (cnt) {
+      s->http_ping_stat = sum/cnt;
+    }
+  }
+}
+
 /* 
    poste le message sur la tribune -- en tant que fonction 'lente' 
    cette fonction est executée par la boucle principale
@@ -537,6 +561,7 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
 
   http_request_send(&r);
   BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.error, flag_cancel_task));
+  wmcc_log_http_request(site, &r);
   if (r.error == 0) {
     int got;
     char reponse[2048];
@@ -551,12 +576,16 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
       free(s);
     }
     http_request_close(&r);
-  } else {
+    site->http_success_cnt++;
+    site->http_recent_error_cnt = 0;
+  } else if (r.response != 302) {
     char *s;
     /* si la reponse n'est pas un 302 Found */
     s = str_printf(_("[%s] Damned ! There has been an error<p>%s"), site->prefs->site_name, http_error());
     msgbox_show(dock, s);
     free(s);
+    site->http_error_cnt++;
+    site->http_recent_error_cnt++;
   }
 
   /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
@@ -893,7 +922,7 @@ sigint_signal(int signum UNUSED) {
     pour les news,   delai_base = Prefs.dlfp_news_check_delay)
 */
 int
-wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
+wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base, int recent_err_cnt)
 {
   int delay;
 
@@ -918,6 +947,7 @@ wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
   } else {                                                    /* apres 1h30 */
     delay = 25*60*delay_base;                                /* on passe aux delai_max (qui est exprime en minutes) */ 
   }
+  delay *= (recent_err_cnt+1);
   delay = MIN(delay, Prefs.max_refresh_delay*25*60);
   return delay;
 }
@@ -946,11 +976,11 @@ update_timers(Dock *dock)
   for (site = dock->sites->list; site; site = site->next) {
     site->news_refresh_delay = 
       MIN(site->news_refresh_delay, 
-	  wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay));
+	  wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay, site->http_recent_error_cnt));
     if (site->board) {
       site->board->board_refresh_delay = 
 	MIN(site->board->board_refresh_delay, 
-	    wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay));
+	    wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay, site->http_recent_error_cnt));
     }
   }
 
@@ -963,7 +993,7 @@ update_timers(Dock *dock)
 	ccqueue_push_board_update(site->site_id);
 	site->board->board_refresh_cnt = 0;
 	site->board->board_refresh_delay = 
-	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay);
+	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay, site->http_recent_error_cnt);
       }
     }
   }
@@ -980,7 +1010,7 @@ update_timers(Dock *dock)
 	ccqueue_push_comments_update(site->site_id);
       site->news_refresh_cnt = 0;
       site->news_refresh_delay = 
-	wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay);
+	wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay, site->http_recent_error_cnt);
     }
   }
 }

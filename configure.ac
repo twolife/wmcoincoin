@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.16  2003/01/11 17:44:10  pouaite
+dnl   ajout de stats/coinping sur les sites
+dnl
 dnl   Revision 1.15  2003/01/11 14:10:06  pouaite
 dnl   fix du palmi pour xf 4.3
 dnl
@@ -133,7 +136,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.2b, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.3a, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)

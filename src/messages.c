@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.7 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.8 2003/01/11 17:44:10 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.8  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.7  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -151,7 +154,7 @@ site_msg_dl_and_update(Site *site)
 {
   HttpRequest r;
   char path[2048];
-
+  int http_err_flag = 0;
   if (site->prefs->user_cookie == NULL) return;
   
   BLAHBLAH(3,printf("site_msg_update_messages...\n"));
@@ -168,6 +171,7 @@ site_msg_dl_and_update(Site *site)
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
   if (site->prefs->use_if_modified_since) { r.p_last_modified = &site->messages_last_modified; }
   http_request_send(&r);
+  wmcc_log_http_request(site, &r);
 
   if (r.error == 0) {
     char *s, *p, *end=NULL;
@@ -272,8 +276,17 @@ site_msg_dl_and_update(Site *site)
       myfprintf(stderr,_("site_msg_update_messages: %<RED Error while downloading> '%s' (err=%d)\n"), path, err);
     }
   } else {
+    http_err_flag = 1;
     myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
   }
+  if (http_err_flag) {
+    site->http_error_cnt++;
+    site->http_recent_error_cnt++;
+  } else {
+    site->http_success_cnt++;
+    site->http_recent_error_cnt = 0;
+  }
+
   pp_set_download_info(NULL,NULL);
 }
 

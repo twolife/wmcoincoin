@@ -129,6 +129,13 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   site->news_refresh_delay = sp->news_check_delay*(1000/WMCC_TIMER_DELAY_MS);
   site->news_refresh_cnt = site->news_refresh_delay-100; /* juste pour que le premier check se fasse après
 							    celui de la tribune */
+  site->http_error_cnt = site->http_success_cnt = site->http_recent_error_cnt = 0;;
+  {
+    int i;
+    for (i=0; i < NB_HTTP_PING_STAT; ++i) site->http_ping_stat_buf[i] = -1.;
+    site->http_ping_stat_i = 0;
+    site->http_ping_stat = -1.0;
+  }
 
   sl_set_site_id(site);
  

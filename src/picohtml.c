@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.15 2002/12/20 11:26:35 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.16 2003/01/11 17:44:10 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.16  2003/01/11 17:44:10  pouaite
+  ajout de stats/coinping sur les sites
+
   Revision 1.15  2002/12/20 11:26:35  pouaite
   deux trois conneries
 
@@ -298,11 +301,14 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       new_parag = 1; next_parag_align = CENTER; 
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
 
-		} else if (strcasecmp(tok, "<p align=right>") == 0) {
+    } else if (strcasecmp(tok, "<p align=right>") == 0) {
       new_parag = 1; next_parag_align = RIGHT;
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
-    } else if (strcasecmp(tok, "<tab>") == 0) { /* extension proprietaire ;-) */
-      x = ((x + ph->tabul_skip)/ph->tabul_skip)*ph->tabul_skip;
+    } else if (strncasecmp(tok, "<tab",4) == 0 && 
+	       (tok[4]=='>' || (isdigit(tok[4]) && tok[5] == '>'))) { /* extension proprietaire ;-) */
+      int n = (tok[4]=='>' ? 1 : tok[4]-'0');
+      if (n) 
+	x = ((x + (n*ph->tabul_skip))/(n*ph->tabul_skip))*(n*ph->tabul_skip);
       parag_align = LEFT;
     } else if (strncasecmp(tok, "<!special=", 10)==0) { /* encore une extension (pour phv_title de newswin.c) */
       special_attr = atoi(tok+10);
