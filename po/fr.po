@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2003-01-19 20:01+0100\n"
+"POT-Creation-Date: 2003-02-26 01:49+0100\n"
 "PO-Revision-Date: 2002-08-18 21:31+0200\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -254,7 +254,7 @@ msgstr "La ligne '%s' a l'air bizarre\n"
 msgid "There are too many lines in '%s' (max=%d) !! \n"
 msgstr "Il y a trop de lignes dans '%s' (max=%d) !! \n"
 
-#: src/coin_util.c:115
+#: src/coin_util.c:118
 msgid "[empty]"
 msgstr "[vide]"
 
@@ -283,11 +283,11 @@ msgstr "id message"
 msgid "thread from id"
 msgstr "fil depuis l'id"
 
-#: src/msgbox.c:79
+#: src/msgbox.c:82
 msgid "MESSAGE FROM WMCOINCOIN"
 msgstr "MESSAGE DE WMCOINCOIN"
 
-#: src/msgbox.c:196
+#: src/msgbox.c:199
 msgid "close msgbox\n"
 msgstr "fermer msgbox\n"
 
@@ -872,30 +872,30 @@ msgstr ""
 msgid "we forget '%<YEL %s>'\n"
 msgstr ""
 
-#: src/picohtml.c:572 src/pinnipede.c:1661
+#: src/picohtml.c:572 src/pinnipede.c:1665
 #, c-format
 msgid "XLoadQueryFont: failed loading font '%s'\n"
 msgstr ""
 
-#: src/picohtml.c:573 src/pinnipede.c:1662
+#: src/picohtml.c:573 src/pinnipede.c:1666
 msgid "Please choose another font.\n"
 msgstr ""
 
-#: src/picohtml.c:582 src/pinnipede.c:1671
+#: src/picohtml.c:582 src/pinnipede.c:1675
 #, c-format
 msgid "Slanted font '%s' not found -> we're looking for the italic font\n"
 msgstr ""
 
-#: src/picohtml.c:586 src/pinnipede.c:1675 src/pinnipede.c:1701
+#: src/picohtml.c:586 src/pinnipede.c:1679 src/pinnipede.c:1705
 msgid "%<RED WARNING>: error while looking for the italic font: '%s'\n"
 msgstr ""
 
 #: src/picohtml.c:587 src/picohtml.c:599 src/picohtml.c:608
-#: src/pinnipede.c:1676 src/pinnipede.c:1688 src/pinnipede.c:1702
+#: src/pinnipede.c:1680 src/pinnipede.c:1692 src/pinnipede.c:1706
 msgid "We'll use the base font.\n"
 msgstr ""
 
-#: src/picohtml.c:598 src/pinnipede.c:1687
+#: src/picohtml.c:598 src/pinnipede.c:1691
 msgid "%<RED WARNING>: error while looking for the bold font: '%s'\n"
 msgstr ""
 
@@ -919,50 +919,50 @@ msgstr ""
 msgid "Uuuurg, no helvetica/12 - iso8859 , I prefer to die.\n"
 msgstr ""
 
-#: src/board_util.c:245
+#: src/board_util.c:248
 msgid ""
 "sniff? sniff ? soit vous vous amusez a faire de threads de folie, soit ca "
 "sent le BEUGGUE!\n"
 msgstr ""
 
-#: src/board_util.c:651
+#: src/board_util.c:656
 #, c-format
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
-#: src/board_util.c:666
+#: src/board_util.c:671
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
 msgstr "Hum, on dirait qu'il y a un problème de slip ici: %s\n"
 
-#: src/board_util.c:827
+#: src/board_util.c:832
 msgid "IPOT(tm) detected"
 msgstr "IPOT(tm) détecté"
 
-#: src/board_util.c:829
+#: src/board_util.c:834
 #, c-format
 msgid "but where is '%s' ?"
 msgstr "où qu'il est '%s' ?"
 
-#: src/board_util.c:833
+#: src/board_util.c:838
 msgid "[IPOT(tm)]"
 msgstr ""
 
-#: src/board_util.c:835
+#: src/board_util.c:840
 msgid "Awww, we turn around and around and around and around..."
 msgstr "merde on tourne en rond merde on tourne en rond merde..."
 
-#: src/board_util.c:843
+#: src/board_util.c:848
 #, c-format
 msgid "Hello from %.30s in the boitakon ! (because %s=%.20s)"
 msgstr "kikoo de %.30s depuis la boitakon, (car %s=%.20s)"
 
-#: src/board_util.c:847
+#: src/board_util.c:852
 #, fuzzy, c-format
 msgid "Hello from %.30s who was eaten by the boitakon"
 msgstr "kikoo de %.30s depuis la boitakon, (car %s=%.20s)"
 
-#: src/board_util.c:849
+#: src/board_util.c:854
 #, c-format
 msgid ""
 "Hello from %.30s in the boitakon, BUT YOU HAVE JUST FOUND A BUG IN THE "
@@ -971,7 +971,7 @@ msgstr ""
 "kikoo de %.30s depuis la boitakon, MAIS VOUS VENEZ DE TROUVER UN BUG DANS LA "
 "BOITAKON :-("
 
-#: src/board_util.c:881
+#: src/board_util.c:886
 #, c-format
 msgid "I don't fucking know %s"
 msgstr "Je ne connais vraiment pas %s"
@@ -980,7 +980,7 @@ msgstr "Je ne connais vraiment pas %s"
 msgid "FILTER UNDEFINED"
 msgstr "FILTRE NON DÉFINI"
 
-#: src/pinnipede_widgets.c:856 src/pinnipede.c:2692
+#: src/pinnipede_widgets.c:856 src/pinnipede.c:2696
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font>' from %s"
 msgstr ""
@@ -1626,29 +1626,29 @@ msgstr "Impossible de charger la police %s\n"
 msgid "Unable to load font %s, aborting\n"
 msgstr "Impossible de charger la police %s\n"
 
-#: src/pinnipede.c:1643
+#: src/pinnipede.c:1647
 msgid ""
 "%<yel impossible to use the pseudo-transparency> (probable solution: "
 "relaunch wmsetbg or its equivalent)\n"
 msgstr ""
 
-#: src/pinnipede.c:1697
+#: src/pinnipede.c:1701
 #, c-format
 msgid "Bold slanted font '%s' not found -> we're looking for the italic font\n"
 msgstr ""
 
-#: src/pinnipede.c:1878
+#: src/pinnipede.c:1882
 #, c-format
 msgid ""
 "Failed to load the '%s' fonts with size '%d'\n"
 "Let's try with helvetica/12.\n"
 msgstr ""
 
-#: src/pinnipede.c:1880
+#: src/pinnipede.c:1884
 msgid "Uuuurg !! No helvetica, I shoot my nose.\n"
 msgstr ""
 
-#: src/pinnipede.c:2220
+#: src/pinnipede.c:2224
 msgid ""
 "\n"
 "[you posted this message]"
@@ -1656,7 +1656,7 @@ msgstr ""
 "\n"
 "[vous avez posté ce message]"
 
-#: src/pinnipede.c:2223
+#: src/pinnipede.c:2227
 msgid ""
 "\n"
 "[this message answers to one of yours]"
@@ -1664,7 +1664,7 @@ msgstr ""
 "\n"
 "[ce message répond à l'un des vôtres]"
 
-#: src/pinnipede.c:2227
+#: src/pinnipede.c:2231
 msgid ""
 "\n"
 "message 'boxed' because: "
@@ -1672,7 +1672,7 @@ msgstr ""
 "\n"
 "message 'encadré' car: "
 
-#: src/pinnipede.c:2236
+#: src/pinnipede.c:2240
 #, c-format
 msgid ""
 "\n"
@@ -1681,7 +1681,7 @@ msgstr ""
 "\n"
 "message plopifié (niveau %d) car: "
 
-#: src/pinnipede.c:2243
+#: src/pinnipede.c:2247
 #, fuzzy
 msgid ""
 "\n"
@@ -1690,15 +1690,15 @@ msgstr ""
 "\n"
 "message plopifié (niveau %d) car: "
 
-#: src/pinnipede.c:2252
+#: src/pinnipede.c:2256
 msgid "answers"
 msgstr "réponses"
 
-#: src/pinnipede.c:2252
+#: src/pinnipede.c:2256
 msgid "answer"
 msgstr "réponse"
 
-#: src/pinnipede.c:2324
+#: src/pinnipede.c:2328
 #, fuzzy
 msgid ""
 "<p align=center> Welcome to the <b><font color=#008000>Pinnipede Teletype</"
@@ -1778,41 +1778,41 @@ msgstr ""
 "fichier <tt>~/.wmcoincoin/useragents</tt><br> (hint : il a 5 positions "
 "différentes)<br><br>Le pinnipède télétype vous souhaite un agréable moulage."
 
-#: src/pinnipede.c:2466 src/pinnipede.c:2485 src/pinnipede.c:2502
-#: src/pinnipede.c:2519
+#: src/pinnipede.c:2470 src/pinnipede.c:2489 src/pinnipede.c:2506
+#: src/pinnipede.c:2523
 #, c-format
 msgid "Activating the filter [%s]\n"
 msgstr "Activation du filtre [%s]\n"
 
-#: src/pinnipede.c:2603
+#: src/pinnipede.c:2607
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>thread</font> '<font "
 "color=#800000>id=%d</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2616
+#: src/pinnipede.c:2620
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>useragent</font> '<font "
 "color=#800000>%s</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2626
+#: src/pinnipede.c:2630
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>login</font> '<font "
 "color=#800000>%s</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2632
+#: src/pinnipede.c:2636
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>message</font> #id=<font "
 "color=#800000>%d</font>"
 msgstr ""
 
-#: src/pinnipede.c:2640
+#: src/pinnipede.c:2644
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>word</font> '<font "
@@ -1821,68 +1821,68 @@ msgstr ""
 "L'élément sélectionné est le <font color=blue>mot</font> '<font "
 "color=#800000>%s</font>'"
 
-#: src/pinnipede.c:2650
+#: src/pinnipede.c:2654
 msgid "<b>plop</b>ify it"
 msgstr "<b>plop</b>ifier"
 
-#: src/pinnipede.c:2651
+#: src/pinnipede.c:2655
 msgid "<b>superplop</b>ify it"
 msgstr "<b>superplop</b>ifier"
 
-#: src/pinnipede.c:2652
+#: src/pinnipede.c:2656
 msgid "put in <b>boitakon</b>"
 msgstr "mettre dans la <b>boitakon</b>"
 
-#: src/pinnipede.c:2653
+#: src/pinnipede.c:2657
 msgid "put in <i>hungry</i> <b>boitakon</b>"
 msgstr "mettre dans la <b>boitakon</b> <i>affamée</i>"
 
-#: src/pinnipede.c:2657
+#: src/pinnipede.c:2661
 msgid "mark it (categ 0)"
 msgstr "marquer (categ 0)"
 
-#: src/pinnipede.c:2658
+#: src/pinnipede.c:2662
 msgid "mark it (categ 1)"
 msgstr "marquer (categ 1)"
 
-#: src/pinnipede.c:2659
+#: src/pinnipede.c:2663
 msgid "mark it (categ 2)"
 msgstr "marquer (categ 2)"
 
-#: src/pinnipede.c:2660
+#: src/pinnipede.c:2664
 msgid "mark it (categ 3)"
 msgstr "marquer (categ 3)"
 
-#: src/pinnipede.c:2661
+#: src/pinnipede.c:2665
 msgid "mark it (categ 4)"
 msgstr "marquer (categ 4)"
 
-#: src/pinnipede.c:2662
+#: src/pinnipede.c:2666
 msgid "filter it"
 msgstr "filtrer"
 
-#: src/pinnipede.c:2666
+#: src/pinnipede.c:2670
 msgid "gogole search"
 msgstr "recherche gogole"
 
-#: src/pinnipede.c:2671
+#: src/pinnipede.c:2675
 msgid "copy link in X clipboard"
 msgstr "copier lien dans presse-papier X"
 
-#: src/pinnipede.c:2675
+#: src/pinnipede.c:2679
 msgid "copy useragent in X clipboard"
 msgstr "copier useragent dans presse-papier X"
 
-#: src/pinnipede.c:2698
+#: src/pinnipede.c:2702
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font> from hilight categ %d"
 msgstr "enlever %s:'<font color=blue>%.15s</font> de la catégorie soulignée %d"
 
-#: src/pinnipede.c:2704
+#: src/pinnipede.c:2708
 msgid "hide the button bar / tabs bar"
 msgstr "cacher la barre de boutons / barre de tâches"
 
-#: src/pinnipede.c:2705
+#: src/pinnipede.c:2709
 msgid "show the button bar / tabs bar"
 msgstr "montrer la barre de boutons / barre de tâches"
 
@@ -1986,23 +1986,23 @@ msgstr "Effacer"
 msgid "Restore the default user-agent"
 msgstr "Restaurer le user-agent par défaut"
 
-#: src/dock.c:444
+#: src/dock.c:447
 msgid "..NO NEWS"
 msgstr "..PAS DE NOUVELLES"
 
-#: src/dock.c:712
+#: src/dock.c:715
 msgid "coin ?.... COIN ?? couic !\n"
 msgstr ""
 
-#: src/dock.c:829
+#: src/dock.c:832
 msgid "%<YEL Troll-o-meter -> going to level> %<GRN 0.00> (max=1.) !!!\n"
 msgstr ""
 
-#: src/dock.c:949
+#: src/dock.c:952
 msgid "Coin !\n"
 msgstr ""
 
-#: src/dock.c:952
+#: src/dock.c:955
 msgid ""
 "<b>Please</b> fill your options file with a valid site equiped with a "
 "board..."
@@ -2010,12 +2010,12 @@ msgstr ""
 "<b>SVP</b> remplissez votre fichier d'options avec un site valide comprenant "
 "une tribune..."
 
-#: src/dock.c:1077
+#: src/dock.c:1080
 #, c-format
 msgid "Error while loading file : '%s' [64x64 pixels XPM, please]"
 msgstr ""
 
-#: src/dock.c:1264 src/dock.c:1460
+#: src/dock.c:1267 src/dock.c:1463
 msgid "No new messages."
 msgstr "Pas de nouveaux messages."
 

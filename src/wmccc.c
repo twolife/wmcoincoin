@@ -918,10 +918,11 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
     }
     SP_SAVEINT(OPTSG_palmipede_msg_max_length, palmi_msg_max_len);
     SP_SAVEINT(OPTSG_palmipede_useragent_max_length, palmi_ua_max_len);
-    {
+    SP_SAVESTR(OPTSG_http_site_url, site_root);
+    /*    {
       fprintf(f, ".%s: %s%s%s\n", DOTIFY(OPTSG_http_site_url),
 	      sp->site_root, strlen(sp->site_path) ? "/" : "", sp->site_path);
-    }
+	      }*/
     //SP_SAVESTR(OPTSG_http_site_url, site_root);
     SP_SAVESTR(OPTSG_http_path_tribune_backend, path_board_backend);
     SP_SAVESTR(OPTSG_http_path_news_backend, path_news_backend);

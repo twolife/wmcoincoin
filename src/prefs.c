@@ -224,11 +224,11 @@ option_set_useragent(const char *optarg,
 /* lecture du nom du site (avec le port) */
 static void
 option_site_root (const char  *optarg,
-		  SitePrefs *prefs)
+		  SitePrefs *prefs, int verbatim)
 {
   char *s;
   char *p,*p2;
-
+  char *nice_url;
   assert(optarg);
   if (prefs->site_root) free(prefs->site_root);
   prefs->site_root = NULL;
@@ -266,8 +266,19 @@ option_site_root (const char  *optarg,
     while (p2 > p && *p2 == '/') { *p2 = 0; p2--;}
   }
   prefs->site_path = strdup(p);
-  myprintf(_("site_root : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n"), 
+  nice_url = str_printf("http://%s:%d/%s",prefs->site_root, prefs->site_port, prefs->site_path);
+  url_au_coiffeur(nice_url,0);
+
+  /*  myprintf(_("site_root : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n"), 
 	   prefs->site_root, prefs->site_port, prefs->site_path,strlen(prefs->site_path) ? "/" : "");
+  */
+  myprintf(_("site_root : %<YEL %s>\n"), nice_url);
+  if (verbatim) {
+    free(prefs->site_root);
+    prefs->site_root = nice_url;
+  } else {
+    free(nice_url);
+  }
   free(s);
 }
 
@@ -1202,7 +1213,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_INTEGER_ARG(1,3, sp->board_backend_type);
   } break; 
   case OPTSG_http_site_url: {
-    option_site_root(arg,sp);
+    option_site_root(arg,sp,verbatim);
   } break; 
   case OPTSG_http_path_tribune_backend: {
     ASSIGN_STRING_VAL(sp->path_board_backend, arg); 

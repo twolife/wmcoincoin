@@ -568,7 +568,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
   GtkWidget *active_item;
   SitePrefs *sp;
   
-  enum { NONE, DLFP, WOOF, MDKFR} item_index;
+  enum { NONE, DLFP, WOOF, MDKFR, LORDORIC, CAVERNE, DAE, DALENTBOUCHOT, GLANDIUM, MANTICORE, DAIQUE, DAPORTATIVEBOUCHOT, HOUPLA} item_index;
 
   active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
   item_index = g_list_index(menu_shell->children, active_item);
@@ -594,6 +594,10 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->check_messages = 0;
       sp->palmi_msg_max_len = 255;
       sp->palmi_ua_max_len = 60;
+      sp->use_AM_PM = 0;
+      sp->locale = locFR;
+      sp->board_backend_type = 1;
+      sp->board_check_delay = 300;
     }
     switch (item_index) {
     case NONE: break;
@@ -603,12 +607,12 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->all_names[1] = strdup("wooflu");
       sp->user_cookie = strdup("session_id=PROUT");
       sp->locale = locEN;
-      sp->use_AM_PM = 0;
       sp->palmi_msg_max_len = 400;
       sp->palmi_ua_max_len = 60;
       sp->check_news = 1;
       sp->check_comments = 1;
       sp->check_messages = 1;
+      sp->board_check_delay = 30;
       break;
     case DLFP:
       sp->site_root = strdup("http://linuxfr.org");
@@ -617,15 +621,90 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->all_names[0] = strdup("dlfp");
       sp->all_names[1] = strdup("linuxfr");
       sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
-      sp->locale = locFR;
-      sp->use_AM_PM = 0;
+      sp->check_news = 1;
+      sp->board_backend_type = 2;
+      sp->board_check_delay = 30;
+      break;
     case MDKFR:
       sp->site_root = strdup("mandrakefr.org");
       sp->all_names[0] = strdup("mdkfr");
       sp->all_names[1] = strdup("mandrakefr");
-      sp->locale = locFR;
-      sp->use_AM_PM = 0;
       sp->check_news = 1;
+      break;
+    case LORDORIC:
+      sp->site_root = strdup("lordoric.free.fr");
+      sp->all_names[0] = strdup("comptoir");
+      sp->all_names[1] = strdup("lo");
+      sp->path_board_backend = strdup("daBoard/remote.xml");
+      sp->path_board_add = strdup("daBoard/add.php");
+      sp->user_cookie = NULL;
+      break;
+    case DALENTBOUCHOT:
+      sp->site_root = strdup("rincevent.dyndns.org");
+      sp->all_names[0] = strdup("kad");
+      sp->all_names[1] = strdup("dalentbouchot");
+      sp->all_names[2] = strdup("dlb");
+      sp->path_board_backend = strdup("bouchot/backend.php");
+      sp->path_board_add = strdup("index.php");
+      sp->user_cookie = NULL;      
+      sp->board_backend_type = 2;
+      break;
+    case CAVERNE:
+      sp->site_root = strdup("didbaba.tuxfamily.org/index.php");
+      sp->all_names[0] = strdup("caverne");
+      sp->all_names[1] = strdup("didbaba");
+      sp->path_board_backend = strdup("board/remote.xml");
+      sp->path_board_add = strdup("index.php/board,board,add,,,.html");
+      sp->board_post = strdup("message=%s&section=1");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      sp->board_backend_type = 2;
+      break;
+    case DAE:
+      sp->site_root = strdup("quadaemon.dyndns.org");
+      sp->all_names[0] = strdup("dae");
+      sp->all_names[1] = strdup("darkside");
+      sp->path_board_backend = strdup("dauphin.xml");
+      sp->path_board_add = strdup("/cgi-bin/blahblah.sh");
+      sp->board_post = strdup("msg=%s");
+      sp->user_cookie = NULL;      
+      break;
+    case GLANDIUM:
+      sp->site_root = strdup("old.glandium.org");
+      sp->all_names[0] = strdup("glandium");
+      sp->user_cookie = NULL;      
+      break;
+    case MANTICORE:
+      sp->site_root = strdup("reziztanzia.free.fr/board");
+      sp->all_names[0] = strdup("manticore");
+      sp->all_names[1] = strdup("nostromo");
+      sp->path_board_backend = strdup("remote.php");
+      sp->path_board_add = strdup("add.php");
+      break;
+    case DAIQUE:
+      sp->site_root = strdup("daique.dyndns.org/~ced");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      sp->all_names[0] = strdup("daique");
+      sp->path_board_add = strdup("board/add.php");
+      sp->board_post = strdup("message=%s");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      break;
+    case DAPORTATIVEBOUCHOT:
+      sp->site_root = strdup("daportativebouchot.org");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      sp->all_names[0] = strdup("dpb");
+      sp->all_names[1] = strdup("daportativebouchot");
+      sp->path_board_add = strdup("templeet.php?/board/add.html");
+      sp->board_post = strdup("message=%s");
+      sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
+      break;
+    case HOUPLA:
+      sp->site_root = strdup("pschit.net");
+      sp->all_names[0] = strdup("houpla");
+      sp->all_names[1] = strdup("corse");
+      sp->all_names[2] = strdup("houplaboom");      
+      sp->board_backend_type = 2;
+      sp->user_cookie = NULL;
+      break;
     default:
       break;
     }

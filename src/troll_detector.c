@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.15 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.16 2003/02/28 19:08:43 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.16  2003/02/28 19:08:43  pouaite
+  trucs divers
+
   Revision 1.15  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -401,10 +404,25 @@ troll_detector(board_msg_info *mi) {
 	if (strncasecmp(s, "\t<a href=\"",10) == 0) {
 	  s += 10;
 	  in_url++;
+	  if (i < MI_MAX_LEN-5) {
+	    txt_simple[i++] = '\t';
+	    txt_simple[i++] = '<';
+	    txt_simple[i++] = 'a';
+	    txt_simple[i++] = '\t';
+	    txt_simple[i++] = '>';
+	  }
 	  continue;
 	} else if (strncasecmp(s, "\t</a\t>", 6) == 0) {
 	  s += 6;
 	  in_url--;
+	  if (i < MI_MAX_LEN-6) {
+	    txt_simple[i++] = '\t';
+	    txt_simple[i++] = '<';
+	    txt_simple[i++] = '/';
+	    txt_simple[i++] = 'a';
+	    txt_simple[i++] = '\t';
+	    txt_simple[i++] = '>';
+	  }
 	  continue;
 	}	
 	if (in_url) {
@@ -477,25 +495,31 @@ troll_detector(board_msg_info *mi) {
      ainsi que du nombre de mots mis en gras */
   {
     Word *w = wlst;
-    int in_bold;
+    int in_bold=0;
+    in_url=0;
 
-    in_bold = 0;
     while (w) {
       if (w->in_tag && w->len == 2 && w->w[0] == '/' && w->w[1] == 'b') {
 	in_bold = 0;
       }
-      if (in_bold) {
+      if (in_bold && !in_url) {
 	boldwords_cnt++;
       }
 
       /* on ne compte pas les tags fermant */
       if (w->in_tag && w->w[0] != '/') {
-	if (!(w->len == 1 && w->w[0] == 'i')) {
+	if (!(w->len == 1 && (w->w[0] == 'i' || w->w[0] == 'a'))) {
 	  tag_cnt ++; /* on ne compte pas les <i>, c'est des tags gentils, mais on compte tout le reste */
 	}
 	if (w->len == 1 && w->w[0] == 'b') {
 	  in_bold = 1;
 	}
+	if (w->len == 1 && w->w[0] == 'a') {
+	  in_url = 1;
+	}
+      }
+      if (in_url && w->len == 2 && w->w[0] == '/' && w->w[1] == 'a') {
+	in_url = 0;
       }
       w = w->next; 
     }

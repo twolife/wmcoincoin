@@ -852,9 +852,18 @@ Les tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci perme
 		  <tooltip>Initialize the various entries below with predefined (and hopefully correct) values</tooltip>
 		  <can_focus>True</can_focus>
 		  <items>no
-linuxfr.org
-woof.lu
-mandrakefr.org
+linuxfr.org (templeet/no anonymous)
+woof.lu (dacode/anonymous with ip in ua)
+mandrakefr.org (dacode)
+lordoric.free.fr (anonymous only)
+didbaba.tuxfamily.org (templeet)
+quadaemon.free.fr (sed board/anonymous only)
+dalentbouchot (anonymous only)
+old.glandium (anonymous only)
+manticore
+daique
+daportativebouchot
+houpla
 </items>
 		  <initial_choice>0</initial_choice>
 		  <child>
@@ -3871,7 +3880,7 @@ aspell
 		<widget>
 		  <class>GtkEntry</class>
 		  <name>entry_default_ua</name>
-		  <tooltip>yes, you can enter whatever stupid string you want, just try, don't be shy</tooltip>
+		  <tooltip>yes, you can enter whatever stupid string you want, just try, don't be shy. Note that this is the DEFAULT useragent, if you just want to change your CURRENT useragent, press the tab key in the palmipede and edit it</tooltip>
 		  <can_focus>True</can_focus>
 		  <signal>
 		    <name>changed</name>

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.74 2003/01/12 18:42:19 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.75 2003/02/28 19:08:44 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.75  2003/02/28 19:08:44  pouaite
+  trucs divers
+
   Revision 1.74  2003/01/12 18:42:19  pouaite
   et une baguette bien cuite pour le monsieur avec l'ornythorinque
 
@@ -288,8 +291,6 @@
 #include "../xpms/date.xpm"
 #include "../xpms/led.xpm"
 
-
-
 /* des vieilles variables globales qui feraient mieux de rentrer dans une jolie structure */
 
 GeneralPrefs Prefs;
@@ -525,6 +526,56 @@ wmcc_log_http_request(Site *s, HttpRequest *r)
   }
 }
 
+/*
+ * Tente de formater potablement un message d'erreur retourné par le serveur
+ * C'est de la bricole pour linuxfr, hein !
+ * ( et ne pas oublier le free() sur le joli_message, oui c'est crados )
+ */
+char *formate_erreur( char *tribune, char *message_ignoble )
+{
+	char *debut, *fin, *erreur;
+	int taille;
+	char *joli_message;
+	int content = 0;
+
+	debut = strstr( message_ignoble, "<div class=\"menubar\">" );
+
+	if ( NULL != debut ) 
+	{
+		// Chouette, c'est bien le template de linuxfr
+		debut = strstr( debut, "</div>" ) + 6;
+		if ( NULL != debut ) {	
+			fin = strstr( debut, "<div" );
+			if ( NULL != fin ) {
+				taille = fin - debut;
+				erreur = strdup( debut );
+				erreur[taille] = 0;	 // j'ai honte
+				
+				if ( NULL != strstr( erreur, "XP >=" )	)
+				{
+					joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+								"the server answered:<p>%s<p>%s"), tribune, erreur,
+								_("Check your cookies !") );
+				} else {
+					joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+								"the server answered:<p>%s"), tribune, erreur );
+				}
+
+				// Ca a marche \o/
+				content = 1;
+			}
+		}			
+	}
+	
+	if ( ! content ) 
+	{
+		joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+				"the server answered:<p>%s"), tribune, message_ignoble );	
+	}
+	
+	return joli_message;
+}
+
 /* 
    poste le message sur la tribune -- en tant que fonction 'lente' 
    cette fonction est executée par la boucle principale
@@ -567,17 +618,15 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.error, flag_cancel_task));
   wmcc_log_http_request(site, &r);
   if (r.error == 0) {
-    int got;
-    char reponse[2048];
+    unsigned char *reponse; 
 
-
-    if ((got=http_read(&r, reponse, 2047))>0) {
-      char *s;
-      reponse[got] = 0;
-      s = str_printf(_("[%s] Ooops, there must have been a little problem, "
-	       "the server answered:<p>%s"), site->prefs->site_name, reponse);
+		reponse = http_read_all(&r, site->prefs->site_name);
+    if ( *reponse != 0 ) {
+			char *s;
+      s = formate_erreur( site->prefs->site_name, reponse ); 
       msgbox_show(dock, s);
       free(s);
+			free(reponse);
     }
     http_request_close(&r);
     site->http_success_cnt++;
