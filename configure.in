@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.13  2002/03/09 19:45:52  pouaite
+dnl   microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
+dnl
 dnl   Revision 1.12  2002/03/08 23:53:40  pouaite
 dnl   derniers bugfixes pour la v2.3.6
 dnl
@@ -41,6 +44,7 @@ AC_INIT(src/wmcoincoin.c)
 
 AM_INIT_AUTOMAKE(wmcoincoin, 2.3.6)
 AM_CONFIG_HEADER(src/config.h)
+AC_DEFINE(PATCH_LEVEL, "2", _UNQUOTED)
 
 dnl Checks for host/os name
 dnl =======================

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.27 2002/03/08 23:53:40 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.28 2002/03/09 19:45:52 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.28  2002/03/09 19:45:52  pouaite
+  microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
+
   Revision 1.27  2002/03/08 23:53:40  pouaite
   derniers bugfixes pour la v2.3.6
 
@@ -1435,7 +1438,7 @@ main(int argc, char **argv)
   srand(time(NULL));
   ALLOC_OBJ(dock, Dock);
 
-  myprintf("%<GRN wmc2> v.%<WHT " VERSION "> [ compile le " __DATE__ " ]\n");
+  myprintf("%<GRN wmc2> v.%<WHT " VERSION "> patch level " PATCH_LEVEL " [ compile le " __DATE__ " ]\n");
 
   init_default_prefs (argc, argv, &Prefs);
   check_wmcoincoin_dir();

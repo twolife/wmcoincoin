@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.32 2002/03/09 00:25:12 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.33 2002/03/09 19:45:52 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.33  2002/03/09 19:45:52  pouaite
+  microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
+
   Revision 1.32  2002/03/09 00:25:12  pouaite
   coin coin
 
@@ -2985,7 +2988,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA);
       } else {
 	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);
-	else tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN);
+	else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN);
       }
     } else if (pw->attr & PWATTR_LOGIN) {
       *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);

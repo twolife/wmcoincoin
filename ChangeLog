@@ -1,3 +1,11 @@
+--------------------------v2.3.6-2-----------------------------------------
+	
+2002-03-09  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (pp_handle_shift_clic): petit bugfix lorsqu'on
+	plopifie en premier un ua non authentifié. Du coup j'ai aussi
+	ajouté une macro PATCH_LEVEL .. c'est la version 2.3.6-2
+
 --------------------------v2.3.6-----------------------------------------
 
 2002-03-08  pouaite  <c0in@altern.org>

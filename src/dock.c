@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.4 2002/02/24 22:13:56 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.5 2002/03/09 19:45:52 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.5  2002/03/09 19:45:52  pouaite
+  microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
+
   Revision 1.4  2002/02/24 22:13:56  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -852,6 +855,7 @@ dock_show_tribune_frequentation(Dock *dock)
   }
   
   snprintf(s, 2048, 
+	   "vous utilisez wmc² v.<font color=blue>" VERSION " pl " PATCH_LEVEL "</font> [ compilé le " __DATE__ " ]<p>"
 	   "%s"
 	   "<p align=center><b>Fréquentation de la Tribune</b><br>"
 	   "<i>(estimation basée sur les useragents et les logins)</i></p><br>"
