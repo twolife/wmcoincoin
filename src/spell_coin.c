@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.4 2001/12/02 18:11:45 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.5 2001/12/02 19:04:42 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.5  2001/12/02 19:04:42  pouaite
+  suppression de messages de debug...
+
   Revision 1.4  2001/12/02 18:11:45  pouaite
   amélioration du support de ispell (moins de pb de ralentissement du palmipede) au prix d'un vilain hack
 
@@ -180,7 +183,7 @@ kill_ispell()
 {
   int spell_pid = ispell_pid, ret;
   ispell_pid = -1;
-  printf("kill ispell(%d)\n", spell_pid);
+  BLAHBLAH(1,printf("kill ispell(%d)\n", spell_pid));
   close(ispell_stdin);
   close(ispell_stdout); /* et paf ! */
   waitpid(spell_pid, &ret, 0); /* On attends la reponse ca elimine les zombies :) */

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.3 2001/12/02 19:04:42 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.3  2001/12/02 19:04:42  pouaite
+  suppression de messages de debug...
+
   Revision 1.2  2001/12/02 18:24:16  pouaite
   modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
 
@@ -395,7 +398,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     
     if (texte == NULL) { err = 7; goto ouups1; }
 
-    myprintf("liens: '%<BLU %s>'\n", liens);
+    //myprintf("liens: '%<BLU %s>'\n", liens);
     
     p2 = liens;
     while (p2) {
