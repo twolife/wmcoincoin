@@ -70,8 +70,8 @@ create_main_win (void)
   GtkWidget *table26;
   GtkWidget *label112;
   GtkWidget *label133;
-  GtkWidget *optionmenu6;
-  GtkWidget *optionmenu6_menu;
+  GtkWidget *optionmenu_site_locale;
+  GtkWidget *optionmenu_site_locale_menu;
   GtkWidget *entry_user_login;
   GtkWidget *hbox163;
   GtkWidget *entry_site_alias1;
@@ -187,6 +187,7 @@ create_main_win (void)
   GtkWidget *combo_entry_board_wiki;
   GtkWidget *label111;
   GtkWidget *checkbutton_pp_use_AMPM;
+  GtkWidget *checkbutton_board_auto_refresh;
   GtkWidget *label6;
   GtkWidget *vbox11;
   GtkWidget *frame8;
@@ -528,7 +529,7 @@ create_main_win (void)
   gtk_widget_show (text1);
   gtk_container_add (GTK_CONTAINER (scrolledwindow8), text1);
   gtk_text_insert (GTK_TEXT (text1), NULL, NULL, NULL,
-                   "PASSAGE DE WMC² 2.3.8 à WMC² 2.4\n\nLe format du fichier d'options a beaucoup changé.. du coup il est conseillé d'utiliser le nouveau wmccc pour éditer les options, c'est plus simple. Sinon, lisez le fichier d'options par défaut, c'est expliqué.\n\n* Pour ceux qui ne veulent pas se faire chier, il suffit de rajouter site: \"lenomdusite\" à la _FIN_ de fichier d'options que vous utilisez actuellement, et vous devriez retrouver un coincoin quasi similaire à la v2.3.8 (voir qd même la remarque sur les cookies plus bas)\n\n* Les cookies:\nwmc² demande maintenant le NOM du cookie avec sa valeur, veillez donc à bien rajouter 'session_id=' devant la valeur du cookie.\n\n* Le bouton 'Apply' n'a pas forcément un effet immédiat, si wmc² est occupé à d/l des news ou autre, il faudra attendre quelques secondes (le bouton wmc3 du pinnipède clignote)\n\n* Certaines rares options ne peuvent pas être changées en cours de fonctionnement (comme le skin de wmc²)\n\n* IL EST TRES FORTEMENT CONSEILLE DE REPARTIR DU FICHIER D'OPTIONS PAR DEFAUT, ou alors d'ajouter à votre fichier d'options les diverses lignes 'url_replace' et 'board.miniua' du fichier d'options par défaut.\n\n* Les tabs du pinnipede ont trois états:\n  off : on ne voit pas les messages du site\n  on : les messages du site sont affichés\n  on principale: c'est le site par défaut sur lequel vous postez avec le palmipede.\n\nLe comportement par défaut des tabs pour le clic gauche est le suivant\n  (1) tab off --> tab on principale\n  (2) tab on principale -> tous les autres à on\n  (3) tab on principale + tous les autres à on -> tous les autres à off\n  les clics suivants alternent entre (2) et (3)\n\nSi ce comportement vous déplait, cochez l'option 'classical tabs' dans le volet 'pinnipède' de wmccc.\n\nLes tabs ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).", -1);
+                   "PASSAGE DE WMC² 2.3.8 à WMC² 2.4\n\nLe format du fichier d'options a beaucoup changé.. du coup il est conseillé d'utiliser le nouveau wmccc pour éditer les options, c'est plus simple. Sinon, lisez le fichier d'options par défaut, c'est expliqué.\n\n* Pour ceux qui ne veulent pas se faire chier, il suffit de rajouter site: \"lenomdusite\" à la _FIN_ de fichier d'options que vous utilisez actuellement, et vous devriez retrouver un coincoin quasi similaire à la v2.3.8 (voir qd même la remarque sur les cookies plus bas)\n\n* Les cookies:\nwmc² demande maintenant le NOM du cookie avec sa valeur, veillez donc à bien rajouter 'session_id=' devant la valeur du cookie.\n\n* Le bouton 'Apply' n'a pas forcément un effet immédiat, si wmc² est occupé à d/l des news ou autre, il faudra attendre quelques secondes (le bouton wmc3 du pinnipède clignote)\n\n* Certaines rares options ne peuvent pas être changées en cours de fonctionnement (comme le skin de wmc²)\n\n* IL EST TRES FORTEMENT CONSEILLE DE REPARTIR DU FICHIER D'OPTIONS PAR DEFAUT, ou alors d'ajouter à votre fichier d'options les diverses lignes 'url_replace' et 'board.miniua' du fichier d'options par défaut.\n\n* Les tabs du pinnipede ont trois états:\n  off : on ne voit pas les messages du site\n  on : les messages du site sont affichés\n  on principale: c'est le site par défaut sur lequel vous postez avec le palmipede.\n\nLe comportement par défaut des tabs pour le clic gauche est le suivant\n  (1) tab off --> tab on principale\n  (2) tab on principale -> tous les autres à on\n  (3) tab on principale + tous les autres à on -> tous les autres à off\n  les clics suivants alternent entre (2) et (3)\n\nSi ce comportement vous déplait, cochez l'option 'classical tabs' dans le volet 'pinnipède' de wmccc.\n\nLes tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).", -1);
 
   label161 = gtk_label_new ("Release Notes");
   gtk_widget_ref (label161);
@@ -907,6 +908,7 @@ create_main_win (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (text_site_cookie);
   gtk_container_add (GTK_CONTAINER (scrolledwindow5), text_site_cookie);
+  gtk_tooltips_set_tip (tooltips, text_site_cookie, "for 'classical' dacode sites, just put something like 'session_id=0934PLOPCOIN', for new.linuxfr.org you have to put 2 cookies, like 'unique_id=0plOP3Co1N;md5=GRUIK5453Pl0p'  (you may also have to fill more specific values in the http panel)", NULL);
   gtk_text_set_editable (GTK_TEXT (text_site_cookie), TRUE);
 
   table26 = gtk_table_new (2, 2, FALSE);
@@ -937,23 +939,23 @@ create_main_win (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label133), 0, 0.5);
 
-  optionmenu6 = gtk_option_menu_new ();
-  gtk_widget_ref (optionmenu6);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "optionmenu6", optionmenu6,
+  optionmenu_site_locale = gtk_option_menu_new ();
+  gtk_widget_ref (optionmenu_site_locale);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "optionmenu_site_locale", optionmenu_site_locale,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (optionmenu6);
-  gtk_table_attach (GTK_TABLE (table26), optionmenu6, 1, 2, 1, 2,
+  gtk_widget_show (optionmenu_site_locale);
+  gtk_table_attach (GTK_TABLE (table26), optionmenu_site_locale, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_tooltips_set_tip (tooltips, optionmenu6, "Setting a wrong value can prevent wmcc from downloading correctly the news text", NULL);
-  optionmenu6_menu = gtk_menu_new ();
-  glade_menuitem = gtk_menu_item_new_with_label ("FR");
-  gtk_widget_show (glade_menuitem);
-  gtk_menu_append (GTK_MENU (optionmenu6_menu), glade_menuitem);
+  gtk_tooltips_set_tip (tooltips, optionmenu_site_locale, "Setting a wrong value can prevent wmcc from downloading correctly the text of the news", NULL);
+  optionmenu_site_locale_menu = gtk_menu_new ();
   glade_menuitem = gtk_menu_item_new_with_label ("EN");
   gtk_widget_show (glade_menuitem);
-  gtk_menu_append (GTK_MENU (optionmenu6_menu), glade_menuitem);
-  gtk_option_menu_set_menu (GTK_OPTION_MENU (optionmenu6), optionmenu6_menu);
+  gtk_menu_append (GTK_MENU (optionmenu_site_locale_menu), glade_menuitem);
+  glade_menuitem = gtk_menu_item_new_with_label ("FR");
+  gtk_widget_show (glade_menuitem);
+  gtk_menu_append (GTK_MENU (optionmenu_site_locale_menu), glade_menuitem);
+  gtk_option_menu_set_menu (GTK_OPTION_MENU (optionmenu_site_locale), optionmenu_site_locale_menu);
 
   entry_user_login = gtk_entry_new ();
   gtk_widget_ref (entry_user_login);
@@ -1943,6 +1945,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "combo_entry_board_wiki", combo_entry_board_wiki,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (combo_entry_board_wiki);
+  gtk_tooltips_set_tip (tooltips, combo_entry_board_wiki, "if you want to emulate a proxy, put something like 'http://wiki.woof.lu/index.php?'", NULL);
   gtk_entry_set_text (GTK_ENTRY (combo_entry_board_wiki), "http://wiki.woof.lu/index.php?");
 
   label111 = gtk_label_new ("WikiUrl emulation");
@@ -1963,6 +1966,16 @@ create_main_win (void)
   gtk_table_attach (GTK_TABLE (table19), checkbutton_pp_use_AMPM, 0, 1, 3, 4,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
+
+  checkbutton_board_auto_refresh = gtk_check_button_new_with_label ("Auto-refresh the board");
+  gtk_widget_ref (checkbutton_board_auto_refresh);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_board_auto_refresh", checkbutton_board_auto_refresh,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (checkbutton_board_auto_refresh);
+  gtk_table_attach (GTK_TABLE (table19), checkbutton_board_auto_refresh, 1, 2, 3, 4,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_tooltips_set_tip (tooltips, checkbutton_board_auto_refresh, "Untoggle this to disable the auto-refresh of the board (for example, in order to reduce the number of hits in the company's proxy of the 42 boards you're monitoring)", NULL);
 
   label6 = gtk_label_new ("Board");
   gtk_widget_ref (label6);
@@ -3599,7 +3612,7 @@ create_main_win (void)
   gtk_clist_set_column_width (GTK_CLIST (clist_kemph), 0, 106);
   gtk_clist_set_column_width (GTK_CLIST (clist_kemph), 1, 323);
   gtk_clist_set_column_width (GTK_CLIST (clist_kemph), 2, 71);
-  gtk_clist_column_titles_show (GTK_CLIST (clist_kemph));
+  gtk_clist_column_titles_hide (GTK_CLIST (clist_kemph));
 
   label155 = gtk_label_new ("label155");
   gtk_widget_ref (label155);
@@ -3804,7 +3817,7 @@ create_main_win (void)
   gtk_clist_set_column_width (GTK_CLIST (clist_kplop), 0, 112);
   gtk_clist_set_column_width (GTK_CLIST (clist_kplop), 1, 295);
   gtk_clist_set_column_width (GTK_CLIST (clist_kplop), 2, 17);
-  gtk_clist_column_titles_show (GTK_CLIST (clist_kplop));
+  gtk_clist_column_titles_hide (GTK_CLIST (clist_kplop));
 
   label158 = gtk_label_new ("label155");
   gtk_widget_ref (label158);
@@ -4692,6 +4705,9 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (checkbutton_pp_use_AMPM), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (checkbutton_board_auto_refresh), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (entry_coin_coin_message), "changed",
                       GTK_SIGNAL_FUNC (on_editable_changed),
                       NULL);
@@ -5100,56 +5116,6 @@ create_fontselectiondialog (void)
 }
 
 GtkWidget*
-create_dialog_msg_ok (void)
-{
-  GtkWidget *dialog_msg_ok;
-  GtkWidget *vbox10;
-  GtkWidget *label_dialog_msg_ok;
-  GtkWidget *hbox7;
-  GtkWidget *button14;
-
-  dialog_msg_ok = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_object_set_data (GTK_OBJECT (dialog_msg_ok), "dialog_msg_ok", dialog_msg_ok);
-  gtk_window_set_title (GTK_WINDOW (dialog_msg_ok), "Message");
-  gtk_window_set_modal (GTK_WINDOW (dialog_msg_ok), TRUE);
-  gtk_window_set_policy (GTK_WINDOW (dialog_msg_ok), FALSE, TRUE, TRUE);
-
-  vbox10 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (vbox10);
-  gtk_object_set_data_full (GTK_OBJECT (dialog_msg_ok), "vbox10", vbox10,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (vbox10);
-  gtk_container_add (GTK_CONTAINER (dialog_msg_ok), vbox10);
-
-  label_dialog_msg_ok = gtk_label_new ("plop");
-  gtk_widget_ref (label_dialog_msg_ok);
-  gtk_object_set_data_full (GTK_OBJECT (dialog_msg_ok), "label_dialog_msg_ok", label_dialog_msg_ok,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label_dialog_msg_ok);
-  gtk_box_pack_start (GTK_BOX (vbox10), label_dialog_msg_ok, TRUE, TRUE, 0);
-
-  hbox7 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (hbox7);
-  gtk_object_set_data_full (GTK_OBJECT (dialog_msg_ok), "hbox7", hbox7,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (hbox7);
-  gtk_box_pack_start (GTK_BOX (vbox10), hbox7, FALSE, FALSE, 0);
-
-  button14 = gtk_button_new_with_label ("OK");
-  gtk_widget_ref (button14);
-  gtk_object_set_data_full (GTK_OBJECT (dialog_msg_ok), "button14", button14,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (button14);
-  gtk_box_pack_start (GTK_BOX (hbox7), button14, FALSE, FALSE, 0);
-
-  gtk_signal_connect_object (GTK_OBJECT (button14), "clicked",
-                             GTK_SIGNAL_FUNC (gtk_widget_destroy),
-                             GTK_OBJECT (dialog_msg_ok));
-
-  return dialog_msg_ok;
-}
-
-GtkWidget*
 create_fileselection_save (void)
 {
   GtkWidget *fileselection_save;
@@ -5215,5 +5181,72 @@ create_fileselection_xpm (void)
                       NULL);
 
   return fileselection_xpm;
+}
+
+GtkWidget*
+create_dialog_errmsg (void)
+{
+  GtkWidget *dialog_errmsg;
+  GtkWidget *dialog_vbox1;
+  GtkWidget *fixed1;
+  GtkWidget *pixmap3;
+  GtkWidget *label_errmsg;
+  GtkWidget *dialog_action_area1;
+  GtkWidget *ok_button;
+
+  dialog_errmsg = gtk_dialog_new ();
+  gtk_object_set_data (GTK_OBJECT (dialog_errmsg), "dialog_errmsg", dialog_errmsg);
+  gtk_window_set_title (GTK_WINDOW (dialog_errmsg), "wmccc is talking to you");
+  gtk_window_set_policy (GTK_WINDOW (dialog_errmsg), TRUE, TRUE, FALSE);
+
+  dialog_vbox1 = GTK_DIALOG (dialog_errmsg)->vbox;
+  gtk_object_set_data (GTK_OBJECT (dialog_errmsg), "dialog_vbox1", dialog_vbox1);
+  gtk_widget_show (dialog_vbox1);
+  gtk_widget_set_usize (dialog_vbox1, 400, 250);
+
+  fixed1 = gtk_fixed_new ();
+  gtk_widget_ref (fixed1);
+  gtk_object_set_data_full (GTK_OBJECT (dialog_errmsg), "fixed1", fixed1,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (fixed1);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox1), fixed1, TRUE, TRUE, 0);
+
+  pixmap3 = create_pixmap (dialog_errmsg, "badnews.xpm");
+  gtk_widget_ref (pixmap3);
+  gtk_object_set_data_full (GTK_OBJECT (dialog_errmsg), "pixmap3", pixmap3,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (pixmap3);
+  gtk_fixed_put (GTK_FIXED (fixed1), pixmap3, 8, 8);
+
+  label_errmsg = gtk_label_new ("");
+  gtk_label_parse_uline (GTK_LABEL (label_errmsg),
+                         "label_errmsg");
+  gtk_widget_ref (label_errmsg);
+  gtk_object_set_data_full (GTK_OBJECT (dialog_errmsg), "label_errmsg", label_errmsg,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label_errmsg);
+  gtk_fixed_put (GTK_FIXED (fixed1), label_errmsg, 120, 8);
+  gtk_widget_set_uposition (label_errmsg, 120, 8);
+  gtk_widget_set_usize (label_errmsg, 312, 104);
+  gtk_label_set_line_wrap (GTK_LABEL (label_errmsg), TRUE);
+
+  dialog_action_area1 = GTK_DIALOG (dialog_errmsg)->action_area;
+  gtk_object_set_data (GTK_OBJECT (dialog_errmsg), "dialog_action_area1", dialog_action_area1);
+  gtk_widget_show (dialog_action_area1);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area1), 10);
+
+  ok_button = gtk_button_new_with_label ("Honk ! Honk !");
+  gtk_widget_ref (ok_button);
+  gtk_object_set_data_full (GTK_OBJECT (dialog_errmsg), "ok_button", ok_button,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (ok_button);
+  gtk_box_pack_start (GTK_BOX (dialog_action_area1), ok_button, FALSE, FALSE, 0);
+  gtk_button_set_relief (GTK_BUTTON (ok_button), GTK_RELIEF_NONE);
+
+  gtk_signal_connect (GTK_OBJECT (dialog_errmsg), "delete_event",
+                      GTK_SIGNAL_FUNC (gtk_widget_destroy),
+                      NULL);
+
+  return dialog_errmsg;
 }
 

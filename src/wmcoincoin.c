@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.59 2002/09/01 23:54:56 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.60 2002/09/02 23:24:41 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.60  2002/09/02 23:24:41  pouaite
+  bugfixes de la soiree
+
   Revision 1.59  2002/09/01 23:54:56  pouaite
   completurage du wmc3 et compatibilitation avec new.linuxfr
 
@@ -1619,7 +1622,7 @@ void *Net_loop (Dock *dock) {
     ALLOW_X_LOOP;
     for (site = dock->sites->list; site; site = site->next) {
       site->news_refresh_cnt++;
-      if (site->board && site->board->enabled) site->board->board_refresh_cnt++;
+      if (site->board && site->board->auto_refresh) site->board->board_refresh_cnt++;
     }
     temps_depuis_dernier_event++;
     save_state_cnt++;

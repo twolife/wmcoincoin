@@ -113,7 +113,7 @@ Le comportement par défaut des tabs pour le clic gauche est le suivant
 
 Si ce comportement vous déplait, cochez l'option 'classical tabs' dans le volet 'pinnipède' de wmccc.
 
-Les tabs ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).</text>
+Les tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).</text>
 	  </widget>
 	</widget>
 
@@ -926,6 +926,7 @@ emacsfr.org
 		  <widget>
 		    <class>GtkText</class>
 		    <name>text_site_cookie</name>
+		    <tooltip>for 'classical' dacode sites, just put something like 'session_id=0934PLOPCOIN', for new.linuxfr.org you have to put 2 cookies, like 'unique_id=0plOP3Co1N;md5=GRUIK5453Pl0p'  (you may also have to fill more specific values in the http panel)</tooltip>
 		    <can_focus>True</can_focus>
 		    <signal>
 		      <name>changed</name>
@@ -1005,11 +1006,11 @@ emacsfr.org
 
 		  <widget>
 		    <class>GtkOptionMenu</class>
-		    <name>optionmenu6</name>
-		    <tooltip>Setting a wrong value can prevent wmcc from downloading correctly the news text</tooltip>
+		    <name>optionmenu_site_locale</name>
+		    <tooltip>Setting a wrong value can prevent wmcc from downloading correctly the text of the news</tooltip>
 		    <can_focus>True</can_focus>
-		    <items>FR
-EN
+		    <items>EN
+FR
 </items>
 		    <initial_choice>0</initial_choice>
 		    <child>
@@ -3343,6 +3344,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 		  <class>GtkEntry</class>
 		  <child_name>GtkCombo:entry</child_name>
 		  <name>combo_entry_board_wiki</name>
+		  <tooltip>if you want to emulate a proxy, put something like 'http://wiki.woof.lu/index.php?'</tooltip>
 		  <can_focus>True</can_focus>
 		  <signal>
 		    <name>changed</name>
@@ -3397,6 +3399,35 @@ disable the dynamic adjustment of the refresh rate)</label>
 		<child>
 		  <left_attach>0</left_attach>
 		  <right_attach>1</right_attach>
+		  <top_attach>3</top_attach>
+		  <bottom_attach>4</bottom_attach>
+		  <xpad>0</xpad>
+		  <ypad>0</ypad>
+		  <xexpand>False</xexpand>
+		  <yexpand>False</yexpand>
+		  <xshrink>False</xshrink>
+		  <yshrink>False</yshrink>
+		  <xfill>True</xfill>
+		  <yfill>False</yfill>
+		</child>
+	      </widget>
+
+	      <widget>
+		<class>GtkCheckButton</class>
+		<name>checkbutton_board_auto_refresh</name>
+		<tooltip>Untoggle this to disable the auto-refresh of the board (for example, in order to reduce the number of hits in the company's proxy of the 42 boards you're monitoring)</tooltip>
+		<can_focus>True</can_focus>
+		<signal>
+		  <name>toggled</name>
+		  <handler>on_checkbutton_toggled</handler>
+		  <last_modification_time>Sun, 25 Aug 2002 22:29:31 GMT</last_modification_time>
+		</signal>
+		<label>Auto-refresh the board</label>
+		<active>False</active>
+		<draw_indicator>True</draw_indicator>
+		<child>
+		  <left_attach>1</left_attach>
+		  <right_attach>2</right_attach>
 		  <top_attach>3</top_attach>
 		  <bottom_attach>4</bottom_attach>
 		  <xpad>0</xpad>
@@ -7319,7 +7350,7 @@ LOGIN OR USERAGENT
 			  <columns>3</columns>
 			  <column_widths>106,323,71</column_widths>
 			  <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
-			  <show_titles>True</show_titles>
+			  <show_titles>False</show_titles>
 			  <shadow_type>GTK_SHADOW_IN</shadow_type>
 
 			  <widget>
@@ -7681,7 +7712,7 @@ categ 4
 			  <columns>3</columns>
 			  <column_widths>112,295,17</column_widths>
 			  <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
-			  <show_titles>True</show_titles>
+			  <show_titles>False</show_titles>
 			  <shadow_type>GTK_SHADOW_IN</shadow_type>
 
 			  <widget>
@@ -9303,81 +9334,6 @@ without pants
 </widget>
 
 <widget>
-  <class>GtkWindow</class>
-  <name>dialog_msg_ok</name>
-  <title>Message</title>
-  <type>GTK_WINDOW_TOPLEVEL</type>
-  <position>GTK_WIN_POS_NONE</position>
-  <modal>True</modal>
-  <allow_shrink>False</allow_shrink>
-  <allow_grow>True</allow_grow>
-  <auto_shrink>True</auto_shrink>
-
-  <widget>
-    <class>GtkVBox</class>
-    <name>vbox10</name>
-    <homogeneous>False</homogeneous>
-    <spacing>0</spacing>
-
-    <widget>
-      <class>GtkLabel</class>
-      <name>label_dialog_msg_ok</name>
-      <label>plop</label>
-      <justify>GTK_JUSTIFY_CENTER</justify>
-      <wrap>False</wrap>
-      <xalign>0.5</xalign>
-      <yalign>0.5</yalign>
-      <xpad>0</xpad>
-      <ypad>0</ypad>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-    </widget>
-
-    <widget>
-      <class>GtkHBox</class>
-      <name>hbox7</name>
-      <homogeneous>False</homogeneous>
-      <spacing>0</spacing>
-      <child>
-	<padding>0</padding>
-	<expand>False</expand>
-	<fill>False</fill>
-      </child>
-
-      <widget>
-	<class>Placeholder</class>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>button14</name>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>gtk_widget_destroy</handler>
-	  <object>dialog_msg_ok</object>
-	  <last_modification_time>Sat, 24 Aug 2002 23:47:35 GMT</last_modification_time>
-	</signal>
-	<label>OK</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>Placeholder</class>
-      </widget>
-    </widget>
-  </widget>
-</widget>
-
-<widget>
   <class>GtkFileSelection</class>
   <name>fileselection_save</name>
   <border_width>10</border_width>
@@ -9472,6 +9428,102 @@ without pants
     </signal>
     <label>No pixmap</label>
     <relief>GTK_RELIEF_NORMAL</relief>
+  </widget>
+</widget>
+
+<widget>
+  <class>GtkDialog</class>
+  <name>dialog_errmsg</name>
+  <signal>
+    <name>delete_event</name>
+    <handler>gtk_widget_destroy</handler>
+    <last_modification_time>Mon, 02 Sep 2002 20:47:30 GMT</last_modification_time>
+  </signal>
+  <title>wmccc is talking to you</title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <allow_shrink>True</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <child_name>Dialog:vbox</child_name>
+    <name>dialog-vbox1</name>
+    <width>400</width>
+    <height>250</height>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <child_name>Dialog:action_area</child_name>
+      <name>dialog-action_area1</name>
+      <border_width>10</border_width>
+      <homogeneous>True</homogeneous>
+      <spacing>5</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>True</fill>
+	<pack>GTK_PACK_END</pack>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>ok_button</name>
+	<can_focus>True</can_focus>
+	<label>Honk ! Honk !</label>
+	<relief>GTK_RELIEF_NONE</relief>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkFixed</class>
+      <name>fixed1</name>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkPixmap</class>
+	<name>pixmap3</name>
+	<x>8</x>
+	<y>8</y>
+	<width>0</width>
+	<height>0</height>
+	<filename>badnews.xpm</filename>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<build_insensitive>True</build_insensitive>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label_errmsg</name>
+	<x>120</x>
+	<y>8</y>
+	<width>312</width>
+	<height>104</height>
+	<label>label_errmsg</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>True</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+    </widget>
   </widget>
 </widget>
 

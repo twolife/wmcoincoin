@@ -10,7 +10,7 @@
 #include "wmccc_support.h"
 #include "wmccc.h"
 
-
+/*
 void
 messagebox(char *msg) {
   GtkWidget *wg, *wgtxt;
@@ -20,7 +20,7 @@ messagebox(char *msg) {
   wgtxt = lookup_widget(wg, "label_dialog_msg_ok"); g_assert(wgtxt);
   gtk_label_set_text(GTK_LABEL(wgtxt), msg);
   gtk_widget_show(wg);
-}
+  }*/
 
 /* ----------------------- COLOR SELECTION TRASH ----------------*/
 static void
@@ -252,7 +252,7 @@ on_bt_mua_change_clicked(GtkButton *button, gpointer user_data UNUSED) {
     err = string_to_miniuarule(s, &r);
     if (err) {
       g_print("'%s' : \n%s\n", s, err);
-      messagebox(err);
+      quick_message(err);
       g_free(err);
     } else {
       MiniUARule *old_r;
@@ -283,7 +283,7 @@ on_bt_mua_add_clicked(GtkButton *button, gpointer user_data UNUSED) {
     char *err;
     err = string_to_miniuarule(s, &r);
     if (err) {
-      messagebox(err);
+      quick_message(err);
       g_free(err);
     } else {
       update_miniua_clist(&Prefs->miniuarules);
@@ -403,8 +403,7 @@ on_bt_remove_site_clicked(GtkButton *button, gpointer user_data UNUSED) {
 
 void
 on_bt_save_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
-  //quick_message("desactive pour le moment, je veux pas massacrer\nun beau fichier d'options tune à la main");
-  save_prefs(glob.options_file);
+  save_prefs(glob.options_file, 1);
 }
 
 void
@@ -427,7 +426,7 @@ on_bt_save_as_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
 void
 on_bt_apply_clicked(GtkButton *button UNUSED, gpointer user_data UNUSED) {
   g_assert(glob.tmp_options_file);
-  if (save_prefs(glob.tmp_options_file) == 0) {
+  if (save_prefs(glob.tmp_options_file, 0) == 0) {
     g_assert(glob.wmcc_pid > 0);
     kill(glob.wmcc_pid, SIGUSR2);
   }
@@ -461,7 +460,7 @@ on_fileselection_ok_button_clicked(GtkButton *button, gpointer user_data UNUSED)
   gtk_widget_hide (filesel);
   filename = gtk_file_selection_get_filename (GTK_FILE_SELECTION (filesel));
   if (filename && strlen(filename)) {
-    save_prefs(filename);
+    save_prefs(filename,1);
     g_free(glob.options_file); glob.options_file = strdup(filename);
   }
 }
@@ -572,7 +571,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
     case DLFP2:
       sp->site_root = strdup("http://new.linuxfr.org");
       sp->path_board_add = strdup("board.html");
-      sp->board_post = strdup("message=%d&section=1");
+      sp->board_post = strdup("message=%s&section=1");
       sp->all_names[0] = strdup("dlfp2");
       sp->all_names[1] = strdup("linuxfr2");
       sp->user_cookie = strdup("unique_id=COIN;md5=PLOP");
@@ -615,7 +614,7 @@ on_optionmenu_transp_selected(GtkMenuShell *menu_shell,
 void
 reorder_hk(GtkCList *clist, KeyList **pfirst)
 {
-  KeyList *first = NULL, *hk, *prev;
+  KeyList *first = NULL, *hk, *prev = NULL;
   int row;
   for (row = 0; row < clist->rows; row++) {
     hk = (KeyList*) gtk_clist_get_row_data(clist, row);
@@ -693,10 +692,12 @@ on_bt_klist_del_clicked(GtkButton *button, gpointer user_data) {
   char *clname = (char*)user_data;
   GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
   int row = clist_selected_row_number(wg);
+  int isplop = strcmp(clname, "clist_kemph");
   KeyList *hk = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk);
   hk->next = NULL;
   key_list_destroy(hk);
   gtk_clist_remove(GTK_CLIST(wg), row);
+  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
 }
 
 void

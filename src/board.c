@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.7 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: board.c,v 1.8 2002/09/02 23:24:41 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.8  2002/09/02 23:24:41  pouaite
+  bugfixes de la soiree
+
   Revision 1.7  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -211,7 +214,7 @@ board_create(Site *site, Boards *boards)
   board->time_shift_min = LONG_MIN;
   board->time_shift_max = LONG_MAX;
   board->time_shift = 0;
-  board->enabled = 1;
+  board->auto_refresh = sp->board_auto_refresh;
   return board;
 }
 

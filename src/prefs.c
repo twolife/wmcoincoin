@@ -698,6 +698,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->check_board = 1;
   p->check_comments = 1;
   p->check_messages = 1;
+  p->board_auto_refresh = 1;
 }
 
 void
@@ -1042,6 +1043,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTS_check_messages: {
     CHECK_BOOL_ARG(sp->check_messages);
   } break; 
+  case OPTS_board_auto_refresh: {
+    CHECK_BOOL_ARG(sp->board_auto_refresh);
+  } break;
   case OPT_font_encoding: { 
     ASSIGN_STRING_VAL(p->font_encoding,arg); 
   } break; 

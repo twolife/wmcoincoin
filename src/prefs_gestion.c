@@ -619,6 +619,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       SP_STR_OPT_COPY(user_cookie);
       SP_STR_OPT_COPY(user_login);
       SP_INT_OPT_COPY(force_fortune_retrieval);
+      SP_INT_OPT_COPY(board_auto_refresh);
 
       if (SP_INT_OPT_COPY_IF_CHANGED(palmi_msg_max_len) +
 	  SP_INT_OPT_COPY_IF_CHANGED(palmi_ua_max_len)) {

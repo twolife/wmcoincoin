@@ -229,7 +229,7 @@ struct _Board {
      etc...     
   */
   volatile int update_request, update_in_progress;
-  volatile int enabled; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
+  volatile int auto_refresh; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
 };
 
 typedef struct _SiteNameHash {

@@ -162,7 +162,7 @@ pp_tabs_refresh(Dock *dock)
       XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 
 		0, pt->x+pt->w-1, PPT_H-1);
       
-      if (pt->site->board->enabled) {
+      if (pt->site->board->auto_refresh) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-5, x+w-2, h-1);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-1, x+w-2, h-5);
@@ -263,7 +263,7 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
     Board *board = pt->site->board;
     if (event->button == Button1) {
       if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
-	board->enabled = 1-board->enabled;
+	board->auto_refresh = 1-board->auto_refresh;
       } else {
 	/* clic 'classique sur une tab */
 	if (Prefs.pp_use_classical_tabs) {

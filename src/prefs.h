@@ -136,6 +136,8 @@ typedef struct _SitePrefs {
   int check_board;
   int check_comments;
   int check_messages;
+  int board_auto_refresh;
+
 } SitePrefs;
 
 #define MAX_SITES 20 /* au-dela, faut vraiment songer à consulter */

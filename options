@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.41 2002/09/01 23:54:55 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.42 2002/09/02 23:24:40 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.42  2002/09/02 23:24:40  pouaite
+#%  bugfixes de la soiree
+#%
 #%  Revision 1.41  2002/09/01 23:54:55  pouaite
 #%  completurage du wmc3 et compatibilitation avec new.linuxfr
 #%
@@ -172,6 +175,10 @@
 ### le coincoin passe automatiquement en mode horloge et cesse toute activité (plus de refresh etc..)
 ### (par defaut, 1440 minutes = 1 jour, une valeur de 0 désactive cette fonctionnalité)
 #tribunenews.switch_off_coincoin_delay: 1440
+
+### permet de desactiver l'auto-refresh sur la tribune (genre pour limiter le nb de hits
+### sur le proxy de la boite quand on a 15 tribunes dans le coincoin)
+#.board.auto_refresh: on
 
 ### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede
 ### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas été conçu pour ça !
