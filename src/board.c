@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.15 2002/12/20 15:49:51 pouaite Exp $
+  rcsid=$Id: board.c,v 1.16 2002/12/20 18:11:46 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.16  2002/12/20 18:11:46  pouaite
+  bon...
+
   Revision 1.15  2002/12/20 15:49:51  pouaite
   prout 2.4.2b ?
 
@@ -1485,7 +1488,35 @@ board_update(Board *board)
 	if (roll_back_cnt > 1) roll_back_cnt--;
 	else if (roll_back_cnt == 1) break;
       }
-    }
+    } /*else if (strncasecmp(s,board_sign_board, strlen(board_sign_info)) == 0) {
+      char *attr;
+      if ((attr = find_xml_attribute(s, "posturl"))) {
+	convert_to_ascii(attr, attr, strlen(attr)+1);
+	if (strlen(attr)) {
+	  ASSIGN_STRING_VAL(board->prefs->path_board_add, attr);
+	}
+	free(attr);
+      }
+      if ((attr = find_xml_attribute(s, "postdata"))) {
+	convert_to_ascii(attr, attr, strlen(attr)+1);	
+	char *tmp = strstr(attr, "%");
+	if (tmp && strstr(tmp, "%s") && !strstr(tmp+1, "%")) { // verifie qu'il n'y a qu'un %s
+	  ASSIGN_STRING_VAL(board->prefs->path_board_data, attr);
+	}
+      }
+      if ((attr = find_xml_attribute(s, "msgmaxlen"))) {
+	int l = atoi(attr);
+	if (l > 1 && l < 4096 && board->prefs->palmi_msg_max_len != l)
+	  board->prefs->palmi_msg_max_len = l;editw_rebuild(dock);
+	}
+      }
+      if ((attr = find_xml_attribute(s, "uamaxlen"))) {
+	int l = atoi(attr);
+	if (l > 1 && l < 4096 && board->prefs->palmi_ua_max_len != l)
+	  board->prefs->palmi_ua_max_len = l;editw_rebuild(dock);
+	}
+      }    
+    }*/
   err:
     if (errmsg) {
       myfprintf(stderr, _("[%<YEL %s>] There is a problem in '%s',  I can't parse it... "
