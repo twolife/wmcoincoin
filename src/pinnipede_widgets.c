@@ -57,7 +57,7 @@ pp_tabs_set_pos(Pinnipede *pp)
   pp->zmsg_h = pp->zmsg_y2-pp->zmsg_y1+1;
 }
 
-static void
+void
 pp_tabs_set_visible_sites(Pinnipede *pp) {
   int i;
   for (i=0; i < MAX_SITES; i++) pp->filter.visible_sites[i] = 0;
@@ -242,7 +242,16 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
     } else if (event->button == Button3) {
       if (pt->selected == 0) pt->selected = 1;
       else if (pp->active_tab != pt) pp->active_tab = pt;
-      else pt->selected = 0;
+      else { 
+	pt->selected = 0;
+	if (pp->active_tab == pt) {
+	  int j;
+	  for (j=0; j <pp->nb_tabs; j++) {
+	    if (&pp->tabs[j] != pt) pp->active_tab = pp->tabs+j;
+	  }
+	}
+      }
+      
     }
 
     pp_tabs_set_visible_sites(pp);

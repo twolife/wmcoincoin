@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.71 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.72 2002/08/21 21:34:16 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.72  2002/08/21 21:34:16  pouaite
+  coin
+
   Revision 1.71  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -1802,10 +1805,11 @@ pp_animate(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
   if (pp && pp->mapped /*&& flag_updating_board == 0*/) {
     /* pour affichage du temps restant avant refresh */
-    pp_minib_refresh(dock);
-    pp_tabs_refresh(dock);
-  }
-}
+    if (pp->use_minibar) {
+      pp_minib_refresh(dock);
+      pp_tabs_refresh(dock);
+    }
+  }}
 
 static int
 pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
@@ -3007,6 +3011,9 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
       if (strlen(pw->attr_s)) {
 	open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
 	pp_visited_links_add(pp, pw->attr_s);
+	pp_pv_destroy(pp);
+	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
+	pp_refresh(dock, pp->win, NULL);
       }
     } else if (pw->attr & PWATTR_TSTAMP) {
       /* clic sur l'holorge -> ouverture du palmipede */
@@ -3092,6 +3099,18 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
 	  }
 	}
 
+	if (!id_type_is_invalid(mi->id)) {
+	  int i;
+	  for (i=0; i < pp->nb_tabs; i++) {
+	    if (pp->tabs[i].site->prefs == Prefs.site[id_type_sid(mi->id)]) {
+	      if (pp->tabs[i].selected == 0) {
+		pp->tabs[i].selected = 1;
+		pp_tabs_set_visible_sites(pp);
+	      }
+	    }
+	  }
+	}
+
 	pp_update_content(dock, mi->id, 0, 0, 0);
 	pp_refresh(dock, pp->win, NULL);
 #endif
@@ -3174,9 +3193,9 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {
       int plop_level = 1;
-      if (event->state & Mod1Mask) {
+      if (event->state & ControlMask) {
 	plop_level = 2;
-	if ((event->state & ControlMask) && 
+	if ((event->state & Mod1Mask) || 
 	    (event->state & Mod4Mask)) {
 	  //	  printf("yo! %04x\n", event->state);
 	  plop_level = 3;

@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.35 2002/08/21 20:22:16 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.36 2002/08/21 21:34:15 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.36  2002/08/21 21:34:15  pouaite
+#%  coin
+#%
 #%  Revision 1.35  2002/08/21 20:22:16  pouaite
 #%  fix compil
 #%
@@ -431,10 +434,13 @@
 #pinnipede.plop_words: "plop","grouik","prout"
 
 ### listes des remplacements de <b>[url]</b> pour les sites connus
-#pinnipede.url_replace: "yahoo" => "[YAHOO]"
-#pinnipede.url_replace: "forum.hardware" => "[HFR]"
-#pinnipede.url_replace: "linuxfr.org/" => "[DLFP]"
+#pinnipede.url_replace: "yahoo" => "[yahoo]"
+#pinnipede.url_replace: "forum.hardware" => "[hfr]"
+#pinnipede.url_replace: "linuxfr.org/" => "[dlfp]"
 #pinnipede.url_replace: "goatse" => "[goatsecx]"
+#pinnipede.url_replace: "wiki" => "[wiki]"
+#pinnipede.url_replace: "wickedweasel" => "[WW]"
+#pinnipede.url_replace: "slashdot.org" => "[/.]"
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #[.]pinnipede.use_AM_PM: off

@@ -89,7 +89,7 @@ typedef struct _PinnipedeLignesSel {
 
 typedef struct _PPMinib {
 #define NB_MINIB 9
-#define MINIB_H 10
+#define MINIB_H 12
 #define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
   enum { HELP, SCROLLBAR, /*REFRESH_TRIBUNE, REFRESH_NEWS,*/ UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY, TRANSPARENT } type;
@@ -98,7 +98,7 @@ typedef struct _PPMinib {
   int clicked;
 } PPMinib;
   
-#define PPT_H 14
+#define PPT_H 12
 
 typedef struct _PinnipedeTab {
   Site *site;
@@ -216,6 +216,7 @@ void pp_tabs_build(Dock *dock);
 //void pp_tabs_set_position(Pinnipede *pp);
 void pp_tabs_destroy(Pinnipede *pp);
 void pp_tabs_refresh(Dock *dock);
+void pp_tabs_set_visible_sites(Pinnipede *pp);
 
 void pp_scrollcoin_update_bounds(Dock *dock);
 void pp_widgets_set_pos(Dock *dock);
