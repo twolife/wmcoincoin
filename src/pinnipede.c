@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.6 2002/01/03 22:15:31 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.7 2002/01/06 17:06:27 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
-  Revision 1.6  2002/01/03 22:15:31  pouaite
-  patch top moumoute de glandium pour la gestion du wiki
+  Revision 1.7  2002/01/06 17:06:27  pouaite
+  enlevage du patch de glandium (enfin j'essaye..)
 
   Revision 1.5  2001/12/16 20:28:45  pouaite
   bugfixes divers
@@ -240,6 +240,7 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
   return 1;
 }
 
+/* ceci est un commentaire à la con pour forcer le commit (oui je suis un tocard mais g la flemme de chercher à comprendre */
 
 
 /* dans la famille des fonction pourries, je demande ... */
@@ -660,9 +661,8 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
       }
     }
     if (add_word) {
-      int is_ref, is_wiki;
+      int is_ref;
       tribune_msg_info *ref_mi;
-      is_wiki = 0;
 
       ref_mi = check_for_horloge_ref(trib, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
       if (is_ref) {
@@ -675,27 +675,9 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
 	attr &= (~PWATTR_HAS_INITIAL_SPACE);
       }
 
-      if (!(attr & PWATTR_LNK)) {
-	char *b;
-	if ((b = index(s,'['))) {
-	  char *e;
-	  if ((e = index(s, ']'))) {
-	    if (e > b) {
-	      attr |= PWATTR_LNK;
-	      is_wiki = 1;
-	      strncpy(attr_s, "http://wiki.linuxfr.org/?", PVTP_SZ);
-	      strncpy(attr_s + 25, b + 1, (e - b - 1 > PWATTR_LNK) ? PWATTR_LNK : e - b - 1);
-	    }
-	  }
-	}
-      }
-
       pw->next = pw_create(s, attr, (attr & PWATTR_LNK) ? attr_s : NULL, pv);
       has_initial_space = 0;
       attr &= ~PWATTR_REF;
-      if (is_wiki) {
-	attr &= ~PWATTR_LNK;
-      }
       //      printf("ADD(id=%d): '%s'\n", mi->id, s);
       pw = pw->next;
     }
