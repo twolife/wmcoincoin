@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.14 2002/11/20 23:34:40 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.15 2002/12/20 11:26:35 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.15  2002/12/20 11:26:35  pouaite
+  deux trois conneries
+
   Revision 1.14  2002/11/20 23:34:40  pouaite
   paf le patch, par lordOric
 
@@ -80,7 +83,7 @@ patterns_t patterns[] =
       "([[:digit:]]*)[[:space:]]*votes[[:space:]]*.*"
       "reste[^:]*:[^[0-9\\-]]*(-?[[:digit:]]*)", NULL, "dd" },
 
-		{ pat_xp_votes, "XPs: (-?[[:digit:]]+*)/(-?[[:digit:]]+*)/(-?[[:digit:]]+*)", NULL, "ddd" }
+		{ pat_xp_votes, "XPs: (-?[[:digit:]]+)/(-?[[:digit:]]+)/(-?[[:digit:]]+)", NULL, "ddd" }
     /*    
 	  
     pat_news est remplace par la fonction ci-dessous (j'arrive pas a avoir une regex qui marche

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.5 2002/10/05 18:08:14 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.6 2002/12/20 11:26:35 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.6  2002/12/20 11:26:35  pouaite
+  deux trois conneries
+
   Revision 1.5  2002/10/05 18:08:14  pouaite
   ajout menu contextuel + fix de la coloration des boutons du wmccc
 
@@ -1258,12 +1261,14 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
     XCreateIC(dock->input_method, XNInputStyle, 1032,
 	      XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);*/
 #ifndef sun
-  ew->input_context = 
-    XCreateIC(dock->input_method, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-	      XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);
+  if (dock->input_method) {
+    ew->input_context = 
+      XCreateIC(dock->input_method, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+		XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);
 
-  if(ew->input_context == NULL){
-    fprintf(stderr, _("Warning : errot in XCreateIC() !\n"));
+    if(ew->input_context == NULL){
+      fprintf(stderr, _("Warning : errot in XCreateIC() !\n"));
+    }
   }
 #endif
 
@@ -1308,7 +1313,9 @@ void
 editw_unmap(Dock *dock, EditW *ew)
 {
 #ifndef sun
-  XDestroyIC(ew->input_context);
+  if (ew->input_context)
+    XDestroyIC(ew->input_context);
+  ew->input_context = NULL;
 #endif
   //  fprintf(stderr, "destroy! %lx\n", (unsigned long)ew->win);
   XDestroyWindow(dock->display, ew->win);
@@ -1483,8 +1490,13 @@ editw_build(Dock *dock)
     snprintf(fn, 512, "%s-%s", EW_FONT, Prefs.font_encoding);
     ew->fn = XLoadQueryFont(dock->display, fn);
     if (!ew->fn) {
-      myfprintf(stderr, _("Unable to load font %s \n"), fn);
-      exit(-1);
+      myfprintf(stderr, _("Unable to load font %s, trying iso8859-1 encoding \n"), fn);
+      snprintf(fn, 512, "%s-%s", EW_FONT, "iso8859-1");
+      ew->fn = XLoadQueryFont(dock->display, fn);
+      if (!ew->fn) {
+	myfprintf(stderr, _("Failed\n"));
+	exit(-1);
+      }
     }
   }
  

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.69 2002/11/11 15:26:43 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.70 2002/12/20 11:26:35 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.70  2002/12/20 11:26:35  pouaite
+  deux trois conneries
+
   Revision 1.69  2002/11/11 15:26:43  pouaite
   fix soulignement et strike avec les span
 
@@ -1362,7 +1365,6 @@ void initx(Dock *dock, int argc, char **argv) {
   dock->input_method = XOpenIM(dock->display, NULL, NULL, NULL);
   if (!dock->input_method) {
     printf("Erreur ! echec de XOpenIM(), ca pue !\n");
-    exit(1);
   }
 
   /* get screen and root window */
@@ -1830,8 +1832,13 @@ main(int argc, char **argv)
       snprintf(fn, 512, "%s-%s", DOCK_FIXED_FONT, Prefs.font_encoding);
       dock->fixed_font = XLoadQueryFont(dock->display, fn);
       if (!dock->fixed_font) {
-	myfprintf(stderr, _("Unable to load font %s\n"), fn);
-	exit(-1);
+	myfprintf(stderr, _("Unable to load font %s , trying iso8859-1\n"), fn);
+	snprintf(fn, 512, "%s-iso8859-1", DOCK_FIXED_FONT);
+	dock->fixed_font = XLoadQueryFont(dock->display, fn);
+	if (!dock->fixed_font) {
+	  myfprintf(stderr, _("Unable to load font %s, aborting\n"), fn);
+	  exit(-1);
+	}
       }
     }
 

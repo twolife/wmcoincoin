@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.14 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.15 2002/12/20 11:26:35 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.15  2002/12/20 11:26:35  pouaite
+  deux trois conneries
+
   Revision 1.14  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -549,7 +552,7 @@ XFontStruct *picohtml_get_fn_bold(PicoHtml *ph)
 
 static
 int
-picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size)
+picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size, char *encoding)
 {
   char base_name[512];
   char ital_name[512];
@@ -557,7 +560,7 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   char tt_name[512];
 
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
-  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
+  snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
   ph->fn_base = XLoadQueryFont(display, base_name);
   if (!ph->fn_base) {
     fprintf(stderr, _("XLoadQueryFont: failed loading font '%s'\n"), base_name);
@@ -566,12 +569,12 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   }
 
   /* police italique -> on cherche d'abord la police oblique */
-  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
+  snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
   ph->fn_ital = XLoadQueryFont(display, ital_name);
   if (!ph->fn_ital) {
     /* puis la police italique */
     BLAHBLAH(1, fprintf(stderr, _("Slanted font '%s' not found -> we're looking for the italic font\n"), ital_name));
-    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
+    snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
     ph->fn_ital = XLoadQueryFont(display, ital_name);
     if (!ph->fn_ital) {
       myfprintf(stderr, _("%<RED WARNING>: error while looking for the italic font: '%s'\n"), ital_name);
@@ -583,7 +586,7 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   }
 
   /* police bold */
-  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
+  snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
   ph->fn_bold = XLoadQueryFont(display, bold_name);
   if (!ph->fn_bold) {
     myfprintf(stderr, _("%<RED WARNING>: error while looking for the bold font: '%s'\n"), bold_name);
@@ -592,7 +595,7 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   }
 
   /* police courier */
-  snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-%s", fn_size, Prefs.font_encoding);
+  snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-%s", fn_size, encoding);
   ph->fn_tt = XLoadQueryFont(display, tt_name);
   if (!ph->fn_tt) {
     myfprintf(stderr, _("%<RED WARNING>: error while looking for the courier font: '%s'\n"), tt_name);
@@ -604,11 +607,17 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
 
 static void
 picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size) {
-  if (picohtml_try_loadfonts(ph,display,fn_family,fn_size)==-1) {
-    myfprintf(stderr, _("Loading font '%s' with size '%d' failed\nNow we try helvetica/12\n"));
-    if (picohtml_try_loadfonts(ph,display,"helvetica",12)==-1) {
-      myfprintf(stderr, _("Uuuurg, no helvetica/12 , I prefer to die.\n"));
-      exit(-1);
+  if (picohtml_try_loadfonts(ph,display,fn_family,fn_size,Prefs.font_encoding)==-1) {
+    myfprintf(stderr, _("Now we try helvetica/12\n"));
+    if (picohtml_try_loadfonts(ph,display,"helvetica",12,Prefs.font_encoding)==-1) {
+      myfprintf(stderr, _("Uuuurg, no helvetica/12 , we try another encoding\n"));
+      if (picohtml_try_loadfonts(ph,display,fn_family,fn_size,"iso8859-1")==-1) {
+	myfprintf(stderr, _("Now we try helvetica/12 - iso8859-1\n"));
+	if (picohtml_try_loadfonts(ph,display,"helvetica",12,"iso8859-1")==-1) {
+	  myfprintf(stderr, _("Uuuurg, no helvetica/12 - iso8859 , I prefer to die.\n"));
+	  exit(-1);
+	}
+      }
     }
   }
 }
