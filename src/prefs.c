@@ -467,7 +467,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->tribune_max_msg = 300;
   p->debug = 0;
   p->verbosity = 0;
-  p->tribune_backend_type = 3;
+  p->tribune_backend_type = 1; /* style 'moderne' par défaut */
   p->tribune_wiki_emulation = NULL;
   ASSIGN_STRING_VAL(p->font_encoding, "iso8859-1");
   p->news_max_nb_days = 1;

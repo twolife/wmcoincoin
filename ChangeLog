@@ -1,3 +1,7 @@
+2002-05-31  pouaite  <c0in@altern.org>
+
+	* src/http.c: et hop un gethostbyname non bloquant, à grands coups de fork!
+
 2002-05-30  pouaite  <c0in@altern.org>
 
 	* bidouille dans configure.in et cie.. normalement 'options' et 'useragents'

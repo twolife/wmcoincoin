@@ -35,6 +35,10 @@
 
 #endif /* ifdef __CYGWIN */
 
+/* pour le waitpid */
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 #ifdef __CYGWIN__
 #  define LASTERR_EINTR (WSAGetLastError() == WSAEINTR)
@@ -384,14 +388,112 @@ http_error() {
 #include "http_unix.c"
 #endif
 
+
+int
+gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
+  struct hostent *phost;
+
+  memset(addr, 0, 65);
+  BLAHBLAH(1, printf("gethostbyname('%s') -> si le reseau rame, on risque de bloquer le coincoin ici\n", hostname));
+  ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
+  phost = gethostbyname(hostname); /* rahhh comme c'est lent :-( */
+  ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
+  if (phost) {
+    addr[0] = (unsigned char)phost->h_length;
+    memcpy(addr+1, phost->h_addr_list[0], addr[0]);
+    return 0;
+  } else {
+    addr[0] = 0;
+    return -1;
+  }
+}
+
+int
+gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
+  pid_t pid;
+  struct hostent *phost;
+  int tube[2];
+
+  fprintf(stderr, "bienvenu dans le gethostbyname forké, tout ceci est expérimental, gare aux zombies\n");
+  memset(addr, 0, 65);
+
+  if (pipe(tube) == -1) {
+    fprintf(stderr, "tuyau percé !: %s\n", STR_LAST_ERROR); return -1;
+  }
+  switch ((pid = fork())) {
+  case -1:
+    fprintf(stderr, "ouuups, à mon avis y'a une armée de zombies dans le coin\nle fork() est parti en torche: %s", strerror(errno));
+    return -1;
+    break;
+
+  case 0: /* fiston */
+    if (close(tube[0]) == -1) {
+      fprintf(stderr, "fiston: tube bouché (%s)\n", STR_LAST_ERROR); close(tube[1]); exit(-1);
+    }
+    fprintf(stderr, "fiston: gethostbyname en cours..\n");
+    phost=gethostbyname(hostname);
+    fprintf(stderr, "fiston: gethostbyname terminé..\n");
+    if( phost != NULL ) {
+      unsigned char l;
+      assert(phost->h_length < 128); /* faut pas pousser grand mère */
+      l = (unsigned char)phost->h_length;
+      write( tube[1], &phost->h_length, 1);
+      write( tube[1], phost->h_addr_list[0] , phost->h_length);
+    } else {
+      fprintf(stderr, "échec de gethostbyname sur '%s'\n", hostname);
+    }
+    exit(phost == NULL );
+    break;
+
+  default: { /* pôpa */
+    int cnt, got, len, cstat;
+
+    if (close(tube[1]) == -1) {
+      fprintf(stderr, "pôpa: tube bouché (%s), que va devenir fiston ?\n", STR_LAST_ERROR); close(tube[0]);
+    }
+    fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
+    cnt = 0; len = -1;
+    do {
+      ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
+
+      got = read(tube[0], addr+cnt, (len == -1 ? 65 : len-cnt)); 
+      if (got > 0) cnt += got;
+      if (cnt >= 1) len = addr[0];
+    } while ((got == -1 ||  (len != -1 && cnt < len)) &&
+	     (LASTERR_EAGAIN || LASTERR_EINTR));
+
+    close(tube[0]);
+
+    while (waitpid(pid,&cstat,WNOHANG) == 0) {
+      usleep(10000);
+      ALLOW_X_LOOP_MSG("retour du gethostbyname forké"); ALLOW_ISPELL;
+      printf("on attend fiston... gamin ? viens là gamin !\n");
+    }
+
+    if (len == -1 || cnt < len) {
+      fprintf(stderr, "pôpa: j'ai pas réussi à lire fiston :-/ (len=%d, cnt=%d) (lasterr=%s)\n", len, cnt, STR_LAST_ERROR);
+      return -1;
+    }
+    break;
+  }
+  }
+  return 0;  /*   \o/    */
+}
+
+
+
+
+
 /* -1 => erreur */
 static SOCKET
 http_connect(const char *host_name, int port)
 {
-  static struct hostent *host = NULL;
   SOCKET sockfd = INVALID_SOCKET;
   struct sockaddr_in dest_addr;   /* Contiendra l'adresse de destination */
   int num_try;
+
+  static unsigned char addr[65]; /* premier char = nombre d'octets utilisés pour reprensenter l'adresse 
+			     (ça sera 4 ..) */
 
    /* 
      un peu tordu : 
@@ -401,40 +503,42 @@ http_connect(const char *host_name, int port)
 
      BIEN SUR CA NE MARCHE QUE SI L'ON S'ADDRESSE TOUJOURS AU MEME SITE !
   */
+
+  
+  //  flag_changed_http_params = 1;
+
   for (num_try = 0; num_try < 2; num_try++) 
     {
-      if (num_try == 1 || host == NULL || flag_changed_http_params)
+
+      /* faut-il retenter le gethostbyname ? */
+      if (num_try == 1 || addr[0] == 0 || flag_changed_http_params)
 	{
 	  flag_changed_http_params = 0;
-	  /*
-	  int t0,t1;
-	  myprintf("%<CYA gethostname>: "); fflush(stdout);
-	  t0 = times(NULL);*/
-	  BLAHBLAH(1, printf("gethostbyname('%s') -> si le reseau rame, on risque de bloquer le coincoin ici\n", host_name));
-	  ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-	  host = gethostbyname(host_name); /* rahhh comme c'est lent :-( */
-	  ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
-	  if (host) {
+	  
+	  gethostbyname_nonbloq(host_name, addr);
+	  if (addr[0]) {
 	    snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
-		     (unsigned char)host->h_addr_list[0][0],
-		     (unsigned char)host->h_addr_list[0][1],
-		     (unsigned char)host->h_addr_list[0][2],
-		     (unsigned char)host->h_addr_list[0][3]);
-	    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host->h_name, http_used_ip));
+		     (unsigned char)addr[1],
+		     (unsigned char)addr[2],
+		     (unsigned char)addr[3],
+		     (unsigned char)addr[4]);
+	    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
 	  } else {
 	    snprintf(http_used_ip, 20, "???.???.???.???");
 	  }
-	  /*	  t1 = times(NULL);
-		  printf(" %f millisecondes\n", (t1-t0)*10.0);*/
 	}
-      if (host == NULL) {
-	if (num_try == 0) continue;
+
+      
+      if (addr[0] == 0) {
+	if (num_try == 0) continue; /* on a droit a un deuxième essai */
 	else {
 	  set_http_err();
 	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "Impossible de resoudre le nom '%s'", host_name);
 	  return INVALID_SOCKET;
 	}
       }
+
+      assert(addr[0]); /* ben oui */
 
       sockfd = socket(AF_INET, SOCK_STREAM, 0); /* Vérification d'erreurs! */
       ALLOW_X_LOOP; ALLOW_ISPELL;
@@ -448,7 +552,7 @@ http_connect(const char *host_name, int port)
       dest_addr.sin_port = htons(port);
 
       /* pris dans wget, donc ca doit etre du robuste */
-      memcpy (&dest_addr.sin_addr, host->h_addr_list[0], host->h_length);
+      memcpy(&dest_addr.sin_addr, addr+1, addr[0]);
 
       memset(&(dest_addr.sin_zero), 0, 8);
   
@@ -471,7 +575,7 @@ http_connect(const char *host_name, int port)
 	  http_close(sockfd);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
 	  BLAHBLAH(VERBOSE_LVL, printf("connection failed: %s..\n", http_last_err_msg));
-	  host = NULL;
+	  addr[0] = 0;
 	  if (num_try == 1) {
 	    return INVALID_SOCKET;
 	}
