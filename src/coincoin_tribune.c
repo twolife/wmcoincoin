@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.5 2001/12/16 21:51:22 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.6 2002/01/06 16:52:37 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.6  2002/01/06 16:52:37  pouaite
+  preparation pour la prochaine v. de la tribune avec sa gestion integree du wiki et des logins, tout ça ..
+
   Revision 1.5  2001/12/16 21:51:22  pouaite
   *** empty log message ***
 
@@ -258,11 +261,38 @@ update_secondes_flag(DLFP_tribune *trib)
   }
 }
 
+static char *
+nettoie_message_tags(const char *inmsg) 
+{
+  char *outmsg;
+  char *s, *w, *p;
+  int in_comment;
+
+  outmsg = malloc(strlen(inmsg)+1);
+  in_comment = 0;
+  p = outmsg;
+  for (s = inmsg; *s; s++) {
+    if (strncmp(s, "<!--",4)==0 && in_comment == 0) {
+      w = strstr(s, "-->");
+      if (w) {
+	in_comment = w+3-s;
+      }
+    }
+    if (in_comment == 0) {
+      *p = *s; p++;
+    } else in_comment--;
+  }
+  *p = 0;
+  return outmsg;
+}
+
 static tribune_msg_info *
-tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, char *message, int id)
+tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, char *_message, int id)
 {
   tribune_msg_info *nit, *pit, *it;
+  char *message = NULL;
 
+  message = nettoie_message_tags(_message);
   nit = trib->msg;
   pit = NULL;
   while (nit) {
@@ -322,6 +352,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
 
   /* evalue le potentiel trollesque */
   troll_detector(it);
+  free(message);
   return it;
 }
 
