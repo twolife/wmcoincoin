@@ -817,6 +817,7 @@ wmcc_site_prefs_destroy(SitePrefs *p)
 /* remplit la structure des prefs generales avec les valeurs par défaut */
 void
 wmcc_prefs_set_default(GeneralPrefs *p) {
+  int i;
   assert(p);
 
   p->max_refresh_delay = 30;   /* 30 minutes entre deux refresh au max */
@@ -928,7 +929,9 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
 						 */
   ASSIGN_STRING_VAL(p->ew_spell_dict, "french"); /* risque mais soyons chauvin */
   
-  p->post_cmd = NULL;
+  for (i=0; i < NB_BIGORNO; ++i) {
+    p->post_cmd[i] = NULL; p->post_cmd_enabled[i] = 1;
+  }
   ASSIGN_STRING_VAL(p->board_scrinechote, "~/wmcc_board_shot.html");  
   p->pinnipede_open_on_start = 1;
   
@@ -994,7 +997,9 @@ wmcc_prefs_destroy(GeneralPrefs *p)
   FREE_STRING(p->pp_fortune_fn_family);
   FREE_STRING(p->ew_spell_cmd);
   FREE_STRING(p->ew_spell_dict);
-  FREE_STRING(p->post_cmd);
+  for (i=0; i < NB_BIGORNO; ++i) {
+    FREE_STRING(p->post_cmd[i]);
+  }
   FREE_STRING(p->board_scrinechote);
 
   for (i=0; i < p->nb_sites; i++) { 
@@ -1125,8 +1130,17 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_BOOL_ARG(p->enable_troll_detector);
   } break;
   case OPT_tribune_post_cmd: {
-    ASSIGN_STRING_VAL(p->post_cmd, arg);
+    ASSIGN_STRING_VAL(p->post_cmd[0], arg);
   } break; 
+  case OPT_tribune_post_cmd_enabled: {
+    CHECK_BOOL_ARG(p->post_cmd_enabled[0]);
+  } break;
+  case OPT_tribune_post_cmd2: {
+    ASSIGN_STRING_VAL(p->post_cmd[1], arg);
+  } break;
+  case OPT_tribune_post_cmd2_enabled: {
+    CHECK_BOOL_ARG(p->post_cmd_enabled[1]);
+  } break;
   case OPTSG_tribune_wiki_emulation: {
     ASSIGN_STRING_VAL(sp->board_wiki_emulation, arg);
   } break; 

@@ -519,7 +519,8 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
       check_if_should_kill_ispell(1);
     }
 
-    G_STR_OPT_COPY(post_cmd);
+    for (i=0; i < NB_BIGORNO; ++i)
+      G_STR_OPT_COPY(post_cmd[i]);
     G_STR_OPT_COPY(board_scrinechote);
 
     /* à faire: plop_words */

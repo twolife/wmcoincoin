@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.80 2003/06/09 16:42:29 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.81 2003/06/21 14:48:45 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.81  2003/06/21 14:48:45  pouaite
+  g cho
+
   Revision 1.80  2003/06/09 16:42:29  pouaite
   pan pan
 
@@ -272,7 +275,6 @@
 //#include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
 #include <locale.h>
@@ -900,9 +902,10 @@ wmcoincoin_dispatch_events(Dock *dock)
     if (plopup_ismapped(dock)) {
       plopup_dispatch_event(dock, &event);
     } else {
-      /* attention le champ window n'est pas utilise pour les evenement du clavier 
-	 gare au bug */
-      if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
+      if (event.type == KeyPress) {
+        if (!pp_handle_keypress(dock,&event))
+          editw_handle_keypress(dock,dock->editw,&event);
+      } else if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
 	dock_dispatch_event(dock, &event);
       } else if (event.xany.window == editw_get_win(dock->editw) && event.xany.window) {
 	editw_dispatch_event(dock, dock->editw, &event);

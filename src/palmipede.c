@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.10 2003/06/09 16:42:29 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.11 2003/06/21 14:48:45 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.11  2003/06/21 14:48:45  pouaite
+  g cho
+
   Revision 1.10  2003/06/09 16:42:29  pouaite
   pan pan
 
@@ -1822,7 +1825,7 @@ editw_balise_tt(EditW *ew) {
 #define FORWARD_KEY XSendEvent(dock->display, dock->rootwin, True, KeyPressMask, event); \
                     editw_set_kbfocus(dock, ew, 1);
 
-static void
+int
 editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 {
   KeySym ksym;
@@ -1831,12 +1834,13 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   static XComposeStatus compose_status = { 0, 0 };
 
   //printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
+  if (!editw_ismapped(dock->editw) || ew->action != NOACTION) return 0; /* animation encours */
 
   if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
       (ew->input_context && XFilterEvent(event, None))) {
     //printf("forward key: \n");
     FORWARD_KEY;
-    return;
+    return 1;
   }
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
@@ -1857,6 +1861,10 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case 's': editw_balise(ew, "<s>", "</s>"); break;
     case 'M':
     case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
+    case 'G':
+    case 'g': editw_insert_string(ew, "Ta gueule pwet"); break;
+    case 'Z':
+    case 'z': editw_insert_string(ew, "La SuSE sa pue, sai pas libre"); break;
     case 'F':
     case 'f': editw_set_pinnipede_filter(dock); break;
     case XK_KP_Left:
@@ -2045,6 +2053,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   editw_refresh(dock, ew);
   //printf("ksym=%04x klen=%d buff=%02x(%c) %02x %02x %02x\n",(unsigned)ksym,klen, buff[0], buff[0], buff[1],buff[2],buff[3]);
   //printf("cassos\n");
+  return 1;
 }
 
 void
@@ -2115,6 +2124,11 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
 	editw_change_current_site(dock,i);
       }
     }
+  }
+  if (event->button == Button4) {
+    editw_next_site(dock,-1);
+  } else if (event->button == Button5) {
+    editw_next_site(dock,+1);
   }
 }
 
@@ -2261,10 +2275,6 @@ editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event)
     } break;
   case MapNotify:
     {
-    } break;
-  case KeyPress:
-    {
-      editw_handle_keypress(dock, ew, event);
     } break;
   case KeyRelease:
     {

@@ -1,3 +1,44 @@
+2003-06-21  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (pp_handle_keypress): le pinnipede comprend
+	enfin ce que lui dit le clavier: du coup plein de nouveaux
+	raccourcis (qui sont pour la plupart désactivés quand le palmipede
+	est activé):
+
+	- return : ouvre le palmipede
+	- ctrl-return: ouvre le palmipede pour répondre au message affiché
+	en bas du pinnipède.	
+	- ctrl-s : passe en mode recherche incrémentale (tapez le texte à
+	chercher, et le pinni affiche tous les postes qui "matchent" le
+	mot. La recherche du mot est aussi faite dans les logins, les ua,
+	et a l'intérieur des urls.
+	- espace : rafraichissement immédiat de la tribune affichée.
+	- ctrl-espace: rafraichissement immédiat de toutes les tribunes
+	affichées.
+	- tab : bascule entre une tribune affichée et toutes les tribunes
+	affichées.
+	- escape : annule le téléchargement en cours
+	- haut,bas,pgup,pgdown,home,end: scrolle le pinnipede.
+	- gauche/droite : change la tribune active.
+	- "f": active/désactive le filtrage.
+	- "r": active/désactive l'autorefresh.
+
+	* ajout d'un deuxième bigornophone, les deux bigornophones sont
+	désactivables dans le menu popup du pinnipède.
+	
+2003-06-19  pouaite  <c0in@altern.org>
+	ce soir c'est flush des trucs faciles de la toudou-list:
+	* src/board.c (board_check_my_messages): suppression du
+	clignotement quand on répond à un de ses propres messages
+	* src/palmipede.c (editw_handle_button_press): changement de la
+	tribune avec la roulette de la souris
+	* src/pinnipede.c (pp_check_survol): sépare la boitakon du
+	décompte des réponses à un post.
+
+2003-06-17  pouaite  <c0in@altern.org>
+
+	* configure.ac: suppr. du test sur le cflag '-g'
+
 2003-06-09  pouaite  <c0in@altern.org>
 
 	* remplacement de la vérif des urls "http:// | ftp:// | https://"

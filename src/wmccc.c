@@ -505,9 +505,16 @@ news_site_panel_update(SitePrefs *sp) {
 void
 board_global_panel_update(GeneralPrefs *p) {
   link_toggle_button(glob.main_win, "checkbutton_trolldetector", &p->enable_troll_detector);
-  link_text_widget(glob.main_win, "text_post_cmd", &p->post_cmd);
   link_entry_widget(glob.main_win, "entry_archive_filename", &p->board_scrinechote);
   update_miniua_clist(&p->miniuarules);
+}
+
+void
+bigorno_global_panel_update(GeneralPrefs *p) {
+  link_toggle_button(glob.main_win, "checkbutton_post_cmd", &p->post_cmd_enabled[0]);
+  link_text_widget(glob.main_win, "text_post_cmd", &p->post_cmd[0]);
+  link_toggle_button(glob.main_win, "checkbutton_post_cmd2", &p->post_cmd_enabled[1]);
+  link_text_widget(glob.main_win, "text_post_cmd2", &p->post_cmd[1]);
 }
 
 void
@@ -687,6 +694,7 @@ global_panels_update(GeneralPrefs *p)
   dock_global_panel_update(p);
   news_global_panel_update(p);
   board_global_panel_update(p);
+  bigorno_global_panel_update(p);
   palmipede_global_panel_update(p);
   pinnipede_global_panel_update(p);
   http_global_panel_update(p);
@@ -793,7 +801,10 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEINT(OPT_tribunenews_max_refresh_delay, max_refresh_delay);
   G_SAVEINT(OPT_tribunenews_switch_off_coincoin_delay, switch_off_coincoin_delay);
   G_SAVEBOOL(OPT_tribune_troll_detector, enable_troll_detector);
-  G_SAVESTR(OPT_tribune_post_cmd, post_cmd);
+  G_SAVESTR(OPT_tribune_post_cmd, post_cmd[0]);
+  G_SAVEBOOL(OPT_tribune_post_cmd_enabled, post_cmd_enabled[0]);
+  G_SAVESTR(OPT_tribune_post_cmd2, post_cmd[1]);
+  G_SAVEBOOL(OPT_tribune_post_cmd2_enabled, post_cmd_enabled[1]);
   G_SAVESTR(OPT_tribune_archive, board_scrinechote);
   G_SAVECOL(OPT_dock_bg_color, dock_bgcolor);
   G_SAVESTR(OPT_dock_bg_pixmap, dock_bgpixmap);

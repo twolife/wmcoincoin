@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.54 2003/03/02 14:41:21 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.55 2003/06/21 14:48:44 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.55  2003/06/21 14:48:44  pouaite
+#%  g cho
+#%
 #%  Revision 1.54  2003/03/02 14:41:21  pouaite
 #%  ce commit est dédié à la mémoire de jacques martin
 #%
@@ -237,6 +240,9 @@
 ###  $h -> remote host
 ### for example, to hear a duck sound each time you get an answer:
 #tribune.post_cmd: (if [ $(($R & 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav & fi)
+#tribune.post_cmd_enabled: on
+#tribune.post_cmd2:
+#tribune.post_cmd2_enabled: on
 
 ### nom du fichier dans lequel sont sauvés les scrinechotes de la tribune
 #tribune.archive: ~/wmcc_tribune_shot.html

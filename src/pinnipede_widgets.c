@@ -323,6 +323,25 @@ pp_tabs_handle_button_press(Dock *dock, XButtonEvent *ev) {
   } else return 0;
 }
 
+/* effectue la rotation bizarre 1 tabs actif/tous les tabs/etc */
+void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt) {
+  int i;
+  if (pt != pp->active_tab) {
+    if (pt->selected) {
+      pp->active_tab = pt;
+    } else pt->selected = 1;
+  } else {
+    int all_active = 1;
+    for (i=0; i < pp->nb_tabs; i++) if (pp->tabs[i].selected == 0) all_active = 0;
+    if (all_active) {
+      for (i=0; i < pp->nb_tabs; i++) 
+        pp->tabs[i].selected = (pp->tabs+i == pt);
+    } else {
+      for (i=0; i < pp->nb_tabs; i++) 
+        pp->tabs[i].selected = 1;
+    }
+  }
+}
 
 static int
 pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
@@ -345,21 +364,7 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
 	      pp->tabs[i].selected = (pp->tabs+i == pt);
 	    
 	  } else {	  /* clic plus tordu */
-	    if (pt != pp->active_tab) {
-	      if (pt->selected) {
-		pp->active_tab = pt;
-	      } else pt->selected = 1;
-	    } else {
-	      int all_active = 1;
-	      for (i=0; i < pp->nb_tabs; i++) if (pp->tabs[i].selected == 0) all_active = 0;
-	      if (all_active) {
-		for (i=0; i < pp->nb_tabs; i++) 
-		  pp->tabs[i].selected = (pp->tabs+i == pt);
-	      } else {
-		for (i=0; i < pp->nb_tabs; i++) 
-		  pp->tabs[i].selected = 1;
-	      }
-	    }
+            pp_tabs_cliquouille(pp, pt);
 	  }
 	}
       } else { /* ctrl-left clic */
@@ -399,6 +404,33 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
   if (need_refresh) pp_tabs_refresh(dock);
   return ret;
 }
+
+void pp_tabs_changed(Dock *dock) {
+  Pinnipede *pp = dock->pinnipede;
+  if (pp->active_tab) {
+    pp_tabs_set_visible_sites(pp);
+    if (!flag_updating_board) {
+      pp_pv_destroy(pp);
+      pp_update_content(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 100,0,1);
+      pp_refresh(dock, pp->win, NULL);    
+    }
+  }  
+}
+
+void
+pp_change_active_tab(Dock *dock, int dir) {
+  Pinnipede *pp = dock->pinnipede;
+  int i;
+  if (pp->active_tab) {
+    pp->active_tab+=dir;
+    if (pp->active_tab >= pp->tabs + pp->nb_tabs) pp->active_tab = pp->tabs;    
+    else if (pp->active_tab < pp->tabs) pp->active_tab = pp->tabs + pp->nb_tabs -1;
+  } else pp->active_tab = pp->tabs;
+  for (i=0; i < pp->nb_tabs; i++) 
+    pp->tabs[i].selected = (pp->tabs+i == pp->active_tab);
+  pp_tabs_changed(dock);
+}
+
 
 
 /* ------------------- gestion de la barre de boutons -------------------------- */

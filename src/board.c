@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.18 2003/03/09 13:02:47 pouaite Exp $
+  rcsid=$Id: board.c,v 1.19 2003/06/21 14:48:45 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.19  2003/06/21 14:48:45  pouaite
+  g cho
+
   Revision 1.18  2003/03/09 13:02:47  pouaite
   ouéééééé
 
@@ -1112,20 +1115,13 @@ board_get_trollo_rate(const Board *board, float *trollo_rate, float *trollo_scor
   appelle le programme externe (dans l'ordre des id) pour chaque nouveau message reçu
 */
 static void
-board_call_external(Board *board, int last_id)
-{
+board_call_external_(Board *board, int last_id, char *cmd) {
   board_msg_info *it;
-  
-  if (Prefs.post_cmd == NULL) {
-    return;
-  } else {
-    BLAHBLAH(1, myprintf("board_call_external, id=%d - %d\n", last_id, board->last_post_id));
-  }
+  BLAHBLAH(1, myprintf("board_call_external, id=%d - %d\n", last_id, board->last_post_id));
   if (last_id != -1) { /* si ce n'est pas le premier appel.. */
     it = board_find_id(board, last_id);
     if (it) it = it->next;
   } else {
-    //    it = board->msg;
     return; /* à l'initialisation, on évite de passer tous les messages dans le coincoin */
   }
   while (it) {
@@ -1162,9 +1158,9 @@ board_call_external(Board *board, int last_id)
     /* pour $R */
     typemessage = 0;
     if (it->is_my_message) typemessage |= 1;
-    else if (it->is_answer_to_me) typemessage |= 2;
-    else if (board_key_list_test_mi(board->boards, it, Prefs.hilight_key_list)) typemessage |= 4;
-    else if (board_key_list_test_mi(board->boards, it, Prefs.plopify_key_list)) typemessage |= 8;
+    if (it->is_answer_to_me) typemessage |= 2;
+    if (board_key_list_test_mi(board->boards, it, Prefs.hilight_key_list)) typemessage |= 4;
+    if (board_key_list_test_mi(board->boards, it, Prefs.plopify_key_list)) typemessage |= 8;
     snprintf(stypemessage2, 4, "%d", typemessage);
 
     subs[0] = qlogin;
@@ -1176,7 +1172,7 @@ board_call_external(Board *board, int last_id)
     subs[6] = stypemessage;
     subs[7] = stypemessage2;
     subs[9] = qhost;
-    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 10);
+    shift_cmd = str_multi_substitute(cmd, keys, subs, 10);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
 
@@ -1189,6 +1185,17 @@ board_call_external(Board *board, int last_id)
     it = it->next;
 
     ALLOW_X_LOOP;
+  }
+}
+
+static void
+board_call_external(Board *board, int last_id)
+{
+  int i;
+  for (i=0; i < NB_BIGORNO; ++i) {
+    if (Prefs.post_cmd[i] && Prefs.post_cmd_enabled[i]) {
+      board_call_external_(board,last_id,Prefs.post_cmd[i]);
+    }
   }
 }
 
@@ -1224,7 +1231,7 @@ board_check_my_messages(Board *board, int old_last_post_id) {
 	flag_updating_board++;
 	it->is_answer_to_me = 1;
 	flag_updating_board--;
-	if (old_last_post_id != -1) board->flag_answer_to_me = 1;
+	if (old_last_post_id != -1 && !it->is_my_message) board->flag_answer_to_me = 1;
       }
 
       it = it->next;

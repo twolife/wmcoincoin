@@ -1,10 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.89 2003/02/26 00:03:20 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.90 2003/06/21 14:48:45 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
 */
-
+#include <X11/keysym.h>
 #include "pinnipede.h"
 
 inline static int
@@ -24,7 +24,13 @@ filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter)
 
   if (filter->visible_sites[id_type_sid(mi->id)] == 0) return 0;
   if (filter->filter_mode == 0) return 1;
-  if (filter->ua) {
+  if (filter->anything) {
+    if (filter->anything[0] == 0) return 1;
+    else
+      return ((str_noaccent_casestr(mi->msg, filter->anything) != NULL) ||
+              (str_noaccent_casestr(mi->useragent, filter->anything) != NULL) ||
+              (str_noaccent_casestr(mi->login, filter->anything) != NULL));
+  } else if (filter->ua) {
     return (strcmp(filter->ua, mi->useragent) == 0);
   } else if (filter->login) {
     return (strcmp(filter->login, mi->login) == 0);
@@ -169,6 +175,7 @@ pp_unset_filter(struct _PinnipedeFilter *f)
 {
   f->filter_mode = 0;
   if (f->filter_name) { free(f->filter_name); f->filter_name = NULL;}
+  if (f->anything) { free(f->anything); f->anything = NULL; }
   if (f->ua) { free(f->ua); f->ua = NULL;}
   if (f->login) { free(f->login); f->login = NULL; }
   if (f->word) { free(f->word); f->word = NULL; }
@@ -952,7 +959,7 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
 
   /* assignation des lignes */
   pp_pv_uncount(pp);
-  if (pp->lignes) free(pp->lignes);
+  if (pp->lignes) { free(pp->lignes); pp->lignes=NULL; }
   ALLOC_VEC(pp->lignes, pp->nb_lignes, PostWord*);
 
   while (cur_lig >= 0) {
@@ -1003,7 +1010,6 @@ pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update
     }
   }
   pp_pv_garbage_collect(pp); // rhooooo
-
   if (pp->sc) {
     if (update_scrollbar_bounds) { pp_scrollcoin_update_bounds(dock); }
 /*     else { pp_scrollcoin_move_resize(dock); } */
@@ -1305,6 +1311,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
   int ref_num; /* utilise pour les ref précises dans les post multiples (ie qui ont le meme timestamp) 
 		  par defaut, vaut -1 (cad désactivé)
 		*/
+
+  if (pp->lignes == NULL) return; /* ça peut arriver pendant que flag_updating_board != 0 */
 
   ref_num = -1;
   ref_comment[0] = 0;
@@ -1828,6 +1836,7 @@ pp_build(Dock *dock)
 
   pp->filter.filter_mode = 0;
   pp->filter.filter_name = NULL;
+  pp->filter.anything = NULL;
   pp->filter.ua = NULL;
   pp->filter.login = NULL;
   pp->filter.word = NULL;
@@ -1953,6 +1962,8 @@ pp_show(Dock *dock)
     StructureNotifyMask |
     EnterWindowMask | 
     //    ResizeRedirectMask |
+    KeyPressMask | 
+    KeyReleaseMask | 
       
     LeaveWindowMask;
     
@@ -2149,13 +2160,13 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
 
 /* renvoie le nombre de references vers le message base_mi (sauf ipot) */
 /* to do: comptage inter-sites */
-static int
-pp_count_backrefs(Boards *b, board_msg_info *base_mi)
+static void
+pp_count_backrefs(Boards *b, board_msg_info *base_mi, int *nrep, int *nrep_bak)
 {
-  int nb_backrefs = 0;
   board_msg_info *mi;
-  
-  if (base_mi == NULL) return 0;
+
+  *nrep = *nrep_bak = 0;
+  if (base_mi == NULL) return;
 
   /* on parcourt tous les message postérieurs à base_mi */
   mi = b->first; //base_mi->next;
@@ -2178,14 +2189,15 @@ pp_count_backrefs(Boards *b, board_msg_info *base_mi)
 	    Prefs.site[mi->id.sid]->site_name, mi->id.lid,
 	    nb_backrefs+1);
 	  */
-	  nb_backrefs++;
+	  (*nrep)++;
+          if (mi->in_boitakon) (*nrep_bak)++;
 	  break; /* si le message contient deux refs vers base_mi, on ne le compte qu'une fois */
 	}
       }
     }
     mi = mi->g_next;
   }
-  return nb_backrefs;
+  return;
 }
 
 
@@ -2211,11 +2223,11 @@ pp_check_survol(Dock *dock, int x, int y)
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
     } else if (pw->attr & PWATTR_TSTAMP) {
       board_msg_info *mi;
-      char blah[1024];
+      char blah[1024], snrep[1024];
       char *s;
       int blah_sz = 1024;
 
-      int nrep;
+      int nrep, nrep_bak;
       KeyList *hk;
       mi = boards_find_id(boards, pw->parent->id);
 
@@ -2247,13 +2259,18 @@ pp_check_survol(Dock *dock, int x, int y)
 	snprintf(s, blah_sz, _("\nmessage plopified (level 3) because the boitakon is hungry"));
 	blah_sz -= strlen(s); s += strlen(s);
       }
-      nrep = pp_count_backrefs(boards, mi);
+      pp_count_backrefs(boards, mi, &nrep, &nrep_bak);
 
-      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%d %s%s", 
+      if (nrep_bak == 0) {
+        snprintf(snrep, 1024, "%d %s",nrep, (nrep > 1) ? _("answers") : _("answer"));
+      } else {
+        snprintf(snrep, 1024, _("%d %s (and %d plop%s from the boitakon)"),nrep-nrep_bak, (nrep-nrep_bak > 1) ? _("answers") : _("answer"), nrep_bak, nrep_bak > 1 ? "s" : "");
+      }
+      snprintf(survol, 1024, "[%s] id=%d ua=%s\n%s%s", 
 	       Prefs.site[pw->parent->id.sid]->site_name,
 	       pw->parent->id.lid, 
 	       (mi ? mi->useragent : ""), 
-	       nrep, (nrep > 1) ? _("answers") : _("answer"), blah);
+	       snrep, blah);
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
       is_a_ref = 1;
@@ -2525,6 +2542,22 @@ pp_set_word_filter(Dock *dock, char *word)
   pp_refresh(dock, pp->win, NULL);	  
 }
 
+void
+pp_set_anything_filter(Dock *dock, char *word)
+{
+  Pinnipede *pp = dock->pinnipede;
+  char fname[200];
+
+  snprintf(fname, 200, "isearch: '%s'", word);
+  pp_unset_filter(&pp->filter);
+  pp->filter.filter_mode = 1;
+  pp->filter.filter_name = strdup(fname);
+  pp->filter.anything = strdup(word);
+  BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);	  
+}
+
 
 static void
 gogole_search(Dock *dock, int mx, int my, char *w)
@@ -2574,7 +2607,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   int hk_what_clicked = -1, plop_lvl, emph_lvl;
   enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
 	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
-	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, 
+	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
 	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
 	 };
   char s_thread[20]; /* 'txt' peut pointer dessus */
@@ -2708,6 +2741,22 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 		   _("hide the button bar / tabs bar") : 
 		   _("show the button bar / tabs bar"), PUP_TOGGLE_MINIB);
 
+  if (Prefs.post_cmd[0]) {
+    if (!Prefs.post_cmd_enabled[0]) {
+      plopup_pushentry(dock, _("<b>enable</b> the bigornophone"), PUP_TOGGLE_BIGORNO1);
+    } else {
+      plopup_pushentry(dock, _("<b>disable</b> the bigornophone"), PUP_TOGGLE_BIGORNO1);
+    }
+  }
+  if (Prefs.post_cmd[1]) {
+    if (!Prefs.post_cmd_enabled[1]) {
+      plopup_pushentry(dock, _("<b>enable</b> the secondary bigornophone"), PUP_TOGGLE_BIGORNO2);
+    } else {
+      plopup_pushentry(dock, _("<b>disable</b> the secondary bigornophone"), PUP_TOGGLE_BIGORNO2);
+    }
+  }
+
+
   plop_lvl = 3;
   emph_lvl = 4;
   redraw = 1;
@@ -2761,6 +2810,12 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     } else {
       pp_minib_hide(dock);
     }
+  } break;
+  case PUP_TOGGLE_BIGORNO1: {
+    Prefs.post_cmd_enabled[0] = 1-Prefs.post_cmd_enabled[0];
+  } break;
+  case PUP_TOGGLE_BIGORNO2: {
+    Prefs.post_cmd_enabled[1] = 1-Prefs.post_cmd_enabled[1];
   } break;
   default: {
     if (choice >= PUP_UNPLOP && choice <= PUP_UNPLOP+10) {
@@ -2821,6 +2876,49 @@ pp_open_url(Dock *dock, char *url, int mx, int my, int num) {
 }
 
 static void
+pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
+  char s_ts[11];
+  char s_subts[3];
+  assert(pw->attr & PWATTR_TSTAMP);
+  s_subts[0] = s_subts[1] = s_subts[2] = 0;
+  switch(pw->parent->sub_tstamp) {
+  case -1: break;
+  case 0: s_subts[0] = '¹'; break;
+  case 1: s_subts[0] = '²'; break;
+  case 2: s_subts[0] = '³'; break;
+  default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
+  }
+	
+  snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
+	
+  if (editw_ismapped(dock->editw) == 0) {
+    char *username = Prefs.site[id_type_sid(pw->parent->id)]->user_name;
+    if (username) {
+      snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s %s ",
+               username, s_ts);
+    } else {
+      snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s ",
+               s_ts);
+    }
+    //	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
+    // strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
+    dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
+    editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
+    editw_move_end_of_line(dock->editw, 0);
+    editw_refresh(dock, dock->editw);
+  } else {
+    char s[60];
+    if (editw_get_site_id(dock) == id_type_sid(pw->parent->id)) {
+      snprintf(s, 60, "%s ", s_ts);
+    } else { 
+      snprintf(s, 60, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
+    }
+    editw_insert_string(dock->editw, s);
+    editw_refresh(dock, dock->editw);
+  }
+}
+
+static void
 pp_handle_left_clic(Dock *dock, int mx, int my)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -2863,46 +2961,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
       }
     } else if (pw->attr & PWATTR_TSTAMP) {
       /* clic sur l'holorge -> ouverture du palmipede */
-      
-      char s_ts[11];
-      char s_subts[3];
-      
-      s_subts[0] = s_subts[1] = s_subts[2] = 0;
-      switch(pw->parent->sub_tstamp) {
-      case -1: break;
-      case 0: s_subts[0] = '¹'; break;
-      case 1: s_subts[0] = '²'; break;
-      case 2: s_subts[0] = '³'; break;
-      default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
-      }
-	
-      snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
-	
-      if (editw_ismapped(dock->editw) == 0) {
-	char *username = Prefs.site[id_type_sid(pw->parent->id)]->user_name;
-	if (username) {
-	  snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s %s ",
-		   username, s_ts);
-	} else {
-	  snprintf(dock->coin_coin_message, MESSAGE_MAXMAX_LEN, "%s ",
-		   s_ts);
-	}
-	//	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
-	// strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
-	dock->coin_coin_message[MESSAGE_MAXMAX_LEN] = 0;
-	editw_show(dock, Prefs.site[id_type_sid(pw->parent->id)], 0);
-	editw_move_end_of_line(dock->editw, 0);
-	editw_refresh(dock, dock->editw);
-      } else {
-	char s[60];
-	if (editw_get_site_id(dock) == id_type_sid(pw->parent->id)) {
-	  snprintf(s, 60, "%s ", s_ts);
-	} else { 
-	  snprintf(s, 60, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
-	}
-	editw_insert_string(dock->editw, s);
-	editw_refresh(dock, dock->editw);
-      }
+      pp_open_palmi_for_reply(dock, pw);
     } else if (pw->attr & PWATTR_REF) {
       /* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
 	 pinnipede */
@@ -3291,6 +3350,233 @@ pp_selection_copy(Dock *dock, char *buff)
   return nc;
 }
 
+/* /!\ spaghettis */
+int
+pp_handle_keypress(Dock *dock, XEvent *event)
+{
+  Pinnipede *pp = dock->pinnipede;
+  Boards *boards = dock->sites->boards;
+  KeySym ksym;
+  int klen;
+  unsigned char buff[4];
+  static XComposeStatus compose_status = { 0, 0 };
+  int ret = 0;
+
+  klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
+  if (event->xkey.state & Mod1Mask) {
+    /* ALT-TOUCHE */
+  } else if (event->xkey.state & ControlMask) {
+    /* CTRL-TOUCHE */
+    switch (ksym) {
+    case ' ': { /* ctrl-espace : rafraichit tous les sites */
+      Site *site;
+      for (site = dock->sites->list; site; site = site->next) {
+        if (site->prefs->check_board) {
+          ccqueue_push_board_update(site->site_id);
+          site->board->board_refresh_cnt = 0;
+        }
+      }
+      ret++;
+    } break;
+    case 'S':
+    case 's': if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) { /* ctrl-s : mode recherche */
+      if (pp->filter.filter_mode) { pp->filter.filter_mode = 0; }
+      else { pp_set_anything_filter(dock, pp->filter.anything ? pp->filter.anything : ""); }
+      pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    /* CTRL-ENTER : ouvre le palmi pour répondre au message affiché en bas du pinni */
+    case XK_Return:
+    case XK_KP_Enter: if (!editw_ismapped(dock->editw)) {
+      if (pp->lignes) {
+        int i=pp->nb_lignes-1;
+        PostWord *pwts = NULL;
+        /* :(================ */
+        while (i>=0 && !pwts) {
+          if (pp->lignes[i]) {          
+            PostWord *pw = pp->lignes[i];
+            while (pw) {
+              if ((pw->attr & PWATTR_TSTAMP)) { pwts = pw;  break; }
+              pw = pw->next;
+            }
+          }
+          i--;
+        }
+        if (pwts)
+          pp_open_palmi_for_reply(dock,pwts);
+      }
+      ret++;
+    } break;
+    }
+  } else if (pp->filter.filter_mode && pp->filter.anything && !editw_ismapped(dock->editw)) {
+    /* TOUCHE NORMALE EN MODE RECHERCHE */
+    int c = 0;
+    //fprintf(stderr, "recherche : ksym = %04x (%c), klen=%04x, buff=%02x%02x%02x%02x\n", ksym, ksym, klen, buff[0],buff[1],buff[2],buff[3]);
+    if (ksym >= ' ' && ksym < 255) { c = ksym; }
+    else if (ksym >= XK_KP_0 && ksym <= XK_KP_9) { c = '0' + ksym - XK_KP_0; }
+    else {
+      switch (ksym) {
+      case XK_KP_Decimal: c = '.'; break;
+      case XK_KP_Subtract: c = '-'; break;
+      case XK_KP_Add: c = '+'; break;
+      case XK_KP_Divide: c = '/'; break;
+      case XK_KP_Multiply: c = '*'; break;
+      case XK_BackSpace: c = -2; break;
+      case XK_Return:
+      case XK_KP_Enter:
+      case XK_KP_Up:
+      case XK_Up:
+      case XK_KP_Down:
+      case XK_Down:
+      case XK_KP_Left:
+      case XK_Left:
+      case XK_KP_Right:
+      case XK_Right:
+      case XK_KP_Page_Up:
+      case XK_Page_Up:
+      case XK_KP_Page_Down:
+      case XK_Page_Down:
+      case XK_KP_Home:
+      case XK_Home:
+      case XK_KP_End:
+      case XK_End:
+      case XK_Tab:
+      case XK_Escape: c = -1; break; /* pffff liste a la con */
+      }
+    }
+    if (c > 0) {
+      char *s = str_printf("%s%c", pp->filter.anything, c);
+      pp_set_anything_filter(dock, s);
+      free(s);
+    } else if (c == -2) {
+      char *s = strdup(pp->filter.anything);
+      if (s[0]) { s[strlen(s)-1] = 0; }
+      pp_set_anything_filter(dock, s);
+      free(s);
+    } else if (c == -1) { 
+      pp->filter.filter_mode = 0;
+      pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+      pp_refresh(dock, pp->win, NULL);
+    }
+    ret++;
+  } else {
+    /* TOUCHE NORMALE */
+    switch (ksym) {
+      /* fleche droite: active le tab de droite */
+    case XK_KP_Left:
+    case XK_Left: if (!editw_ismapped(dock->editw)) {
+      if (event->xkey.window == pp->win) {
+        pp_change_active_tab(dock,-1);
+        ret++;
+      }
+    } break;
+    /* fleche gauche: active le tabs de gauche */
+    case XK_KP_Right:
+    case XK_Right: if (!editw_ismapped(dock->editw)) {
+      if (event->xkey.window == pp->win) {
+        pp_change_active_tab(dock,+1);
+        ret++;
+      }
+    } break;
+    /* "tab" : switch entre un seul tab et tous les tabs simultanés */
+    case XK_Tab: if (!editw_ismapped(dock->editw)) {
+      pp_tabs_cliquouille(pp, pp->active_tab); pp_tabs_changed(dock);
+    } break;
+    /* "R" : active/desactive l'autorefresh */
+    case 'R':
+    case 'r': {
+      if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) {
+        if (pp->active_tab) {
+          pp->active_tab->site->board->auto_refresh = 1-pp->active_tab->site->board->auto_refresh;
+          pp_tabs_refresh(dock);
+          ret++;
+        }
+      }
+    } break;
+    /* "F" : active/desactive le filtre */
+    case 'F':
+    case 'f': if (!editw_ismapped(dock->editw)) {
+      pp->filter.filter_mode = 1-pp->filter.filter_mode;
+      pp_update_content(dock, pp->id_base, 0,0,0);
+      pp_refresh(dock, pp->win, NULL);
+    } break;
+    case ' ': {
+      if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) {
+        if (pp->active_tab) {
+          ccqueue_push_board_update(pp->active_tab->site->site_id);
+          pp->active_tab->site->board->board_refresh_cnt = 0;
+          ret++;
+        }
+      }
+    } break;
+    case XK_Return:
+    case XK_KP_Enter: if (!editw_ismapped(dock->editw)) {
+      editw_show(dock, pp->active_tab ? pp->active_tab->site->prefs : 0, 0);
+      ret++;
+    } break;
+    case XK_KP_Up:
+    case XK_Up: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, pp->id_base, pp->decal_base-1,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_KP_Down:
+    case XK_Down: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, pp->id_base, pp->decal_base+1,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_KP_Page_Up:
+    case XK_Page_Up: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, pp->id_base, pp->decal_base-pp->nb_lignes,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_KP_Page_Down:
+    case XK_Page_Down: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, pp->id_base, pp->decal_base+pp->nb_lignes,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_KP_Home:
+    case XK_Home: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, get_nth_id_filtered(boards, &pp->filter, 0), 0,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_KP_End:
+    case XK_End: if (!editw_ismapped(dock->editw)) {
+      pp_update_content(dock, get_last_id_filtered(boards, &pp->filter), 0,0,0);
+      pp_refresh(dock, pp->win, NULL);
+      ret++;
+    } break;
+    case XK_Escape: if (!editw_ismapped(dock->editw)) {
+      flag_cancel_task = 1;
+      ret++;
+    } break;
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': if (!editw_ismapped(dock->editw)) {
+      int c = ksym - '1';
+      if (c < pp->nb_tabs) {
+        pp_tabs_cliquouille(pp, pp->tabs+c); pp_tabs_changed(dock);
+      }
+      ret++;
+    } break;
+    default: {
+      ret = 0;
+    } break;
+    }
+  }
+  return ret;
+}
 
 void
 pp_dispatch_event(Dock *dock, XEvent *event)

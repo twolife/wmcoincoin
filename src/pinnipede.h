@@ -72,6 +72,7 @@ struct _PinnipedeFilter {
   char *word;
   //  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
   id_type *id; int nid; /* liste des id des messages affichés dans le filtre de threads */
+  char *anything; /* filtres sur les ua, mots et logins (activé par ctrl-s dans le pinni) */
   int filter_boitakon;
   char visible_sites[MAX_SITES]; /* indique les sites affichés
 				    en simultané (maj d'après l'état des tabs du pinni) 
@@ -220,6 +221,9 @@ void pp_tabs_build(Dock *dock);
 void pp_tabs_destroy(Pinnipede *pp);
 void pp_tabs_refresh(Dock *dock);
 void pp_tabs_set_visible_sites(Pinnipede *pp);
+void pp_tabs_cliquouille(Pinnipede *pp, PinnipedeTab *pt);
+void pp_tabs_changed(Dock *dock);
+void pp_change_active_tab(Dock *dock, int dir);
 
 void pp_scrollcoin_update_bounds(Dock *dock);
 void pp_widgets_set_pos(Dock *dock);

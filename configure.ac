@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.27  2003/06/21 14:48:44  pouaite
+dnl   g cho
+dnl
 dnl   Revision 1.26  2003/05/07 18:44:55  pouaite
 dnl   bugfix divers+solaris7
 dnl
@@ -197,7 +200,8 @@ AC_ISC_POSIX
 
 
 dnl don't want the -g flag
-CFLAGS=`echo "x $CFLAGS"|sed 's/^x //; s/\(^\| \)-g\($\| \)/ /g'`
+dnl update: jjb< do want the -g flag
+dnl CFLAGS=`echo "x $CFLAGS"|sed 's/^x //; s/\(^\| \)-g\($\| \)/ /g'`
 
 dnl additional compile flags when using gcc
 if test x$GCC = xyes; then

@@ -90,7 +90,12 @@
 	    <name>text1</name>
 	    <can_focus>True</can_focus>
 	    <editable>False</editable>
-	    <text>WMC² 2.4.2
+	    <text>WMC² 2.4.5
+ * commandes clavier dans le pinni (ouverture du palmi avec la touche enter etc)
+ * un second bigorno désactivable
+ 
+
+WMC² 2.4.2
 * bugfixes divers -- tout fonctionne à nouveau sur dlfp, à l'exception du flamophone.
 
 WMC² 2.4.1
@@ -2893,71 +2898,7 @@ disable the dynamic adjustment of the refresh rate)</label>
 	      </widget>
 
 	      <widget>
-		<class>GtkFrame</class>
-		<name>frame5</name>
-		<border_width>5</border_width>
-		<label>Post-processing of messages via shell</label>
-		<label_xalign>0</label_xalign>
-		<shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
-		<child>
-		  <padding>0</padding>
-		  <expand>False</expand>
-		  <fill>True</fill>
-		</child>
-
-		<widget>
-		  <class>GtkHBox</class>
-		  <name>hbox5</name>
-		  <border_width>7</border_width>
-		  <homogeneous>False</homogeneous>
-		  <spacing>6</spacing>
-
-		  <widget>
-		    <class>GtkLabel</class>
-		    <name>label24</name>
-		    <width>160</width>
-		    <label>Shell command [CAUTION: be careful this script can receive any sequence of input arguments, be VERY CAREFUL for security risks]</label>
-		    <justify>GTK_JUSTIFY_FILL</justify>
-		    <wrap>True</wrap>
-		    <xalign>0.5</xalign>
-		    <yalign>0.5</yalign>
-		    <xpad>0</xpad>
-		    <ypad>0</ypad>
-		    <child>
-		      <padding>0</padding>
-		      <expand>False</expand>
-		      <fill>False</fill>
-		    </child>
-		  </widget>
-
-		  <widget>
-		    <class>GtkScrolledWindow</class>
-		    <name>scrolledwindow1</name>
-		    <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-		    <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-		    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-		    <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-		    <child>
-		      <padding>0</padding>
-		      <expand>True</expand>
-		      <fill>True</fill>
-		    </child>
-
-		    <widget>
-		      <class>GtkText</class>
-		      <name>text_post_cmd</name>
-		      <tooltip>$l -&gt; login, $m -&gt; message, $u -&gt; useragent, $i -&gt; #id du message, $t -&gt; timestamp, $s -&gt; troll_score,  $R -&gt; message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -&gt; wmc² version, $h -&gt; remote host</tooltip>
-		      <can_focus>True</can_focus>
-		      <signal>
-			<name>changed</name>
-			<handler>on_editable_changed</handler>
-			<last_modification_time>Sat, 24 Aug 2002 20:41:30 GMT</last_modification_time>
-		      </signal>
-		      <editable>True</editable>
-		      <text></text>
-		    </widget>
-		  </widget>
-		</widget>
+		<class>Placeholder</class>
 	      </widget>
 
 	      <widget>
@@ -3470,6 +3411,195 @@ disable the dynamic adjustment of the refresh rate)</label>
 	  <child_name>Notebook:tab</child_name>
 	  <name>label6</name>
 	  <label>Board</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame5</name>
+	  <border_width>5</border_width>
+	  <label>Post-processing of messages via shell</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+
+	  <widget>
+	    <class>GtkVBox</class>
+	    <name>vbox372</name>
+	    <homogeneous>False</homogeneous>
+	    <spacing>0</spacing>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <name>label24</name>
+	      <width>748</width>
+	      <sensitive>False</sensitive>
+	      <label>Shell command executed for each new message received [CAUTION: be careful this script can receive any sequence of input arguments, be VERY CAREFUL for security risks]
+Some &quot;special&quot; variables will be substituted:
+$l -&gt; login, $m -&gt; message, $u -&gt; useragent, $i -&gt; message#id, $t -&gt; timestamp, $s -&gt; troll_score, $r -&gt; obsolete message type (do not use), 
+$R -&gt; message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message)
+$v -&gt; wmc² version, $h -&gt; remote host
+
+Example (play a sound for each answer to your messages):
+(if [ $(($R &amp; 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav &amp; fi)</label>
+	      <justify>GTK_JUSTIFY_LEFT</justify>
+	      <wrap>True</wrap>
+	      <xalign>0</xalign>
+	      <yalign>0</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <child>
+		<padding>0</padding>
+		<expand>False</expand>
+		<fill>False</fill>
+	      </child>
+	    </widget>
+
+	    <widget>
+	      <class>GtkFrame</class>
+	      <name>frame35</name>
+	      <label>Main bigornophone</label>
+	      <label_xalign>0</label_xalign>
+	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	      <child>
+		<padding>0</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+
+	      <widget>
+		<class>GtkVBox</class>
+		<name>vbox373</name>
+		<homogeneous>False</homogeneous>
+		<spacing>0</spacing>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>checkbutton_post_cmd</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>on_checkbutton_toggled</handler>
+		    <last_modification_time>Sat, 24 Aug 2002 19:44:27 GMT</last_modification_time>
+		  </signal>
+		  <label>Enable on startup</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		  <child>
+		    <padding>0</padding>
+		    <expand>False</expand>
+		    <fill>False</fill>
+		  </child>
+		</widget>
+
+		<widget>
+		  <class>GtkScrolledWindow</class>
+		  <name>scrolledwindow1</name>
+		  <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		  <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+		  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+		  <child>
+		    <padding>0</padding>
+		    <expand>True</expand>
+		    <fill>True</fill>
+		  </child>
+
+		  <widget>
+		    <class>GtkText</class>
+		    <name>text_post_cmd</name>
+		    <tooltip>$l -&gt; login, $m -&gt; message, $u -&gt; useragent, $i -&gt; #id du message, $t -&gt; timestamp, $s -&gt; troll_score,  $R -&gt; message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -&gt; wmc² version, $h -&gt; remote host (REFER TO THE DEFAULT OPTIONS FILE FOR MORE DETAILS)</tooltip>
+		    <can_focus>True</can_focus>
+		    <signal>
+		      <name>changed</name>
+		      <handler>on_editable_changed</handler>
+		      <last_modification_time>Sat, 24 Aug 2002 20:41:30 GMT</last_modification_time>
+		    </signal>
+		    <editable>True</editable>
+		    <text></text>
+		  </widget>
+		</widget>
+	      </widget>
+	    </widget>
+
+	    <widget>
+	      <class>GtkFrame</class>
+	      <name>frame36</name>
+	      <label>Secondary bigornophone</label>
+	      <label_xalign>0</label_xalign>
+	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	      <child>
+		<padding>0</padding>
+		<expand>True</expand>
+		<fill>True</fill>
+	      </child>
+
+	      <widget>
+		<class>GtkVBox</class>
+		<name>vbox374</name>
+		<homogeneous>False</homogeneous>
+		<spacing>0</spacing>
+
+		<widget>
+		  <class>GtkCheckButton</class>
+		  <name>checkbutton_post_cmd2</name>
+		  <can_focus>True</can_focus>
+		  <signal>
+		    <name>toggled</name>
+		    <handler>on_checkbutton_toggled</handler>
+		    <last_modification_time>Sat, 24 Aug 2002 19:44:27 GMT</last_modification_time>
+		  </signal>
+		  <label>Enable on startup</label>
+		  <active>False</active>
+		  <draw_indicator>True</draw_indicator>
+		  <child>
+		    <padding>0</padding>
+		    <expand>False</expand>
+		    <fill>False</fill>
+		  </child>
+		</widget>
+
+		<widget>
+		  <class>GtkScrolledWindow</class>
+		  <name>scrolledwindow9</name>
+		  <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+		  <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
+		  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+		  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+		  <child>
+		    <padding>0</padding>
+		    <expand>True</expand>
+		    <fill>True</fill>
+		  </child>
+
+		  <widget>
+		    <class>GtkText</class>
+		    <name>text_post_cmd2</name>
+		    <tooltip>$l -&gt; login, $m -&gt; message, $u -&gt; useragent, $i -&gt; #id du message, $t -&gt; timestamp, $s -&gt; troll_score,  $R -&gt; message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -&gt; wmc² version, $h -&gt; remote host (REFER TO THE DEFAULT OPTIONS FILE FOR MORE DETAILS)</tooltip>
+		    <can_focus>True</can_focus>
+		    <signal>
+		      <name>changed</name>
+		      <handler>on_editable_changed</handler>
+		      <last_modification_time>Sat, 24 Aug 2002 20:41:30 GMT</last_modification_time>
+		    </signal>
+		    <editable>True</editable>
+		    <text></text>
+		  </widget>
+		</widget>
+	      </widget>
+	    </widget>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <child_name>Notebook:tab</child_name>
+	  <name>label173</name>
+	  <label>Bigorno</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
 	  <xalign>0.5</xalign>
@@ -8467,7 +8597,7 @@ boitakon
 		  <widget>
 		    <class>GtkLabel</class>
 		    <name>label64</name>
-		    <width>590</width>
+		    <width>751</width>
 		    <label>These options allows you to launch an external browser from wmcoincoin, this is used for reading the news, the comments detected by the flamophone, the personnal messages, the [url]s of the pinnipede teletype.
 BE CAREFUL: this kind of 'external' command might be a great source of vulnerability since the urls can contain ANY caracter (think of 'http://plop.org; reboot' ..
 For this reason, dangerous caracter are carefully escapped by wmcc before calling the external browser

@@ -159,7 +159,7 @@ typedef struct _SitePrefs {
 } SitePrefs;
 
 #define MAX_SITES 30 /* au-dela, faut vraiment songer à consulter */
-
+#define NB_BIGORNO 2
 typedef struct _GeneralPrefs{
   /* en cas d'inactivité les delais vont être progressivement augmentés
      max_refresh_delay est leur valeur maximale (en minutes) (0 => ralentissement désactivé) */
@@ -243,7 +243,8 @@ typedef struct _GeneralPrefs{
   int ew_do_spell;
   char* ew_spell_cmd;
   char* ew_spell_dict;
-  char *post_cmd; /* commande exécutée après chaque nouveau post lu ($m=message, $l=login, $t=timestamp, $u=ua, $i=id, $s=troll_score) */
+  char *post_cmd[NB_BIGORNO]; /* commande exécutée après chaque nouveau post lu ($m=message, $l=login, $t=timestamp, $u=ua, $i=id, $s=troll_score) */
+  int post_cmd_enabled[NB_BIGORNO];
   /* Nom du fichier de scrinechote */
   char* board_scrinechote;
 

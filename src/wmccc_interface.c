@@ -155,11 +155,6 @@ create_main_win (void)
   GtkWidget *frame20;
   GtkWidget *vbox7;
   GtkWidget *checkbutton_trolldetector;
-  GtkWidget *frame5;
-  GtkWidget *hbox5;
-  GtkWidget *label24;
-  GtkWidget *scrolledwindow1;
-  GtkWidget *text_post_cmd;
   GtkWidget *frame6;
   GtkWidget *entry_archive_filename;
   GtkWidget *frame7;
@@ -189,6 +184,20 @@ create_main_win (void)
   GtkWidget *checkbutton_pp_use_AMPM;
   GtkWidget *checkbutton_board_auto_refresh;
   GtkWidget *label6;
+  GtkWidget *frame5;
+  GtkWidget *vbox372;
+  GtkWidget *label24;
+  GtkWidget *frame35;
+  GtkWidget *vbox373;
+  GtkWidget *checkbutton_post_cmd;
+  GtkWidget *scrolledwindow1;
+  GtkWidget *text_post_cmd;
+  GtkWidget *frame36;
+  GtkWidget *vbox374;
+  GtkWidget *checkbutton_post_cmd2;
+  GtkWidget *scrolledwindow9;
+  GtkWidget *text_post_cmd2;
+  GtkWidget *label173;
   GtkWidget *vbox11;
   GtkWidget *frame8;
   GtkWidget *entry_coin_coin_message;
@@ -544,7 +553,7 @@ create_main_win (void)
   gtk_widget_show (text1);
   gtk_container_add (GTK_CONTAINER (scrolledwindow8), text1);
   gtk_text_insert (GTK_TEXT (text1), NULL, NULL, NULL,
-                   "WMC² 2.4.2\n* bugfixes divers -- tout fonctionne à nouveau sur dlfp, à l'exception du flamophone.\n\nWMC² 2.4.1\n* ajout du menu contextuel\n* pour l'utilisation avec le templeet de linuxfr, voir http://hules.free.fr/wmcoincoin/rtff.html\n\nPASSAGE DE WMC² 2.3.8 à WMC² 2.4\n\nLe format du fichier d'options a beaucoup changé.. du coup il est conseillé d'utiliser le nouveau wmccc pour éditer les options, c'est plus simple. Sinon, lisez le fichier d'options par défaut, c'est expliqué.\n\n* Pour ceux qui ne veulent pas se faire chier, il suffit de rajouter site: \"lenomdusite\" à la _FIN_ de fichier d'options que vous utilisez actuellement, et vous devriez retrouver un coincoin quasi similaire à la v2.3.8 (voir qd même la remarque sur les cookies plus bas)\n\n* Les cookies:\nwmc² demande maintenant le NOM du cookie avec sa valeur, veillez donc à bien rajouter 'session_id=' devant la valeur du cookie.\n\n* Le bouton 'Apply' n'a pas forcément un effet immédiat, si wmc² est occupé à d/l des news ou autre, il faudra attendre quelques secondes (le bouton wmc3 du pinnipède clignote)\n\n* Certaines rares options ne peuvent pas être changées en cours de fonctionnement (comme le skin de wmc²)\n\n* IL EST TRES FORTEMENT CONSEILLE DE REPARTIR DU FICHIER D'OPTIONS PAR DEFAUT, ou alors d'ajouter à votre fichier d'options les diverses lignes 'url_replace' et 'board.miniua' du fichier d'options par défaut.\n\n* Les tabs du pinnipede ont trois états:\n  off : on ne voit pas les messages du site\n  on : les messages du site sont affichés\n  on principale: c'est le site par défaut sur lequel vous postez avec le palmipede.\n\nLe comportement par défaut des tabs pour le clic gauche est le suivant\n  (1) tab off --> tab on principale\n  (2) tab on principale -> tous les autres à on\n  (3) tab on principale + tous les autres à on -> tous les autres à off\n  les clics suivants alternent entre (2) et (3)\n\nSi ce comportement vous déplait, cochez l'option 'classical tabs' dans le volet 'pinnipède' de wmccc.\n\nLes tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).", -1);
+                   "WMC² 2.4.5\n * commandes clavier dans le pinni (ouverture du palmi avec la touche enter etc)\n * un second bigorno désactivable\n \n\nWMC² 2.4.2\n* bugfixes divers -- tout fonctionne à nouveau sur dlfp, à l'exception du flamophone.\n\nWMC² 2.4.1\n* ajout du menu contextuel\n* pour l'utilisation avec le templeet de linuxfr, voir http://hules.free.fr/wmcoincoin/rtff.html\n\nPASSAGE DE WMC² 2.3.8 à WMC² 2.4\n\nLe format du fichier d'options a beaucoup changé.. du coup il est conseillé d'utiliser le nouveau wmccc pour éditer les options, c'est plus simple. Sinon, lisez le fichier d'options par défaut, c'est expliqué.\n\n* Pour ceux qui ne veulent pas se faire chier, il suffit de rajouter site: \"lenomdusite\" à la _FIN_ de fichier d'options que vous utilisez actuellement, et vous devriez retrouver un coincoin quasi similaire à la v2.3.8 (voir qd même la remarque sur les cookies plus bas)\n\n* Les cookies:\nwmc² demande maintenant le NOM du cookie avec sa valeur, veillez donc à bien rajouter 'session_id=' devant la valeur du cookie.\n\n* Le bouton 'Apply' n'a pas forcément un effet immédiat, si wmc² est occupé à d/l des news ou autre, il faudra attendre quelques secondes (le bouton wmc3 du pinnipède clignote)\n\n* Certaines rares options ne peuvent pas être changées en cours de fonctionnement (comme le skin de wmc²)\n\n* IL EST TRES FORTEMENT CONSEILLE DE REPARTIR DU FICHIER D'OPTIONS PAR DEFAUT, ou alors d'ajouter à votre fichier d'options les diverses lignes 'url_replace' et 'board.miniua' du fichier d'options par défaut.\n\n* Les tabs du pinnipede ont trois états:\n  off : on ne voit pas les messages du site\n  on : les messages du site sont affichés\n  on principale: c'est le site par défaut sur lequel vous postez avec le palmipede.\n\nLe comportement par défaut des tabs pour le clic gauche est le suivant\n  (1) tab off --> tab on principale\n  (2) tab on principale -> tous les autres à on\n  (3) tab on principale + tous les autres à on -> tous les autres à off\n  les clics suivants alternent entre (2) et (3)\n\nSi ce comportement vous déplait, cochez l'option 'classical tabs' dans le volet 'pinnipède' de wmccc.\n\nLes tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci permet d'annuler l'auto-refresh du site (plus de maj automatique de la tribune du site).", -1);
 
   label161 = gtk_label_new ("Release Notes");
   gtk_widget_ref (label161);
@@ -1742,49 +1751,6 @@ create_main_win (void)
   gtk_widget_show (checkbutton_trolldetector);
   gtk_box_pack_start (GTK_BOX (vbox7), checkbutton_trolldetector, FALSE, FALSE, 0);
 
-  frame5 = gtk_frame_new ("Post-processing of messages via shell");
-  gtk_widget_ref (frame5);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "frame5", frame5,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (frame5);
-  gtk_box_pack_start (GTK_BOX (vbox7), frame5, FALSE, TRUE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (frame5), 5);
-
-  hbox5 = gtk_hbox_new (FALSE, 6);
-  gtk_widget_ref (hbox5);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "hbox5", hbox5,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (hbox5);
-  gtk_container_add (GTK_CONTAINER (frame5), hbox5);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox5), 7);
-
-  label24 = gtk_label_new ("Shell command [CAUTION: be careful this script can receive any sequence of input arguments, be VERY CAREFUL for security risks]");
-  gtk_widget_ref (label24);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "label24", label24,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label24);
-  gtk_box_pack_start (GTK_BOX (hbox5), label24, FALSE, FALSE, 0);
-  gtk_widget_set_usize (label24, 160, -2);
-  gtk_label_set_justify (GTK_LABEL (label24), GTK_JUSTIFY_FILL);
-  gtk_label_set_line_wrap (GTK_LABEL (label24), TRUE);
-
-  scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (scrolledwindow1);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "scrolledwindow1", scrolledwindow1,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (scrolledwindow1);
-  gtk_box_pack_start (GTK_BOX (hbox5), scrolledwindow1, TRUE, TRUE, 0);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
-
-  text_post_cmd = gtk_text_new (NULL, NULL);
-  gtk_widget_ref (text_post_cmd);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "text_post_cmd", text_post_cmd,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (text_post_cmd);
-  gtk_container_add (GTK_CONTAINER (scrolledwindow1), text_post_cmd);
-  gtk_tooltips_set_tip (tooltips, text_post_cmd, "$l -> login, $m -> message, $u -> useragent, $i -> #id du message, $t -> timestamp, $s -> troll_score,  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -> wmc² version, $h -> remote host", NULL);
-  gtk_text_set_editable (GTK_TEXT (text_post_cmd), TRUE);
-
   frame6 = gtk_frame_new ("Archive file (use ctrl+middle clic in the pinnipede to store the board content)");
   gtk_widget_ref (frame6);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "frame6", frame6,
@@ -2009,6 +1975,118 @@ create_main_win (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label6);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 3), label6);
+
+  frame5 = gtk_frame_new ("Post-processing of messages via shell");
+  gtk_widget_ref (frame5);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "frame5", frame5,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (frame5);
+  gtk_container_add (GTK_CONTAINER (notebook1), frame5);
+  gtk_container_set_border_width (GTK_CONTAINER (frame5), 5);
+
+  vbox372 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_ref (vbox372);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "vbox372", vbox372,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (vbox372);
+  gtk_container_add (GTK_CONTAINER (frame5), vbox372);
+
+  label24 = gtk_label_new ("");
+  gtk_label_parse_uline (GTK_LABEL (label24),
+                         "Shell command executed for each new message received [CAUTION: be careful this script can receive any sequence of input arguments, be VERY CAREFUL for security risks]\nSome \"special\" variables will be substituted:\n$l -> login, $m -> message, $u -> useragent, $i -> message#id, $t -> timestamp, $s -> troll_score, $r -> obsolete message type (do not use), \n$R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message)\n$v -> wmc² version, $h -> remote host\n\nExample (play a sound for each answer to your messages):\n(if [ $(($R & 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav & fi)");
+  gtk_widget_ref (label24);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "label24", label24,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label24);
+  gtk_box_pack_start (GTK_BOX (vbox372), label24, FALSE, FALSE, 0);
+  gtk_widget_set_usize (label24, 748, -2);
+  gtk_widget_set_sensitive (label24, FALSE);
+  gtk_label_set_justify (GTK_LABEL (label24), GTK_JUSTIFY_LEFT);
+  gtk_label_set_line_wrap (GTK_LABEL (label24), TRUE);
+  gtk_misc_set_alignment (GTK_MISC (label24), 0, 0);
+
+  frame35 = gtk_frame_new ("Main bigornophone");
+  gtk_widget_ref (frame35);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "frame35", frame35,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (frame35);
+  gtk_box_pack_start (GTK_BOX (vbox372), frame35, TRUE, TRUE, 0);
+
+  vbox373 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_ref (vbox373);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "vbox373", vbox373,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (vbox373);
+  gtk_container_add (GTK_CONTAINER (frame35), vbox373);
+
+  checkbutton_post_cmd = gtk_check_button_new_with_label ("Enable on startup");
+  gtk_widget_ref (checkbutton_post_cmd);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_post_cmd", checkbutton_post_cmd,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (checkbutton_post_cmd);
+  gtk_box_pack_start (GTK_BOX (vbox373), checkbutton_post_cmd, FALSE, FALSE, 0);
+
+  scrolledwindow1 = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_ref (scrolledwindow1);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "scrolledwindow1", scrolledwindow1,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (scrolledwindow1);
+  gtk_box_pack_start (GTK_BOX (vbox373), scrolledwindow1, TRUE, TRUE, 0);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow1), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+
+  text_post_cmd = gtk_text_new (NULL, NULL);
+  gtk_widget_ref (text_post_cmd);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "text_post_cmd", text_post_cmd,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (text_post_cmd);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow1), text_post_cmd);
+  gtk_tooltips_set_tip (tooltips, text_post_cmd, "$l -> login, $m -> message, $u -> useragent, $i -> #id du message, $t -> timestamp, $s -> troll_score,  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -> wmc² version, $h -> remote host (REFER TO THE DEFAULT OPTIONS FILE FOR MORE DETAILS)", NULL);
+  gtk_text_set_editable (GTK_TEXT (text_post_cmd), TRUE);
+
+  frame36 = gtk_frame_new ("Secondary bigornophone");
+  gtk_widget_ref (frame36);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "frame36", frame36,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (frame36);
+  gtk_box_pack_start (GTK_BOX (vbox372), frame36, TRUE, TRUE, 0);
+
+  vbox374 = gtk_vbox_new (FALSE, 0);
+  gtk_widget_ref (vbox374);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "vbox374", vbox374,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (vbox374);
+  gtk_container_add (GTK_CONTAINER (frame36), vbox374);
+
+  checkbutton_post_cmd2 = gtk_check_button_new_with_label ("Enable on startup");
+  gtk_widget_ref (checkbutton_post_cmd2);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_post_cmd2", checkbutton_post_cmd2,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (checkbutton_post_cmd2);
+  gtk_box_pack_start (GTK_BOX (vbox374), checkbutton_post_cmd2, FALSE, FALSE, 0);
+
+  scrolledwindow9 = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_ref (scrolledwindow9);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "scrolledwindow9", scrolledwindow9,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (scrolledwindow9);
+  gtk_box_pack_start (GTK_BOX (vbox374), scrolledwindow9, TRUE, TRUE, 0);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow9), GTK_POLICY_NEVER, GTK_POLICY_ALWAYS);
+
+  text_post_cmd2 = gtk_text_new (NULL, NULL);
+  gtk_widget_ref (text_post_cmd2);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "text_post_cmd2", text_post_cmd2,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (text_post_cmd2);
+  gtk_container_add (GTK_CONTAINER (scrolledwindow9), text_post_cmd2);
+  gtk_tooltips_set_tip (tooltips, text_post_cmd2, "$l -> login, $m -> message, $u -> useragent, $i -> #id du message, $t -> timestamp, $s -> troll_score,  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message), $v -> wmc² version, $h -> remote host (REFER TO THE DEFAULT OPTIONS FILE FOR MORE DETAILS)", NULL);
+  gtk_text_set_editable (GTK_TEXT (text_post_cmd2), TRUE);
+
+  label173 = gtk_label_new ("Bigorno");
+  gtk_widget_ref (label173);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "label173", label173,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label173);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 4), label173);
 
   vbox11 = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (vbox11);
@@ -2266,7 +2344,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "label7", label7,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label7);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 4), label7);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 5), label7);
 
   vbox_pinni = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (vbox_pinni);
@@ -3306,7 +3384,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "label8", label8,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label8);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 5), label8);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 6), label8);
 
   vbox27 = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (vbox27);
@@ -4124,7 +4202,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "label117", label117,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label117);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 6), label117);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 7), label117);
 
   vbox31 = gtk_vbox_new (FALSE, 0);
   gtk_widget_ref (vbox31);
@@ -4171,7 +4249,7 @@ create_main_win (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label64);
   gtk_box_pack_start (GTK_BOX (vbox18), label64, FALSE, FALSE, 0);
-  gtk_widget_set_usize (label64, 590, -2);
+  gtk_widget_set_usize (label64, 751, -2);
   gtk_label_set_justify (GTK_LABEL (label64), GTK_JUSTIFY_FILL);
   gtk_label_set_line_wrap (GTK_LABEL (label64), TRUE);
   gtk_misc_set_alignment (GTK_MISC (label64), 0.4, 0.5);
@@ -4193,6 +4271,7 @@ create_main_win (void)
                     (GtkAttachOptions) (0), 0, 0);
   combo3_items = g_list_append (combo3_items, (gpointer) "galeon -n %s &");
   combo3_items = g_list_append (combo3_items, (gpointer) "konqueror %s &");
+  combo3_items = g_list_append (combo3_items, (gpointer) "dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &");
   combo3_items = g_list_append (combo3_items, (gpointer) "netscape -remote openurl\\(%s\\) &");
   combo3_items = g_list_append (combo3_items, (gpointer) "mozilla %s &");
   combo3_items = g_list_append (combo3_items, (gpointer) "mozilla -remote openurl\\(%s,new-tab\\) &");
@@ -4229,6 +4308,7 @@ create_main_win (void)
                     (GtkAttachOptions) (0), 0, 0);
   combo2_items = g_list_append (combo2_items, (gpointer) "galeon -n %s &");
   combo2_items = g_list_append (combo2_items, (gpointer) "konqueror %s &");
+  combo2_items = g_list_append (combo2_items, (gpointer) "dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &");
   combo2_items = g_list_append (combo2_items, (gpointer) "netscape -remote openurl\\(%s\\) &");
   combo2_items = g_list_append (combo2_items, (gpointer) "mozilla %s &");
   combo2_items = g_list_append (combo2_items, (gpointer) "mozilla -remote openurl\\(%s,new-tab\\) &");
@@ -4601,7 +4681,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "label42", label42,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label42);
-  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 7), label42);
+  gtk_notebook_set_tab_label (GTK_NOTEBOOK (notebook1), gtk_notebook_get_nth_page (GTK_NOTEBOOK (notebook1), 8), label42);
 
   hbox162 = gtk_hbox_new (FALSE, 0);
   gtk_widget_ref (hbox162);
@@ -4863,9 +4943,6 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (checkbutton_trolldetector), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (text_post_cmd), "changed",
-                      GTK_SIGNAL_FUNC (on_editable_changed),
-                      NULL);
   gtk_signal_connect (GTK_OBJECT (entry_archive_filename), "changed",
                       GTK_SIGNAL_FUNC (on_editable_changed),
                       NULL);
@@ -4895,6 +4972,18 @@ create_main_win (void)
                       NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_board_auto_refresh), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (checkbutton_post_cmd), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (text_post_cmd), "changed",
+                      GTK_SIGNAL_FUNC (on_editable_changed),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (checkbutton_post_cmd2), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (text_post_cmd2), "changed",
+                      GTK_SIGNAL_FUNC (on_editable_changed),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (entry_coin_coin_message), "changed",
                       GTK_SIGNAL_FUNC (on_editable_changed),
