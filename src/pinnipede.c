@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.23 2002/02/26 09:18:23 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.24 2002/02/26 22:02:07 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.24  2002/02/26 22:02:07  pouaite
+  bugfix gruikissime pour les pbs de lag sous cygwin
+
   Revision 1.23  2002/02/26 09:18:23  pouaite
   bugfixes divers
 
@@ -126,7 +129,10 @@ struct _PostVisual {
   int is_answer_to_me:1;
   int is_hilight_key:1;
   int is_skipped_id:1; /* non nul si le message (id-1) n'existe pas */
-  int is_plopified:1;  /* non nul si le message a été plopifié */
+  int is_plopified:3;  /* non nul si le message a été plopifié
+			  =1, le message apparait en gris, tags html enleves
+			  =2, le message est plopifié (mots remplacés par plop, grouik..)
+			*/
   struct _PostVisual *next;
 };
 
@@ -401,7 +407,7 @@ pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr
    en regardant aussi le mot precedent
 */
 static void
-plopify_word(unsigned char *s, int sz)
+plopify_word(unsigned char *s, int sz, int bidon)
 {
   unsigned char s_simple[sz];
 
@@ -472,7 +478,7 @@ plopify_word(unsigned char *s, int sz)
 
 
   /* longeur > 15 => substitution assurée */
-  hache_s = hache_s % (nb_plop_subst + ((15-MIN(slen,15))*nb_plop_subst)/12);
+  hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(slen,15))*nb_plop_subst)/10);
   
   if (hache_s < nb_plop_subst) {
     strncpy(s, plop[hache_s], sz); s[sz-1] = 0;
@@ -509,7 +515,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->is_answer_to_me = mi->is_answer_to_me;
   pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
   pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list) == NULL ? 0 : 1;
-  pv->is_plopified = (disable_plopify || tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL) ? 0 : 1;
+  pv->is_plopified = (tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL) ? 0 : (disable_plopify ? 1 : 2);
 
   pw = NULL;
 
@@ -623,8 +629,8 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 
       if (pv->is_plopified) {
 	attr &= ~(PWATTR_U | PWATTR_BD | PWATTR_S | PWATTR_IT);
-	if (strlen(s) >= 3) {
-	  plopify_word(s, PVTP_SZ);
+	if (pv->is_plopified >1 && strlen(s) >= 3) {
+	  plopify_word(s, PVTP_SZ,  (char*)p - (char*)mi->msg);
 	}
       }
 
@@ -1053,7 +1059,7 @@ pp_minib_refresh(Dock *dock)
     }
     XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
-  } else if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
+  } else {
     
     /* affichage de la charge du serveur de dlfp */
 
@@ -1061,20 +1067,20 @@ pp_minib_refresh(Dock *dock)
     char s_xp[20], s_votes[20], s_nb_messages[20], s_http_stats[40];
     int x, w;
     s_xp[0] = 0; s_cpu[0] = 0; s_votes[0] = 0; s_nb_messages[0] = 0;
-    if (flag_updating_comments == 0) {
-      /*
-
-      le CPU a disparu (ouuiiiinnn!)
-      if (dock->dlfp->CPU != -1.0) {
+    if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
+      if (flag_updating_comments == 0) {
+	/*
+	  
+	le CPU a disparu (ouuiiiinnn!)
+	if (dock->dlfp->CPU != -1.0) {
 	snprintf(s_cpu, 20, "cpu:%1.2f", dock->dlfp->CPU);
-      } else snprintf(s_cpu, 20, "cpu: ??");
-      */
-      if (dock->dlfp->xp >= 0) {
-	snprintf(s_xp, 20, "xp:%d", dock->dlfp->xp);
-	snprintf(s_votes, 20, "[%d/%d]", dock->dlfp->votes_cur, dock->dlfp->votes_max);
+	} else snprintf(s_cpu, 20, "cpu: ??");
+	*/
+	if (dock->dlfp->xp >= 0) {
+	  snprintf(s_xp, 20, "xp:%d", dock->dlfp->xp);
+	  snprintf(s_votes, 20, "[%d/%d]", dock->dlfp->votes_cur, dock->dlfp->votes_max);
+	}
       }
-    } else {
-      snprintf(s_cpu, 20, "maj...");
     }
     snprintf(s_nb_messages, 20, "%d msg", count_all_id(&dock->dlfp->tribune, &pp->filter));
     snprintf(s_http_stats, 40, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);

@@ -56,7 +56,12 @@ scrollcoin_draw_btup(ScrollCoin *sc)
     XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
     XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, BT_H-1);
   }
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+
+  if (sc->pos != sc->vmin) {
+    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+  } else {
+    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_emphasized_pixel);
+  }
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 4, y0+3, 5, y0+3);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 3, y0+4, 6, y0+4);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 2, y0+5, 7, y0+5);
@@ -76,7 +81,12 @@ scrollcoin_draw_btdn(ScrollCoin *sc)
     XSetForeground(xctx->dpy, xctx->copy_gc, scroll_bg_dark_pixel);
     XFillRectangle(xctx->dpy, sc->pix, xctx->copy_gc, 1, y0, SC_W-2, BT_H-1);
   }
-  XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+
+  if (sc->pos != sc->vmax) {
+    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_normal_pixel);
+  } else {
+    XSetForeground(xctx->dpy, xctx->copy_gc, scroll_arrow_emphasized_pixel);
+  }
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 4, y1-3, 5, y1-3);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 3, y1-4, 6, y1-4);
   XDrawLine(xctx->dpy, sc->pix, xctx->copy_gc, 2, y1-5, 7, y1-5);
@@ -189,7 +199,7 @@ scrollcoin_build(RGBAContext *rgbactx)
   scroll_bg_light_pixel         = _IRGB2PIXEL(xctx, 0xffffff);
   scroll_bg_dark_pixel          = _IRGB2PIXEL(xctx, 0x626262);
   scroll_arrow_normal_pixel     = _IRGB2PIXEL(xctx, 0x0000ff);
-  scroll_arrow_emphasized_pixel = _IRGB2PIXEL(xctx, 0xff0000);
+  scroll_arrow_emphasized_pixel = _IRGB2PIXEL(xctx, 0x9c99cd);
   
   scroll_bar_pixel              = _IRGB2PIXEL(xctx, 0x9c99cd);
   scroll_bar_light_pixel        = _IRGB2PIXEL(xctx, 0xcdceff);
@@ -299,9 +309,9 @@ scrollcoin_handle_button_press(ScrollCoin *sc, XButtonEvent *ev, Drawable d)
   if (mx >= sc->x && mx <= sc->x + SC_W -1 &&
       my >= sc->y && my <= sc->y + sc->h-1) {
     if (ev->button == Button1 || ev->button == Button2 || ev->button == Button3) {
-      if (IS_IN_BTUP(sc,mx,my)) {
+      if (IS_IN_BTUP(sc,mx,my) && sc->pos != sc->vmin) {
 	sc->bt_state = BT_UP; 
-      } else if (IS_IN_BTDN(sc,mx,my)) {
+      } else if (IS_IN_BTDN(sc,mx,my) && sc->pos != sc->vmax) {
 	sc->bt_state = BT_DOWN;
       } else if (IS_IN_BAR(sc,mx,my)) {
 	sc->bt_state = BT_BAR;

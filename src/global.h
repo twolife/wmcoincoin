@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.14 2002/02/26 09:18:23 pouaite Exp $
+  rcsid=$Id: global.h,v 1.15 2002/02/26 22:02:07 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.15  2002/02/26 22:02:07  pouaite
+  bugfix gruikissime pour les pbs de lag sous cygwin
+
   Revision 1.14  2002/02/26 09:18:23  pouaite
   bugfixes divers
 
@@ -195,6 +198,16 @@ void ispell_run_background(const char* spellCmd, const char* spellDict);
 #define ALLOW_ISPELL if (Prefs.ew_do_spell) {ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);}
 #define ALLOW_X_LOOP if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf("%s, ligne %d : X_loop_request=%d!\n", __FILE__, __LINE__, X_loop_request); }X_loop(); }
 #define ALLOW_X_LOOP_MSG(m) if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf(m " : X_loop_request=%d!\n", X_loop_request); }  X_loop(); }
+
+/* très très laid, voir wmcoincoin.c/Timer_Thread */
+#ifdef __CYGWIN__
+# define CYGWIN_ENABLE_THREAD_X_LOOP flag_cygwin_x_loop_in_thread = 1;
+# define CYGWIN_DISABLE_THREAD_X_LOOP flag_cygwin_x_loop_in_thread = 0;
+DECL_GLOB_INIT(volatile int flag_cygwin_x_loop_in_thread,0);
+#else
+# define CYGWIN_ENABLE_THREAD_X_LOOP 
+# define CYGWIN_DISABLE_THREAD_X_LOOP 
+#endif
 
 
 DECL_GLOB(structPrefs Prefs);

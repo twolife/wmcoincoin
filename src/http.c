@@ -171,10 +171,13 @@ http_select_fd (int fd, int maxtime_sec, int writep)
   FD_SET (fd, &exceptfds);
   timeout.tv_sec = maxtime_sec;
   timeout.tv_usec = 0;
+  ALLOW_X_LOOP_MSG("http_select_fd.1"); ALLOW_ISPELL;  
   /* HPUX reportedly warns here.  What is the correct incantation?  */
+  CYGWIN_ENABLE_THREAD_X_LOOP;
   retval = select (fd + 1, writep ? NULL : &fds, writep ? &fds : NULL,
 		 &exceptfds, &timeout);
-  ALLOW_X_LOOP_MSG("http_select_fd"); ALLOW_ISPELL;
+  CYGWIN_DISABLE_THREAD_X_LOOP;
+  ALLOW_X_LOOP_MSG("http_select_fd.2"); ALLOW_ISPELL;
   return retval;
 }
 #endif /* HAVE_SELECT */

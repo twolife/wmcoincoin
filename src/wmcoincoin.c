@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.20 2002/02/26 09:18:23 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.21 2002/02/26 22:02:07 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.21  2002/02/26 22:02:07  pouaite
+  bugfix gruikissime pour les pbs de lag sous cygwin
+
   Revision 1.20  2002/02/26 09:18:23  pouaite
   bugfixes divers
 
@@ -1121,9 +1124,24 @@ wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
 }
 
 #ifdef __CYGWIN__
-void *Timer_Thread(void *arg)
+void *Timer_Thread(void *arg UNUSED)
 {
   while (1) {
+
+    /* very very ugly hack ... 
+       le but est que le coincoin ne se bloque plus sous cygwin dans
+       l'appel à 'select' de la fonction 'http_select_fd'
+
+       pour ça on l'autorise exceptionnellement à être appelée depuis
+       cette thread
+
+       oui c'est laidissime mais j'ai vraiment pas envie de me pencher
+       sur les sockets non bloquants de windows
+    */
+    if (flag_cygwin_x_loop_in_thread && X_loop_request) {
+      X_loop_request = 0;
+      X_loop();
+    }
     usleep (40000);
     X_loop_request++; wmcc_tic_cnt++;
   }
