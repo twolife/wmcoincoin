@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.5 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.6 2002/01/13 20:02:51 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.6  2002/01/13 20:02:51  pouaite
+  j'ai honte
+
   Revision 1.5  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -500,7 +503,7 @@ shell_quote(const char *src)
   const char *p;
   char *dest;
 
-  if (src == NULL || strlen(src) == 0) return "";
+  if (src == NULL || strlen(src) == 0) return strdup("");
 
   dest_sz = strlen(src)+1;
   for (p=src; *p; p++) {
