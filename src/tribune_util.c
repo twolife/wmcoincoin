@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.6 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.7 2002/02/25 01:36:58 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.7  2002/02/25 01:36:58  pouaite
+  bugfixes pour la compilation
+
   Revision 1.6  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -596,9 +599,11 @@ tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klis
       }
     } else if (hk->type == HK_THREAD) {
       tribune_msg_info *tmi;
+      int id;
       int antibug = 0;
+
       tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
-      int id = atoi(hk->key);
+      id = atoi(hk->key);
       
       if (tribune_key_list_test_thread(trib, mi, id, &antibug)) { return hk; }
     }

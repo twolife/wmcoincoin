@@ -72,11 +72,11 @@ http_complete_error_info()
     if (http_err_time == 0) {
       snprintf(s_heure, 80, "<i>il n'y a pas encore eu d'erreurs http</i>");
     } else {
-      struct tm t;
-      localtime_r(&http_err_time, &t);
+      struct tm *t;
+      t = localtime(&http_err_time);
       
       snprintf(s_heure, 80, "dernière erreur à: <b>%02d:%02d:%02d</b>",
-	       t.tm_hour, t.tm_min, t.tm_sec);
+	       t->tm_hour, t->tm_min, t->tm_sec);
     }
 
     if (flag_http_error) {

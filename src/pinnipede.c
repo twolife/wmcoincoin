@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.20 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.21 2002/02/25 01:36:58 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.21  2002/02/25 01:36:58  pouaite
+  bugfixes pour la compilation
+
   Revision 1.20  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -1028,6 +1031,7 @@ pp_minib_refresh(Dock *dock)
   x_minib = pp->mb[0].x;
   for (i=0; i < NB_MINIB; i++) x_minib = MIN(x_minib, pp->mb[i].x);
 
+  XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
   if (pp->filter.filter_mode) {
     char s_filtre[50];
     
@@ -1036,7 +1040,6 @@ pp_minib_refresh(Dock *dock)
     } else {
       snprintf(s_filtre, 60, "FILTRE NON DEFINI");
     }
-    XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
     XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
   } else if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
@@ -1062,7 +1065,6 @@ pp_minib_refresh(Dock *dock)
     } else {
       snprintf(s_cpu, 20, "maj...");
     }
-    XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
     XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     
     x = 5;
@@ -3168,11 +3170,15 @@ pp_selection_copy(Dock *dock, char *buff)
   return nc;
 }
 
+
+/* lecture de la scrollbar, avec un refresh legerement differé pour éviter de trop charger... */
 void
 pp_check_scroll_pos(Dock *dock, DLFP_tribune *trib)
 {
   Pinnipede *pp = dock->pinnipede;
   
+  static int refresh_requested = 0;
+  static int refresh_nb_delayed = 0;
   int new_pos;
  
   if (pp->sc == NULL) return;
@@ -3183,11 +3189,18 @@ pp_check_scroll_pos(Dock *dock, DLFP_tribune *trib)
     if (new_pos == scrollcoin_get_vmin(pp->sc)) new_pos--;
 
     id = get_nth_id(trib, &pp->filter, new_pos);
-    myprintf("scroll pos = %<MAG %d>, --> id_base = %d\n", new_pos, id);
+    //    myprintf("scroll pos = %<MAG %d>, --> id_base = %d\n", new_pos, id);
     
 
     pp_update_content(dock, trib, id, 0,0,0);
+    refresh_requested = 2;
+  }
+  if (refresh_requested == 1 || refresh_nb_delayed > 3) {
     pp_refresh(dock, trib, pp->win, NULL);
+    refresh_nb_delayed = 0; 
+    refresh_requested = 0;
+  } else if (refresh_requested > 0) {
+    refresh_requested--; refresh_nb_delayed++;
   }
 }
 

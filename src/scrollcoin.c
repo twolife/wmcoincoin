@@ -14,7 +14,6 @@ unsigned long scroll_bar_dark_pixel;
 
 RGBAContext *xctx;
 
-#define SC_W 10
 #define BT_H 10
 
 #define IS_IN_BTUP(sc,mx,my) (IS_INSIDE((mx),(my), \
@@ -370,7 +369,7 @@ scrollcoin_handle_motion(ScrollCoin *sc, XMotionEvent *ev, Drawable d)
     coef = ((float)pix_pos - BT_H)/(marge);
     pos = (int)(coef * (sc->vmax - sc->vmin) + sc->vmin);
 
-    printf("coef=%f , rmarge = %d, sc->y = %d, marge=%d pos=%d\n", coef, pix_pos - sc->y - BT_H, sc->y, marge, pos);
+    //    printf("coef=%f , rmarge = %d, sc->y = %d, marge=%d pos=%d\n", coef, pix_pos - sc->y - BT_H, sc->y, marge, pos);
 
     if (pos != sc->pos) {
       sc->requested_pos = pos;
