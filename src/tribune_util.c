@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.13 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.14 2002/04/03 20:15:11 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.14  2002/04/03 20:15:11  pouaite
+  plop
+
   Revision 1.13  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -272,10 +275,13 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 	//printf("\n");
 	//if (*end) end++;
       } else {
+	const char *p;
 	/* sinon on ignore */
-	end++;
-	printf("get_tok pas reconnu: (len=%d)'", strlen(end));
-	while (*end) { printf("%c", *end); end++;}
+	start++;
+	end=start+1;
+	p = start;
+	printf("get_tok pas reconnu: (len=%d)'", strlen(p));
+	while (*p) { printf("%c", *p); p++;}
 	printf("\n");
       }
     }
@@ -287,6 +293,10 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       *end = c;
     }
     */
+  } else if (*start == '\t') { /* ça pue .. le backend ou le coincoin est sans slip */
+    printf("roooh problème de slip ici: %s\n", start);
+    start++;
+    if (*start) end = start+1;
   } else {
     /* pour aider la reconnaissance des timestamp */
     if (*end >= '0' && *end <= '9') {

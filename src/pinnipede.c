@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.44 2002/04/02 22:29:29 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.45 2002/04/03 20:15:11 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.45  2002/04/03 20:15:11  pouaite
+  plop
+
   Revision 1.44  2002/04/02 22:29:29  pouaite
   bugfixes transparence
 
@@ -3716,6 +3719,35 @@ pp_selection_copy(Dock *dock, char *buff)
   return nc;
 }
 
+void
+pp_check_balloons(Dock *dock, int x, int y)
+{
+  Pinnipede *pp = dock->pinnipede;
+  int i;
+
+  if (pp->use_minibar) {
+    for (i=0; i < NB_MINIB; i++) {
+      char *msg = NULL;
+      switch (pp->mb[i].type) {
+      case HELP: msg = "affiche un peu d'aide"; break;
+      case SCROLLBAR: msg = "affichage/cache la scrollcoin"; break;
+      case TRANSPARENT: msg = "active/désactive la pseudo-transparence"; break;
+      case UA: msg = "change le mode d'affichage des logins/useragents (5 modes différents)"; break;
+      case SECOND: msg = "affiche/masque les secondes (quand il y a moins de deux messages dans la même minute)"; break;
+      case TSCORE: msg = "affiche/cache le score troll (les chiffres à gauche de certains messages)"; break;
+      case FORTUNE: msg = "affiche/cache la fortune (pour qu'elle soit téléchargée, il faut soit que vous soyez identifié, soit que vous utilisiez l'option <tt>http.force_fortune_retrieval</tt>"; break;
+      case FILTER: msg = "active/désactive le <b>filtre</b>. Pour filtrer des messages, faites <font color=#0000ff>ctrl+left clic</font> sur un mot/login/useragent ou une horloge (pour afficher un thread). Pour virer le filtre, il suffit de cliquer sur ce bouton"; break;
+      case PLOPIFY: msg = "change le type de plopification. Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier, il suffit de recliquer au même endroit."; break;
+      case REFRESH_NEWS: msg = "cliquer ici pour forcer le rafraichissement immédiat des news, messages, fortune et XP"; break;
+      case REFRESH_TRIBUNE: msg = "cliquer ici pour forcer le rafraichissement immédiat de la tribune"; break;
+      default: assert(0);
+      }
+      balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos, 0, 
+		   pp->mb[i].x, MINIB_Y0, 
+		   pp->mb[i].w, MINIB_H, msg);
+    }
+  }
+}
 
 /* lecture de la scrollbar, avec un refresh legerement differé pour éviter de trop charger... */
 void

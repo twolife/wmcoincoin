@@ -707,6 +707,7 @@ void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
 void pp_set_prefs_colors(Dock *dock);
+void pp_check_balloons(Dock *dock, int x, int y);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

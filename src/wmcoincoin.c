@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.35 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.36 2002/04/03 20:15:11 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.36  2002/04/03 20:15:11  pouaite
+  plop
+
   Revision 1.35  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -512,6 +515,8 @@ void check_balloons(Dock *dock)
     } else if (newswin_is_used(dock) && dock->mouse_win == newswin_get_window(dock)) {
     } else if (editw_ismapped(dock->editw) && dock->mouse_win == editw_get_win(dock->editw)) {
       editw_balloon_test(dock, dock->editw, x, y);
+    } else if (pp_ismapped(dock) && dock->mouse_win == pp_get_win(dock)) {
+      pp_check_balloons(dock, x, y);
     }
   }
 #endif
