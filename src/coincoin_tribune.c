@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.35 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.36 2002/06/23 10:02:53 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.36  2002/06/23 10:02:53  pouaite
+  petit changement pour le type de message envoyé à wmcc_new_msg
+
   Revision 1.35  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -710,7 +713,8 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     char *qlogin;
     char *qmessage;
     char *qua;
-    char sid[20], stimestamp[20], strollscore[20], *stypemessage;
+    char sid[20], stimestamp[20], strollscore[20], stypemessage[4];
+    int typemessage;
     char *shift_cmd;
 
     const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r"};
@@ -725,11 +729,15 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     snprintf(sid, 20, "%d", it->id);
     snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
-    if (it->is_my_message) stypemessage = "1";
-    else if (it->is_answer_to_me) stypemessage = "2";
-    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) stypemessage = "3";
-    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) stypemessage = "4";
-    else stypemessage = "0";
+
+    typemessage = 0;
+
+    if (it->is_my_message) typemessage |= 1;
+    else if (it->is_answer_to_me) typemessage |= 2;
+    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) typemessage |= 4;
+    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) typemessage |= 8;
+
+    snprintf(stypemessage, 4, "%d", typemessage);
 
     subs[0] = qlogin;
     subs[1] = qmessage;
