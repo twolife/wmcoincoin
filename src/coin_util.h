@@ -65,4 +65,5 @@ unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned c
 char *str_printf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 char *str_fget_line(FILE *f);
 void str_trim(unsigned char *s);
+char *str_preencode_for_http(const char *in);
 #endif

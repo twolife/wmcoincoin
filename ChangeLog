@@ -1,3 +1,17 @@
+2002-04-13  pouaite  <c0in@altern.org>
+
+	* nouvelle option 'http.gogole_search_url' pour lancer une
+	recherche (sur google ou autre) avec Alt+{left|middle} clic sur un
+	mot/une selection etc.. D'ailleurs dorénavant le plopifieur, le
+	filtre etc utilisent aussi le texte sélectionné (*quand* il a du
+	texte selectionné) au lieu de l'élément cliqué.
+
+	Le {left|middle} clic sur un login ouvre la page http://linuxfr/~lelogin.
+	Un right clic sur le login ouvre le palmipède en remplissant '/msg lelogin'.
+
+	wmcc fonctionne correctement sous KDE3 (il a pris une fois de plus
+	exemple sur wmpinboard).
+	
 2002-04-12  pouaite  <c0in@altern.org>
 
 	* modifs légères sur la boitakon, avec deux nouveaux

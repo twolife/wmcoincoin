@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.21 2002/04/10 18:13:33 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.22 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.22  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.21  2002/04/10 18:13:33  pouaite
   bugfix ppc
 
@@ -435,7 +438,7 @@ str_hache(const unsigned char *s, int max_len)
   assert(s);
   v[0] = 0xAB; v[1] = 0x13; v[2] = 0x9A; v[3] = 0x12;
   p = s;
-  for (i=0, j=0; i < max_len; i++) {
+  for (i=0, j=0; i < max_len && s[i]; i++) {
     unsigned char c;
     c = ((p[i])<<j) + ((p[i]) >> (8-j));
     v[j] ^= c;
@@ -565,4 +568,16 @@ str_trim(unsigned char *s) {
   if (i<=j) {
     memmove(s, s+i, j+2-i);
   }
+}
+
+char *
+str_preencode_for_http(const char *in)
+{
+  const char *keys[] = {" ", "+"  , ":"  ,"@"  };
+  const char *subs[] = {"+", "%2B", "%3A","%40"};
+  char *s;
+  
+  if (in == NULL) return NULL;
+  s = str_multi_substitute(in, keys, subs, 2);
+  return s;
 }

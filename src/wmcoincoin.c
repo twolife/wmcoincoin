@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.38 2002/04/10 22:53:44 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.39 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.39  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.38  2002/04/10 22:53:44  pouaite
   un commit et au lit
 
@@ -945,7 +948,7 @@ wmcc_set_wm_icon(Dock *dock) {
 #include "../xpms/icon.xpm"
 
   w = 0; h = 0;
-  fprintf(stderr,"creation de l'icone des fenetres, si ça fait planter votre wm faites-moi signe!\n");
+  BLAHBLAH(2,fprintf(stderr,"creation de l'icone des fenetres, si ça fait planter votre wm faites-moi signe!\n"));
   if (XGetIconSizes(dock->display, dock->win, &isz, &nbsz) != 0) {
     int i;
     printf("nbsz=%d\n", nbsz);
@@ -1058,15 +1061,17 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   
-  /* create icon window */
-  dock->iconwin = XCreateSimpleWindow(dock->display, dock->rootwin,
-				      xsh.x, xsh.y, xsh.width, xsh.height, 0,
-				      BlackPixel(dock->display, dock->screennum),
-				      WhitePixel(dock->display, dock->screennum));
+  if (Prefs.use_iconwin) {
+    /* create icon window */
+    dock->iconwin = XCreateSimpleWindow(dock->display, dock->rootwin,
+					xsh.x, xsh.y, xsh.width, xsh.height, 0,
+					BlackPixel(dock->display, dock->screennum),
+					WhitePixel(dock->display, dock->screennum));
   
-  if(!dock->iconwin) {
-    fprintf(stderr, "Couldn't create icon window\n");
-    exit(1);
+    if(!dock->iconwin) {
+      fprintf(stderr, "Couldn't create icon window\n");
+      exit(1);
+    }
   }
 
 

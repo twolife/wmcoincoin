@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.18 2002/04/11 23:16:54 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.19 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.19  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.18  2002/04/11 23:16:54  pouaite
   boitakon mega combo
 
@@ -122,7 +125,7 @@ tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
 int
 check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
 {
-  int l, h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
+  int l, h, m, s, num;  /* num est utilise pour les posts multiples (qui on un même timestamp) */
   const unsigned char *p;
   int use_deuxpt;
   unsigned char w[11];
@@ -174,7 +177,6 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
        sous la forme hh:mm:ss:num -> wmc2 ne les reconnaissait pas comme des 
        refs, maintenant si */
 
-    //  } else if (use_deuxpt <= 2) {
   } else if (use_deuxpt <= 3) {
     /* il y a des separateurs entre les heure et les minutes [et les secondes] */
     int nb_char_h, nb_char_m, nb_char_s;
@@ -237,15 +239,15 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
   assert(*p); 
   assert(tok);
 
-  //has_initial_space doit etre initialise dans la procedure appelante (sinon y'a des pbs avec les tag html)
-  //*has_initial_space = 0; /* indique si le token commence par un (ou plusieurs) espace */
+  /* has_initial_space doit etre initialise dans la procedure appelante (sinon y'a des pbs avec les tag html)
+   *has_initial_space = 0; */ /* indique si le token commence par un (ou plusieurs) espace */
 
   start = *p; *np = NULL;
-  // saute les espaces
+  /* saute les espaces */
   while (*start <= ' ' && *start != '\t' && *start) { start++; *has_initial_space = 1; }
   end = start;
 
-  //  if (*start == '\t') printf("allez ! '%.20s'\n", start);
+  /* if (*start == '\t') printf("allez ! '%.20s'\n", start); */
 
   /* les bon vieux tags html (update les '<' et '>' des tags sont prefixés par une tabulation) */
   if (*start == '\t' && *(start+1) == '<') {
@@ -280,12 +282,12 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
       if (strncasecmp(start, s4, strlen(s4)) == 0) is_href = 1; 
       if (is_href) {
-	//	printf("get_tok: '");
+	/* printf("get_tok: '"); */
 	end = start+1;
-	while (*end && *end != '\t') end++; //{ printf("%c", *end); end++; }
+	while (*end && *end != '\t') end++; /* { printf("%c", *end); end++; } */
 	if (*end == '\t' && *(end+1)=='>') end+=2;
-	//printf("\n");
-	//if (*end) end++;
+	/* printf("\n"); */
+/* 	if (*end) end++; */
       } else {
 	const char *p;
 	/* sinon on ignore */
@@ -348,7 +350,7 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 
   mi = trib->msg;
   
-  //printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);
+  /*printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);*/
   while (mi) {
     const unsigned char *p, *np;
 
@@ -363,11 +365,11 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 	if (tok[0] >= '0' && tok[0] <= '9') {
 	  int h,m,s,num;
 	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
-	    //	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);
+	    /*	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);*/
 	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
 		(mi->hmsf[3] == 0 || (mi->hmsf[2] == s && 
 				      (num == -1 || (num == 0 && mi->sub_timestamp == -1) || num == mi->sub_timestamp)))) {
-//	      printf("ref au message trouvée !\n");
+	      /*	      printf("ref au message trouvée !\n");*/
 	      return 1;
 	    }
 	  }
@@ -445,7 +447,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 	char *nom;
 
 	nom = (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent;
-	hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
+	hk = tribune_key_list_test_mi(trib, best_mi, Prefs.plopify_key_list);
 	if (hk) {
 	  snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon ! "
 		   "(car %s=%.20s)", nom,
@@ -465,7 +467,7 @@ tribune_msg_info *
 check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
 		      const unsigned char *ww, unsigned char *commentaire, int comment_sz, int *is_a_ref, int *ref_num)
 {
-  int h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
+  int h, m, s, num; /* num est utilise pour les posts multiples (qui on un même timestamp) */
 
   *is_a_ref = 0;
   if (check_for_horloge_ref_basic(ww, &h, &m, &s, &num) == 0) return NULL;
@@ -587,7 +589,7 @@ tribune_key_list_destroy(KeyList *first)
     free(hk->key); free(hk); hk = n;
   }
 }
-
+ 
 KeyList *
 tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num, int from_prefs)
 {
@@ -649,7 +651,7 @@ tribune_key_list_test_thread(DLFP_tribune *trib, tribune_msg_info *mi, int threa
 
   mi->bidouille_qui_pue = 1;
 
-  //  printf("test: mi->id=%d, %d\n", mi->id, thread_id);
+  /*  printf("test: mi->id=%d, %d\n", mi->id, thread_id); */
 
   if (mi->id == thread_id) return 1;
 
@@ -683,7 +685,7 @@ tribune_key_list_test_mi_hk(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *h
     }
   } else if (hk->type == HK_WORD) {
     if (str_noaccent_casestr(mi->msg, hk->key)) {
-      //	printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id);
+      /* printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id); */
       return 1;
     } 
   } else if (hk->type == HK_ID) {

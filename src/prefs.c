@@ -515,6 +515,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->force_fortune_retrieval = 0;
   p->browser_cmd = NULL;
   p->browser2_cmd = NULL;
+  p->gogole_search_url = NULL;
   p->enable_troll_detector = 1;
   ASSIGN_STRING_VAL(p->pp_fn_family, "helvetica");
   p->pp_fn_size = 12;
@@ -792,6 +793,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_http_browser2: {
     option_browser(arg, opt_name, p, 2);
   } break; 
+  case OPT_http_gogole_search_url: {
+    ASSIGN_STRING_VAL(p->gogole_search_url, arg);
+  } break;
   case OPT_pinnipede_font_family: {
     ASSIGN_STRING_VAL(p->pp_fn_family, arg); 
   } break; 

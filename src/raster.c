@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.9 2002/04/10 22:53:44 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.10 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.10  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.9  2002/04/10 22:53:44  pouaite
   un commit et au lit
 
@@ -112,7 +115,7 @@ RGBACreateContext(Display *dpy, int screen_number)
     context->rtable[i] = foobarize(i, context->visual->red_mask);
     context->gtable[i] = foobarize(i, context->visual->green_mask);
     context->btable[i] = foobarize(i, context->visual->blue_mask);
-    //    printf("i=%02x: %lx %lx %lx\n", i, context->rtable[i], context->gtable[i], context->btable[i]);
+    /*    printf("i=%02x: %lx %lx %lx\n", i, context->rtable[i], context->gtable[i], context->btable[i]); */
   }
 
   {
@@ -204,13 +207,13 @@ RGBAImage2XImage(RGBAContext *ctx, RGBAImage *rimg)
     for (y=0; y < rimg->h; y++) {
       unsigned long pix;
 
-      //      printf("x=%04d, y=%04d, rgb=%02x%02x%02x, %08lx %08lx\n", x,y,
-      //	     rimg->data[y][x].rgba[0],rimg->data[y][x].rgba[1],rimg->data[y][x].rgba[2],
-      //	     pix, ctx->white);
+      /*      printf("x=%04d, y=%04d, rgb=%02x%02x%02x, %08lx %08lx\n", x,y,
+	      rimg->data[y][x].rgba[0],rimg->data[y][x].rgba[1],rimg->data[y][x].rgba[2],
+	      pix, ctx->white); */
       pix = (ctx->rtable[rimg->data[y][x].rgba[0]] + 
 	     ctx->gtable[rimg->data[y][x].rgba[1]] + 
 	     ctx->btable[rimg->data[y][x].rgba[2]]);
-      XPutPixel(ximg, x, y, pix);//ctx->white);
+      XPutPixel(ximg, x, y, pix);
     }
   }
   return ximg;
@@ -284,7 +287,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
       col_tab[i].b = (rgb & 0x0000ff);
       col_tab[i].a = 255;
       
-      //printf("couleur %d: %x [s='%s']\n", i, rgb, xpm[i+1]);
+      /*printf("couleur %d: %x [s='%s']\n", i, rgb, xpm[i+1]);*/
     } else {
       col_tab[i].r = 0;
       col_tab[i].g = 0;
@@ -310,7 +313,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
       }
       assert(k < ncolor);
       
-      //      printf("%d %d --> [%02x,%02x,%02x]\n", i, j, col_tab[k].r, col_tab[k].g, col_tab[k].b);
+      /*   printf("%d %d --> [%02x,%02x,%02x]\n", i, j, col_tab[k].r, col_tab[k].g, col_tab[k].b);*/
       rimg->data[i][j].rgba[0] = col_tab[k].r;
       rimg->data[i][j].rgba[1] = col_tab[k].g;
       rimg->data[i][j].rgba[2] = col_tab[k].b;
@@ -374,7 +377,7 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
       }
       l[i] = 0;
 
-      //      printf("ajout de la ligne: '%s'\n", l+1);
+      /*      printf("ajout de la ligne: '%s'\n", l+1); */
       l_tab[lcnt] = strdup(l+1);
       lcnt++;
     }

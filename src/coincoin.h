@@ -17,6 +17,7 @@
 
 /* tentative de compilation avec _XOPEN_SOURCE, y'a plein de warnings */
 #ifdef _XOPEN_SOURCE
+#ifndef _GNU_SOURCE
 int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t n);
 char *strdup(const char *s);
@@ -24,9 +25,9 @@ int snprintf(char *str, size_t size, const char *format, ...);
 void bzero(void *s, size_t n);
 void usleep(unsigned long usec);
 #endif
+#endif
 
 #define APPNAME "wmcoincoin"
-//#define APP_USERAGENT "wmCoinCoin/" VERSION
 
 typedef struct _PicoHtmlItem PicoHtmlItem;
 typedef struct _PicoHtml PicoHtml;
@@ -61,7 +62,7 @@ typedef struct _DLFP_news {
 
 #define trollo_log_extent 5 /* minutes */
 
-//#define TRIBUNE_MAX_MSG 400 /* nb max de messages gardés en mémoire */
+/* #define TRIBUNE_MAX_MSG 400 */ /* nb max de messages gardés en mémoire */
 
 /* la tribune load affiche les messages sur les 15 dernieres minutes */
 #define TROLLOSCOPE_NB_MINUTES 11
@@ -411,10 +412,6 @@ typedef struct _Dock {
     int tribune_answer_decnt;
   } flamometre;
 
-  //  int trolloscope_bgr, trolloscope_bgg, trolloscope_bgb; /* couleur de fond du trolloscope (oui c'est tout naze) */
-  //  int trolloscope_clign_step; /*  -1 -> pas de clignot, -2 -> arret demande */
-
-
   /* si non nul, c'est le compteur de defilement*/
   int msginfo_defil;
 
@@ -429,7 +426,7 @@ typedef struct _Dock {
      clavier qwerty, par exemple.. */
   XIM input_method;
 
-  Atom atom_WM_DELETE_WINDOW; // oh les bon gros atomes
+  Atom atom_WM_DELETE_WINDOW; /* oh les bon gros atomes  */
   Atom atom_WM_PROTOCOLS;
 
   /* si non nul, on voit l'id du msg designe par tl_item_clicked, 
@@ -460,8 +457,6 @@ typedef struct _Dock {
   Window rootwin;
 
   Window iconwin,win;
-  //  Window used_win; /* designe soit iconwin, soit win selon que l'option '-w' a ete utilisee ou non */
-
 
   Window msgwin;
   Pixmap pix_msgwin;
@@ -527,7 +522,6 @@ typedef struct _Dock {
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 char* http_transfert(char *URL);
 
-//int flush_expose(Window w);
 void block_sigalrm(int bloque);
 
 /* picohtml.c */

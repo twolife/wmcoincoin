@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.51 2002/04/12 12:49:56 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.52 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.52  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.51  2002/04/12 12:49:56  pouaite
   *** empty log message ***
 
@@ -262,6 +265,8 @@ struct _Pinnipede {
   int sel_head_x, sel_head_y;
   int sel_l0, sel_l1;
 
+  char *last_selected_text; /* stockage temporaire à usage interne au pinnipede */
+
   int id_base, decal_base;
   int last_post_id; /* utilise pour savoir si la tribune a ete mise a jour.. */
 
@@ -301,8 +306,6 @@ struct _Pinnipede {
   int transparency_mode;
   //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
-
-
 
 static int
 pp_thread_filter_find_id(struct _PinnipedeFilter *f, int id) {
@@ -1181,6 +1184,9 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
 
   if (pp->lignes_sel) {
     pp_selection_unselect(pp);
+  }
+  if (pp->last_selected_text) {
+    free(pp->last_selected_text); pp->last_selected_text = NULL;
   }
 
   pp_update_fortune(dock);
@@ -2263,6 +2269,7 @@ pp_build(Dock *dock)
   pp->sel_l0 = pp->sel_l1 = 0;
   pp->sel_anchor_x = pp->sel_head_x = 0;
   pp->sel_anchor_y = pp->sel_head_y = 0;
+  pp->last_selected_text = NULL;
 
   pp->sc = NULL;
 
@@ -2702,6 +2709,7 @@ pp_unmap(Dock *dock)
   pp->mapped = 0;
 
   if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
+  if (pp->last_selected_text) { free(pp->last_selected_text); pp->last_selected_text = NULL; }
 
   pp_pv_destroy(pp);
 }
@@ -3191,42 +3199,72 @@ static void
 pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 {
   Pinnipede *pp = dock->pinnipede;
-  PostWord *pw;
-  pw = pp_get_pw_at_xy(pp, mx, my);
-  if (pw) {
-    if (pw->attr & PWATTR_TSTAMP) {
-      /* control+clic sur l'horloge -> activation du filtre */
-      pp_set_thread_filter(dock, trib, pw->parent->id); 
-    } else if (pw->attr & PWATTR_LOGIN) {
-      /* control+clic sur un <login> -> filtre ! */
-      pp_set_login_filter(dock, trib, pw->w);
-    } else if (pw->attr & PWATTR_NICK) {
-      /* control+clic sur un useragent raccourci -> filtre ! */
-      
-      tribune_msg_info *mi;
 
-      mi = tribune_find_id(trib, pw->parent->id);
-      if (mi) {
-	pp_set_ua_filter(dock, trib, mi->useragent);
+  if (pp->last_selected_text) {
+    pp_set_word_filter(dock, trib, pp->last_selected_text);
+  } else {
+    PostWord *pw;
+    pw = pp_get_pw_at_xy(pp, mx, my);
+    if (pw) {
+      if (pw->attr & PWATTR_TSTAMP) {
+	/* control+clic sur l'horloge -> activation du filtre */
+	pp_set_thread_filter(dock, trib, pw->parent->id); 
+      } else if (pw->attr & PWATTR_LOGIN) {
+	/* control+clic sur un <login> -> filtre ! */
+	pp_set_login_filter(dock, trib, pw->w);
+      } else if (pw->attr & PWATTR_NICK) {
+	/* control+clic sur un useragent raccourci -> filtre ! */
+	
+	tribune_msg_info *mi;
+	
+	mi = tribune_find_id(trib, pw->parent->id);
+	if (mi) {
+	  pp_set_ua_filter(dock, trib, mi->useragent);
+	}
+      } else if (strlen(pw->w) > 0) {
+	/* control+clic sur un mot normal -> filtre ! */
+	char *s, *p;
+	s = strdup(pw->w);
+	p = s + strlen(s) -1;
+	while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
+	p = s;
+	while (*p && !isalnum((unsigned char)*p)) p++;
+	if (strlen(p)) {
+	  pp_set_word_filter(dock, trib, p);
+	} else {
+	  pp_set_word_filter(dock, trib, pw->w);
+	}
+	free(s);
       }
-    } else if (strlen(pw->w) > 0) {
-      /* control+clic sur un mot normal -> filtre ! */
-      char *s, *p;
-      s = strdup(pw->w);
-      p = s + strlen(s) -1;
-      while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
-      p = s;
-      while (*p && !isalnum((unsigned char)*p)) p++;
-      if (strlen(p)) {
-	pp_set_word_filter(dock, trib, p);
-      } else {
-	pp_set_word_filter(dock, trib, pw->w);
-      }
-      free(s);
     }
   }
 }
 
+static void
+pp_handle_alt_clic(Dock *dock, XButtonEvent *ev)
+{
+  Pinnipede *pp = dock->pinnipede;
+  int mx,my;
+  char *w = NULL;
+
+  if (Prefs.gogole_search_url == NULL) return;
+  mx = ev->x; my = ev->y;
+  if (pp->last_selected_text) {
+    w = pp->last_selected_text;
+  } else {
+    PostWord *pw;
+    pw = pp_get_pw_at_xy(pp, mx, my);
+    if (pw) w = pw->w;
+  }
+  if (w) {
+    char *s;
+    char *ww;
+    ww = str_preencode_for_http(w);
+    s = str_substitute(Prefs.gogole_search_url, "%s", ww);
+    open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, ev->button == Button1 ? 1 : 2);
+    free(s); free(ww); 
+  }
+}
 
 /* gestion des shift+left click sur un mot du pinnipede
    --> permet l'ajout/enlevement de mots clefs de mise en valeur de post
@@ -3241,94 +3279,113 @@ static void
 pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int my, int plopify_level)
 {
   Pinnipede *pp = dock->pinnipede;
-  PostWord *pw;
-  int thread_clic;
   int num;
-
-  thread_clic = 0;
-  pw = pp_get_pw_at_xy(pp, mx, my);
-
-  if (pw) {
-    if (pw->attr & PWATTR_TROLLSCORE) thread_clic = 1;
-  } else {
-    if (mx < 20) { /* si on clique à gauche de l'horloge, on considère une action sur tout le
-		      thread (le pb est qu'il n'y a pas forcement de mot à cet endroit) */
-      pw = pp_get_pw_at_xy(pp, 20, my); /* le 20 est une ruse de chacal puant */
-      thread_clic = 1;    
-    }
-  }
-
+  unsigned boitakon_state=0;
 
   num = 0;
   if (plopify_level == 2) num = 1;
   if (plopify_level == 3) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
 
-  if (pw) {
-    tribune_msg_info *mi;
-    unsigned boitakon_state=0;
-
-    mi = tribune_find_id(trib, pw->parent->id);
-
-    if (plopify_level) {
-      boitakon_state = tribune_key_list_get_state(*pkl, 2);
-    }
-
-    if (mi && thread_clic) {
-      char sid[15];
-      snprintf(sid, 15, "%d", mi->id);
-      *pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD, num);
-    } else if (mi && pw->attr & PWATTR_NICK) {
-      if (plopify_level == 0) {
-	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA, num);
-      } else {
-	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
-	else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
-      }
-    } else if (pw->attr & PWATTR_LOGIN) {
-      *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
-    } else if (pw->attr & PWATTR_TSTAMP) {
-      char sid[10];
-      snprintf(sid,10,"%d", pw->parent->id);
-      *pkl = tribune_key_list_swap(*pkl, sid, HK_ID, num);
-    } else {
-      char *s, *p;
-      KeyList *hk;
-
-      /* pour deplopifier un post plopifié à cause d'un mot clef, on ne peut pas esperer que l'utilisateur
-	 puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
-	 en 'plop' ou 'pikaa' ...
-      */
-      if (plopify_level && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
-	*pkl = tribune_key_list_remove(*pkl, hk->key, hk->type);
-      } else {
-	
-	/* simplification du mot */
-	s = strdup(pw->w);
-	p = s + strlen(s) -1;
-	while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
-	p = s;
-	while (*p && !isalnum((unsigned char)*p)) p++;
-	
-	if (strlen(p) == 0) p = pw->w;
-	
-	*pkl = tribune_key_list_swap(*pkl, p, HK_WORD, num);
-	free(s);
-      }
-    }
-
-    *pkl = tribune_key_list_cleanup(trib, *pkl); /* supprime les key faisant ref à des messages detruits */
-    
-    /* vérifie si la boitakon a été modifiée */
-    if (plopify_level) {
-      if (boitakon_state != tribune_key_list_get_state(*pkl, 2)) {
-	tribune_update_boitakon(trib);
-      }
-    }
-
-    pp_pv_destroy(pp); /* force le rafraichissement complet */
-    pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
-    pp_refresh(dock, trib, pp->win, NULL);
+  if (plopify_level) {
+    boitakon_state = tribune_key_list_get_state(*pkl, 2);
   }
+
+  /* shift clic alors que du texte est selectionné: on applique le truc sur le texte selectionné */  
+
+  if (pp->last_selected_text) {
+    *pkl = tribune_key_list_swap(*pkl, pp->last_selected_text, HK_WORD, 0);
+  } else {
+    PostWord *pw;
+    int thread_clic;
+
+    thread_clic = 0;
+    pw = pp_get_pw_at_xy(pp, mx, my);
+
+    if (pw) {
+      if (pw->attr & PWATTR_TROLLSCORE) thread_clic = 1;
+    } else {
+      if (mx < 20) { /* si on clique à gauche de l'horloge, on considère une action sur tout le
+			thread (le pb est qu'il n'y a pas forcement de mot à cet endroit) */
+	pw = pp_get_pw_at_xy(pp, 20, my); /* le 20 est une ruse de chacal puant */
+	thread_clic = 1;    
+      }
+    }
+
+
+
+    if (pw) {
+      tribune_msg_info *mi;
+
+      mi = tribune_find_id(trib, pw->parent->id);
+
+      if (mi && thread_clic) {
+	char sid[15];
+	snprintf(sid, 15, "%d", mi->id);
+	*pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD, num);
+      } else if (mi && pw->attr & PWATTR_NICK) {
+	if (plopify_level == 0) {
+	  *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA, num);
+	} else {
+	  if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+	  else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
+	}
+      } else if (pw->attr & PWATTR_LOGIN) {
+	*pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+      } else if (pw->attr & PWATTR_TSTAMP) {
+	char sid[10];
+	snprintf(sid,10,"%d", pw->parent->id);
+	*pkl = tribune_key_list_swap(*pkl, sid, HK_ID, num);
+      } else {
+	char *s, *p;
+	KeyList *hk;
+
+	/* pour deplopifier un post plopifié à cause d'un mot clef, on ne peut pas esperer que l'utilisateur
+	   puisse recliquer sur le mot incriminé puisque celui a de fortes chances d'avoir été transformé
+	   en 'plop' ou 'pikaa' ...
+	*/
+	if (plopify_level && mi && (hk = tribune_key_list_test_mi(trib, mi, *pkl))) {
+	  *pkl = tribune_key_list_remove(*pkl, hk->key, hk->type);
+	} else {
+	
+	  /* simplification du mot */
+	  s = strdup(pw->w);
+	  p = s + strlen(s) -1;
+	  while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
+	  p = s;
+	  while (*p && !isalnum((unsigned char)*p)) p++;
+	
+	  if (strlen(p) == 0) p = pw->w;
+	
+	  *pkl = tribune_key_list_swap(*pkl, p, HK_WORD, num);
+	  free(s);
+	}
+      }
+    } else {
+      return; /* pour eviter un refresh inutile */
+    }
+  }
+  *pkl = tribune_key_list_cleanup(trib, *pkl); /* supprime les key faisant ref à des messages detruits */
+  
+  /* vérifie si la boitakon a été modifiée */
+  if (plopify_level) {
+    if (boitakon_state != tribune_key_list_get_state(*pkl, 2)) {
+      tribune_update_boitakon(trib);
+    }
+  }
+
+  pp_pv_destroy(pp); /* force le rafraichissement complet */
+  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
+  pp_refresh(dock, trib, pp->win, NULL);
+}
+
+static void
+pp_open_login_home_in_browser(Dock *dock, int mx, int my, char *w, int bnum) {
+  Pinnipede *pp = dock->pinnipede;
+  char *s;
+  assert(w);
+  s = str_printf("http://%s:%d/%s~%s", Prefs.site_root, Prefs.site_port, Prefs.site_path, w);
+  open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, bnum);
+  free(s);
 }
 
 static void
@@ -3440,18 +3497,7 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 #endif
       }
     } else if (pw->attr & PWATTR_LOGIN) {
-      char s[60];
-      snprintf(s, 60, "/msg %s ", pw->w);
-      if (editw_ismapped(dock->editw) == 0) {
-	strncpy(dock->coin_coin_message, s, MESSAGE_MAX_LEN);
-	dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
-	editw_show(dock, dock->editw, 0);
-	editw_move_end_of_line(dock->editw, 0);
-      } else {
-	editw_erase(dock->editw);editw_erase(dock->editw); /* deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme) */
-	editw_insert_string(dock->editw, s);
-      }
-      editw_refresh(dock, dock->editw);
+      pp_open_login_home_in_browser(dock, mx, my, pw->w,1);
     }
   } /* if (pw) */  
 }
@@ -3491,6 +3537,8 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       pp_handle_shift_clic(dock, trib, &Prefs.hilight_key_list, mx, my, 0);
     } else if (event->state & ControlMask) {
       pp_handle_control_left_clic(dock, trib, mx, my);
+    } else if (event->state & Mod1Mask) {
+      pp_handle_alt_clic(dock, event);
     } else {
       pp_handle_left_clic(dock, trib, mx, my);
     }
@@ -3513,7 +3561,11 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	if (strlen(pw->attr_s)) {
 	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 2);
 	}
+      } else if (pw && pw->attr & PWATTR_LOGIN) {
+	pp_open_login_home_in_browser(dock, mx, my, pw->w,2);
       }
+    } else if (event->state & Mod1Mask) {
+      pp_handle_alt_clic(dock, event);
     } else {
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
       pp_tribuneshot_kikoooo(dock, trib);
@@ -3551,6 +3603,20 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	}
       } else if (pw && (pw->attr & PWATTR_REF)) {
 	editw_cb_copy(dock, pp->win, pw->w, strlen(pw->w));  
+      } else if (pw && (pw->attr & PWATTR_LOGIN)) {
+	char *s;
+	s = str_printf("/msg %s ", pw->w);
+	if (editw_ismapped(dock->editw) == 0) {
+	  strncpy(dock->coin_coin_message, s, MESSAGE_MAX_LEN);
+	  dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
+	  editw_show(dock, dock->editw, 0);
+	  editw_move_end_of_line(dock->editw, 0);
+	} else {
+	  editw_erase(dock->editw);editw_erase(dock->editw); // deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme)
+	  editw_insert_string(dock->editw, s);
+	}
+	free(s);
+	editw_refresh(dock, dock->editw);
       } else {
 	/* right clic ailleurs, affiche la mini barre de boutons */
 	if ((pp->use_minibar == 0) || my < pp->win_height - MINIB_H) {
@@ -3779,13 +3845,15 @@ pp_selection_copy(Dock *dock, char *buff)
   nc = 0;
   for (l=pp->sel_l0; l <= pp->sel_l1; l++) {
     PostWord *pw;
+    /*    printf("first=%d, last=%d\n", pp->lignes_sel[l].first_pw_pos, pp->lignes_sel[l].last_pw_pos); */
     pw = pp->lignes_sel[l].first_pw;
     while (pw) {
       int i, i0, i1;
       i0 = 0; i1 = strlen(pw->w);
       if (pw == pp->lignes_sel[l].first_pw) {
 	i0 = pp->lignes_sel[l].first_pw_pos;
-      } else if (pw == pp->lignes_sel[l].last_pw) {
+      } 
+      if (pw == pp->lignes_sel[l].last_pw) {
 	i1 = pp->lignes_sel[l].last_pw_pos;
       }
       if (pw != pp->lignes_sel[l].first_pw && (pw->attr & PWATTR_HAS_INITIAL_SPACE)) {
@@ -3891,7 +3959,7 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
       //      printf("destroy?\n");
     } break;
   case ButtonPress:
-    {
+    {     
       pp_selection_unselect(pp);
       if (pp->sc && scrollcoin_handle_button_press(pp->sc, &event->xbutton, pp->win)) {
       } else if (pp->use_minibar && pp_minib_handle_button_press(dock, &event->xbutton)) {
@@ -3912,12 +3980,9 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	
 	blen = pp_selection_copy(dock, NULL);
 	if (blen) {
-	  char *buff;
-	  
-	  buff = malloc(blen); assert(buff);
-	  pp_selection_copy(dock, buff);
-	  editw_cb_copy(dock, pp->win, buff, blen-1);
-	  free(buff);
+	  if (pp->last_selected_text) { free(pp->last_selected_text); pp->last_selected_text=NULL;}	  	  pp->last_selected_text = malloc(blen); assert(pp->last_selected_text);
+	  pp_selection_copy(dock, pp->last_selected_text);
+	  editw_cb_copy(dock, pp->win, pp->last_selected_text, blen-1);
 	}
       } else {
 	if (pp->sc && scrollcoin_handle_button_release(pp->sc, &event->xbutton, pp->win)) {

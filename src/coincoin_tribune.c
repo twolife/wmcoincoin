@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.31 2002/04/11 23:16:54 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.32 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.32  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.31  2002/04/11 23:16:54  pouaite
   boitakon mega combo
 
@@ -375,10 +378,8 @@ nettoie_message_tags(const char *inmsg)
 char *
 wiki_url_encode(const unsigned char *w)
 {
-  const char *keys[] = {" ", "+"};
-  const char *subs[] = {"+", "%2B"};
   unsigned char *w2, *ret;
-  w2 = str_multi_substitute(w, keys, subs, 2);
+  w2 = str_preencode_for_http(w);
   ret = str_printf("\t<a href=\"%s%s\"\t>[%s]\t</a\t>", Prefs.tribune_wiki_emulation, w2, w);
   free(w2); 
   return ret;

@@ -101,6 +101,8 @@ typedef struct _structPrefs{
   char *proxy_name; /* default: NULL */
   int   proxy_port; /* default: 1080 */
 
+  char *gogole_search_url;
+
   /* message poste sur la tribune */
   char *coin_coin_message;
 

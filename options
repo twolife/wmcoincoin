@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.22 2002/04/11 23:16:54 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.23 2002/04/13 11:55:19 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.23  2002/04/13 11:55:19  pouaite
+#%  fix kde3 + deux trois conneries
+#%
 #%  Revision 1.22  2002/04/11 23:16:54  pouaite
 #%  boitakon mega combo
 #%
@@ -223,6 +226,11 @@
 ### du milieu au lieu du bouton de gauche
 #http.browser2: xterm -fn 6x13 -bg white -fg black -geometry 120x80 -e w3m %s &
 
+### pour lancer des recherches sur google (ou autre) d'un clic,
+### faire alt+{left|middle} clic sur un mot/login/texte selectionné
+### le %s est remplacé par le(s) mot(s) recherché(s)
+### /!\ par défaut cette option n'est pas activée
+#http.gogole_search_url: http://www.google.fr/search?q=%22%s%22
 
 # ## par défaut le pinnipède est en helvetica, mais je trouve 'verdana' (en taille 11)
 # ## bien plus jolie. l'inconvenient, c'est qu'elle est plus lente a afficher...          

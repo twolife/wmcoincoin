@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.11 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.12 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.12  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.11  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -247,7 +250,7 @@ eval_best_troll(Word *wlst, int nb_mots, int filter_categ, int level, int bonus_
 
   assert(wlst);
 
-  if (level > 5) return 0; // faut pas exagerer
+  if (level > 5) return 0; /* faut pas exagerer */
 
   /* liste des mots déjà selectionnés à des level inférieurs */
   for (i=0; i < nb_mots; i++) {
@@ -307,7 +310,6 @@ eval_best_troll(Word *wlst, int nb_mots, int filter_categ, int level, int bonus_
 	      score += subscore;
 	    }
 	    if (td->lnkcat2 && trouve1) {
-	      //	    printf("recherche lnk2\n");
 	      score += eval_best_troll(wlst, nb_mots, td->lnkcat2, level+1, td->bonuscat2, sel, &trouve2);
 	    }
 	  } else {
@@ -414,14 +416,14 @@ troll_detector(tribune_msg_info *mi) {
 	txt_simple[i] = *s;
       }
       i++;
-      if (*s > 127) { bizarre_cnt++; } //printf("bizarre: %02x = '%c'\n", *s, *s); }
+      if (*s > 127) { bizarre_cnt++; } 
       s++;
     }
     if (i == MI_MAX_LEN-1) break;
   }
   txt_simple[i] = 0;
   BLAHBLAH(2,myprintf("troll_detector, message initial: %<YEL %s>\n", mi->msg));
-  //  myprintf("message filtré : %<GRN %s>\n", txt_simple);
+  /*  myprintf("message filtré : %<GRN %s>\n", txt_simple); */
   /*
     passe deux: construction de la liste de mots avec identification des tags, 
      séparation des mots se terminant par des chiffres, du genre 'emacs21' en 'emacs' '21' 
@@ -569,7 +571,7 @@ troll_detector(tribune_msg_info *mi) {
 	}
       }
       if (keep_word == 0) {
-	w->nb_td_idx = 0; // marqué pour effecament
+	w->nb_td_idx = 0; /* marqué pour effecament */
       }
       w = w->next;
     }

@@ -159,7 +159,7 @@ scrollcoin_compute_bar_size(ScrollCoin *sc) {
 
   npos = sc->vmax - sc->vmin + 1;
   sc->bar_sz = MAX((sc->h - 2*BT_H - 1) / npos,30);
-  //  printf("bar_sz <- %d\n",sc->bar_sz);
+  /*  printf("bar_sz <- %d\n",sc->bar_sz); */
 }
 
 static void
@@ -178,8 +178,8 @@ scrollcoin_compute_pixel_pos(ScrollCoin *sc, int pos) {
   }
   
 
-  //  printf("pos=%d, vmin=%d, vmax=%d, nxpos = %d, pixel_pos = %d\n",
-  //	 pos, sc->vmin, sc->vmax, nxpos, sc->pixel_pos);
+  /*  printf("pos=%d, vmin=%d, vmax=%d, nxpos = %d, pixel_pos = %d\n",
+      pos, sc->vmin, sc->vmax, nxpos, sc->pixel_pos);*/
 }
 
 void
@@ -306,7 +306,7 @@ scrollcoin_handle_button_press(ScrollCoin *sc, XButtonEvent *ev, Drawable d)
 
   mx = ev->x;
   my = ev->y;
-  //  printf("clic %d %d (%d,%d,%d,%d)\n",mx,my,sc->x, sc->y, SC_W, sc->h);
+  /*  printf("clic %d %d (%d,%d,%d,%d)\n",mx,my,sc->x, sc->y, SC_W, sc->h); */
   if (mx >= sc->x && mx <= sc->x + SC_W -1 &&
       my >= sc->y && my <= sc->y + sc->h-1) {
     if (ev->button == Button1 || ev->button == Button2 || ev->button == Button3) {
@@ -401,10 +401,10 @@ scrollcoin_handle_motion(ScrollCoin *sc, XMotionEvent *ev, Drawable d)
     coef = ((float)pix_pos - BT_H)/(marge);
     pos = (int)(coef * (sc->vmax - sc->vmin) + sc->vmin);
 
-    //    printf("coef=%f , rmarge = %d, sc->y = %d, marge=%d pos=%d\n", coef, pix_pos - sc->y - BT_H, sc->y, marge, pos);
+    /*    printf("coef=%f , rmarge = %d, sc->y = %d, marge=%d pos=%d\n", coef, pix_pos - sc->y - BT_H, sc->y, marge, pos); */
 
     if (pos != sc->pos) {
-      //      printf("scrollcoin_handle_motion: requested_pos <- %d\n", pos);
+      /*      printf("scrollcoin_handle_motion: requested_pos <- %d\n", pos); */
       sc->requested_pos = pos;
     }
     if (pix_pos != sc->pixel_pos) {

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.5 2002/03/07 18:54:34 pouaite Exp $
+  rcsid=$Id: http.h,v 1.6 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.6  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.5  2002/03/07 18:54:34  pouaite
   raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
 
@@ -25,11 +28,11 @@
 # define SOCKET_ERROR -1
 # define INVALID_SOCKET -1
 # define SOCKET int
-#else // WIN32 Detected
+#else /* WIN32 Detected */
 # ifdef __INSIDE_HTTP
 #   define __USE_W32_SOCKETS
 #   include "windows.h"
-# else // !__INSIDE_HTTP
+# else /* !__INSIDE_HTTP */
 #   define SOCKET_ERROR -1
 #   define INVALID_SOCKET 0
 #   define SOCKET unsigned int

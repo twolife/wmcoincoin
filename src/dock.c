@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.10 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.11 2002/04/13 11:55:19 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.11  2002/04/13 11:55:19  pouaite
+  fix kde3 + deux trois conneries
+
   Revision 1.10  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -129,7 +132,7 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
     if (it->tatouage) {
       int age;
 
-      //      age = tribune_get_msg_age(trib, it) / 60 / col_nb_min;
+      /* age = tribune_get_msg_age(trib, it) / 60 / col_nb_min; */
       age = (tnow - (it->timestamp + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
       BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_sec=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_sec,tnow));
       assert(age >= 0);
@@ -259,10 +262,10 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
     dec = dock->newstitles_char_dec;
     cx = x - dec;
     cnt = dock->newstitles_pos;
-    //  if (msg[cnt] == 0) return;
+    /* if (msg[cnt] == 0) return; */
     do {
       XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, &msg[cnt], 1);
-      //      XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[msg[cnt]]+dec,0,MIN(cx+6, x+w)-MAX(cx,x),12,MAX(cx,x),y);
+      /* XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[msg[cnt]]+dec,0,MIN(cx+6, x+w)-MAX(cx,x),12,MAX(cx,x),y); */
       cx += 6;
       cnt++; if (msg[cnt] == 0) cnt = 0;
       dec = 0;
@@ -281,7 +284,7 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
 	/* remarque c'est plus rentrant (depuis la v2.3.5) mais on s'en bat les ouilles
 	   puisque coincoin n'est pas multithreadé */
 	t = localtime(&mi->timestamp);
-	//snprintf(minimsg, 10, "%02d:%02d", (int)((mi->timestamp/3600)%24), (int)((mi->timestamp/60)%60));
+	/* snprintf(minimsg, 10, "%02d:%02d", (int)((mi->timestamp/3600)%24), (int)((mi->timestamp/60)%60)); */
 	snprintf(minimsg, 10, "%02d:%02d:%02d", t->tm_hour, t->tm_min, t->tm_sec);
       } else {
 	strcpy(minimsg, "??:?? BUG");
@@ -322,7 +325,7 @@ textout_msginfo(Dock *dock, int x, int y)
 
       XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, &c, 1);
 
-      //      XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[c]+dec,0,MIN(cx+6, x+56)-MAX(cx,x),12,MAX(cx,x),y);
+      /*       XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[c]+dec,0,MIN(cx+6, x+56)-MAX(cx,x),12,MAX(cx,x),y); */
       cx += DOCK_FIXED_FONT_W;
       cnt++;
       dec = 0;
@@ -336,7 +339,7 @@ textout_msginfo(Dock *dock, int x, int y)
 
       XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, &c, 1);
     
-      //      XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[c],0,MIN(cx+6, x+56)-MAX(cx,x),12,MAX(cx,x),y);
+      /* XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[c],0,MIN(cx+6, x+56)-MAX(cx,x),12,MAX(cx,x),y); */
       cx += DOCK_FIXED_FONT_W;
       cnt++;
     } while (cx < x+56);
@@ -367,7 +370,6 @@ dock_checkout_newstitles(Dock *dock, DLFP *dlfp)
 	  int i;
 	  static char *separ = " ... ";
 	  pos0 = pos;
-	  //	  printf("ajout de '%s'\n",n->titre);
 	  for (i=0; i < (int)strlen(n->titre); i++) {
 	    if (pos >= MAX_NEWSTITLES_LEN-1) break;
 	    dock->newstitles[pos] = n->titre[i];
@@ -535,7 +537,7 @@ refresh_msginfo(Dock *dock)
 	      dock->dlfp->tribune.nbsec_since_last_msg < 100 ? "s" : "");
       dock->tribune_updatable = 1;
     }  else {
-      //      strcpy(dock->msginfo, "updating");
+      /* strcpy(dock->msginfo, "updating"); */
     }
   }
 }
@@ -575,7 +577,6 @@ dock_refresh_normal(Dock *dock)
       XCopyArea(dock->display, dock->pix_porte, dock->coinpix, dock->NormalGC, 
 		0, 0, 64, 64-dock->door_state_step, 0, dock->door_state_step);
       XSetClipMask(dock->display, dock->NormalGC, None);
-      //      textout_simple(tribune_time, 3, 49 + state_step, 5);
 
       if (dock->door_state_step < TROLLOSCOPE_HEIGHT) {
 	XCopyArea(dock->display, dock->pix_trolloscope, dock->coinpix, dock->NormalGC, 
@@ -594,7 +595,7 @@ dock_refresh_normal(Dock *dock)
     {
       XCopyArea(dock->display, dock->pix_porte, dock->coinpix, dock->NormalGC, 0, 0, 64, 64, 0, 0);
       textout_msg(dock, dock->newstitles, 3, 3, 57);
-      //      XCopyArea(dock->display, dock->pix_porte_bas, dock->coinpix, dock->or_GC, 0, 0, 64, 64, 0, 0);
+
       textout_msginfo(dock, 4, 49+MAX(0,dock->door_state_step - TROLLOSCOPE_HEIGHT + 5));
 
       XCopyArea(dock->display, dock->pix_trolloscope, dock->coinpix, dock->NormalGC, 0, 0, 
@@ -629,9 +630,7 @@ dock_refresh_horloge_mode(Dock *dock)
     decal = difftime(tnow, dock->dlfp->tribune.local_time_last_check);
     ttribune = dock->dlfp->tribune.last_post_timestamp + decal + dock->dlfp->tribune.nbsec_since_last_msg;
     tm = localtime(&ttribune);
-//    snprintf(s, 20, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
   } else {
-//    snprintf(s, 20, "...");
     tm = localtime(&tnow);
   }
   
@@ -777,8 +776,6 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
       j = (TROLLOSCOPE_WIDTH + TROLLOSCOPE_X - 1 - x) / dock->trolloscope_resolution;
       i = (TROLLOSCOPE_HEIGHT + TROLLOSCOPE_Y - 1 - y) / dock->trolloscope_resolution;
       
-      //	  printf("\r%d, %d %d %d", event->xmotion.x, event->xmotion.y, i, j); fflush(stdout);
-      
       if (dock->trolloscope[i][j].id > 0) {
 	dock->tl_item_survol = &dock->trolloscope[i][j];
 	if (dock->trolloscope[i][j].id != oldid) {
@@ -787,7 +784,7 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
 	}
 	dock->view_id_in_newstitles = dock->tl_item_survol->id;
 	dock->view_id_timer_cnt = 0;
-	//	    myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].tatouage->name);
+	/* myprintf("i = %d, j=%d, id = %d, nom = %s\n", i,j, dock->trolloscope[i][j].id,dock->trolloscope[i][j].tatouage->name); */
       } else {
 	dock->tl_item_clicked = 0;
 	dock->msginfo_defil = 0;
@@ -807,13 +804,11 @@ dock_handle_motion_notify(Dock *dock, int x, int y)
     if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 		  dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
       /* survol de la led 1 */
-      //	  printf("survol led1\n");
       dock->flag_survol_led1 = 1;
     } else {
       dock->flag_survol_led1 = 0;
     }
   }
-  //      printf("DEBUG MOTION: item survol %p)\n", dock->tl_item_survol);
 }
 
 /* renvoie 1 si le bouton rouge a ete suffisament enfonce */
@@ -953,7 +948,6 @@ dock_build_pixmap_porte(Dock *dock)
       }
 
       dock->pix_porte = RGBAImage2Pixmap(dock->rgba_context, rgba_porte);
-      //XpmWriteFileFromPixmap (dock->display, "pixporte.xpm", dock->pix_porte, 0, NULL);
       RGBADestroyImage(rgba_porte);
       XDestroyImage (XiPixPixmap);
     }
@@ -1029,8 +1023,6 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	 un LeaveNotify est genere quand on clique sur le dock...
 	 du coup ca reinitialise plein de choses.. */
   dock_handle_motion_notify(dock, x, y);
-
-  //      printf("DEBUG: item survol %p)\n", dock->tl_item_survol);
 
   /* Ctrl-Clic1 -> passage en mode horloge */
   if (xbevent->button == Button1 && (xbevent->state & ControlMask)) {
@@ -1144,8 +1136,6 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       } else {
 	editw_hide(dock, dock->editw);
       }
-      //msgbox_show(dock, "<b>essai de msgbox</b>");
-      //	  balloon_show(dock, 1600, 0, 1,1, "essai<br>je suis <b>bien</b><i>content</i> c'est vraiment surper djkdhfds dgjkfdgjgjkfdg dfgjkhfd");
     }
 
     /********************************************* BOUTON DROIT ****************************/
@@ -1320,8 +1310,6 @@ dock_dispatch_event(Dock *dock, XEvent *event)
     } break;
   case LeaveNotify:
     {
-      //printf("DEBUG: leave %p ->send_event=%d\n", dock->tl_item_survol, event->xcrossing.send_event);
-
       check_cursor_shape(dock, -1,-1);
       dock->tl_item_survol = NULL;
       dock->tl_item_clicked = 0;

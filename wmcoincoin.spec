@@ -27,8 +27,10 @@ Visionnage du contenu des news (sans les commentaires)
 * Une fonction flamophone, parce que vous le valez bien.
 * Le Pinnipède Télétype, un véritable outil de décideur.
 
-%prep
-%setup
+Le fichier d'options 'modèle' et largement documenté se trouve avec la doc,
+copiez-le dans ~/.wmcoincoin/ puis éditez-le
+
+%prep %setup
 
 %build
 %configure
@@ -43,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,0755)
-%doc README NEWS COPYING AUTHORS
+%doc README NEWS COPYING AUTHORS options
 %{_bindir}/wmcoincoin
 %{_bindir}/wmcoincoin-kde
 
