@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.4 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.5 2002/08/23 00:25:21 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.5  2002/08/23 00:25:21  pouaite
+  oué
+
   Revision 1.4  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -354,7 +357,7 @@ check_for_horloge_ref_basic_helper(const unsigned char *ww, const char **site_na
   *site_name = NULL;
   if (l > 6) {
     int i;    
-    for (i = 6; i < 10 && ww[i]; i++) {
+    for (i = 5; i < 10 && ww[i]; i++) {
       if (ww[i] == '@') {
 	l = i; /* ben oui faut pas affoler tout le monde */
 

@@ -233,25 +233,26 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
       if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
 	board->enabled = 1-board->enabled;
       } else {
-	for (i=0; i < pp->nb_tabs; i++) pp->tabs[i].selected = 0;
-	pp->active_tab = pt;
-	pt->selected = 1;
+	if (pt != pp->active_tab) {
+	  if (pt->selected) {
+	    pp->active_tab = pt;
+	  } else pt->selected = 1;
+	} else {
+	  int all_active = 1;
+	  for (i=0; i < pp->nb_tabs; i++) if (pp->tabs[i].selected == 0) all_active = 0;
+	  if (all_active) {
+	    for (i=0; i < pp->nb_tabs; i++) 
+	      pp->tabs[i].selected = (pp->tabs+i == pt);
+	  } else {
+	    for (i=0; i < pp->nb_tabs; i++) 
+	      pp->tabs[i].selected = 1;
+	  }
+	}
       }
     } else if (event->button == Button2) {
       board->update_request = 1;
     } else if (event->button == Button3) {
       if (pt->selected == 0) pt->selected = 1;
-      else if (pp->active_tab != pt) pp->active_tab = pt;
-      else { 
-	pt->selected = 0;
-	if (pp->active_tab == pt) {
-	  int j;
-	  for (j=0; j <pp->nb_tabs; j++) {
-	    if (&pp->tabs[j] != pt) pp->active_tab = pp->tabs+j;
-	  }
-	}
-      }
-      
     }
 
     pp_tabs_set_visible_sites(pp);

@@ -1,9 +1,10 @@
 #ifndef __PREFS_H
 #define __PREFS_H
 #include <string.h>
+#include <sys/types.h> /* obligatoire pour regex.h sous bsd */
+#include <regex.h>
 #include "options_list.h" /* liste des noms des options */
 #include "keylist.h"
-#include "regex.h"
 
 /* valeur absolument maximale de la longueur d'un message envoyé
    (selon les prefs par sites, des valeurs inférieure sont fixées */

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.17 2002/08/22 20:04:09 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.18 2002/08/23 00:25:21 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.18  2002/08/23 00:25:21  pouaite
+##   oué
+##
 ##   Revision 1.17  2002/08/22 20:04:09  pouaite
 ##   fin de la premiere manche contre gettextize
 ##
@@ -48,7 +51,7 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
-#AUTOMAKE_OPTIONS = 1.5 dist-bzip2
+AUTOMAKE_OPTIONS = 1.5 dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 
 MAINT_CHARSET = latin1
@@ -74,6 +77,10 @@ bin-dist: all
 	cp src/wmcoincoin .
 	strip wmcoincoin
 	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options wmcoincoin
+
+nightly: dist
+	cp $(PACKAGE)-$(VERSION).tar.bz2 ../wmcoincoin-cvs.tar.bz2
+	(cd ..; ./up.sh ./wmcoincoin-cvs.tar.bz2 download/devel)
 
 pkgdata_DATA = options README wmcoincoin.spec
 

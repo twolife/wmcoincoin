@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.10 2002/08/18 20:52:15 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.11 2002/08/23 00:25:21 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.11  2002/08/23 00:25:21  pouaite
+  oué
+
   Revision 1.10  2002/08/18 20:52:15  pouaite
   les locales des sites fonctionnent (c bon pour les news)
 
@@ -112,7 +115,8 @@ site_locale_str(SitePrefs *sp, const char *s) {
     }
     i++;
   }
-  assert(0);		
+  assert(0);
+  return NULL;
 }
 
 char *
