@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.17 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.18 2002/02/06 21:34:17 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.18  2002/02/06 21:34:17  pouaite
+  coin coin
+
   Revision 1.17  2002/02/02 23:49:17  pouaite
   plop
 
@@ -643,8 +646,8 @@ void X_loop()
 	dock->flamometre.xp_change_decnt += (((FLAMOMETRE_XP_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 					      FLAMOMETRE_XP_CLIGN_SPEED)*FLAMOMETRE_XP_CLIGN_SPEED);
       }
-      if (dock->dlfp->xp_change_flag) {
-	dock->dlfp->xp_change_flag = 0;
+      if (dock->dlfp->comment_change_flag) {
+	dock->dlfp->comment_change_flag = 0;
 	if (dlfp_yc_find_modified(dock->dlfp,NULL)) { /* les inconsistences sont possibles */
 	  dock->flamometre.comment_change_decnt += (((FLAMOMETRE_COMMENT_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 						     FLAMOMETRE_COMMENT_CLIGN_SPEED)*FLAMOMETRE_COMMENT_CLIGN_SPEED);

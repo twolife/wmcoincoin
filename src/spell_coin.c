@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.8 2001/12/16 20:28:45 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.9 2002/02/06 21:34:17 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.9  2002/02/06 21:34:17  pouaite
+  coin coin
+
   Revision 1.8  2001/12/16 20:28:45  pouaite
   bugfixes divers
 
@@ -360,8 +363,15 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	   (keskil renvoit aspell au fait? ... regarder son man
 	   sur une machine qui a ce truc)
 	*/
-	fprintf(stderr, "spellString: unknow option \'%c\'\n", buff[0]);
+	fprintf(stderr, "spellString: unknow option \'%c\'\n", buff[0]); fflush(stderr);
 	kill_ispell(); /* je veux pas d'un ispell tout patraque */
+
+
+	/*
+	  ça ARRIVE PARFOIS .. !? (ça vient tout juste de m'arriver..)
+	   il faudra trouver pourquoi et gèrer autrement que par le suicide..
+	*/
+
 	assert(0);     /* voila une triste fin */
       }
     } while (buff[0]);
