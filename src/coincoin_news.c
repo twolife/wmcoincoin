@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.19 2002/03/27 23:27:10 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.20 2002/03/28 11:21:57 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.20  2002/03/28 11:21:57  pouaite
+  bugfix crash messagerie (si l'utilisateur ne l'a jamais utilisee) -> merci bplessis
+
   Revision 1.19  2002/03/27 23:27:10  pouaite
   tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
 
@@ -1362,7 +1365,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
     do {
       const char *sign = "messages/view.php3?id=";
       p = strstr(p+1, sign); /* p+1 pour pas tourner en rond comme un çon ..*/
-      if (end == NULL) { /* pour éviter de clignoter lorsqu'on vient d'envoyer un message
+      if (end == NULL && p) { /* pour éviter de clignoter lorsqu'on vient d'envoyer un message
 			    on tronque à la fin de la premiere table, ce qui évite de lire
 			    la liste des messages que l'on a envoyé, et donc qu'ils soient
 			    signalés comme de nouveau messages */
