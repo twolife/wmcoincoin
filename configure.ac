@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.33  2003/08/26 21:50:47  pouaite
+dnl   2.6.4b au mastic
+dnl
 dnl   Revision 1.32  2003/07/20 22:22:27  pouaite
 dnl   ce commit est dedie a Pierre Tramo
 dnl
@@ -184,7 +187,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.5totoz, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.6b, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -221,6 +224,7 @@ dnl CFLAGS=`echo "x $CFLAGS"|sed 's/^x //; s/\(^\| \)-g\($\| \)/ /g'`
 dnl additional compile flags when using gcc
 if test x$GCC = xyes; then
   CFLAGS="$CFLAGS -Wall -W -fsigned-char";
+  LDFLAGS="$LDFLAGS -rdynamic"; dnl juste pour avoir les noms de fonction dans le backtrace /o\
 else
   echo "Vous n'utilisez pas gcc .. attention coincoin peut avoir quelque bugs si les char ne sont pas signés"
 fi
@@ -368,6 +372,32 @@ if test "x$ac_cv_have_struct_addrinfo" = "xyes" ; then
 	AC_DEFINE(HAVE_STRUCT_ADDRINFO,1,[struct addrinfo])
 fi
 
+AC_CACHE_CHECK([for execinfo.h and backtrace], ac_have_backtrace, [
+        AC_TRY_COMPILE(
+                [ #include <execinfo.h>       
+                ],
+                [ void* trace[256]; int n = backtrace(trace, 256); ],
+                [ ac_have_backtrace="yes" ],
+                [ ac_have_backtrace="no"  ])])
+if test "x$ac_have_backtrace" = "xyes"; then
+        AC_DEFINE(HAVE_BACKTRACE,1,[glibc backtrace function])
+fi;     
+
+AC_CHECK_PROG([IMLIB2_CONFIG_IN_PATH],[imlib2-config],[yes],[no])
+if test "x$IMLIB2_CONFIG_IN_PATH" = "xno"; then
+        echo " *********************** YOU ARE NOT READY FOR THE DESKTOP ***********************"
+        echo " * no arms                              ==> no chocolate                         *"
+        echo " * imlib2-config was not found in path  ==> wmcoincoin_player will not be built. *"
+        echo " ************************* Thank you for your attention **************************"
+        WMCOINCOIN_PLAYER=""
+        build_wmcc_player="no"
+else
+        AC_DEFINE(HAVE_IMLIB2,1,[use imlib2 for the player])
+        WMCOINCOIN_PLAYER="wmcoincoin_player"
+        build_wmcc_player="yes"
+        AC_DEFINE(HAVE_WMCOINCOIN_PLAYER,1,[wmcoincoin_player is supported])
+fi;
+AC_SUBST([WMCOINCOIN_PLAYER])
 
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
@@ -413,7 +443,12 @@ AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
 AC_OUTPUT
 
 if test "x$build_wmccc" = "xno"; then
-  echo "    I recall you that you choosed to disable wmccc"
+  echo "    **** I recall you that you choosed to disable wmccc ****"
 else
   echo "    wmcc will be built with wmccc"
+fi
+if test "x$build_wmcc_player" = "xno"; then
+  echo "    **** I recall you that wmcoincoin_player won't be built ****"
+else
+  echo "    wmcc will be built with wmcoincoin_player"
 fi

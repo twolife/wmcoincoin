@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.36 2003/06/29 23:58:38 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.37 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.37  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.36  2003/06/29 23:58:38  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -105,18 +108,21 @@
   à la demande des décideurs de tous poils, gestion (toute naze...) de l'EURO !
 
 */
-
+#include "config.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_BACKTRACE
+# include <execinfo.h>
+#endif
 #include "coin_util.h"
 
 #include <libintl.h>
 #define _(String) gettext(String)
-
+#include "myprintf.h"
 
 /* construit un 'nom' à partir des premiers mots du useragent */
 
@@ -573,7 +579,7 @@ str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
   str_noaccent_tolower(a);
   res = strstr(m, a); if (res) pos = res-m;
   free(a); free(m);
-  return ((pos >= 0) ? meule+pos : NULL);
+  return ((pos >= 0) ? (unsigned char*)meule+pos : NULL);
 }
 
 void
@@ -754,7 +760,6 @@ open_wfile(const char *fname) {
 
 int
 is_url(const char *s) {
-  int ok = 1;
   int i=0;
   while (s[i] && isalpha(s[i])) ++i;
   if (i && s[i] == ':' && s[i+1] == '/' && s[i+2] == '/') return i+3;
@@ -790,4 +795,34 @@ void url_au_coiffeur(unsigned char *url, int coupe) {
   }
   url[j+1] = 0;
   //printf("SORTIE url_au_coiffeur(%s,%d)\n", url, coupe);
+}
+
+void dump_backtrace() {
+#ifdef HAVE_BACKTRACE
+  static int cnt = 0;
+  int i,n;
+  void* trace[256];
+  char** strings;
+  if (cnt++ == 0) {
+    n = backtrace(trace, 256);
+    strings = backtrace_symbols (trace, n);
+    if (strings == NULL) {
+      myfprintf(stderr, "backtrace unavailable ... no more memory ?\n"); return;
+    }
+    myfprintf(stderr,"Backtrace dump follows:\n");
+    for (i = 0; i < n; ++i)
+      myfprintf(stderr,"%<grn %2d> : %<GRN %s>\n",
+                i, strings[i]);
+    free (strings);
+    cnt--;
+  } else { /* on n'est jamais trop prudent */
+    fprintf(stderr, "yaisse, a recursive bug in backtrace\n"); 
+  }
+#endif
+}
+
+void assertion_failed(const char *fun, const char *ass) {
+  myfprintf(stderr,"assertion failed in function %<MAG %s>: %<YEL %s>\n", fun, ass); 
+  dump_backtrace(); 
+  abort();
 }

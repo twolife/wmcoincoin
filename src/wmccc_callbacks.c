@@ -375,7 +375,7 @@ on_notebook_sites_switch_page(GtkNotebook *notebook, GtkNotebookPage *page UNUSE
 			      gint page_num, gpointer user_data UNUSED)
 {
   if (glob.updating_labels) return;
-  g_print("switch page %d->%d\n",gtk_notebook_get_current_page(notebook),page_num);
+  /*g_print("switch page %d->%d\n",gtk_notebook_get_current_page(notebook),page_num);*/
   glob.current_site = page_num; g_assert(page_num < Prefs->nb_sites);
   glob.updating_labels++;
   site_panels_update(Prefs->site[glob.current_site]);
@@ -571,7 +571,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
   GtkWidget *active_item;
   SitePrefs *sp;
   
-  enum { NONE, DLFP, WOOF, MDKFR, LORDORIC, CAVERNE, DAE, DALENTBOUCHOT, GLANDIUM, MANTICORE, DAIQUE, XOF, OLO, DAPORTATIVEBOUCHOT, HOUPLA} item_index;
+  enum { NONE, DLFP, WOOF, MDKFR, LORDORIC, CAVERNE, DAE, DALENTBOUCHOT, GLANDIUM, MANTICORE, DAIQUE, XOF, OLO, DAPORTATIVEBOUCHOT, HOUPLA, NOFRAG, NOFRAGANO} item_index;
 
   active_item = gtk_menu_get_active(GTK_MENU(menu_shell));
   item_index = g_list_index(menu_shell->children, active_item);
@@ -653,11 +653,11 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->board_backend_type = 2;
       break;
     case CAVERNE:
-      sp->site_root = strdup("didbaba.tuxfamily.org/index.php");
+      sp->site_root = strdup("didbaba.tuxfamily.org");
       sp->all_names[0] = strdup("caverne");
       sp->all_names[1] = strdup("didbaba");
-      sp->path_board_backend = strdup("board/remote.xml");
-      sp->path_board_add = strdup("index.php/board,board,add,,,.html");
+      sp->path_board_backend = strdup("board/remote.py");
+      sp->path_board_add = strdup("board/add.py");
       sp->board_post = strdup("message=%s&section=1");
       sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
       sp->board_backend_type = 2;
@@ -684,7 +684,7 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->path_board_add = strdup("add.php");
       break;
     case DAIQUE:
-      sp->site_root = strdup("daique.dyndns.org/~ced");
+      sp->site_root = strdup("daique.dyndns.org");
       sp->user_cookie = strdup("unique_id=COIN; md5=PLOP");
       sp->all_names[0] = strdup("daique");
       sp->path_board_add = strdup("board/add.php");
@@ -724,6 +724,21 @@ on_optionmenu_site_selected(GtkMenuShell *menu_shell,
       sp->all_names[2] = strdup("houplaboom");      
       sp->board_backend_type = 2;
       sp->user_cookie = NULL;
+      break;
+    case NOFRAG:
+    case NOFRAGANO:
+      sp->site_root = strdup("www.nofrag.com");
+      sp->all_names[0] = strdup("nofrag");
+      sp->path_board_backend = strdup("tribune/xml/");
+      sp->path_board_add = strdup("tribune/");
+      sp->board_backend_type = 2;
+      if (item_index == NOFRAG) {
+        sp->user_cookie = strdup("UserInfoCookie[UserName]=your login; UserInfoCookie[Password]=your passwd");
+        sp->board_post = strdup("message=%s&noredir=1");
+      } else {
+        sp->board_post = strdup("message=%s&anonyme=1&noredir=1");
+        sp->user_cookie = NULL;
+      }
       break;
     default:
       break;

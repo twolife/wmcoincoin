@@ -1,19 +1,39 @@
 %define name wmcoincoin
-%define version 2.3.8b
+%define version 2.4.6a
 %define release 1
 
-Summary: wmcoincoin is a stupid dock app for linuxfr-addicted people
-Name: %{name}
-Version: %{version}
-Release: %{release}
-Source: %{name}-%{version}.tar.bz2
-License: GPL
-URL: http://hules.free.fr/wmcoincoin/wmcoincoin.html
-Group: Toys
-BuildRoot: %{_tmppath}/%{name}-buildroot
-Prefix: %{_prefix}
+Summary:	wmcoincoin is a stupid dock app for linuxfr-addicted people
+Name:		%{name}
+Version:	%{version}
+Release:	%{release}
+Source:		%{name}-%{version}.tar.bz2
+License:	GPL
+URL:		http://hules.free.fr/wmcoincoin/wmcoincoin.html
+Group:		Toys
+BuildRoot:	%{_tmppath}/%{name}-buildroot
+Prefix:		%{_prefix}
+BuildRequires:  gtk-devel
+BuildRequires:  imlib2-devel
 
 %description
+Funny dockapp for browsing DaCode sites news and board
+WMcoincoin allows you to browse linuxfr.org, and any other site based
+on DaCode 1.2+. It handles:
+
+* the website news scrolling, warning of new ones, and with an ability
+  to display them in a window;
+* the private messages, bringing to the appropriate webpage when you
+  receive new ones;
+* tabbed browsing of multiple DaCode or Templeet sites;
+* the board, with ability to view the contents and post messages,
+  featuring advanced functions designed to detect, enhance or kill
+  the trolls.
+
+WMcoincoin, while being full of stupid things, is a real advanced
+chatting client, working all over HTTP, with a low bandwidth
+consumption.
+
+%description -l fr
 La fonctionnalité centrale (le gros bouton rouge), permet de poster "coin coin!"
 sur la tribune libre. Autour de ce bouton, différentes fonctionnalités annexes gravitent:
 * Affichage de l'heure du dernier post sur la tribune
@@ -26,11 +46,10 @@ Visionnage du contenu des news (sans les commentaires)
 * Le Palmipède Editor qui permet d'éditer le messages/useragent à poster avec un confort maximal.
 * Une fonction flamophone, parce que vous le valez bien.
 * Le Pinnipède Télétype, un véritable outil de décideur.
-Un fichier d'options 'modèle' et largement documenté se trouve avec la doc,
-copiez-le dans ~/.wmcoincoin/ puis éditez-le
 
 %prep
-%setup
+rm -rf $RPM_BUILD_ROOT
+%setup 
 
 %build
 %configure
@@ -39,17 +58,24 @@ copiez-le dans ~/.wmcoincoin/ puis éditez-le
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
+%find_lang %{name}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root,0755)
-%data README NEWS COPYING AUTHORS options useragents
-%{_bindir}/wmcoincoin
-%{_bindir}/wmcoincoin-kde
+%data README NEWS COPYING AUTHORS 
+%{_bindir}/*
+%dir %{_datadir}/%{name}
+%{_datadir}/%{name}/options
+%{_datadir}/%{name}/*.xpm
 
 %changelog
+* Tue Jul 19 2003 houpla <laurent@pschit.net> 2.4.6a-1
+- version 2.4.6a
+- clean and update spec
+
 * Sat Jun  1 2002 pouaite <c0in@altern.org> 2.3.8a-1
 - version 2.3.8a
 

@@ -513,6 +513,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 
     G_INT_OPT_COPY(enable_troll_detector);
     G_INT_OPT_COPY(board_auto_dl_pictures);
+    G_INT_OPT_COPY(board_enable_hfr_pictures);
 
     /* spell */
     if (G_INT_OPT_COPY_IF_CHANGED(ew_do_spell) +

@@ -6,7 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <assert.h>
 #include <time.h>
 #include <regex.h>
 #include <ctype.h>
@@ -193,7 +192,7 @@ struct _Board {
   /* nombre de secondes ecoulees depuis que le dernier message a ete recu */
   int nbsec_since_last_msg;
 
-  int nb_msg_at_last_check;
+  int nb_msg_at_last_check; /* ne compte pas les posts boitakonnés */
 
   /* date a laquelle le dernier check a ete fait
      (c'est pas redondant, je part du principe que l'horloge locale
@@ -676,6 +675,7 @@ void pp_show(Dock *dock);
 void pp_unmap(Dock *dock);
 int pp_ismapped(Dock *dock);
 int pp_handle_keypress(Dock *dock, XEvent *event);
+int pp_handle_keyrelease(Dock *dock, XEvent *event);
 int pp_dispatch_event(Dock *dock, XEvent *event);
 void pp_minib_dispatch_event(Dock *dock, Board *trib, XEvent *event);
 Window pp_get_win(Dock *dock);

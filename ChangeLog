@@ -1,3 +1,40 @@
+--------------------------v2.4.6-b-----------------------------------------
+2003-08-26  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (pp_handle_keyrelease): reglage du probleme de
+	bouton qui se blo, grace a une intervention cruciale de olo<
+	* src/board_util.c: reconnaissance des ref cross-tribune dont le @
+	contient des chiffres (micro-patch de gle).
+	* src/wmccc_callbacks.c: ajout de la tribune de nofrag (qui est
+	équipée d'un backend d'un fort beau gabarit) dans les options
+	predefinies du wmccc.
+
+2003-08-25  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c: patch de lo< pour les urls avec des attributs
+
+--------------------------v2.4.6-a-----------------------------------------
+2003-07-27  pouaite  <c0in@altern.org>
+
+	* platypus/* : ajout du wmcoincoin_player (nécessite imlib2-dev),
+	ainsi que wmcc-totoz-get pour la gestion des smileys de hfr. Voir
+	les nouvelles options du wmccc/onglet board.
+
+	* src/pinnipede.c src/coin_xutil.c: correction (je pense) des
+	problèmes de lenteur debilissime de la transparence. Par contre
+	j'ai toujours pas compris pourquoi c'était si lent, et pourquoi
+	des fois c'etait normal :-/ 
+	
+	* src/board.c (board_update): ne compte plus les posts boitakonnes
+	dans les nouveaux messages
+
+	* finalement le palmi en override redirect, c'était
+	mieux. L'option est qd meme dans le wmccc (onglet palmi).
+
+	* src/pinnipede.c: le clic sur la petite croix pour désactiver
+	l'autorefresh a été remplacé par shift+clic_gauche sur le tab,
+	c'est moins chiant à viser.
+	
 2003-07-19  pouaite  <c0in@altern.org>
 
 	* src/wmcoincoin.c,src/palmipede.c,src/coin_xutil.c: bidouilles

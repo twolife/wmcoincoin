@@ -76,7 +76,7 @@ dowget()
     echo -n "[$ext] "
     test -f "$img.$ext" && rm -f "$img.$ext";
     if curl -s -f -o "$img.$ext" "$siteroot$img.$ext" && test -f "$img.$ext"; then
-      mime=$(file -i "$img.$ext" | grep -o '\(video/\|image/\).*$');
+      mime=$(file -ib "$img.$ext" 2>/dev/null);
       if test $? -ne 0; then
         rm -f "$img.$ext";
       else

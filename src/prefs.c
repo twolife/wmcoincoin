@@ -852,7 +852,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->balloon_fn_size = 10;
   p->use_iconwin = 1; /* style windowmaker par defaut */
   p->draw_border = 0; /* idem */
-  p->palmipede_override_redirect = 0;
+  p->palmipede_override_redirect = 1;
   p->dock_xpos = p->dock_ypos = 0;
   p->start_in_boss_mode = 0;
 
@@ -862,6 +862,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->gogole_search_url = NULL;
   p->enable_troll_detector = 1;
   p->board_auto_dl_pictures = 0;
+  p->board_enable_hfr_pictures = 0;
 
   ASSIGN_STRING_VAL(p->pp_fn_family, "helvetica");
   p->pp_fn_size = 12;
@@ -1134,7 +1135,10 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break;
   case OPT_board_auto_dl_pictures: {
     CHECK_BOOL_ARG(p->board_auto_dl_pictures);
-  }
+  } break;
+  case OPT_board_enable_hfr_pictures: {
+    CHECK_BOOL_ARG(p->board_enable_hfr_pictures);
+  } break;
   case OPT_tribune_post_cmd: {
     ASSIGN_STRING_VAL(p->post_cmd[0], arg);
   } break; 

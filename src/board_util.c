@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.15 2003/06/29 23:58:37 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.16 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.16  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.15  2003/06/29 23:58:37  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -695,7 +698,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	is_multi = 1;
 	do { 
 	  end++;
-	} while (isalpha(*end));
+	} while (isalnum(*end));
 /* 		{ char c = *end; *end = 0; printf("TOK : %s\n", start); *end = c; } */
       }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
@@ -703,11 +706,13 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
     } else {
       int ok_totoz = 0;
       if (end[0] == '[' && end[1] == ':') { /* totoz ? */
-        const unsigned char *s = end+2;
-        int i;
-        for (i=0; i < 100 && s[i]; ++i) {
-          if (s[i] == ']' && i > 2) { end = s+i+1; ok_totoz = 1; break; }
-          if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-') break;
+        if (Prefs.board_enable_hfr_pictures) {
+          const unsigned char *s = end+2;
+          int i;
+          for (i=0; i < 100 && s[i]; ++i) {
+            if (s[i] == ']' && i > 2) { end = s+i+1; ok_totoz = 1; break; }
+            if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-') break;
+          }
         }
         if (!ok_totoz) end++; /* pour relancer la machine */
       }

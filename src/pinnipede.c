@@ -1,12 +1,11 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.96 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.97 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
 */
 #include <X11/keysym.h>
 #include "pinnipede.h"
-
 inline static int
 pp_thread_filter_find_id(const struct _PinnipedeFilter *f, id_type id) {
   int i;
@@ -635,8 +634,15 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	int i;
 	char *url;
 	attr |= PWATTR_LNK;
-	i = strlen(s)-1; assert(i>0);
-	while (s[i] != '\"' && i > 0) i--;
+        /* MODIF lo v2.4.6a 05/08/03 ITEM#FFE902  (j'ai presque l'impression d'%/1€Œiso8859-15ê
+           tre au taff) */
+        /* Oooops. S'il y a un target qui traine, tout est p%/1€Œiso8859-15ét%/1€Œiso8859-15é
+         * Alors on va plut%/1€Œiso8859-15ôt chercher la fin depuis le d%/1€Œiso8859-15ébut
+         * (sisi, suivez moi bien
+         */
+        i=strlen("\t<a href=\"") + 1;
+        while (s[i] && s[i] != '\"') i++;
+        /* FIN_MODIF lo v2.4.6a 05/08/03 ITEM#FFE902 */
 	s[i] = 0;
 	url = s+10;
 	if (url[0] == '.') { /* chemin relatif :-/ */	  
@@ -689,7 +695,8 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	if (pp_visited_links_find(pp, attr_s)) attr |= PWATTR_VISITED;
       }
 
-      if (s[0] == '[' && s[1] == ':' && strlen(s) > 5 && s[strlen(s)-1] == ']') { /* totoz ? */
+      if (Prefs.board_enable_hfr_pictures &&
+          s[0] == '[' && s[1] == ':' && strlen(s) > 5 && s[strlen(s)-1] == ']') { /* totoz ? */
         const char *st = "bug...";
         int z = pp_totoz_img_status(pp,s);
         switch (z) {
@@ -1063,7 +1070,7 @@ pp_clear_win_area(Dock *dock, int x, int y, int w, int h)
     XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
     XFillRectangle(dock->display, pp->win, dock->NormalGC, x, y, w, h);
   } else {
-    XCopyArea(dock->display, pp->bg_pixmap, pp->win, dock->NormalGC, x, y, 
+    XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, x, y+pp->lpix_h0, 
 	      w, h, x, y);
   }
 }
@@ -1093,8 +1100,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
   if (use_bg_pixmap == 0) {
     XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
   } else {
-    assert(pp->bg_pixmap != None);
-    XCopyArea(dock->display, pp->bg_pixmap, pp->lpix, dock->NormalGC, 0, dest_y, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, 0);
+    XCopyArea(dock->display, pp->lpix, pp->lpix, dock->NormalGC, 0, dest_y+pp->lpix_h0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, 0);
   }
 
 
@@ -1686,26 +1692,28 @@ pp_update_bg_pixmap(Dock *dock)
   if (pp->lpix != None) {
     XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
   }
-  pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
   
+  pp->lpix_h0 = MAX(MINIB_H, pp->fn_h);
 
-  if (pp->bg_pixmap != None) {
-    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
-  }
   if (pp->transparency_mode) {
     int xpos, ypos;
     xpos = pp->win_real_xpos; ypos = pp->win_real_ypos;
     //    get_window_pos_with_decor(dock->display, pp->win, &xpos, &ypos);
     //printf("window pos without: %d, %d (pp_xpos=%d, pp_ypos=%d)\n", xpos, ypos, pp->win_real_xpos, pp->win_real_ypos);
-    pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
-						  xpos, ypos, 
-						  pp->win_width, pp->win_height,
-						  &Prefs.pp_transparency, 
-						  Prefs.use_fake_real_transparency);
-    if (pp->bg_pixmap == None) {
+    pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, pp->win_height+pp->lpix_h0, DefaultDepth(dock->display,dock->screennum));
+    if (pp->lpix == None || extract_root_pixmap_and_shade(dock->rgba_context,
+                                                          xpos, ypos, 
+                                                          pp->win_width, pp->win_height,
+                                                          &Prefs.pp_transparency, 
+                                                          Prefs.use_fake_real_transparency, pp->lpix, 0, pp->lpix_h0) != 0) {
       myprintf(_("%<yel impossible to use the pseudo-transparency> (probable solution: relaunch wmsetbg or its equivalent)\n"));
+      XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
       pp_change_transparency_mode(dock, 0);
     }
+  }
+  if (pp->lpix == None) {
+    pp_change_transparency_mode(dock, 0);
+    pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, pp->lpix_h0, DefaultDepth(dock->display,dock->screennum));
   }
 }
 
@@ -1853,7 +1861,7 @@ pp_build(Dock *dock)
 
   pp->mapped = 0;
 
-  pp->bg_pixmap = None;
+  pp->lpix_h0 = 0;
   pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
 
   pp->id_base = id_type_invalid_id(); pp->decal_base = 0;
@@ -2009,7 +2017,7 @@ pp_show(Dock *dock)
   for (xiscr=0; xiscr < dock->nb_xiscreen; ++xiscr) {
     int x0=dock->xiscreen[xiscr].x_org, y0=dock->xiscreen[xiscr].y_org;
     int x1=x0+dock->xiscreen[xiscr].width,y1=y0+dock->xiscreen[xiscr].height;
-    //printf("[%d-%dx%d-%x] %d %d\n", x0,x1,y0,y1
+    //printf("[%d-%dx%d-%x] %d %d\n", x0,x1,y0,y1);
     if (MIN(xpos + pp->win_width,x1) - MAX(xpos,x0)  > 20 &&
         MIN(ypos + pp->win_height,y1) - MAX(ypos,y0)  > 20)
       wrong_pos = 0;
@@ -2355,10 +2363,8 @@ pp_unmap(Dock *dock)
 
 
   XDestroyWindow(dock->display, pp->win);
-  XFreePixmap(dock->display, pp->lpix); pp->lpix = None;
-  if (pp->bg_pixmap != None) {
-    XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
-  }
+  if (pp->lpix != None) XFreePixmap(dock->display, pp->lpix); 
+  pp->lpix = None;
   pp->win = None;
 
   pp->mapped = 0;
@@ -3101,6 +3107,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
     pp_refresh(dock, pp->win, NULL);
     //    printf("scroll up  : id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button5) {
+    
     pp_update_content(dock, pp->id_base, pp->decal_base+q,0,0);
     pp_refresh(dock, pp->win, NULL);
     //printf("scroll down: id=%d %d\n",pp->id_base, pp->decal_base);
@@ -3757,6 +3764,12 @@ pp_handle_keypress(Dock *dock, XEvent *event)
 }
 
 int
+pp_handle_keyrelease(Dock *dock, XEvent *event)
+{
+  return 0;
+}
+
+int
 pp_dispatch_event(Dock *dock, XEvent *event)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -3861,7 +3874,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
     {
       XWindowAttributes wa;
       Window child;
-
+      int dim_changed = 0;
 
       
       //printf("ConfigureNotify: w<-%d, h<-%d\n", event->xconfigure.width, event->xconfigure.height);
@@ -3876,24 +3889,17 @@ pp_dispatch_event(Dock *dock, XEvent *event)
       			    0/*wa.x*/, 0/*wa.y*/, &pp->win_real_xpos, &pp->win_real_ypos, &child);
       
       //      printf(" -> xpos=%d, ypos=%d [%d %d]\n", pp->win_real_xpos,pp->win_real_ypos, wa.x, wa.y);
-      if (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height ||
-	  pp->transparency_mode) {
+      dim_changed = (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height);
+      if (dim_changed || pp->transparency_mode) {
 	pp->win_width = MAX(event->xconfigure.width,80);
 	pp->win_height = MAX(event->xconfigure.height,80);
 	
 	/* eh oui, faut pas oublier ça.... */
-	XFreePixmap(dock->display, pp->lpix);
-	pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
-
-	/* euh oui, a fixer d'une maniere ou d'une autre,
-	   mais il ne faut pas que la fenetre soit mappée quand
-	   on met à jour l'image de fond ...(en mode use_fake_real_transparency) */
 	if (Prefs.use_fake_real_transparency == 0)
-	  pp_update_bg_pixmap(dock);
-	
-	//	pp_minib_initialize(pp);
+          pp_update_bg_pixmap(dock);
 	pp_pv_destroy(pp);
 	pp_update_content(dock, pp->id_base, pp->decal_base, 0,1);
+	pp_refresh(dock, pp->win, NULL);
       }
     } break;
   case EnterNotify:

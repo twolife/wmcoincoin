@@ -364,10 +364,10 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
   if (pt && pt->clicked == 1) {
     Board *board = pt->site->board;
     if (event->button == Button1) {
-      if ((event->state & ControlMask) == 0 ) {
-	if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
+      if ((event->state & (ControlMask | ShiftMask)) == 0 ) {
+        /*	if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
 	  board->auto_refresh = 1-board->auto_refresh;
-	} else {
+          } else {*/
 	  /* clic 'classique sur une tab */
 	  if (Prefs.pp_use_classical_tabs) {
 	    pp->active_tab = pt;
@@ -377,8 +377,8 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
 	  } else {	  /* clic plus tordu */
             pp_tabs_cliquouille(pp, pt);
 	  }
-	}
-      } else { /* ctrl-left clic */
+          /*	}*/
+      } else if ((event->state & (ControlMask))) { /* ctrl-left clic */
 	if (pt->selected) {
 	  if (pt == pp->active_tab) {
 	    for (i=0; i < pp->nb_tabs; ++i)
@@ -388,6 +388,8 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
 	} else {
 	  pt->selected = 1;
 	}
+      } else { /* shift-left clic */
+        board->auto_refresh = 1-board->auto_refresh;
       }
     } else if (event->button == Button2) {
       ccqueue_push_board_update(pt->site->site_id);

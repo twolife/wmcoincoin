@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.56 2003/07/20 22:22:27 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.57 2003/08/26 21:50:47 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.57  2003/08/26 21:50:47  pouaite
+#%  2.6.4b au mastic
+#%
 #%  Revision 1.56  2003/07/20 22:22:27  pouaite
 #%  ce commit est dedie a Pierre Tramo
 #%
@@ -222,6 +225,15 @@
 ### sur le proxy de la boite quand on a 15 tribunes dans le coincoin)
 #.board.auto_refresh: on
 
+### active la reconnaissance auto des mots du style [:totoz]
+### pour afficher l'image correspondante trouvée dans les smileys de hfr
+### le d/l d'une image est assuré par wmcc-totoz-get
+### l'affichage par wmcoincoin_player
+#board.enable_hfr_pictures: on
+
+### active le d/l automatique des images inconnues. Attention c'est potentiellement 
+### dangeureux (un script executé automatiquement, des bugs possibles, un maichant 
+### qui rode et paf)
 #board.auto_dl_pictures: on
 
 ### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede

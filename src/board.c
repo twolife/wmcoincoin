@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.21 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: board.c,v 1.22 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.22  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.21  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -1425,7 +1428,7 @@ board_update(Board *board)
     snprintf(path, 2048, "%s/wmcoincoin/test/%s/remote.xml", getenv("HOME"), board->site->prefs->site_name);
     myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
-  wmcc_init_http_request(&r, board->site->prefs, path);
+  wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   wmcc_log_http_request(board->site, &r);
@@ -1546,8 +1549,8 @@ board_update(Board *board)
 		     "this bugfix for coconuts.\n"), id);
 	  }
 	  flag_updating_board++;
-	  board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent);
-	  board->nb_msg_at_last_check++;
+	  if (!board_log_msg(board, ua, login, stimestamp, msg, id, my_useragent)->in_boitakon)
+            board->nb_msg_at_last_check++;
 	  flag_updating_board--;
 	}
 

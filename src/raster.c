@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.17 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.18 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.18  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.17  2002/08/18 19:00:28  pouaite
   plop
 
@@ -51,7 +54,6 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
-#include <assert.h>
 #include <string.h>
 #include <errno.h>
 #include "global.h"

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.17 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.18 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.18  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.17  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -1282,7 +1285,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
     LeaveWindowMask | 
     FocusChangeMask;
   //  if (! ClickOnly) wa.event_mask |= EnterWindowMask | LeaveWindowMask ;
-  wa.override_redirect = False ;
+  wa.override_redirect = (Prefs.palmipede_override_redirect ? True : False) ;
   XChangeWindowAttributes (dock->display, ew->win,
 			   //CWBackPixmap | 
 			   CWEventMask | CWOverrideRedirect, &wa);
@@ -1396,8 +1399,9 @@ editw_action(Dock *dock, EditW *ew)
     float f;
     int l;
     static int save_prev_l = 0;
-    Pixmap tpix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
-                                DefaultDepth(dock->display,dock->screennum));
+    Pixmap tpix = Prefs.palmipede_override_redirect ? 
+      None : XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
+                           DefaultDepth(dock->display,dock->screennum));
     f = (ew->action_step+1) / ((float)ACTION_NB_STEPS);
     l = (int)(EW_SHAPED_WIDTH * f * f + .5);
     //    l = (EW_SHAPED_WIDTH * (ew->action_step+1)) / (ACTION_NB_STEPS);
@@ -1422,18 +1426,23 @@ editw_action(Dock *dock, EditW *ew)
       XShapeOffsetShape(dock->display, ew->win, ShapeBounding, l-save_prev_l, 0);
       save_prev_l = l;
       XMoveResizeWindow(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-      ////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
-      XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      if (Prefs.palmipede_override_redirect)
+        XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      else
+        XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
     } else {
       ew->win_xpos = ew->dock_x-l +2;
       ew->win_ypos = ew->dock_y;
       XMoveResizeWindow(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-      ////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
-      XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      if (Prefs.palmipede_override_redirect)
+        XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      else XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
     }
-    XSetWindowBackgroundPixmap(dock->display, ew->win, tpix); 
-    XFreePixmap(dock->display, tpix);
-
+    
+    if (!Prefs.palmipede_override_redirect) {
+      XSetWindowBackgroundPixmap(dock->display, ew->win, tpix); 
+      XFreePixmap(dock->display, tpix);
+    }
     if (ew->action_step == 0) {
       Window root_return;
       int x_return, y_return, width_return, height_return, border_width_return, depth_return;
@@ -1441,7 +1450,7 @@ editw_action(Dock *dock, EditW *ew)
                                EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
       XGetGeometry(dock->display, ew->win, &root_return, &x_return, &y_return, &width_return,
                    &height_return, &border_width_return, &depth_return);
-      printf("kikoo XMapRaised palmi %d,%d <-> %dx%d+%d+%d\n", ew->win_xpos, ew->win_ypos, width_return, height_return, x_return, y_return);
+      //printf("kikoo XMapRaised palmi %d,%d <-> %dx%d+%d+%d\n", ew->win_xpos, ew->win_ypos, width_return, height_return, x_return, y_return);
       XMapRaised(dock->display, ew->win);
     }
     ew->action_step ++;
@@ -2192,7 +2201,6 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
       ew->curs_x = x; ew->curs_y = y;
       ew->sel_anchor = editw_xy2strpos(ew,x,y);
       ew->sel_head = ew->sel_anchor;
-    
       /* middle clic */  
     } else if (event->button == Button2) {
       editw_cb_paste(dock, ew, 1);
@@ -2209,6 +2217,8 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
 	editw_change_current_site(dock,i);
       }
     }
+  } else if (event->button == Button1) {
+    XRaiseWindow(dock->display, ew->win);
   }
   if (event->button == Button4) {
     editw_next_site(dock,-1);
@@ -2361,10 +2371,6 @@ editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event)
   case MapNotify:
     {
     } break;
-  case KeyRelease:
-    {
-      editw_handle_keyrelease(dock, ew, event);
-    } break;
   case SelectionClear:
     {
       //      printf("selection clear\n");
@@ -2386,7 +2392,6 @@ editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event)
   case UnmapNotify:
     {
       if (editw_ismapped(ew)) editw_unmap(dock,ew);
-      printf("au revoir palmi\n");
     } break;
   }
 }
@@ -2411,6 +2416,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "<i>vi sux0r, emacs roulaize</i>",
     "une question a la con qui se termine par <i>c'est normal?</i>",
     "une contrepetrie",
+    "une bonne blague, par exemple que'est-ce que ça fait quand on se trompe entre la vaseline et le mastic",
     "d'attendre 11:11:11 pour donner l'heure",
     "<i>Plop!</i>",
     "de vous faire passer pour un admin NT",
@@ -2429,11 +2435,13 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "14:00 plodocus",
     "d'ouvrir une bière",
     "d'aller prendre un cafè",
-    "de poster un jeu de mot bien pourri",
+    "de poster un jeu de mot bien pourri (exemple: windows m'ecoeure)",
     "demander où est la FAQ de la tribune",
     "de signaler que WindowMaker 0.70.0 is out!",
+    "de rappeler que Rational a été racheté par IBM avec une [url] qui claque",
     "de lancer un troll sur les user-agents",
-    "d'annoncer avec émotion que vous venez de passer moine",
+    "d'annoncer avec émotion que vous venez de dépasser les 100XP",
+    "de gueuler contre le système de votes",
     "de tenter un concours de trollomètre",
     "de convaincre les moules de lancer un manual DDOS",
     "de poster un lien sur un forum externe (hard-war, aufeminin...)",
@@ -2454,6 +2462,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "<i>le COBOL, c'est de la merde !<i>",
     "un troll de langages de programmation",
     "14:00 phtérie ?",
+    "d'expliquer comment vous faites pour attraper et tuer les chats",
     "<i>wolfenstein cd key</i>",
     "d'expliquer pourquoi vous n'irez pas passer vos vacances en Bretagne",
     "de disserter sur la fainéantise des fonctionnaires de ce pays",

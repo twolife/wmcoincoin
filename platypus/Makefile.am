@@ -1,4 +1,5 @@
-bin_PROGRAMS = wmcoincoin_player
+bin_PROGRAMS = @WMCOINCOIN_PLAYER@
+EXTRA_PROGRAMS = wmcoincoin_player
 
 LIBS = `imlib2-config --libs`
 

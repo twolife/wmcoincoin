@@ -3,11 +3,10 @@
 #  include "windows.h"
 #  include "winsock.h"
 #  include <unistd.h>
-#define AI_NUMERICHOST 4
-#define __INSIDE_HTTP
-#include "global.h"
-#include "http.h"
-#  include <assert.h>
+#  define AI_NUMERICHOST 4
+#  define __INSIDE_HTTP
+#  include "global.h"
+#  include "http.h"
 #  include <stdio.h>
 #  include <stdlib.h>
 #  include <string.h>
@@ -30,7 +29,6 @@
 #  include <arpa/inet.h>
 #  include <netdb.h>
 #  include <stdarg.h>
-#  include <assert.h>
 #  include <stdlib.h>
 #  include <stdio.h>
 #  include <string.h>

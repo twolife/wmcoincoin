@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.36 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.37 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.37  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.36  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -159,6 +162,70 @@
 
 /* au max un defilement toutes les 15 secondes */
 #define TROLLO_MAX_SPEED 15
+
+#if 0
+typedef struct _Duck {
+  id_type id;
+  float x,y,vx,vy;
+  int step, age;
+  Window win;
+} Duck;
+
+
+ducks_build(Dock *dock) {
+  dock->nb_duck = 0;
+  
+}
+
+void
+ducks_add(Dock *dock, id_type id) {
+}
+
+void
+ducks_remove(Dock *dock, int i) {
+  assert(i < dock->nb_duck);
+  XDestroyWindow(dock->ducks[i].win);
+  memmove(dock->ducks + i, dock->ducks + i+1, dock->nb_duck-1-i);
+  dock->nb_duck--;
+}
+
+
+static int duck_is_in(Dock *dock, float x, float y) {
+  int i, ix=(int)x, iy=(int)y;
+  for (i=0; i < dock->nb_xiscreen; ++i) {
+    if (ix >= dock->xiscreen[i].x_org && iy >= dock->xiscreen[i].y_org &&
+        ix <= dock->xiscreen[i].x_org + dock->xiscreen[i].width -20 && 
+        iy <= dock->xiscreen[i].y_org + dock->xiscreen[i].height-20) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int duck_is_dead(Duck *d) { return (d->step == DUCK_DEAD); }
+
+ducks_animate(Dock *dock) {
+  for (i=0; i < dock->nb_duck; ++i) {
+    Duck *d = &dock->ducks[i];
+    if (!duck_is_dead(d->step)) {
+      d->x += d->vx;
+      d->y += d->vy;
+      d->step = (d->step + 1) % 4;
+      if (!duck_is_in(dock,d->x,d->y)) {
+        if (duck_is_in(dock,d->x-2*d->vx,d->y)) {
+          d->x -= 2*d->vx; d->vx = -d->vx;
+        } else if (duck_is_in(dock,d->x,d->y-2*d->vy)) {
+          d->y -= 2*d->vy; d->vy = -d->vy;
+        } else if (duck_is_in(dock,d->x-2*d->vx,d->y-2*d->vy)) {
+          d->x -= 2*d->vx; d->vx = -d->vx;
+          d->y -= 2*d->vy; d->vy = -d->vy;
+        } else d->step = DUCK_DEAD;
+      }
+    }
+  }
+}
+
+#endif
 
 void
 dock_update_pix_trolloscope(Dock *dock)

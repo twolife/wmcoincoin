@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.10 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.11 2003/08/26 21:50:48 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.11  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.10  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -387,11 +390,11 @@ int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
 
 /* obligé de gérer les erreurs de manière un peu cavalière, car le root pixmap peut être détruit
    à tout bout de champ etc.. */
-Pixmap
+int
 extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, 
-			      TransparencyInfo *ti, int use_fake_real_transparency)
+			      TransparencyInfo *ti, int use_fake_real_transparency, Pixmap shade_pix, int spdx, int spdy)
 {
-  Pixmap root_pix, shade_pix;
+  Pixmap root_pix;
   XImage *ximg;
   int rw,rh,rx,ry,dx,dy,sw,sh;
   
@@ -420,12 +423,13 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
   }
   if (rw < 0 || rh < 0) return None;
 
+  dx += spdx; dy += spdy;
+
   x11_error_occured = 0;
 
   /* transparence pure, ça va vite */
   if (ti->type == FULL_TRANSPARENCY) {
-    shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
-			      w, h, rc->depth); assert(shade_pix != None);
+    assert(shade_pix != None);
     XSetErrorHandler(x_error_handler_bidon);
 
     if (use_fake_real_transparency) {
@@ -438,8 +442,9 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
 		rx, ry, rw, rh, dx, dy);
     }
     XSync(rc->dpy,0);
-    XSetErrorHandler(NULL); if (x11_error_occured) { XFreePixmap(rc->dpy, shade_pix); shade_pix = None; };
-    return shade_pix;
+    XSetErrorHandler(NULL); 
+    if (x11_error_occured) { return -1; }
+    else return 0;
   }
 
   /* shade/tinte, il faut retravailler l'image */
@@ -452,14 +457,13 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
     ximg = XGetImage(rc->dpy, root_pix, rx, ry, rw, rh, 
 		     AllPlanes, ZPixmap); 
   }
-  XSetErrorHandler(NULL); if (x11_error_occured || ximg == NULL) return None;
+  XSetErrorHandler(NULL); if (x11_error_occured || ximg == NULL) return -1;
 
   shade_XImage(rc, ximg, ti);
-  shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
-			    w, h, rc->depth); assert(shade_pix != None);
+  assert(shade_pix != None);
   XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, dx, dy, rw, rh);
   XDestroyImage(ximg);
-  return shade_pix;
+  return 0;
 }
 
 int
@@ -506,7 +510,7 @@ typedef struct {
 int
 set_borderless_window_hints(Display *display, Window win) {
   enum { MOTIF_WM_HINTS=0, KWM_WIN_DECORATION, WIN_HINTS, 
-         NET_WM_STATE, NET_WM_STATE_SKIP_TASKBAR, NET_WM_STATE_STAYS_ON_TOP, NB_ATOMS };
+         NET_WM_STATE, NET_WM_STATE_SKIP_TASKBAR, NET_WM_WINDOW_TYPE, NET_WM_WINDOW_TYPE_DOCK, NET_WM_STATE_STAYS_ON_TOP, NB_ATOMS };
 
   Atom atom[NB_ATOMS];
   char *atom_names[NB_ATOMS] = { "_MOTIF_WM_HINTS", 
@@ -514,6 +518,8 @@ set_borderless_window_hints(Display *display, Window win) {
                                  "_WIN_HINTS", 
                                  "_NET_WM_STATE",
                                  "_NET_WM_STATE_SKIP_TASKBAR", 
+                                 "_NET_WM_WINDOW_TYPE",
+                                 "_NET_WM_WINDOW_TYPE_DOCK",
                                  "_NET_WM_STATE_STAYS_ON_TOP" };
   int ok = 0;
   XInternAtoms(display, atom_names, NB_ATOMS, True, atom);
@@ -559,10 +565,16 @@ set_borderless_window_hints(Display *display, Window win) {
                     sizeof(GNOMEHints)/4);
     ok = 1;
   }
-  if (atom[NET_WM_STATE] != None) {
-    Atom p[2]; p[0] = atom[NET_WM_STATE_SKIP_TASKBAR]; p[1] = atom[NET_WM_STATE_STAYS_ON_TOP];
+    if (atom[NET_WM_STATE] != None) {
+    Atom p[2]; 
+    p[0] = atom[NET_WM_STATE_SKIP_TASKBAR]; 
+    p[1] = atom[NET_WM_STATE_STAYS_ON_TOP];
     XChangeProperty(display, win, atom[NET_WM_STATE], XA_ATOM, 32,
                     PropModeReplace, (unsigned char *)p, 2);
+  }
+  if (atom[NET_WM_WINDOW_TYPE] != None) {
+    XChangeProperty(display, win, atom[NET_WM_WINDOW_TYPE], XA_ATOM, 32,
+                    PropModeReplace, (unsigned char*)&atom[NET_WM_WINDOW_TYPE_DOCK], 1);
   }
   return ok; /* pour savoir si il faut la passer en overrideredirect */
 }
@@ -634,4 +646,34 @@ set_window_class_hint(Display *display, Window win, char *res_class, char *res_n
   class_hint->res_class = res_class;
   XSetClassHint(display, win, class_hint);
   XFree(class_hint);
+}
+
+void
+show_gc(Display *display, GC gc) {
+  XGCValues v;
+  XGetGCValues(display, gc, (unsigned long)(-1L), &v);
+  printf("GCValues:\n");
+  printf(" int function             = %d\n", v.function);
+  printf(" unsigned long plane_mask = %08lx\n",v.plane_mask);
+  printf(" unsigned long foreground = %08lx\n",v.foreground);
+  printf(" unsigned long background = %08lx\n",v.background);
+  printf(" int line_width           = %d\n",v.line_width);
+  printf(" int line_style           = %d\n",v.line_style);
+  printf(" int cap_style            = %d\n",v.cap_style);
+  printf(" int join_style           = %d\n",v.join_style);
+  printf(" int fill_style           = %d\n",v.fill_style);
+  printf(" int fill_rule            = %d\n",v.fill_rule);
+  printf(" int arc_mode             = %d\n",v.arc_mode);
+  printf(" Pixmap tile              = %08lx\n",v.tile);
+  printf(" Pixmap stipple           = %08lx\n",v.stipple);
+  printf(" int ts_x_origin          = %d\n",v.ts_x_origin);
+  printf(" int ts_y_origin          = %d\n",v.ts_y_origin);
+  printf(" Font font                = %08lx\n",v.font);
+  printf(" int subwindow_mode       = %d\n",v.subwindow_mode);
+  printf(" Bool graphics_exposures  = %d\n",v.graphics_exposures);
+  printf(" int clip_x_origin        = %d\n",v.clip_x_origin);
+  printf(" int clip_y_origin        = %d\n",v.clip_y_origin);
+  printf(" Pixmap clip_mask         = %08lx\n",v.clip_mask);
+  printf(" int dash_offset          = %d\n",v.dash_offset);
+  printf(" char dashes              = %c\n",v.dashes);
 }

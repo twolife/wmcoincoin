@@ -25,7 +25,8 @@ void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int 
 void get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y);
 Pixmap get_rootwin_pixmap(const RGBAContext *rc);
 void shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *tr);
-Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr, int use_fake_real_transparency);
+int extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr, 
+                                     int use_fake_real_transparency, Pixmap shade_pix, int spdx, int spdy);
 int lighten_color(int icol, float light);
 int set_borderless_window_hints(Display *display, Window win);
 void set_window_title(Display *display, Window win, char *window_title, char *icon_title);
@@ -35,4 +36,5 @@ void set_window_sizepos_hints(Display *display, Window win,
                               int minw, int basew, int maxw,
                               int minh, int baseh, int maxh);
 void set_window_class_hint(Display *display, Window win, char *res_class, char *res_name);
+void show_gc(Display *, GC);
 #endif

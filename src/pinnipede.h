@@ -182,14 +182,14 @@ struct _Pinnipede {
 
   
   volatile int flag_board_updated;
-  Pixmap lpix;
+  int lpix_h0;
+  Pixmap lpix; /* stocke aussi le bg_pixmap (après les lpix_h0 premieres lignes) */
 
   PicoHtml *ph_fortune;
   int fortune_h, fortune_w;
 
   struct _PinnipedeFilter filter;
 
-  Pixmap bg_pixmap;
   int transparency_mode;
   //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 

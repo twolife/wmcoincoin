@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.85 2003/07/20 22:22:28 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.86 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.86  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.85  2003/07/20 22:22:28  pouaite
   ce commit est dedie a Pierre Tramo
 
@@ -609,6 +612,10 @@ char *formate_erreur( char *tribune, char *message_ignoble )
       }
     }
   
+  /*  if ( ! content && strstr(message_ignoble, "Redirection vers http://www.nofrag.com"))
+    content = 1;
+  else printf("message ignoble=%s\n",message_ignoble);
+  */
   if ( ! content ) {
     joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
                                  "the server answered:<p>%s"), tribune, message_ignoble );	
@@ -667,9 +674,9 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
     if ( *reponse != 0 ) {
 			char *s;
       s = formate_erreur( site->prefs->site_name, reponse ); 
-      msgbox_show(dock, s);
+      if (s) msgbox_show(dock, s);
       free(s);
-			free(reponse);
+      free(reponse);
     }
     http_request_close(&r);
     site->http_success_cnt++;
@@ -932,6 +939,9 @@ wmcoincoin_dispatch_events(Dock *dock)
       if (event.type == KeyPress) {
         if (!pp_handle_keypress(dock,&event))
           editw_handle_keypress(dock,dock->editw,&event);
+      } else if (event.type == KeyRelease) {
+        if (!pp_handle_keyrelease(dock,&event))
+          editw_handle_keyrelease(dock,dock->editw,&event);
       } else if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
 	dock_dispatch_event(dock, &event);
       } else if (event.xany.window == editw_get_win(dock->editw) && event.xany.window) {
@@ -1565,6 +1575,7 @@ void initx(Dock *dock, int argc, char **argv) {
 #endif
   if (dock->nb_xiscreen==0) {
     myprintf("Xinerama support disabled\n");
+    dock->nb_xiscreen = 1;
     dock->xiscreen = calloc(1, sizeof *(dock->xiscreen));
     dock->xiscreen[0].screen_number = 0;
     dock->xiscreen[0].x_org = 0;

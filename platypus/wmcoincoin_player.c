@@ -21,8 +21,7 @@ Pixmap   pm = 0;
 Visual  *vis = 0;
 Colormap cm;
 int      depth;
-int      image_width = 0, image_height = 0;
-Imlib_Image bg_im = NULL;
+
 
 #define MAX(a,b) ((a)<(b) ? (b) : (a))
 #define MIN(a,b) ((a)>(b) ? (b) : (a))
@@ -84,7 +83,7 @@ main_loop() {
       */
       imlib_render_image_part_on_drawable_at_size(0, 0, anim.width, anim.height,
                                                   0, 0, w, h);
-      usleep(MAX(anim.delay[img],1) * 7500);
+      usleep(MAX(anim.delay[img],1) * 8000);
     }
   }
 }
@@ -105,6 +104,16 @@ main (int argc, char **argv)
    init_anim();
 
    disp  = XOpenDisplay(NULL);
+   if (argc == 1) {
+     printf("kikou je suis un player pourri\n");
+     printf("mes options toutes plus nazes les unes que les autres sont:\n");
+     printf(" wmcoincoin_player uneimage        pour voir une image\n");
+     printf(" wmcoincoin_player -z unchiffre uneimage  pour voir une image avec un certain facteur de zoom\n");
+     printf(" wmcoincoin_player -i uneimage     pour connaitres les dimensions d'une image\n");
+     printf(" wmcoincoin_player -s uneimage     le stack-mode (pour debeuggai)\n");
+     printf(" le dernier argument, optionel, est l'id de la fenetre a utiliser\n");
+     exit(0);
+   }
    if (argc >= 3 && strcmp(argv[1], "-i") == 0) {
      query_mode = 1;
      argc--; argv++;
@@ -132,7 +141,7 @@ main (int argc, char **argv)
      XWindowAttributes attr;
      unsigned long lwin;
      sscanf(argv[2],"0x%lx",&lwin); win = lwin;
-     printf("win=%08lx\n", lwin);
+     //printf("win=%08lx\n", lwin);
      fname = argv[1];
      XGetWindowAttributes(disp, win, &attr);
      vis = attr.visual;
@@ -151,13 +160,17 @@ main (int argc, char **argv)
    f = fopen(fname, "rb");
    if (!f) {
      fprintf(stderr, "%s: %s", fname, strerror(errno));
-     return 0;
+     return 1;
    }
    gfs = Gif_FullReadFile(f, GIF_READ_COMPRESSED, 0, 0);
    if (!gfs || Gif_ImageCount(gfs) == 0) {
      anim.nimg = 1;
      anim.imgs = Gif_NewArray(Imlib_Image*, anim.nimg);
      anim.imgs[0] = imlib_load_image(fname);
+     if (anim.imgs[0] == NULL) {
+       fprintf(stderr,"'%s' is not a valid image according to imlib2\n",fname);
+       return 1;
+     }
      anim.delay = Gif_NewArray(int, anim.nimg);
      anim.delay[0] = 1000000;
      anim.loopcnt = -1;
@@ -166,7 +179,7 @@ main (int argc, char **argv)
      anim.height = imlib_image_get_height();
    } else {
      int last,disposal;
-     int i, x, y;
+     int i, x, y, lastx,lasty,lastw,lasth;
      anim.width = anim.height = 0;
      if (stack_mode) {
        fprintf(stderr, "%s: background=%02x nbcol=%d sw=%d sh=%d\n", fname, gfs->background, gfs->global->ncol, gfs->screen_width, gfs->screen_height);
@@ -198,9 +211,9 @@ main (int argc, char **argv)
      */
 
      last = -1;
-
+     lastx = 0; lasty = 0; lastw = anim.width; lasth = anim.height;
      disposal = GIF_DISPOSAL_NONE; //gfs->images[gfs->nimages-1]->disposal;
-     for (i=0; i < gfs->nimages; ++i) {       
+     for (i=0; i < gfs->nimages; ++i) {
        DATA32 *data = anim.data + anim.width*anim.height*i;
        Gif_Image *gfi = gfs->images[i];
        int k;
@@ -208,14 +221,28 @@ main (int argc, char **argv)
        if (!gfi->img && !gfi->image_data && gfi->compressed) {
          Gif_UncompressImage(gfi);
        }
+       if (i) memcpy(data, data - anim.width*anim.height , anim.width*anim.height*sizeof(int));
        if ((disposal == GIF_DISPOSAL_NONE || 
             disposal == GIF_DISPOSAL_BACKGROUND) || last == -1 || stack_mode) {
-         for (k=0; k < anim.width*anim.height; ++k) 
-           data[k] = prefs.bgcolor;
+         for (y=0; y < lasth; ++y) {
+           for (x=0; x < lastw; ++x) {
+             unsigned pos = (y+lasty)*anim.width + x + lastx;
+             data[pos] = prefs.bgcolor;
+           }
+         }
        } else {
          int l = last;
          if (i && disposal != GIF_DISPOSAL_ASIS) l = i-1;
-         for (k=0; k < anim.width*anim.height; ++k) data[k] = anim.data[l*anim.width*anim.height + k];
+         if (disposal == GIF_DISPOSAL_ASIS)
+           for (k=0; k < anim.width*anim.height; ++k) data[k] = anim.data[l*anim.width*anim.height + k];
+         else
+           for (y=0; y < lasth; ++y) {
+             for (x=0; x < lastw; ++x) {
+               unsigned pos = (y+lasty)*anim.width + x + lastx;
+               data[pos] = data[pos - l*anim.width*anim.height];
+             }
+           }
+         
        }
 
        for (y=0; y < gfi->height; ++y) {
@@ -251,6 +278,7 @@ main (int argc, char **argv)
          anim.height *= gfs->nimages;
        }
        disposal = gfi->disposal;
+       lastx = gfi->left; lasty = gfi->top; lastw = gfi->width; lasth = gfi->height;
      }
      //imlib_save_image("test.png");
      //progress(anim.imgs[0], 100, 0, 0, 1000, 1000);

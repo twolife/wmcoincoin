@@ -1,6 +1,6 @@
 #ifndef COINCOIN_UTIL
 #define COINCOIN_UTIL
-#include <assert.h>
+#include "global.h"
 #include <stdlib.h>
 #include <stdio.h>
 //#include "raster.h"
@@ -77,4 +77,5 @@ char *str_preencode_for_http(const char *in);
 FILE *open_wfile(const char *fname);
 int is_url(const char *s);
 void url_au_coiffeur(unsigned char *url, int coupe);
+void dump_backtrace();
 #endif

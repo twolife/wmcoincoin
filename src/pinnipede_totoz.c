@@ -54,7 +54,7 @@ pp_totoz_register_img(Pinnipede *pp, char *imgname, int status) {
   } else {
     int imgi = img - pp->totoz->img;
     if (++pp->totoz->nb_img > pp->totoz->max_img) {
-      pp->totoz->max_img += 2; /* --- TODO --- a changer */
+      pp->totoz->max_img += 20;
       pp->totoz->img = realloc(pp->totoz->img, pp->totoz->max_img * sizeof(struct pp_totoz_img)); assert(pp->totoz->img);
       img = pp->totoz->img + imgi;
     }
@@ -114,7 +114,7 @@ pp_totoz_rebuild(Dock *dock) {
   pp->totoz->animate_pid = 0;
   if (pp->totoz->img) free(pp->totoz->img);
   pp->totoz->nb_img = 0;
-  pp->totoz->max_img = 2; // --- TODO --- a changer
+  pp->totoz->max_img = 20;
   ALLOC_VEC(pp->totoz->img, pp->totoz->max_img, struct pp_totoz_img);
 }
 
@@ -275,7 +275,8 @@ pp_totoz_update_status_all(Dock *dock) {
       pp_totoz_update_status(dock, pp->totoz->img[i].name);
       cnt++;
     } else if (Prefs.board_auto_dl_pictures && pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) {
-      pp_totoz_download(dock, pp->totoz->img[i].name);
+      pp_totoz_update_status(dock, pp->totoz->img[i].name);
+      if (pp->totoz->img[i].status == PP_TOTOZ_STATUS_UNKNOWN) pp_totoz_download(dock, pp->totoz->img[i].name);
     }
   }
   return cnt;
@@ -332,11 +333,12 @@ pp_totoz_request(Dock *dock, char *imgname, int x, int y) {
     case -1: /* arrrrg */
       fprintf(stderr, _("Fork failed...(%s)\n"), strerror(errno)); pp->totoz->animate_pid = 0; break;
     case 0: {
-      char *swin = str_printf("0x%08lx",(unsigned long)pp->totoz->subwin); assert(swin);
-      char *sfile= str_printf("%s/.wmcoincoin/totoz/%s",getenv("HOME"),img->realname); assert(sfile);
+      char *swin = str_printf("0x%08lx",(unsigned long)pp->totoz->subwin);
+      char *sfile= str_printf("%s/.wmcoincoin/totoz/%s",getenv("HOME"),img->realname); 
+      int ret;
+      assert(sfile); assert(swin);
       sfile = shell_quote(sfile); assert(sfile);  /* et une deuxième couche, a priori parfaitement inutile */
       //    int ret = execlp("/usr/bin/animate", "/usr/bin/animate", "-virtual-pixel", "Constant", "-background", "white", "-window", swin, sfile, NULL, NULL);
-      int ret;
       /*
         if (use_gifview) {
         BLAHBLAH(0,myprintf("exec gifview +e -a --bg white -w %s %<YEL %s>\n", swin, sfile));
@@ -384,7 +386,8 @@ pp_totoz_download(Dock *dock, unsigned char *imgname) {
   char *realname = pp_totoz_realfname(imgname,0);
   char *cmd = NULL;
   pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_DOWNLOADING);
-  cmd = str_printf("%s/wmcoincoin/wmcc/scripts/wmcoincoin-totoz-get %s&", getenv("HOME"), realname);
+  //cmd = str_printf("%s/wmcoincoin/wmcc/scripts/wmcoincoin-totoz-get %s&", getenv("HOME"), realname);
+  cmd = str_printf("wmcoincoin-totoz-get %s&",realname);
   BLAHBLAH(0, myprintf("Trying to get a new picture [%s] ! executing '%<GRN %s>'\n", realname, cmd));
   system(cmd);
   free(cmd);

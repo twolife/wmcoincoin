@@ -1,4 +1,3 @@
-#include <assert.h>
 #include "global.h"
 #include "scrollcoin.h"
 #include "coin_util.h"

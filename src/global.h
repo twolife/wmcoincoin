@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.29 2002/12/20 17:40:55 pouaite Exp $
+  rcsid=$Id: global.h,v 1.30 2003/08/26 21:50:48 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.30  2003/08/26 21:50:48  pouaite
+  2.6.4b au mastic
+
   Revision 1.29  2002/12/20 17:40:55  pouaite
   ornythorinque en gelée
 
@@ -94,8 +97,13 @@
 
 #include "config.h"
 #include "prefs.h"
-#include <assert.h>
-
+#ifndef HAVE_BACKTRACE
+# include <assert.h>
+#else 
+void assertion_failed();
+# undef assert
+# define assert(x) if (!(x)) assertion_failed(__PRETTY_FUNCTION__, #x);
+#endif
 #define USERNAME_MAX_LEN 60 // lg max du username affiché dans la tribune, pour les personnes loggées
 
 #ifndef __APPLE_CC__
@@ -130,7 +138,7 @@
 
 #define WMCC_TIMER_DELAY_MS 40 /* un bip toutes les 40 millisecondes */
 
-
+#ifndef __WMCCC_C
 /* variables communes ici: */
 
 #ifdef USE_VALGRIND
@@ -271,6 +279,6 @@ inline static void id_type_set_sid(id_type *id, int sid) {
 }
 
 
-
+#endif /* __WMCCC_C */
 #endif
 
