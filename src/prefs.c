@@ -662,10 +662,10 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
     CHECK_INTEGER_ARG(10,10000, p->dlfp_tribune_check_delay); 
   } break;
   case OPT_tribunenews_max_refresh_delay: {
-    CHECK_INTEGER_ARG(1,0, p->dlfp_max_refresh_delay);
+    CHECK_INTEGER_ARG(0,0, p->dlfp_max_refresh_delay);
   } break; 
   case OPT_tribunenews_switch_off_coincoin_delay: {
-    CHECK_INTEGER_ARG(1,0, p->dlfp_switch_off_coincoin_delay);
+    CHECK_INTEGER_ARG(0,0, p->dlfp_switch_off_coincoin_delay);
   } break; 
   case OPT_tribune_max_messages: {
     CHECK_INTEGER_ARG(1,0, p->tribune_max_msg);

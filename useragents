@@ -1,4 +1,4 @@
-#useragents rcsid=$Id: useragents,v 1.5 2002/04/13 11:55:19 pouaite Exp $ 
+#useragents rcsid=$Id: useragents,v 1.6 2002/04/18 17:34:26 pouaite Exp $ 
 #syntaxe: forme[tab]couleur_hexa[tab]regexp[tab]nom[fin_de_ligne]
 #Utilisez bien des TABULATIONS pour separer les champs
 #les formes disponibles:
@@ -39,6 +39,7 @@ carre		ff6000		.*Linux.2.0.*		Linux 2.0
 carre		ffd000		.*Linux.2.2.*		Linux 2.2
 carre		ffa000		.*Linux.2.4.*		Linux 2.4
 carre		ff20ff		.*Linux.2.5.*		Linux 2.5
+trianglegauche  20c0bf          .*MSIE.*Mac.*          	IE/Mac
 losange		c0c080		.*PPC.*			PPC
 losange		c0c080		.*ppc.*			ppc
 trianglebas	1cffd9		.*NetBSD.*		NetBSD
