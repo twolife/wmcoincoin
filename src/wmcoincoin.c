@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.19 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.20 2002/02/26 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.20  2002/02/26 09:18:23  pouaite
+  bugfixes divers
+
   Revision 1.19  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -555,12 +558,12 @@ timer_signal(int signum) {
 */
 void
 sigpipe_signal(int signum UNUSED) {
-  fprintf(stderr, "SIGPIPE reçu ! soit c'est ispell qui se vautre comme une grosse otarie bourrée à la bière, \nsoit vous venez de killer violement wmcc");
+  fprintf(stderr, "SIGPIPE reçu ! soit c'est ispell qui se vautre comme une grosse otarie\n bourrée à la bière, \nsoit vous venez de killer violement wmcc\n");
 }
 /* poreil ! */
 void
 sigchld_signal(int signum UNUSED) {
-  BLAHBLAH(1,fprintf(stderr, "SIGCHLD reçu ! (certainement ispell)\n"));
+  BLAHBLAH(2,fprintf(stderr, "SIGCHLD reçu ! (certainement ispell)\n"));
   /* je comprends pas pourquoi un wait() ici n'élimine pas les zombies ... 
      tant pis, ça marche bien comme ça avec le bon gros kill_ispell d'ours */
 }
@@ -727,6 +730,15 @@ void X_loop()
       }
     }
   }
+
+  /* force l'update de l'affichage du pinnipède (qui cache se refresh
+     comme un salaud pour éviter d'asphyxier le serveur X, ça devrait donner un
+     un scroll plus cool 
+
+     en même temps, et c'est vrai que j'ai peut être été con sur ce coup, 
+     c'est plutot les events du style 'MouseMove' qu'il aurait fallu flusher
+  */
+  pp_refresh_flush(dock);
 
   /* le chef est-il dans le bureau ? */
   if (flag_discretion_request == +1) {

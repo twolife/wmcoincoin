@@ -696,6 +696,7 @@ Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
+void pp_refresh_flush(Dock *dock);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

@@ -298,7 +298,7 @@ scrollcoin_handle_button_press(ScrollCoin *sc, XButtonEvent *ev, Drawable d)
   //  printf("clic %d %d (%d,%d,%d,%d)\n",mx,my,sc->x, sc->y, SC_W, sc->h);
   if (mx >= sc->x && mx <= sc->x + SC_W -1 &&
       my >= sc->y && my <= sc->y + sc->h-1) {
-    if (ev->button == Button1) {
+    if (ev->button == Button1 || ev->button == Button2 || ev->button == Button3) {
       if (IS_IN_BTUP(sc,mx,my)) {
 	sc->bt_state = BT_UP; 
       } else if (IS_IN_BTDN(sc,mx,my)) {
@@ -329,10 +329,21 @@ scrollcoin_handle_button_release(ScrollCoin *sc, XButtonEvent *ev, Drawable d)
        my >= sc->y && my <= sc->y + sc->h-1) || sc->bt_state != BT_NONE) {
     if (sc->dragging == 0) {
       if (IS_IN_BTUP(sc,mx,my) && sc->bt_state == BT_UP) {
-	sc->requested_pos = MAX(sc->pos - 1, sc->vmin);
-	printf("release BTUP\n");
+	if (ev->button == Button1) {
+	  sc->requested_pos = MAX(sc->pos - 1, sc->vmin);
+	} else if (ev->button == Button2) {
+	  sc->requested_pos = MAX(sc->pos - 10, sc->vmin);
+	} else if (ev->button == Button3) {
+	  sc->requested_pos = sc->vmin;
+	} 
       } else if (IS_IN_BTDN(sc,mx,my) && sc->bt_state == BT_DOWN) {
-	sc->requested_pos = MIN(sc->pos + 1, sc->vmax);
+	if (ev->button == Button1) {
+	  sc->requested_pos = MIN(sc->pos + 1, sc->vmax);
+	} else if (ev->button == Button2) {
+	  sc->requested_pos = MIN(sc->pos + 10, sc->vmax);
+	} else if (ev->button == Button3) {
+	  sc->requested_pos = sc->vmax;
+	} 
       }
     }
     if (sc->bt_state != BT_NONE) {

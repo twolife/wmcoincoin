@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.6 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.7 2002/02/26 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.7  2002/02/26 09:18:23  pouaite
+  bugfixes divers
+
   Revision 1.6  2002/02/02 23:49:17  pouaite
   plop
 
@@ -115,7 +118,8 @@ cassos:
 }
 
 void http_init() {
-  ;
+  global_http_download_cnt = 0;
+  global_http_upload_cnt = 0;
 }
 
 int http_close (SOCKET fd) {

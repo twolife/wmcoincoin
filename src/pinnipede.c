@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.22 2002/02/25 18:02:35 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.23 2002/02/26 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.23  2002/02/26 09:18:23  pouaite
+  bugfixes divers
+
   Revision 1.22  2002/02/25 18:02:35  pouaite
   bugfixes de la journee
 
@@ -116,7 +119,9 @@ struct _PostVisual {
   time_t tstamp;
   signed char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
   int nblig:12; // nombre de lignes necessaire pour afficher ce message
-  int ref_cnt:10; // compteur de references
+  int ref_cnt:9; // compteur de references
+  int is_locked:1; /* pv impossible à détruire dans pp_pv_garbage_collect (utilisé pour le cache tout naze de pp_refresh) */
+
   int is_my_message:1;
   int is_answer_to_me:1;
   int is_hilight_key:1;
@@ -145,11 +150,11 @@ typedef struct _PinnipedeLignesSel {
 } PinnipedeLignesSel;
 
 typedef struct _PPMinib {
-#define NB_MINIB 9
+#define NB_MINIB 10
 #define MINIB_H 10
 #define MINIB_FN_W 6
 #define MINIB_Y0 (pp->win_height - MINIB_H)
-  enum { HELP, SCROLLBAR, REFRESH_TRIBUNE, REFRESH_NEWS, UA, SECOND, TSCORE, FORTUNE, FILTER } type;
+  enum { HELP, SCROLLBAR, REFRESH_TRIBUNE, REFRESH_NEWS, UA, SECOND, TSCORE, FORTUNE, FILTER, PLOPIFY } type;
   int x, y;
   int w, h;
   int clicked;
@@ -200,6 +205,7 @@ struct _Pinnipede {
 
   int minib_pressed; /* numero du minibouton enfonce, -1 si aucun */
   int fortune_mode;
+  int disable_plopify;
 
   int hilight_my_message_mode;
   int hilight_answer_to_me_mode;
@@ -475,7 +481,7 @@ plopify_word(unsigned char *s, int sz)
 
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
-pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode) {
+pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode, int disable_plopify) {
 #define PVTP_SZ 512
 
   PostVisual *pv;
@@ -494,6 +500,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->first = NULL;
   pv->nblig = -1;
   pv->ref_cnt = 0;
+  pv->is_locked = 0;
   pv->next = NULL;
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
@@ -502,7 +509,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->is_answer_to_me = mi->is_answer_to_me;
   pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
   pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, trib->hilight_key_list) == NULL ? 0 : 1;
-  pv->is_plopified = tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL ? 0 : 1;
+  pv->is_plopified = (disable_plopify || tribune_key_list_test_mi(trib, mi, trib->plopify_key_list) == NULL) ? 0 : 1;
 
   pw = NULL;
 
@@ -727,7 +734,8 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
       with_seconds = mi->hmsf[3];
     }
 
-    pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, pp->nick_mode, pp->trollscore_mode); 
+    pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, 
+			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify); 
     pv_justif(pp, pv, 8, pp->win_width - (pp->sc ? SC_W : 0));
     assert(pv);
     pv->next = pp->pv;
@@ -760,7 +768,7 @@ pp_pv_garbage_collect(Pinnipede *pp) {
   while (pv) {
     //    printf("pv = %d, next = %p\n", pv->id, pv->next);
     assert(pv->ref_cnt >= 0);
-    if (pv->ref_cnt == 0) {
+    if (pv->ref_cnt == 0 && pv->is_locked == 0) {
       npv = pv->next;
       if (pv == pp->pv) pp->pv = npv;
       pv_destroy(pv);
@@ -780,7 +788,7 @@ pp_pv_destroy(Pinnipede *pp) {
   PostVisual *pv;
 
   pv = pp->pv;  
-  while (pv) { pv->ref_cnt = 0; pv = pv->next; }
+  while (pv) { pv->ref_cnt = 0; assert(pv->is_locked == 0); pv = pv->next; }
   pp_pv_garbage_collect(pp);
   if (pp->lignes) { free(pp->lignes); pp->lignes = NULL; }
 }
@@ -894,8 +902,6 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   pp->nb_lignes = pp->zmsg_h / pp->fn_h;
   cur_lig = pp->nb_lignes;
 
-  //  printf("y0 = %d, y1=%d dec=%d\n", LINEY0(0), LINEY1(pp->nb_lignes-1),(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2);
-  
   id = id_base;
 
   /* 'scroll down' */
@@ -993,15 +999,16 @@ pp_minib_initialize(Pinnipede *pp)
 
   int x;
 
-  x = pp->win_width - (pp->sc ? SC_W : 0);
+  x = pp->win_width; //(pp->sc ? SC_W : 0);
   i = 0;
-  pp->mb[i].type = HELP;            pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = HELP;            pp->mb[i].w = SC_W; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = UA;              pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SECOND;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = TSCORE;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = FORTUNE;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = FILTER;          pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
+  pp->mb[i].type = PLOPIFY;         pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = REFRESH_NEWS;    pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = REFRESH_TRIBUNE; pp->mb[i].w = 60; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   assert(i == NB_MINIB);
@@ -1036,10 +1043,11 @@ pp_minib_refresh(Dock *dock)
 
   XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
   if (pp->filter.filter_mode) {
-    char s_filtre[50];
+    char s_filtre[70];
     
     if (pp->filter.filter_name) {
-      snprintf(s_filtre, 60, pp->filter.filter_name);
+      snprintf(s_filtre, 60, "%.40s [match:%d msg]", 
+	       pp->filter.filter_name, count_all_id(&dock->dlfp->tribune, &pp->filter));
     } else {
       snprintf(s_filtre, 60, "FILTRE NON DEFINI");
     }
@@ -1050,9 +1058,9 @@ pp_minib_refresh(Dock *dock)
     /* affichage de la charge du serveur de dlfp */
 
     char s_cpu[20];
-    char s_xp[20], s_votes[20];
+    char s_xp[20], s_votes[20], s_nb_messages[20], s_http_stats[40];
     int x, w;
-    s_xp[0] = 0; s_cpu[0] = 0; s_votes[0] = 0;
+    s_xp[0] = 0; s_cpu[0] = 0; s_votes[0] = 0; s_nb_messages[0] = 0;
     if (flag_updating_comments == 0) {
       /*
 
@@ -1068,6 +1076,8 @@ pp_minib_refresh(Dock *dock)
     } else {
       snprintf(s_cpu, 20, "maj...");
     }
+    snprintf(s_nb_messages, 20, "%d msg", count_all_id(&dock->dlfp->tribune, &pp->filter));
+    snprintf(s_http_stats, 40, "UP:%d, DL:%d", global_http_upload_cnt, global_http_download_cnt);
     XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
     
     x = 5;
@@ -1089,6 +1099,23 @@ pp_minib_refresh(Dock *dock)
 	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_votes, strlen(s_votes));
       }
     }
+    x += w + 6;
+    w = MINIB_FN_W*strlen(s_nb_messages);
+    if (strlen(s_nb_messages)) {
+      if (x+w < x_minib) {
+	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x7070af));	
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_nb_messages, strlen(s_nb_messages));
+      }
+    }
+    x += w + 6;
+    w = MINIB_FN_W*strlen(s_http_stats);
+    if (strlen(s_http_stats)) {
+      if (x+w < x_minib) {
+	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x7070af));	
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, x, pp->fn_minib->ascent+1, s_http_stats, strlen(s_http_stats));
+      }
+    }
+
   }
 
   /* dessin des boutons */
@@ -1231,6 +1258,19 @@ pp_minib_refresh(Dock *dock)
 	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
 	}
       } break;
+    case PLOPIFY:
+      {
+	int rx, rw, ry, rh;
+
+	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
+	XSetForeground(dock->display, dock->NormalGC, pp->plopify_pixel);
+	
+	if (pp->disable_plopify) {
+	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
+	} else {
+	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
+	}
+      } break;
     case UA:
       {
 	int rx, rw, ry, rh;
@@ -1239,7 +1279,7 @@ pp_minib_refresh(Dock *dock)
 	XSetForeground(dock->display, dock->NormalGC, pp->nick_pixel);
 	
 	XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
-	if (pp->nick_mode == 0) {
+	if (pp->nick_mode == 3) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
 	} else if (pp->nick_mode == 1) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx,ry,xc-rx+1,rh);
@@ -1530,9 +1570,11 @@ void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp
    ou bien quand on survole un timestamp)
    
    cette fonction est malheureusement devenue un vrai sac de noeud
+
+   A NE JAMAIS APPELER DIRECTEMENT --> utiliser pp_refresh ou pp_refresh_cached
 */
 void
-pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
+pp_refresh_now(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 {
   Pinnipede *pp = dock->pinnipede;
   int l;
@@ -1709,6 +1751,85 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   if (pp->sc) { scrollcoin_refresh(pp->sc, pp->win, 1); }
 }
 
+
+/*
+  rafraichit le pinnipede avec un système de cache pour éviter 
+   d'enchainer les refresh comme un ouf et de saturer le serveur X
+
+   par contre, comme tous les caches, c'est gruiiiiiik
+   cf le champ batard 'is_locked' pour etre sur que le message 'pw_ref' ne sera
+   pas détruit entre la demande de refresh et son affichage effectif
+
+   flush = 0, on utilise le cache
+   flush = 1, on fait un refresh immédiatement
+   flush =-1, on effectue le refresh sauvé dans le cache
+
+
+   UPDATE: TOUT EST DESACTIVE, et ça va vraisemblablement être viré si le besoin 
+   ne s'en fait plus ressentir
+*/ 
+void
+pp_refresh_cached(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref, int flush)
+{
+  static int refresh_request_cnt = 0;
+  static PostWord *pw_ref_save = NULL; /* grrruiiiiiik raaaaah c laid */
+
+  if (flush != -1) {
+
+    flush = 1; /* 
+		  UPDATE JE DESACTIVE TOUT C DANGERUEX YA DES PP_PV_DESTROY UN PEU PARTOUT
+		  **ET** depuis le flush_mouse_motions, y'a plus de pb de refresh en rafale 
+	       */
+
+
+    /* c'est une nouvelle requete de refresh */
+    refresh_request_cnt++;
+
+    /* debloque pw_ref_save */
+    if (pw_ref_save) {
+      pw_ref_save->parent->is_locked = 0; pw_ref_save = NULL;
+    }
+    
+    /* bloque pw_ref et le copie dans pw_ref_save */
+    if (pw_ref) {
+      pw_ref_save = pw_ref; pw_ref_save->parent->is_locked = 1;
+    }
+  }
+
+  if (refresh_request_cnt >= 1  || (flush && refresh_request_cnt)) {
+    pp_refresh_now(dock, trib, d, pw_ref_save);
+    if (pw_ref_save) { 
+      pw_ref_save->parent->is_locked = 0; 
+      pw_ref_save = NULL; 
+    }
+    refresh_request_cnt = 0;
+    BLAHBLAH(4,printf("refresh done  (pw_ref=%p) (request_cnd=%d, flush=%d)\n", 
+		      pw_ref_save, refresh_request_cnt, flush));
+  } else if (flush != -1) {
+    BLAHBLAH(4,printf("refresh cached(pw_ref=%p) (request_cnd=%d, flush=%d)\n", 
+		      pw_ref, refresh_request_cnt, flush));
+  }
+}
+
+void
+pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
+{
+  pp_refresh_cached(dock, trib, d, pw_ref, 0);
+}
+
+/* appele depuis wmcoincoin.c, une fois que tous les evennements ont été traités,
+   pour forcer le refresh du pinnipède */
+void
+pp_refresh_flush(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  if (pp && pp->mapped) {
+    assert(pp->win != None);
+    pp_refresh_cached(dock, &dock->dlfp->tribune, pp->win, NULL, -1);
+  }
+}
+
+
 void
 pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 {
@@ -1735,7 +1856,7 @@ void
 pp_animate(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
-  if (pp && pp->mapped && flag_updating_tribune == 0) {
+  if (pp && pp->mapped /*&& flag_updating_tribune == 0*/) {
     /* pour affichage du temps restant avant refresh */
     pp_minib_refresh(dock);
   }
@@ -1853,6 +1974,7 @@ pp_build(Dock *dock)
   pp->nick_mode = Prefs.pp_nick_mode;
   pp->nosec_mode = Prefs.pp_nosec_mode;
   pp->trollscore_mode = Prefs.pp_trollscore_mode;
+  pp->disable_plopify = 0;
   pp->hilight_my_message_mode = 1;
   pp->hilight_answer_to_me_mode = 1;
   pp->hilight_key_mode = 1;
@@ -2047,6 +2169,9 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
   if (txt == NULL) return;
   if (strlen(txt) == 0) return;
 
+  /* faut vider le cache :-/ */
+  pp_refresh_flush(dock);
+
     
   fn = pp->fn_bd;
   XSetFont(dock->display, dock->NormalGC, fn->fid);
@@ -2138,8 +2263,6 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       char *s;
       int blah_sz = 1024;
 
-
-      /*      char plopify_cause[512];*/
       int nrep;
       KeyList *hk;
       mi = tribune_find_id(trib, pw->parent->id);
@@ -2205,6 +2328,11 @@ pp_unmap(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
 
   pp_selection_unselect(pp);
+
+  /* le pp_refresh a juste pour but de 'delocker' le PostVisual sauvé dans le cache
+     oui c'est de la bidouille qui sent les remugles nauséabonds */
+  pp_refresh(dock, &dock->dlfp->tribune, pp->win, NULL);
+
   /* on sauve la position de la fenetre (en prenant en compte les decorations du WM ) */
   get_window_pos_with_decor(dock->display, pp->win, &pp->win_xpos, &pp->win_ypos);
   //  pp_minib_hide(dock);
@@ -2443,6 +2571,14 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	pp->filter.filter_mode = (1-pp->filter.filter_mode);
 
 	if (pp->filter.filter_mode) pp->id_base = -1; /* reset du scroll (necessaire, faut etre que le post 'id_base' soit bien affiché par le filtre) */
+
+	pp_pv_destroy(pp);
+	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
+	pp_refresh(dock, trib, pp->win, NULL);	    	    
+      } break;
+    case PLOPIFY:
+      {
+	pp->disable_plopify = (1-pp->disable_plopify);
 
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
@@ -2858,11 +2994,25 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
       
       mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
       if (mi) {
-	int ligne;
-
-	ligne = pp->nb_lignes - (my-LINEY0(0))/(LINEY0(1)-LINEY0(0));
-	pp_update_content(dock, trib, mi->id, ligne-1, 0, 0);
-	pp_refresh(dock, trib, pp->win, NULL);
+	PostWord *trouve;
+	int i;
+	/* si le message referencé est déjà affiché, on ne fait rien */
+	for (i=0, trouve=NULL; i < pp->nb_lignes; i++) {
+ 	  if (pp->lignes[i] && 
+	      pp->lignes[i]->parent->id == mi->id && 
+	      pp->lignes[i]->ligne == 0) trouve = pp->lignes[i];
+	}
+	if (trouve == NULL) {
+	  PostVisual *pv;
+	  /* c'est un peu lourd pour positionner le message juste en haut du pinnipede.. */
+	  pv = pp_pv_add(pp, trib, mi->id);
+	  if (pv) {
+	    int ligne = pp->nb_lignes - pv->nblig; // - (my-LINEY0(0))/(LINEY0(1)-LINEY0(0));
+	    pp_update_content(dock, trib, mi->id, ligne, 0, 0);
+	  }
+	  trouve = pp->lignes[0];
+	}
+	pp_refresh(dock, trib, pp->win, trouve);
       }
     } 
   } /* if (pw) */  
@@ -2978,6 +3128,45 @@ flush_expose(Dock *dock, Window w) {
   while (XCheckTypedWindowEvent(dock->display, w, Expose, &dummy))
     i++;
   return i;
+}
+
+
+/* vilaine tentative pour 'flusher' les mouvements de souris consécutifs (cad 
+   ne se situant pas de part et d'autre d'un evenement du style mouse-clic)
+
+   hypothèse: XCheckIfEvent parcourt la file depuis l'ev le + vieux vers le + récent
+   (ça semble naturel)
+
+   ça a l'air de bien marcher :)
+*/
+
+int fcmmp_state; /* Mal !! */
+Bool
+flush_consecutive_mouse_motions_predicate(Display *display UNUSED, XEvent *ev, XPointer pw)
+{
+  //  printf("-- test: ev->type = %d\n", ev->type);
+  if (fcmmp_state == 1) return False;
+  else if (ev->type == MotionNotify && ev->xmotion.window == *((Window*)pw)) return True;
+  else if (ev->type == ButtonPress || ev->type == ButtonRelease || ev->type == LeaveNotify || ev->type == EnterNotify) { fcmmp_state = 1; return False; }
+  return False;
+}
+
+XEvent *
+flush_consecutive_mouse_motions(Dock *dock, Window w, XEvent *ev_init) {
+  static XEvent evtmp, ev; /* static == c mal (pas reentrant) */
+  int cnt = 0;
+
+  //  printf("debut\n");
+  fcmmp_state = 0;
+  while (XCheckIfEvent(dock->display, &evtmp, flush_consecutive_mouse_motions_predicate, (XPointer)&w)) {
+    ev = evtmp; cnt++;
+    assert(ev.type == MotionNotify);
+    //    printf("** trouvé: x=%d, y=%d\n", ev.xmotion.x, ev.xmotion.y);
+    fcmmp_state = 0;
+  }
+  //  printf("fin\n");
+
+  if (cnt) return &ev; else return ev_init;
 }
 
 /*
@@ -3198,7 +3387,7 @@ pp_check_scroll_pos(Dock *dock, DLFP_tribune *trib)
     pp_update_content(dock, trib, id, 0,0,0);
     refresh_requested = 2;
   }
-  if (refresh_requested == 1 || refresh_nb_delayed > 3) {
+  if (refresh_requested == 1 || refresh_nb_delayed >= 0) {
     pp_refresh(dock, trib, pp->win, NULL);
     refresh_nb_delayed = 0; 
     refresh_requested = 0;
@@ -3229,7 +3418,6 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
     {
       pp_selection_unselect(pp);
       if (pp->sc && scrollcoin_handle_button_press(pp->sc, &event->xbutton, pp->win)) {
-	printf("sc press\n");
       } else if (pp->use_minibar && pp_minib_handle_button_press(dock, &event->xbutton)) {
       } else {
 	mouse_button_press_x = old_mouse_x = event->xbutton.x;
@@ -3269,6 +3457,8 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
     } break;
   case MotionNotify:
     {
+      event = flush_consecutive_mouse_motions(dock, pp->win, event);
+
       if (pp->sc && scrollcoin_handle_motion(pp->sc, &event->xmotion, pp->win)) {
 	pp_check_scroll_pos(dock,trib);
       } else if (pp_minib_pressed_button(dock)) {

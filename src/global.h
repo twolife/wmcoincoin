@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.13 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: global.h,v 1.14 2002/02/26 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.14  2002/02/26 09:18:23  pouaite
+  bugfixes divers
+
   Revision 1.13  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -220,6 +223,10 @@ DECL_GLOB_INIT(volatile int flag_http_error, 0);
 DECL_GLOB_INIT(volatile int flag_spell_request, 0); /* pour le palmipede (ça commence à puer le vilain hack... mais bon, je veux pas de threads alors j'assume) */
 DECL_GLOB_INIT(volatile int flag_spell_finished, 0);
 DECL_GLOB_INIT(volatile int wmcc_tic_cnt,0);
+
+DECL_GLOB_INIT(unsigned global_http_upload_cnt,0);
+DECL_GLOB_INIT(unsigned global_http_download_cnt,0);
+
 
 #endif
 

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.6 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.7 2002/02/26 09:18:23 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.7  2002/02/26 09:18:23  pouaite
+  bugfixes divers
+
   Revision 1.6  2002/02/02 23:49:17  pouaite
   plop
 
@@ -105,6 +108,8 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_s
 void http_init (void) {
   WSADATA wsaData;
 
+  global_http_download_cnt = 0;
+  global_http_upload_cnt = 0;
   WSAStartup (MAKEWORD (2, 0), &wsaData);
 }
 

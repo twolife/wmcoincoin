@@ -233,6 +233,7 @@ http_iread (SOCKET fd, char *buf, int len)
 #else
       res = read(fd, buf, len); 
 #endif
+      if (res != SOCKET_ERROR) global_http_download_cnt += res;
       ALLOW_X_LOOP; ALLOW_ISPELL; 
     }
   while (res == SOCKET_ERROR && LASTERR_EINTR);
@@ -298,9 +299,12 @@ http_iwrite (SOCKET fd, char *buf, int len)
 #else
       res = write(fd, buf, len);
 #endif
+      if (res != SOCKET_ERROR) global_http_upload_cnt += res;
     } while (res == SOCKET_ERROR && LASTERR_EINTR);
     if (res == SOCKET_ERROR)
       break;
+
+
     buf += res;
     len -= res;
   }
