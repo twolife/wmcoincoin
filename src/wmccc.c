@@ -1012,7 +1012,7 @@ save_prefs(gchar *filename, int do_backup) {
   } else {
     char *backup[4];
     int i;
-    fprintf(f, "### -*- mode: wmccoptions -*-\n### edited by wmccc -- look for *.wmccc.*.bak for backups");
+    fprintf(f, "### -*- mode: wmccoptions -*-\n### edited by wmccc -- look for *.wmccc.*.bak for backups\n");
     prefs_write_to_file(Prefs, f);
     fclose(f);
     if (do_backup) {
