@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.3 2001/12/02 20:29:31 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.3  2001/12/02 20:29:31  pouaite
+  rajout de 'options' et 'useragents' dans le Makefile.am ...
+
   Revision 1.2  2001/12/02 18:24:16  pouaite
   modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
 
@@ -95,7 +98,7 @@ after_substr(const char *s, const char *substr)
 void
 extract_news_txt(const char *s, char **p_date, char **p_txt, char **p_liens)
 {
-  const char *p, *p2;
+  const char *p, *p2=NULL;
 
   *p_date = *p_txt = *p_liens = NULL;
   p = after_substr(s, "class=\"newsinfo\"");
