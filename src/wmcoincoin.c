@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.32 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.33 2002/03/23 10:37:29 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.33  2002/03/23 10:37:29  pouaite
+  retournement de slip, merci lordoric
+
   Revision 1.32  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -936,11 +939,11 @@ wmcc_set_wm_icon(Dock *dock) {
 	w = MAX(w, isz[i].min_width); h = MAX(h, isz[i].min_height);
       }
     }
+    XFree(isz);
   } else {
     printf("pas de taille d'icone par défaut, voila un wmanager qui suce des ours\n");
     w = 48; h = 48;
   }
-  XFree(isz);
 
   in_img = RGBACreateRImgFromXpmData(icon_xpm); assert(in_img);
   assert(in_img->w == 16 && in_img->w == 16);
