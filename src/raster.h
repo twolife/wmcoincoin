@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.7 2002/04/10 22:53:44 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.8 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.8  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.7  2002/04/10 22:53:44  pouaite
   un commit et au lit
 
@@ -29,6 +32,17 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#define PSEUDOCOL_NCOLORS 6
+
+#define _RGB2PIXEL(c,r,g,b) ((c->truecolor) ? c->rtable[r] + \
+                             c->gtable[g] + \
+                             c->btable[b] : c->pseudocol_palette[(r*PSEUDOCOL_NCOLORS+128)/255][(g*PSEUDOCOL_NCOLORS+128)/255][(b*PSEUDOCOL_NCOLORS+128)/255])
+#define _IRGB2PIXEL(c,rgb) ((c->truecolor) ? c->rtable[(rgb>>16) & 0xff] + \
+                            c->gtable[(rgb>> 8) & 0xff] + \
+                            c->btable[(rgb    ) & 0xff] : \
+                            c->pseudocol_palette[(((rgb>>16) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][(((rgb>> 8) & 0xff)*PSEUDOCOL_NCOLORS+128)/255][(((rgb) & 0xff)*PSEUDOCOL_NCOLORS+128)/255])
+
+
 typedef struct RGBAContext {
   Display *dpy;
   int screen_number;
@@ -53,6 +67,9 @@ typedef struct RGBAContext {
   unsigned char r_shift_left , g_shift_left,  b_shift_left;
   unsigned char r_shift_right, g_shift_right, b_shift_right;
   int rmask, gmask, bmask;
+
+  int truecolor;
+  unsigned long pseudocol_palette[PSEUDOCOL_NCOLORS+1][PSEUDOCOL_NCOLORS+1][PSEUDOCOL_NCOLORS+1]; /* contient les pixel pour une palette en pseudocolor */
 } RGBAContext;
 
 

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.45 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.46 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.46  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.45  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -1498,7 +1501,6 @@ main(int argc, char **argv)
 #ifdef __CYGWIN__
   pthread_t timer_thread;
 #endif
-
   setlocale (LC_ALL, "");
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
@@ -1518,6 +1520,7 @@ main(int argc, char **argv)
     while (app_useragent[i] < '0' || app_useragent[i] > '9') app_useragent[i--] = 0;
   }
     
+  printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, ""));
   
   memset(&Prefs, 0, sizeof(structPrefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);

@@ -6,19 +6,8 @@
 #include "prefs.h"
 
 /* deux macros fort pratiques !! */
-#define RGB2PIXEL(r,g,b) (dock->rgba_context->rtable[r] + \
-                          dock->rgba_context->gtable[g] + \
-                          dock->rgba_context->btable[b])
-#define IRGB2PIXEL(rgb) (dock->rgba_context->rtable[(rgb>>16) & 0xff] + \
-                         dock->rgba_context->gtable[(rgb>> 8) & 0xff] + \
-                         dock->rgba_context->btable[(rgb    ) & 0xff])
-
-#define _RGB2PIXEL(c,r,g,b) (c->rtable[r] + \
-                             c->gtable[g] + \
-                             c->btable[b])
-#define _IRGB2PIXEL(c,rgb) (c->rtable[(rgb>>16) & 0xff] + \
-                            c->gtable[(rgb>> 8) & 0xff] + \
-                            c->btable[(rgb    ) & 0xff])
+#define RGB2PIXEL(r,g,b) _RGB2PIXEL(dock->rgba_context,r,g,b)
+#define IRGB2PIXEL(rgb) _IRGB2PIXEL(dock->rgba_context,rgb)
 
 #define PIXEL2R(rc, pixel) (((pixel>>rc->r_shift_left)<<rc->r_shift_right)&0xff)
 #define PIXEL2G(rc, pixel) (((pixel>>rc->g_shift_left)<<rc->g_shift_right)&0xff)

@@ -1,3 +1,9 @@
+2002-06-24  pouaite  <c0in@altern.org>
+
+	* correction du bug des votes négatifs, deux trois bugfixes et
+	ajout du support des display 8bits (attention il faut customiser
+	les couleurs pour aboutir à quelque chose de lisible).
+
 2002-06-23  josselin mouette  <joss@debian.org>
 
 	* i18nisation of the coincoin !!

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.29 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.30 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.30  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.29  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -1063,6 +1066,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_myposts);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/posts.php3", getenv("HOME"));
+    myprintf(_("DEBUG: opening %<RED %s>\n"), path);
   }
 
 
@@ -1140,6 +1144,8 @@ dlfp_yc_update_comments(DLFP *dlfp)
       p = strstr(p, "<br");
       if (p != NULL)
 	regexp_extract(p, pat_votes, &(dlfp->votes_max), &(dlfp->votes_cur));
+
+      BLAHBLAH(1, printf("xp : %d, votes: %d/%d\n", dlfp->xp, dlfp->votes_cur, dlfp->votes_max));
     } else {
       printf(_("Hmmm, how strange is '%s' ... there is no 'loginfo' field.\n"), Prefs.path_myposts);
     }

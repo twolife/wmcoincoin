@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.15 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.16 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.16  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.15  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -94,6 +97,24 @@ foobarize(unsigned long c, unsigned long mask)
   return c;
 }
 
+
+/* recherche la couleur la plus proche de r,g,b dans la colormap */
+static unsigned long 
+rgba_pseudocol_rgb2color(RGBAContext *c,int r,int g,int b)
+{
+  XColor xc;
+  int status;
+  assert(c->truecolor == 0); /* sinon on n'a rien a faire ici */
+  xc.red = r*256;
+  xc.green = g*256;
+  xc.blue = b*256;
+  xc.flags = 0;
+  status = XAllocColor(c->dpy,  c->cmap, &xc);
+
+  printf("allocation de [%02x,%02x,%02x] :  [%02x,%02x,%02x], status=%d, pix=%lx\n", r,g,b,xc.red,xc.green,xc.blue,status,xc.pixel);
+  return xc.pixel;
+}
+
 RGBAContext*
 RGBACreateContext(Display *dpy, int screen_number)
 {
@@ -120,12 +141,31 @@ RGBACreateContext(Display *dpy, int screen_number)
   context->copy_gc = XCreateGC(dpy, context->drawable, GCFunction
 			       |GCGraphicsExposures, &gcv);
   if (context->vclass == TrueColor || context->vclass == DirectColor) {
+    context->truecolor = 1;
     /* calc offsets to create a TrueColor pixel */
     BLAHBLAH(1,printf(_("The visual (depth=%d) is in %s, cool\n"), context->depth, 
 		      context->vclass == TrueColor ? "TrueColor" : "DirectColor"));
   } else if (context->vclass == PseudoColor || context->vclass == StaticColor) {
+    int r,g,b;
     printf(_("Bleh, we are in pseudocolor (depth=%d)...\n"), context->depth);
-    free(context); return NULL;
+    
+    context->truecolor = 0;
+    
+    for (r=0; r < PSEUDOCOL_NCOLORS+1; r++) {
+      for (g=0; g < PSEUDOCOL_NCOLORS+1; g++) {
+	for (b=0; b < PSEUDOCOL_NCOLORS+1; b++) {
+	  int rr,gg,bb;
+	  rr = MIN((r*255)/PSEUDOCOL_NCOLORS,255);
+	  gg = MIN((g*255)/PSEUDOCOL_NCOLORS,255);
+	  bb = MIN((b*255)/PSEUDOCOL_NCOLORS,255);
+	  context->pseudocol_palette[r][g][b] = rgba_pseudocol_rgb2color(context, rr,gg,bb);
+	}
+      }
+    }
+
+    return context;
+
+    //    free(context); return NULL;
   } else if (context->vclass == GrayScale || context->vclass == StaticGray) {
     printf(_("Unbelievable, there's even no colors !\n"));
     free(context); return NULL;
@@ -222,20 +262,31 @@ RGBAImage2XImage(RGBAContext *ctx, RGBAImage *rimg)
   if (ximg->data == NULL) {
     XDestroyImage(ximg); return NULL;
   }
-  
-  for (x=0; x < rimg->w; x++) {
-    for (y=0; y < rimg->h; y++) {
-      unsigned long pix;
 
-      /*      printf("x=%04d, y=%04d, rgb=%02x%02x%02x, %08lx %08lx\n", x,y,
-	      rimg->data[y][x].rgba[0],rimg->data[y][x].rgba[1],rimg->data[y][x].rgba[2],
-	      pix, ctx->white); */
-      pix = (ctx->rtable[rimg->data[y][x].rgba[0]] + 
-	     ctx->gtable[rimg->data[y][x].rgba[1]] + 
-	     ctx->btable[rimg->data[y][x].rgba[2]]);
-      XPutPixel(ximg, x, y, pix);
+  if (ctx->truecolor) {
+    for (x=0; x < rimg->w; x++) {
+      for (y=0; y < rimg->h; y++) {
+	unsigned long pix;
+	
+	/*      printf("x=%04d, y=%04d, rgb=%02x%02x%02x, %08lx %08lx\n", x,y,
+		rimg->data[y][x].rgba[0],rimg->data[y][x].rgba[1],rimg->data[y][x].rgba[2],
+		pix, ctx->white); */
+	pix = (ctx->rtable[rimg->data[y][x].rgba[0]] + 
+	       ctx->gtable[rimg->data[y][x].rgba[1]] + 
+	       ctx->btable[rimg->data[y][x].rgba[2]]);
+	XPutPixel(ximg, x, y, pix);
+      }
+    }
+  } else {
+    for (x=0; x < rimg->w; x++) {
+      for (y=0; y < rimg->h; y++) {
+	unsigned long pix;
+	pix = _RGB2PIXEL(ctx,rimg->data[y][x].rgba[0],rimg->data[y][x].rgba[1],rimg->data[y][x].rgba[2]);
+	XPutPixel(ximg, x, y, pix);
+      }
     }
   }
+
   return ximg;
 }
 
@@ -423,3 +474,5 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
   }
   return pix;
 }
+
+

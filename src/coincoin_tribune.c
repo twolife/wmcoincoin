@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.37 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.38 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.38  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.37  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -716,11 +719,12 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     char *qlogin;
     char *qmessage;
     char *qua;
-    char sid[20], stimestamp[20], strollscore[20], *stypemessage;
+    char sid[20], stimestamp[20], strollscore[20], *stypemessage,  stypemessage2[4];
+    int typemessage;
     char *shift_cmd;
 
-    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r"};
-    const char *subs[] = {  "",   "",   "",   "",   "",   "",   ""};
+    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r", "$R", "$v"};
+    const char *subs[] = {  "",   "",   "",   "",   "",   "",   "", "", VERSION};
 
     
     //----< Code pour passer les infos d'un post à une commande extérieure >
@@ -731,11 +735,22 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     snprintf(sid, 20, "%d", it->id);
     snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
+    
+    /* je garde ça pendant qqes version pour pas casser les bigornos, 
+       mais l'option à utiliser dorénavant, c'est plutot $R */
+    stypemessage = "0";
     if (it->is_my_message) stypemessage = "1";
     else if (it->is_answer_to_me) stypemessage = "2";
     else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) stypemessage = "3";
     else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) stypemessage = "4";
-    else stypemessage = "0";
+
+    /* pour $R */
+    typemessage = 0;
+    if (it->is_my_message) typemessage |= 1;
+    else if (it->is_answer_to_me) typemessage |= 2;
+    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) typemessage |= 4;
+    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) typemessage |= 8;
+    snprintf(stypemessage2, 4, "%d", typemessage);
 
     subs[0] = qlogin;
     subs[1] = qmessage;
@@ -744,7 +759,8 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     subs[4] = stimestamp;
     subs[5] = strollscore;
     subs[6] = stypemessage;
-    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 7);
+    subs[7] = stypemessage2;
+    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 9);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
 

@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.27 2002/05/27 18:39:14 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.28 2002/06/23 22:26:01 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.28  2002/06/23 22:26:01  pouaite
+#%  bugfixes+support à deux francs des visuals pseudocolor
+#%
 #%  Revision 1.27  2002/05/27 18:39:14  pouaite
 #%  trucs du week-end + patch de binny
 #%
@@ -121,9 +124,11 @@
 ###  $i -> #id du message
 ###  $t -> timestamp
 ###  $s -> troll_score
-###  $r -> type de message ( '1' message posté par l'utilisateur, '2' = reponse à un de vos messages, '3' = message selectionne par les mots clefs, '4' = message plopifié, '0' = autre)
-### par exemple, pour entendre 'coin' à chaque réponse à un de vos messages:
-#tribune.post_cmd: (if [ $r -eq 2 ]; then echo $l msg=$m; play ~/coin.wav & fi)
+###  $r -> obsolete message type (do not use)
+###  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message)
+###  $v -> wmc² version
+### for example, to hear a duck sound each time you get an answer:
+#tribune.post_cmd: (if [ $(($R & 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav & fi)
 
 ### nom du fichier dans lequel sont sauvés les scrinechotes de la tribune
 #tribune.archive: ~/wmcc_tribune_shot.html

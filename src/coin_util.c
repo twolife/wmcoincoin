@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.27 2002/06/23 14:01:36 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.28 2002/06/23 22:26:01 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.28  2002/06/23 22:26:01  pouaite
+  bugfixes+support à deux francs des visuals pseudocolor
+
   Revision 1.27  2002/06/23 14:01:36  pouaite
   ouups, j'avais flingué les modifs depuis la v2.3.8b
 
@@ -99,17 +102,24 @@ make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_s
   strncpy(name, ua, name_sz); name[name_sz-1] = 0;
   if ((int)strlen(name) >= name_sz-1) {
     int i;
+
     /* essaye de ramener l'useragent à une longueur correcte sans tronquer de mot */
     i = name_sz-2;
-    while (i && isalnum((unsigned char)name[i])) {
-      i--;
-    }
-    while (i>1 && !isalnum((unsigned char)name[i-1])) {
-      i--;
-    }
     
-    if (i > 5) {
-      name[i] = 0;
+    /* cas facile: des espaces */
+    if (name[i] == ' ') {
+      while (name[i] == ' ' && i) i--;
+      name[i+1] = 0;
+    } else {
+      while (i && isalnum((unsigned char)name[i])) {
+	i--; 
+      }
+      while (i>1 && !isalnum((unsigned char)name[i-1])) {
+	i--;
+      }
+      if (i > 5) {
+	name[i] = 0;
+      }
     }
   }
 }
@@ -411,24 +421,24 @@ str_substitute(const char *src, const char *key, const char *substitution) {
 char *
 shell_quote(const char *src)
 {
-  char *quote = "&;`'\\\"|*?~<>^()[]{}$ \t";
+  char *quote = "&;`'\\\"|*?~<>^()[]{}$";
   int i,dest_sz;
-  const char *p;
+  const unsigned char *p;
   char *dest;
 
   if (src == NULL || strlen(src) == 0) return strdup("");
 
   dest_sz = strlen(src)+1;
   for (p=src; *p; p++) {
-    if (strchr(quote, *p)) dest_sz+=1;
+    if (strchr(quote, *p) || *p <= ' ') dest_sz+=1;
   }
   dest = malloc(dest_sz);
 
   for (p=src, i=0; *p; p++) {
-    if (strchr(quote, *p)) {
+    if (strchr(quote, *p) || *p <= ' ') {
       dest[i++] = '\\';
     }
-    if (*p>=0 && *p < ' ') {
+    if (*p <= ' ') {
       dest[i++] = ' ';
     } else {
       dest[i++] = *p;
