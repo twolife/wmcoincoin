@@ -18,6 +18,16 @@
 
 
  */
+/*
+  rcsid=$Id: spell_coin.c,v 1.4 2001/12/02 18:11:45 pouaite Exp $
+  ChangeLog:
+  $Log: spell_coin.c,v $
+  Revision 1.4  2001/12/02 18:11:45  pouaite
+  amélioration du support de ispell (moins de pb de ralentissement du palmipede) au prix d'un vilain hack
+
+*/
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -188,141 +198,175 @@ check_if_should_kill_ispell()
   return 0;
 }
 
+static ErrList current_errlist = NULL;
+static unsigned char *current_spell_string = NULL;
 
-
-ErrList spellString(const char* str, const char* spellCmd, const char* spellDict)
+ErrList spellString(const char* str)
 {
-  static unsigned char *old_spellStr = NULL;
-  static ErrList old_ret = NULL;
-  
-  unsigned char* spellStr = convert4Spell(str); 
+  static unsigned char *requested_spell_string = NULL;
+  ErrList errlst;
 
+  if (flag_spell_request) return NULL;
 
-  if( old_spellStr && strcmp(spellStr, old_spellStr)==0 ) {
+  errlst = NULL;
+  requested_spell_string = convert4Spell(str);
+  if( current_spell_string && strcmp(requested_spell_string, current_spell_string)==0) {
     /* Si la nouvelle chaine est comme l'ancienne on renvoit 
        l'ancien resultat.
     */
-    free(spellStr);
-    return old_ret;
+    free(requested_spell_string);
+    errlst = current_errlist;
   } else {
-/*    unsigned char* spellSh; */
-    ErrList *end_of_ret = &old_ret;
-    
-    /* reinitailise le passe de cette fonction */
-    if( old_spellStr )
-      free(old_spellStr);
-    old_spellStr = spellStr;
-    freeErrList(old_ret);
-    old_ret = NULL;
-
-    /* lancement de ispell */
-/*    spellSh = (char*)malloc(strlen(spellStr)+strlen(spellDict)+7);
-    sprintf(spellSh, "%s -d%s -a", spellCmd, spellDict);
-*/
-    BLAHBLAH(1 ,myprintf("running %<RED %s -d  %s -a>\n", 
-			 spellCmd, spellDict));
-
-    //    if (is_ispell_running) kill_ispell();
-
-    if (!is_ispell_ready(spellCmd, spellDict) ) {
-/*      free(spellSh);*/
-      return NULL;
-    } else {
-      char buff[1024];
-      unsigned char *s;
-      ErrList tmp;
-
-/*      free(spellSh);*/
-
-      s = spellStr;
-      /* envoie la chaine à ispell */
-      printf("on envoie '%s' à ispell\n", s);
-      while (*s) {
-	if (write(ispell_stdin, s, 1) != 1) {
-	  printf("erreur, il restait '%s' à envoyer à ispell...\n", s);
-	  break; /* ajouter plus tard la gestion des erreurs retryables */
-	}
-	s++;
+    /* si les chaines commencent pareil, on renvoie les vieilles erreurs pour eviter des phenomène de clignotement .. */
+    errlst = NULL;
+    if (current_spell_string) {
+      int l;
+      l = strlen(current_spell_string);
+      if (l && strncmp(requested_spell_string, current_spell_string, l)==0) {
+	errlst = current_errlist;
       }
-      printf("apres ecriture: %s\n", strerror(errno));
-      do {
-	int i, got;
-	char c;
-
-	/* lecture de la ligne comme un gros boeuf */
-	i = 0;
-	while (i < 1023) {
-	  do {
-	    got = read(ispell_stdout, &c, 1);
-	  } while (got <= 0 && errno == EINTR);
-	  
-	  if (c != '\n') {
-	    buff[i] = c;
-	  } else {
-	    buff[i] = 0;
-	    break;
-	  }
-	  i++;
-	}
-	buff[i] = 0;
-
-	BLAHBLAH(1, myprintf("reponse: '%<MAG %s>' (err=%s)\n", buff, strerror(errno)));
-	switch( buff[0] ) {
-	case 0:
-	  break;
-	case SpellComment:
-	case SpellOK:
-	case SpellRoot:
-	case SpellCompound:
-	  /* on passe a la ligne suivante */
-	  break;
-	case SpellMiss:
-	case SpellGuess:
-	case SpellNone:
-	  /* Super!!!! ispell a trouve une faute ... 
-	     il est bon ce ispell !(?) */
-	  tmp = (ErrList)malloc(sizeof(struct spell_err));
-	  tmp->next = NULL;
-
-	  /* on saute les espaces */
-	  s = buff+1;
-	  while (*s == ' ' && *s) s++;
-	  
-	  /* recherche du mot original */
-	  i = 0;
-	  while (s[i] > ' ') i++;
-	  tmp->original = malloc(i+1);
-	  strncpy(tmp->original, s, i); tmp->original[i] = 0;
-
-	  s += i;
-	  if( buff[0]!=SpellNone ) {
-	    sscanf(s, "%d %d", &tmp->proposals_size,&tmp->offset);
-	  } else {
-	    sscanf(s, "%d", &tmp->offset);
-	  }
-	  /* pour l'instant je recupere pas les propositions */
-	  tmp->proposals_size = 0;
-	  tmp->proposals = NULL;
-	  *end_of_ret = tmp;
-	  end_of_ret = &(tmp->next);
-	  break;
-	default:
-	  /* Qu'est ce que je fout ici moi ?
-	     NOTE peut etre que je devrqit en tenir compte au cas
-	     ou le pgm (ki n'est pas ispell) a des retours en +?
-	     (keskil renvoit aspell au fait? ... regarder son man
-	      sur une machine qui a ce truc)
-	  */
-	  fprintf(stderr, "spellString: unknow option \'%c\'\n", buff[0]);
-	  kill_ispell(); /* je veux pas d'un ispell tout patraque */
-	  assert(0);     /* voila une triste fin */
-	}
-      } while (buff[0]);
     }
-    ispell_time_last_used = time(NULL); /* hop ! */
-    /* renvoie la liste des fautes 
-     */
-    return old_ret;
+    
+    if( current_spell_string )
+      free(current_spell_string);
+    current_spell_string = requested_spell_string; 
+    flag_spell_request = 1;
   }
+  return errlst;
 }
+
+void
+ispell_run_background(const char* spellCmd, const char* spellDict)
+{
+  ErrList *end_of_ret = &current_errlist;
+  
+  int save_errno; /* comme cette fonction est susceptible d'etre appelee depuis http.c,
+		     il ne faut pas qu'elle modifie errno !
+		  */
+  
+  save_errno = errno;
+  if (flag_spell_request == 0) return;
+  if (flag_spell_finished) return; /* car sinon on serait susceptible d'appeller la fonction du dessus dans un environnement multitache (et donc on accederait a errlist etc..)
+					  --> au cas ou un jour coincoin deviendrait threadé (et il l'est déjà +ou- sous cygwin)) autant faire des  choses pas trop trop nazes */
+  
+
+  /* reinitailise le passe de cette fonction */
+  
+  freeErrList(current_errlist);
+  current_errlist = NULL;
+
+  /* lancement de ispell */
+
+  BLAHBLAH(2 ,myprintf("running %<RED %s -d  %s -a>\n", 
+		       spellCmd, spellDict));
+
+  if (!is_ispell_ready(spellCmd, spellDict) ) {
+    errno = save_errno;
+    return;
+  } else {
+    char buff[1024];
+    unsigned char *s;
+    ErrList tmp;
+
+    /*      free(spellSh);*/
+
+    s = current_spell_string;
+    /* envoie la chaine à ispell */
+    BLAHBLAH(2,printf("on envoie '%s' à ispell\n", s));
+    while (*s) {
+      if (write(ispell_stdin, s, 1) != 1) {
+	printf("erreur, il restait '%s' à envoyer à ispell...\n", s);
+	break; /* ajouter plus tard la gestion des erreurs retryables */
+      }
+      s++;
+      ALLOW_X_LOOP;
+    }
+    //printf("apres ecriture: %s\n", strerror(errno));
+    do {
+      int i, got;
+      char c;
+
+      /* lecture de la ligne comme un gros boeuf */
+      i = 0;
+      while (i < 1023) {
+	do {
+	  got = read(ispell_stdout, &c, 1);
+	  ALLOW_X_LOOP;
+	} while (got <= 0 && errno == EINTR);
+	  
+	if (c != '\n') {
+	  buff[i] = c;
+	} else {
+	  buff[i] = 0;
+	  break;
+	}
+	i++;
+      }
+      buff[i] = 0;
+
+      BLAHBLAH(2, myprintf("reponse ISPELL: '%<MAG %s>' (err=%s)\n", buff, strerror(errno)));
+      switch( buff[0] ) {
+      case 0:
+	break;
+      case SpellComment:
+      case SpellOK:
+      case SpellRoot:
+      case SpellCompound:
+	/* on passe a la ligne suivante */
+	break;
+      case SpellMiss:
+      case SpellGuess:
+      case SpellNone:
+	/* Super!!!! ispell a trouve une faute ... 
+	   il est bon ce ispell !(?) */
+	tmp = (ErrList)malloc(sizeof(struct spell_err));
+	tmp->next = NULL;
+
+	/* on saute les espaces */
+	s = buff+1;
+	while (*s == ' ' && *s) s++;
+	  
+	/* recherche du mot original */
+	i = 0;
+	while (s[i] > ' ') i++;
+	tmp->original = malloc(i+1);
+	strncpy(tmp->original, s, i); tmp->original[i] = 0;
+
+	s += i;
+	if( buff[0]!=SpellNone ) {
+	  sscanf(s, "%d %d", &tmp->proposals_size,&tmp->offset);
+	} else {
+	  sscanf(s, "%d", &tmp->offset);
+	}
+	/* pour l'instant je recupere pas les propositions */
+	tmp->proposals_size = 0;
+	tmp->proposals = NULL;
+	*end_of_ret = tmp;
+	end_of_ret = &(tmp->next);
+	break;
+      default:
+	/* Qu'est ce que je fout ici moi ?
+	   NOTE peut etre que je devrqit en tenir compte au cas
+	   ou le pgm (ki n'est pas ispell) a des retours en +?
+	   (keskil renvoit aspell au fait? ... regarder son man
+	   sur une machine qui a ce truc)
+	*/
+	fprintf(stderr, "spellString: unknow option \'%c\'\n", buff[0]);
+	kill_ispell(); /* je veux pas d'un ispell tout patraque */
+	assert(0);     /* voila une triste fin */
+      }
+    } while (buff[0]);
+  }
+  ispell_time_last_used = time(NULL); /* hop ! */
+  /* renvoie la liste des fautes 
+   */
+  flag_spell_finished = 4;  /* y'a un petit delai entre la fin de la correction et 
+			      son affichage, c'est juste pour éviter un clignotement trop
+			      chiant quand on tape
+			      -> on decremente progressivement flag_spell_finished dans X_loop
+			     */
+  flag_spell_request = 0;
+  errno = save_errno;
+}
+
 
