@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.7 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.8 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.8  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.7  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -604,6 +607,7 @@ troll_detector(tribune_msg_info *mi) {
 
       if (trouve == 0) {
 	BLAHBLAH(2,printf(" -> impossible d'utiliser les mots restant dans un troll, c'est fini\n"));
+	free(selection);
 	break;
       }
       
@@ -624,6 +628,14 @@ troll_detector(tribune_msg_info *mi) {
       free(selection);
     }
   } while (1);
+
+  while (wlst) {
+    Word *w;
+    w = wlst;
+    if (w->td_idx) free(w->td_idx); w->td_idx = NULL;
+    wlst = w->next;
+    free(w);
+  }
 
   /* ajout de divers bonus :) */
   {

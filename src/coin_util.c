@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.12 2002/03/01 00:27:40 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.13 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.13  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.12  2002/03/01 00:27:40  pouaite
   trois fois rien
 
@@ -254,7 +257,7 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
 		    &root_win,
 		    &parent_win,
 		    &child_windows, &num_child_windows)) {
-    XFree(child_windows);
+    if (child_windows) XFree(child_windows);
     if (parent_win == root_win) break;
     win = parent_win;
   }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.7 2002/02/26 09:18:23 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.8 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.8  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.7  2002/02/26 09:18:23  pouaite
   bugfixes divers
 
@@ -80,7 +83,7 @@ net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs
       /* le test sur EISCONN special BSD -> bsd connecte plus vite que l'éclair? */
       if (errno == EISCONN) goto cassos;
       if (errno != EAGAIN && errno != EINPROGRESS) {
-	printf("%d %d\n", errno, EADDRINUSE);
+	//	printf("%d %d\n", errno, EADDRINUSE);
 	perror ("net_tcp_connect_with_timeout: connect");
 	return -1;
       }

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "global.h"
 #include "scrollcoin.h"
 #include "coin_util.h"
 
@@ -248,7 +249,7 @@ void
 scrollcoin_setpos(ScrollCoin *sc, int new_pos)
 {
   if (!(new_pos >= sc->vmin && new_pos <= sc->vmax)) {
-    printf("setpos out of bounds: %d min=%d, mx=%d\n", new_pos, sc->vmin, sc->vmax);
+    BLAHBLAH(2,printf("setpos out of bounds: %d min=%d, mx=%d\n", new_pos, sc->vmin, sc->vmax));
   }
   new_pos = MIN(MAX(new_pos, sc->vmin),sc->vmax);
   if (sc->pos != new_pos) {

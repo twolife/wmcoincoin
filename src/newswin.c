@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.3 2002/02/28 01:12:33 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.4 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.4  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.3  2002/02/28 01:12:33  pouaite
   scrollcoin dans la fenetre des news
 
@@ -797,9 +800,20 @@ newswin_build(Dock *dock)
   nw->pix = None;
   nw->news_id = -1;
 
-
   dock->newswin = nw;
 }
+
+#ifdef TEST_MEMLEAK
+void
+newswin_destroy(Dock *dock) {
+  Newswin *nw = dock->newswin;
+  if (newswin_is_used(dock)) newswin_unmap(dock);
+  picohtml_destroy(dock->display, nw->phv_news.ph);
+  picohtml_destroy(dock->display, nw->phv_titles.ph);
+  picohtml_destroy(dock->display, nw->ph_survol);
+  free(nw);
+}
+#endif
 
 int
 newswin_is_used(const Dock *dock) {

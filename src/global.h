@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.15 2002/02/26 22:02:07 pouaite Exp $
+  rcsid=$Id: global.h,v 1.16 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.16  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.15  2002/02/26 22:02:07  pouaite
   bugfix gruikissime pour les pbs de lag sous cygwin
 
@@ -51,6 +54,9 @@
 #define GLOBAL_H
 
 #include "config.h"
+#ifdef TEST_MEMLEAK
+#include "mpatrol.h"
+#endif
 
 #define MESSAGE_MAX_LEN 255
 #define USERAGENT_MAX_LEN 60

@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.5 2001/12/17 22:59:26 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.6 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.6  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.5  2001/12/17 22:59:26  pouaite
   bugfix débile qui empeche le plantage du coincoin quand /backend.rdf est invalide
 
@@ -76,7 +79,7 @@ patterns_t patterns[] =
   };
 
 char *
-strndup(const char *s, int n)
+mystrndup(const char *s, int n)
 {
   char *p;
 
@@ -114,7 +117,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   if (p) {
     p2 = strchr(p, '<');
     if (p2) {
-      *p_date = strndup(p, p2-p);
+      *p_date = mystrndup(p, p2-p);
     }
   }
 
@@ -125,7 +128,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   if (p) {
     p2 = strstr(p, "Approuvé le ");
     if (p2) {
-      *p_auteur = strndup(p, p2-p);
+      *p_auteur = mystrndup(p, p2-p);
     }
   }
   if (*p_auteur == NULL) { *p_auteur = strdup("???"); }
@@ -139,7 +142,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
       p++;
       p2 = strchr(p, '<');
       if (p2 && p2 - p < 100) {
-	*p_section = strndup(p, p2-p);
+	*p_section = mystrndup(p, p2-p);
       }
     }
   }
@@ -150,7 +153,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   if (p) {
     p2 = strstr(p, "</td>");
     if (p2) {
-      *p_txt = strndup(p, p2-p);
+      *p_txt = mystrndup(p, p2-p);
     }
   }
 
@@ -162,7 +165,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
     if (p) {
       p2 = strstr(p, "</td>");
       if (p2) {
-	*p_liens = strndup(p, p2-p);
+	*p_liens = mystrndup(p, p2-p);
       }
     }
   }

@@ -1,3 +1,9 @@
+--------------------------v2.3.5-----------------------------------------
+
+2002-03-02  pouaite  <c0in@altern.org>
+
+	* bugfixes divers... je crois que c'est parti pour une release
+
 2002-02-27  pouaite  <c0in@altern.org>
 
 	* src/newswin.c ajout de la scrollcoin a la fenetre des news
@@ -27,7 +33,7 @@
 2002-02-21  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c (plopify_word): ajout d'une nouvelle
-	fonctionnalité: la plopification des malotrus -> shift + right
+	fonctionnalité: la plopification des malotrus -> shift + right	
 	clic sur un login/useragent/mot (fonctionnement similaire au
 	shift+left clic, couleur fixée par 'pinnipede.plopify_color')
 

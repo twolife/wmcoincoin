@@ -118,7 +118,7 @@ struct _tribune_msg_info {
   signed char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
   char *useragent; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(useragent) !!! */
   char *msg; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(msg) !!! */
-  char *login; /* nouveau !! */
+  char *login; /* nouveau !! (non mallocé, comme useragent, msg etc..)*/
   struct _tribune_msg_info *next;
 
   /* tatouage pointe sur la regle que satisfie 'useragent' 
@@ -612,6 +612,7 @@ void dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent);
 /* coincoin_news.c */
 void dlfp_updatenews(DLFP *dlfp);
 DLFP *dlfp_create();
+void dlfp_destroy(DLFP *dlfp);
 int dlfp_delete_news(DLFP *dlfp, int id);
 DLFP_news *dlfp_insert_news(DLFP *dlfp);
 DLFP_news *dlfp_find_news_id(DLFP *dlfp, int id);
@@ -625,10 +626,11 @@ DLFP_message *dlfp_msg_find_unreaded(DLFP *dlfp);
 void dlfp_msg_update_messages(DLFP *dlfp);
 
 /* newswin.c */
+void newswin_build(Dock *dock);
+void newswin_destroy(Dock *dock);
 void newswin_show(Dock *dock, DLFP *dlfp, int id);
 void newswin_unmap(Dock *dock);
 void newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event);
-void newswin_build(Dock *dock);
 int newswin_is_used(const Dock *dock);
 Window newswin_get_window(const Dock *dock);
 int newswin_get_xpos(const Dock *dock);
@@ -667,6 +669,7 @@ void editw_cb_handle_selectionrequest(Dock *dock, XSelectionRequestEvent *rq);
 
 /* balloon.c */
 void balloon_build(Dock *dock);
+void balloon_destroy(Dock *dock);
 void balloon_hide(Dock *dock);
 void balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth);
 void balloon_show_with_image(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth, Pixmap image, int img_w, int img_h);
@@ -687,6 +690,7 @@ void msgbox_build(Dock *dock);
 
 /* pinnipede.c */
 void pp_build(Dock *dock);
+void pp_destroy(Dock *dock);
 void pp_show(Dock *dock, DLFP_tribune *trib);
 void pp_unmap(Dock *dock);
 int pp_ismapped(Dock *dock);
@@ -696,7 +700,6 @@ Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
-void pp_refresh_flush(Dock *dock);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

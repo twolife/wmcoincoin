@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.22 2002/03/01 00:27:40 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.23 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.23  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.22  2002/03/01 00:27:40  pouaite
   trois fois rien
 
@@ -670,9 +673,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	  } else {
 	    /* il manque un message, soit il provient de la tribune des modérateurs et est donc inaccessible,
 	       soit il y a effectivement eu une race condition dans dacode */
-	    myprintf("%<YEL \\o/ il vient d'y avoir une race condition dans le backend de tribune !> (id=%d, il manque le msg id=%d).\n"
-		     "DON'T PANIC, le coincoin va gèrer tout ça calmement, ça prouve au moins que\n"
-		     "je me suis pas fait chier à faire ce bugfix pour rien\n", id, id-need_roll_back);
+	    
 	    roll_back_cnt = 3;
 	  }
 	}
@@ -732,7 +733,11 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	}
 
 	if (roll_back_cnt == 0 || tribune_find_id(&dlfp->tribune,id) == NULL) {
-	  if (roll_back_cnt) myprintf("%<YEL \\o/ sauvetage du message %d réussi !>\n", id);
+	  if (roll_back_cnt) {
+	    myprintf("%<YEL \\o/ il vient peut être d'y avoir une race condition dans le backend de tribune !> (id=%d).\n"
+		     "DON'T PANIC, le coincoin gère tout ça calmement, ça prouve au moins que je\n"
+		     "ne me suis pas fait chier à faire ce bugfix pour rien\n", id);
+	  }
 	  flag_updating_tribune++;
 	  tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
 	  flag_updating_tribune--;

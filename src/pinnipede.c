@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.27 2002/03/01 00:27:40 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.28 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.28  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.27  2002/03/01 00:27:40  pouaite
   trois fois rien
 
@@ -132,7 +135,6 @@ struct _PostVisual {
   signed char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
   int nblig:12; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt:9; // compteur de references
-  int is_locked:1; /* pv impossible à détruire dans pp_pv_garbage_collect (utilisé pour le cache tout naze de pp_refresh) */
 
   int is_my_message:1;
   int is_answer_to_me:1;
@@ -575,7 +577,6 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->first = NULL;
   pv->nblig = -1;
   pv->ref_cnt = 0;
-  pv->is_locked = 0;
   pv->next = NULL;
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
@@ -852,7 +853,7 @@ pp_pv_garbage_collect(Pinnipede *pp) {
   while (pv) {
     //    printf("pv = %d, next = %p\n", pv->id, pv->next);
     assert(pv->ref_cnt >= 0);
-    if (pv->ref_cnt == 0 && pv->is_locked == 0) {
+    if (pv->ref_cnt == 0) {
       npv = pv->next;
       if (pv == pp->pv) pp->pv = npv;
       pv_destroy(pv);
@@ -872,7 +873,7 @@ pp_pv_destroy(Pinnipede *pp) {
   PostVisual *pv;
 
   pv = pp->pv;  
-  while (pv) { pv->ref_cnt = 0; assert(pv->is_locked == 0); pv = pv->next; }
+  while (pv) { pv->ref_cnt = 0; pv = pv->next; }
   pp_pv_garbage_collect(pp);
   if (pp->lignes) { free(pp->lignes); pp->lignes = NULL; }
 }
@@ -906,7 +907,7 @@ pp_update_fortune(Dock *dock)
 }
 
 
-void
+static void
 pp_selection_unselect(Pinnipede *pp) {
   if (pp->lignes_sel) free(pp->lignes_sel);
   pp->lignes_sel = NULL;
@@ -922,7 +923,8 @@ pp_selection_unselect(Pinnipede *pp) {
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1) //(pp->zmsg_y + (l+1)*pp->fn_h-1)
 #define LINEBASE(l) (LINEY0(l) + pp->fn_base->ascent) //(pp->zmsg_y + pp->fn_base->ascent + (l-1)*pp->fn_h)
 
-void
+/* positionnenement de la scrollbar */
+static void
 pp_scrollcoin_move_resize(Dock *dock)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -931,7 +933,18 @@ pp_scrollcoin_move_resize(Dock *dock)
   scrollcoin_resize(pp->sc, pp->win_width - SC_W+1, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));
 }
 
-void
+
+/*
+  ça tient du vilain bricolage.. mais bon: la scrollbar doit connaitre ses bornes
+  le chiffre qu'elle renvoie correspond à l'id du message affiché sur la dernière ligne du pinnipede
+  
+  le problème est alors la borne vmin: c'est l'id du dernier message de la première page,
+  ce qui demande un certain nombre de manip pour le determiner
+
+  (si scroll_coin avait travaillé par ligne plutot que par id, ça aurait été encore pire)
+*/
+
+static void
 pp_scrollcoin_update_bounds(Dock *dock, DLFP_tribune *trib)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -946,7 +959,7 @@ pp_scrollcoin_update_bounds(Dock *dock, DLFP_tribune *trib)
   vmax = count_all_id(trib, &pp->filter);
   vmin = 0;
   lcnt = 0;
-  mi = trib->msg;
+  mi = trib->msg; /* premier message */
   while (lcnt < pp->nb_lignes && mi) {
     if (filter_msg_info(mi,&pp->filter)) {
       PostVisual *pv;
@@ -960,7 +973,8 @@ pp_scrollcoin_update_bounds(Dock *dock, DLFP_tribune *trib)
 }
 
 
-
+/* mise à jour du contenu du pinnipede (reparse tous les messages affichés etc...
+   c'est une des fonctions les plus importantes) */
 /* adjust: param interne, appeler toujours avec adjust  = 0 */
 void
 pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int adjust, int update_scrollbar_bounds)
@@ -1655,10 +1669,9 @@ void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp
    
    cette fonction est malheureusement devenue un vrai sac de noeud
 
-   A NE JAMAIS APPELER DIRECTEMENT --> utiliser pp_refresh ou pp_refresh_cached
 */
 void
-pp_refresh_now(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
+pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 {
   Pinnipede *pp = dock->pinnipede;
   int l;
@@ -1836,84 +1849,7 @@ pp_refresh_now(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 }
 
 
-/*
-  rafraichit le pinnipede avec un système de cache pour éviter 
-   d'enchainer les refresh comme un ouf et de saturer le serveur X
-
-   par contre, comme tous les caches, c'est gruiiiiiik
-   cf le champ batard 'is_locked' pour etre sur que le message 'pw_ref' ne sera
-   pas détruit entre la demande de refresh et son affichage effectif
-
-   flush = 0, on utilise le cache
-   flush = 1, on fait un refresh immédiatement
-   flush =-1, on effectue le refresh sauvé dans le cache
-
-
-   UPDATE: TOUT EST DESACTIVE, et ça va vraisemblablement être viré si le besoin 
-   ne s'en fait plus ressentir
-*/ 
-void
-pp_refresh_cached(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref, int flush)
-{
-  static int refresh_request_cnt = 0;
-  static PostWord *pw_ref_save = NULL; /* grrruiiiiiik raaaaah c laid */
-
-  if (flush != -1) {
-
-    flush = 1; /* 
-		  UPDATE JE DESACTIVE TOUT C DANGERUEX YA DES PP_PV_DESTROY UN PEU PARTOUT
-		  **ET** depuis le flush_mouse_motions, y'a plus de pb de refresh en rafale 
-	       */
-
-
-    /* c'est une nouvelle requete de refresh */
-    refresh_request_cnt++;
-
-    /* debloque pw_ref_save */
-    if (pw_ref_save) {
-      pw_ref_save->parent->is_locked = 0; pw_ref_save = NULL;
-    }
-    
-    /* bloque pw_ref et le copie dans pw_ref_save */
-    if (pw_ref) {
-      pw_ref_save = pw_ref; pw_ref_save->parent->is_locked = 1;
-    }
-  }
-
-  if (refresh_request_cnt >= 1  || (flush && refresh_request_cnt)) {
-    pp_refresh_now(dock, trib, d, pw_ref_save);
-    if (pw_ref_save) { 
-      pw_ref_save->parent->is_locked = 0; 
-      pw_ref_save = NULL; 
-    }
-    refresh_request_cnt = 0;
-    BLAHBLAH(4,printf("refresh done  (pw_ref=%p) (request_cnd=%d, flush=%d)\n", 
-		      pw_ref_save, refresh_request_cnt, flush));
-  } else if (flush != -1) {
-    BLAHBLAH(4,printf("refresh cached(pw_ref=%p) (request_cnd=%d, flush=%d)\n", 
-		      pw_ref, refresh_request_cnt, flush));
-  }
-}
-
-void
-pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
-{
-  pp_refresh_cached(dock, trib, d, pw_ref, 0);
-}
-
-/* appele depuis wmcoincoin.c, une fois que tous les evennements ont été traités,
-   pour forcer le refresh du pinnipède */
-void
-pp_refresh_flush(Dock *dock)
-{
-  Pinnipede *pp = dock->pinnipede;
-  if (pp && pp->mapped) {
-    assert(pp->win != None);
-    pp_refresh_cached(dock, &dock->dlfp->tribune, pp->win, NULL, -1);
-  }
-}
-
-
+/* appelée depuis wmcoincoin.c, pour gèrer l'autoscroll et rafraichir l'affichage */
 void
 pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 {
@@ -1925,11 +1861,12 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
       if (pp->sc) { 
 	pp_scrollcoin_update_bounds(dock, trib); 
       }      
-      if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
-	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
+      if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base) { // && pp->decal_base == 0) {
+	//	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
 	pp_update_content(dock, trib, trib->last_post_id, 0, 0, 0);
       } else {
-	printf("pp_check_tribune_updated, on laisse filer de %d à %d\n", pp->last_post_id, trib->last_post_id);
+	/*	if (trib->last_post_id != pp->last_post_id)
+		printf("pp_check_tribune_updated, on laisse filer de %d à %d (pos=%d/%d)\n", pp->last_post_id, trib->last_post_id, pp->id_base, pp->decal_base);*/
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base, 0, 0);
       }
       pp_refresh(dock, trib, pp->win, NULL);
@@ -2094,21 +2031,22 @@ pp_build(Dock *dock)
   pp->fn_minib = dock->fixed_font;
 
   pp->flag_tribune_updated = 0;
-  /*
-  {
-    char s_xpm_bgcolor[30];
-    // on remplace la ligne de la couleur transparente par notre couleur de fond,
-       //c une ruse de sioux 
-    snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.pp_button_color);
-
-    pp_minib_xpm[1] = s_xpm_bgcolor;
-
-    assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
-				   pp_minib_xpm, &pp->minipix, NULL, NULL) == XpmSuccess);    
-  }
-  */
 }
 
+/* 
+   fonction inutile, sert juste à reperer si y'a des memory leaks 
+*/
+#ifdef TEST_MEMLEAK
+void
+pp_destroy(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  if (pp->mapped) pp_unmap(dock);
+  assert(pp->pv == NULL); assert(pp->sc == NULL); assert(pp->lignes_sel == NULL);
+  picohtml_destroy(dock->display, pp->ph_fortune);
+  free(pp); dock->pinnipede = NULL;
+}
+#endif 
 
 /*
   un petit mot: j'ai enfin compris comment faire apparaitre cette fenetre
@@ -2255,10 +2193,6 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
   if (txt == NULL) return;
   if (strlen(txt) == 0) return;
 
-  /* faut vider le cache :-/ */
-  pp_refresh_flush(dock);
-
-    
   fn = pp->fn_bd;
   XSetFont(dock->display, dock->NormalGC, fn->fid);
   l = 0; s = txt;

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.22 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.23 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.23  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.22  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -139,6 +142,9 @@ structPrefs Prefs;
 int opened_cnt; /* ça c'est de la bonne vieille variable qui date de la v0.9...*/
 
 Dock *dock;
+
+int wmcc_run = 1; /* flag arretant wmcc (pour debug) */
+
 
 /*
    la fonction de la honte ...
@@ -495,6 +501,13 @@ wmcoincoin_dispatch_events(Dock *dock)
 	dock->mouse_win = None;
       } break;
     case ButtonPress:
+#ifdef TEST_MEMLEAK
+      if (event.xbutton.button == Button3 && (event.xbutton.state & (Button1Mask | Button2Mask))) {
+	wmcc_run = 0; printf("suicide in progress...\n");
+	break;
+      }
+#endif
+
     case ButtonRelease:
     case KeyPress:
       {
@@ -736,15 +749,6 @@ void X_loop()
       }
     }
   }
-
-  /* force l'update de l'affichage du pinnipède (qui cache se refresh
-     comme un salaud pour éviter d'asphyxier le serveur X, ça devrait donner un
-     un scroll plus cool 
-
-     en même temps, et c'est vrai que j'ai peut être été con sur ce coup, 
-     c'est plutot les events du style 'MouseMove' qu'il aurait fallu flusher
-  */
-  pp_refresh_flush(dock);
 
   /* le chef est-il dans le bureau ? */
   if (flag_discretion_request == +1) {
@@ -1157,7 +1161,7 @@ void *Timer_Thread(void *arg UNUSED)
 void *Net_loop () {
   strcpy(dock->newstitles, "transfert en cours...");
 
-  while (1) {
+  while (wmcc_run) {
     
     /* ces deux lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
        (si le coincoin rafraichissait 1fois/15min, il va faire très rapidement un refresh) 
@@ -1223,6 +1227,7 @@ void *Net_loop () {
     dock->tribune_refresh_cnt++;
     temps_depuis_dernier_event++;
   }
+  return NULL;
 }
 
 /* (c)(tm)(r) kadreg qui n'aime pas le jaune (pourtant moi j'aime bien le jaune) */
@@ -1572,5 +1577,54 @@ main(int argc, char **argv)
   }
 #endif  
   Net_loop();
+#ifdef TEST_MEMLEAK
+
+#define tfree(x) if (x!=NULL) free(x); x = NULL;
+  block_sigalrm(1);
+  pp_destroy(dock);
+  newswin_destroy(dock);
+  dlfp_destroy(dock->dlfp);
+  balloon_destroy(dock);
+  tfree(dock->msgbox);
+  tfree(dock->editw);
+
+  tfree(dock->newstitles);
+  tfree(dock->newstitles_id);
+  tfree(dock->msginfo);
+  FREE_ARR(dock->trolloscope);
+  tfree(Prefs.font_encoding); 
+  tfree(Prefs.news_fn_family); 
+  tfree(Prefs.user_agent); 
+  tfree(Prefs.proxy_auth); 
+  tfree(Prefs.proxy_name); 
+  //tfree(Prefs.coin_coin_message); déjà fait plus tôt
+  tfree(Prefs.user_name); 
+  tfree(Prefs.balloon_fn_family);
+  tfree(Prefs.bgpixmap); 
+  //  tfree(Prefs.app_name); non mallocé
+  tfree(Prefs.site_root); 
+  tfree(Prefs.site_path);
+  tfree(Prefs.options_file_name); 
+  tfree(Prefs.path_tribune_backend); 
+  tfree(Prefs.path_news_backend);
+  tfree(Prefs.path_end_news_url); 
+  tfree(Prefs.path_tribune_add); 
+  tfree(Prefs.path_myposts);
+  tfree(Prefs.path_messages); 
+  tfree(Prefs.site_path_remote); 
+  tfree(Prefs.site_theme_num);
+  tfree(Prefs.user_cookie); 
+  tfree(Prefs.user_login); 
+  tfree(Prefs.browser_cmd); 
+  tfree(Prefs.browser2_cmd);
+  tfree(Prefs.pp_fn_family); 
+  tfree(Prefs.pp_fortune_fn_family); 
+  tfree(Prefs.ew_spell_cmd);
+  tfree(Prefs.ew_spell_dict); 
+  tfree(Prefs.post_cmd); 
+  tfree(Prefs.tribune_scrinechote);
+  XCloseDisplay(dock->display);
+  tfree(dock);
+#endif  
   return 0;
 }

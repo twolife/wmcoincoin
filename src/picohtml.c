@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.5 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.6 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.6  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.5  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -552,4 +555,5 @@ void picohtml_destroy(Display *display, PicoHtml *ph)
   XFreeFont(display, ph->fn_bold);
   XFreeFont(display, ph->fn_tt);
   if (ph->txt) picohtml_freetxt(ph);
+  free(ph);
 }

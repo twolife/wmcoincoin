@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.4 2001/12/17 00:18:04 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.5 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.5  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.4  2001/12/17 00:18:04  pouaite
   changement du format du backend -> on utilise desormais le /backend.rdf
 
@@ -64,7 +67,7 @@ int regexp_extract(const char *str, pat_type_t pattern, ...);
 void extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens);
 
 /* et deux fonctions à la con qui peuvent etre utiles */
-char * strndup(const char *s, int n);
+char *mystrndup(const char *s, int n);
 char *after_substr(const char *s, const char *substr);
 
 #endif

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.17 2002/02/27 00:32:19 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.18 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.18  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.17  2002/02/27 00:32:19  pouaite
   modifs velues
 
@@ -1222,7 +1225,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
 /*
   efface un message (par ex. quand il est trop vieux et ne figure plus dans linuxfr/messages)
 */
-/*
+#ifdef TEST_MEMLEAK
 static int
 dlfp_msg_delete_message(DLFP *dlfp, int mid) {
   DLFP_message *m, *p;
@@ -1246,7 +1249,7 @@ dlfp_msg_delete_message(DLFP *dlfp, int mid) {
   free(m);
   return 0;
 }
-*/
+#endif
 
 /* insere (en classant) */
 static DLFP_message *
@@ -1447,3 +1450,37 @@ dlfp_msg_update_messages(DLFP *dlfp)
     myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
   }
 }
+
+#ifdef TEST_MEMLEAK
+void DLFP_trib_load_rule_destroy(DLFP_trib_load_rule *r);
+
+void
+dlfp_destroy(DLFP *dlfp)
+{
+  tribune_msg_info *mi;
+  while (dlfp->news) {
+    dlfp_delete_news(dlfp, dlfp->news->id);
+  }
+  while (dlfp->msg) {
+    dlfp_msg_delete_message(dlfp, dlfp->msg->mid);
+  }
+  while (dlfp->com) {
+    dlfp_yc_delete_comment(dlfp, dlfp->com->com_id);
+  }
+  if (dlfp->fortune) {
+    free(dlfp->fortune); dlfp->fortune = NULL;
+  }
+  DLFP_trib_load_rule_destroy(dlfp->tribune.rules);
+
+  mi = dlfp->tribune.msg;
+  while (mi) {
+    tribune_msg_info *nmi;
+    nmi = mi->next;
+    if (mi->refs) free(mi->refs);
+    free(mi);
+    mi = nmi;
+  }
+  dlfp->tribune.msg = NULL;
+  free(dlfp);
+}
+#endif

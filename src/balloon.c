@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.4 2001/12/18 12:43:37 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.5 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.5  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.4  2001/12/18 12:43:37  pouaite
   ajout de l'option de la fonte des ballons d'aide (pour mr. imr !) + bugfix d'une connerie assez naze dans la gestion du nom du fichier d'options (merci glandium de me l'avoir signalé)
 
@@ -105,6 +108,18 @@ balloon_build(Dock *dock)
 
   dock->balloon = b;
 }
+
+#ifdef TEST_MEMLEAK
+void
+balloon_destroy(Dock *dock) {
+  Balloon *b = dock->balloon;
+  
+  if (b->imgpix != None) XFreePixmap(dock->display, b->imgpix);
+  XDestroyWindow(dock->display, b->win);
+  if (b->ph) { picohtml_destroy(dock->display, b->ph); b->ph = NULL; }
+  free(dock->balloon); dock->balloon = NULL;
+}
+#endif
 
 static void
 balloon_draw_frame(Display *dpy, Pixmap pix, GC gc, int x, int y, int w, int h, int side)

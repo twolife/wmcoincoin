@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.11 2002/03/01 00:27:40 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.12 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.12  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.11  2002/03/01 00:27:40  pouaite
   trois fois rien
 
@@ -988,7 +991,7 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
       }
     }
   }
-  free(ctab);
+  if (ctab) free(ctab);
 }
 
 void

@@ -24,9 +24,12 @@
   c'est des choses qui ne sont plus très utiles maintenant ( à part pour les couleurs du trolloscope..)
   Ce fichier a été crée pour désengorger wmcoincoin.c
 
-  rcsid=$Id: useragents_file.c,v 1.2 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: useragents_file.c,v 1.3 2002/03/03 10:10:04 pouaite Exp $
   ChangeLog:
   $Log: useragents_file.c,v $
+  Revision 1.3  2002/03/03 10:10:04  pouaite
+  bugfixes divers et variés
+
   Revision 1.2  2002/02/02 23:49:17  pouaite
   plop
 
@@ -42,7 +45,7 @@
 /*
   destruction de la chaine de regles -- utile en cas d'erreur
 */
-static void
+void
 DLFP_trib_load_rule_destroy(DLFP_trib_load_rule *r)
 {
   DLFP_trib_load_rule *nr;
