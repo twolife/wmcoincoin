@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-01-12 19:59+0100\n"
+"POT-Creation-Date: 2003-01-19 20:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -268,11 +268,11 @@ msgstr ""
 msgid "thread from id"
 msgstr ""
 
-#: src/msgbox.c:76
+#: src/msgbox.c:79
 msgid "MESSAGE FROM WMCOINCOIN"
 msgstr ""
 
-#: src/msgbox.c:192
+#: src/msgbox.c:196
 msgid "close msgbox\n"
 msgstr ""
 
@@ -1689,97 +1689,97 @@ msgstr ""
 msgid "show the button bar / tabs bar"
 msgstr ""
 
-#: src/palmipede.c:274
+#: src/palmipede.c:277
 msgid ""
 "%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%"
 "d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:491
+#: src/palmipede.c:494
 msgid ""
 "%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,"
 "sel_anchor=%d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:590
+#: src/palmipede.c:593
 msgid "wmcoincoin: Failed to set XA_PRIMARY ownership."
 msgstr ""
 
-#: src/palmipede.c:1219
+#: src/palmipede.c:1223
 msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
 msgstr ""
 
-#: src/palmipede.c:1280
+#: src/palmipede.c:1284
 msgid "Warning : errot in XCreateIC() !\n"
 msgstr ""
 
-#: src/palmipede.c:1503
+#: src/palmipede.c:1507
 #, c-format
 msgid "Unable to load font %s, trying iso8859-1 encoding \n"
 msgstr ""
 
-#: src/palmipede.c:1507
+#: src/palmipede.c:1511
 msgid "Failed\n"
 msgstr ""
 
-#: src/palmipede.c:1849
+#: src/palmipede.c:1853
 msgid "====> <b>Moment "
 msgstr ""
 
-#: src/palmipede.c:2369
+#: src/palmipede.c:2373
 #, c-format
 msgid ""
 "<p align=center><b>wmCoinCoin Agent</b></p>Hmmm, it seems that you don't "
 "know what to say, so, if you don't mind,I suggest <font color=blue>%s</font>"
 msgstr ""
 
-#: src/palmipede.c:2379
+#: src/palmipede.c:2383
 msgid "Put here the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2382
+#: src/palmipede.c:2386
 msgid "Fold back the palmipede<p>shortcut: <b>escape</b>"
 msgstr ""
 
-#: src/palmipede.c:2383
+#: src/palmipede.c:2387
 msgid "Edit the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2383
+#: src/palmipede.c:2387
 msgid "Edit the message<p>shortcut: <b>Tab</b>"
 msgstr ""
 
-#: src/palmipede.c:2384
+#: src/palmipede.c:2388
 msgid "Insert italic<p>shortcut: <b>Alt-I</b>"
 msgstr ""
 
-#: src/palmipede.c:2385
+#: src/palmipede.c:2389
 msgid "Insert bold<p>shortcut: <b>Alt-B</b>"
 msgstr ""
 
-#: src/palmipede.c:2386
+#: src/palmipede.c:2390
 msgid "Insert teletype tag<p>shortcut: <b>Alt-T</b>"
 msgstr ""
 
-#: src/palmipede.c:2387
+#: src/palmipede.c:2391
 msgid "Overstrike text<p>shortcut: <b>Alt-S</b>"
 msgstr ""
 
-#: src/palmipede.c:2388
+#: src/palmipede.c:2392
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr ""
 
-#: src/palmipede.c:2390
+#: src/palmipede.c:2394
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr ""
 
-#: src/palmipede.c:2391
+#: src/palmipede.c:2395
 msgid "Clear"
 msgstr ""
 
-#: src/palmipede.c:2392
+#: src/palmipede.c:2396
 msgid "Restore the default user-agent"
 msgstr ""
 
@@ -1805,12 +1805,12 @@ msgid ""
 "board..."
 msgstr ""
 
-#: src/dock.c:1078
+#: src/dock.c:1077
 #, c-format
 msgid "Error while loading file : '%s' [64x64 pixels XPM, please]"
 msgstr ""
 
-#: src/dock.c:1265 src/dock.c:1461
+#: src/dock.c:1264 src/dock.c:1460
 msgid "No new messages."
 msgstr ""
 

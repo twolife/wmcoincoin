@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.32 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.33 2003/02/26 00:03:19 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.33  2003/02/26 00:03:19  pouaite
+  fix bug des urls relatives (pour la caverne)
+
   Revision 1.32  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -736,4 +739,37 @@ open_wfile(const char *fname) {
   fd = open (fname, O_CREAT | O_TRUNC | O_RDWR, 0600);
   if (fd != -1) f = fdopen(fd, "w"); else return NULL;
   return f;
+}
+
+/* rend une url présentable, et lui degage la nuque si nécessaire */
+void url_au_coiffeur(unsigned char *url, int coupe) {
+  int i=0,j, j_path=0;
+  enum {IN_HOST,IN_PORT,IN_PATH} where = IN_HOST;
+  //printf("ENTREE url_au_coiffeur(%s,%d)\n", url, coupe);
+  if (strncasecmp(url, "http://",7)==0) i = 7; 
+  else if (strncasecmp(url, "https://",8)==0) i = 8;
+  else if (strncasecmp(url, "ftp://",6) == 0) i = 6;
+  else {
+    fprintf(stderr,"url_au_coiffeur(%s): vous avez des pous\n", url);
+    url[0] = 0; return;
+  }
+  j = i;
+  while (url[i]) {
+    if (where==IN_HOST && url[i] == ':') where=IN_PORT;    
+    if (url[i] == '/') { where=IN_PATH; if (j_path ==0) j_path = j; }
+
+    if (where == IN_PORT && strncmp(url+i, ":80",3)==0) {
+      i+= 3;
+    } else if (url[i] >= ' ' && (url[i] != '/' || url[i-1] != '/')) {
+      url[j++] = url[i++];
+    } else ++i;
+  }
+  assert(j);
+  j--;
+  if (url[j] == '/') url[j--] = 0;
+  while (coupe) {
+    while (j > j_path) { if (url[j--] == '/') { coupe--; break; } };
+  }
+  url[j+1] = 0;
+  //printf("SORTIE url_au_coiffeur(%s,%d)\n", url, coupe);
 }

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.88 2003/02/25 23:10:44 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.89 2003/02/26 00:03:20 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -632,11 +632,15 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	while (s[i] != '\"' && i > 0) i--;
 	s[i] = 0;
 	url = s+10;
-	if (url[0] == '.') { /* chemin relatif :-/ */
-	  if (url[1] == '.') url+=2;
-	  /* quick & ugly fix, ne marche pas quand le site n'est pas lesite/board mais
-	     lesite/blah/blah/board .. pff */
-	  snprintf(attr_s, PVTP_SZ, "http://%s%s", board->site->prefs->site_root, url);
+	if (url[0] == '.') { /* chemin relatif :-/ */	  
+	  char *tmp = str_printf("http://%s:%d/%s/%s", board->site->prefs->site_root, 
+				 board->site->prefs->site_port, board->site->prefs->site_path, 
+				 board->site->prefs->path_board_backend);
+	  url_au_coiffeur(tmp, 1); /* vire le nom du backend */
+	  tmp = str_cat_printf(tmp, "/%s", url);
+	  url_au_coiffeur(tmp, 0);
+	  snprintf(attr_s, PVTP_SZ, "%s", tmp);
+	  free(tmp);
 	} else {
 	  strncpy(attr_s, url, PVTP_SZ); 
 	}

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2003-01-12 19:59+0100\n"
+"POT-Creation-Date: 2003-01-19 20:01+0100\n"
 "PO-Revision-Date: 2002-08-18 21:31+0200\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -283,11 +283,11 @@ msgstr "id message"
 msgid "thread from id"
 msgstr "fil depuis l'id"
 
-#: src/msgbox.c:76
+#: src/msgbox.c:79
 msgid "MESSAGE FROM WMCOINCOIN"
 msgstr "MESSAGE DE WMCOINCOIN"
 
-#: src/msgbox.c:192
+#: src/msgbox.c:196
 msgid "close msgbox\n"
 msgstr "fermer msgbox\n"
 
@@ -1886,23 +1886,23 @@ msgstr "cacher la barre de boutons / barre de tâches"
 msgid "show the button bar / tabs bar"
 msgstr "montrer la barre de boutons / barre de tâches"
 
-#: src/palmipede.c:274
+#: src/palmipede.c:277
 msgid ""
 "%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%"
 "d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:491
+#: src/palmipede.c:494
 msgid ""
 "%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,"
 "sel_anchor=%d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:590
+#: src/palmipede.c:593
 msgid "wmcoincoin: Failed to set XA_PRIMARY ownership."
 msgstr ""
 
-#: src/palmipede.c:1219
+#: src/palmipede.c:1223
 msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
@@ -1910,24 +1910,24 @@ msgstr ""
 "on dirait que vous avez foiré le fichier d'options, aucune tribune de "
 "définie: pas de tribune, pas de palmipede"
 
-#: src/palmipede.c:1280
+#: src/palmipede.c:1284
 msgid "Warning : errot in XCreateIC() !\n"
 msgstr ""
 
-#: src/palmipede.c:1503
+#: src/palmipede.c:1507
 #, fuzzy, c-format
 msgid "Unable to load font %s, trying iso8859-1 encoding \n"
 msgstr "Impossible de charger la police %s\n"
 
-#: src/palmipede.c:1507
+#: src/palmipede.c:1511
 msgid "Failed\n"
 msgstr ""
 
-#: src/palmipede.c:1849
+#: src/palmipede.c:1853
 msgid "====> <b>Moment "
 msgstr ""
 
-#: src/palmipede.c:2369
+#: src/palmipede.c:2373
 #, c-format
 msgid ""
 "<p align=center><b>wmCoinCoin Agent</b></p>Hmmm, it seems that you don't "
@@ -1937,52 +1937,52 @@ msgstr ""
 "ne savez pas quoi dire, alors si je puis me permettre, je vous suggère <font "
 "color=blue>%s</font>"
 
-#: src/palmipede.c:2379
+#: src/palmipede.c:2383
 msgid "Put here the user-agent"
 msgstr "Entrez le useragent."
 
-#: src/palmipede.c:2382
+#: src/palmipede.c:2386
 msgid "Fold back the palmipede<p>shortcut: <b>escape</b>"
 msgstr "Replier le palmipède<p>raccourci: <b>escape</b>"
 
-#: src/palmipede.c:2383
+#: src/palmipede.c:2387
 msgid "Edit the user-agent"
 msgstr "Éditer le useragent"
 
-#: src/palmipede.c:2383
+#: src/palmipede.c:2387
 msgid "Edit the message<p>shortcut: <b>Tab</b>"
 msgstr "Éditer le message<p>raccourci: <b>Tab</b>"
 
-#: src/palmipede.c:2384
+#: src/palmipede.c:2388
 msgid "Insert italic<p>shortcut: <b>Alt-I</b>"
 msgstr "Insérer de l'italique<p>raccourci: <b>Alt-I</b>"
 
-#: src/palmipede.c:2385
+#: src/palmipede.c:2389
 msgid "Insert bold<p>shortcut: <b>Alt-B</b>"
 msgstr "Insérer du gras<p>raccourci: <b>Alt-B</b>"
 
-#: src/palmipede.c:2386
+#: src/palmipede.c:2390
 #, fuzzy
 msgid "Insert teletype tag<p>shortcut: <b>Alt-T</b>"
 msgstr "Insérer du teletype<p>raccourci: <b>Alt-T</b>"
 
-#: src/palmipede.c:2387
+#: src/palmipede.c:2391
 msgid "Overstrike text<p>shortcut: <b>Alt-S</b>"
 msgstr "Insérer du texte rayé<p>raccourci: <b>Alt-S</b>"
 
-#: src/palmipede.c:2388
+#: src/palmipede.c:2392
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr "Insérer du texte souligné<p>raccourci: <b>Alt-U</b>"
 
-#: src/palmipede.c:2390
+#: src/palmipede.c:2394
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr "Défaire<p>raccourci: <b>Ctrl-Z</b> ou <b>Ctrl-_</b>"
 
-#: src/palmipede.c:2391
+#: src/palmipede.c:2395
 msgid "Clear"
 msgstr "Effacer"
 
-#: src/palmipede.c:2392
+#: src/palmipede.c:2396
 msgid "Restore the default user-agent"
 msgstr "Restaurer le user-agent par défaut"
 
@@ -2010,12 +2010,12 @@ msgstr ""
 "<b>SVP</b> remplissez votre fichier d'options avec un site valide comprenant "
 "une tribune..."
 
-#: src/dock.c:1078
+#: src/dock.c:1077
 #, c-format
 msgid "Error while loading file : '%s' [64x64 pixels XPM, please]"
 msgstr ""
 
-#: src/dock.c:1265 src/dock.c:1461
+#: src/dock.c:1264 src/dock.c:1460
 msgid "No new messages."
 msgstr "Pas de nouveaux messages."
 
