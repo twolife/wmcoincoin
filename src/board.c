@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.13 2002/10/13 23:30:49 pouaite Exp $
+  rcsid=$Id: board.c,v 1.14 2002/11/30 00:10:39 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.14  2002/11/30 00:10:39  pouaite
+  2.4.2a
+
   Revision 1.13  2002/10/13 23:30:49  pouaite
   plop
 
@@ -860,7 +863,7 @@ boards_update_boitakon(Boards *boards)
 static board_msg_info *
 board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, const unsigned char *my_useragent)
 {
-  board_msg_info *nit, *pit, *it;
+  board_msg_info *nit, *pit, *ppit, *it;
   char *message = NULL;
   Boards *boards = board->boards;
 
@@ -882,11 +885,12 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
   nit = board->msg;
   pit = NULL;
-
+  ppit = NULL;
   while (nit) {
     if (nit->id.lid > id) {
       break;
     }
+    ppit = pit;
     pit = nit;
     nit = nit->next;
   }
@@ -914,10 +918,11 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   /* insertion dans la grande chaine de messages globale (inter-sites)*/
   {
     board_msg_info *g_it, *pg_it;
-    g_it = pit ? pit : boards->first; /* on demarre sur le dernier message de la même tribune d'id inférieur
-					 histoire de respecter inconditionnellement l'ordre par tribune
-					 (sinon il y a des problèmes quand un backend laggue et qu'il y
-					 a des sauts de 'time_shift' */
+    g_it = ppit ? ppit : boards->first; /* on demarre sur le dernier message de la même tribune d'id inférieur
+					   histoire de respecter inconditionnellement l'ordre par tribune
+					   (sinon il y a des problèmes quand un backend laggue et qu'il y
+					   a des sauts de 'time_shift' */
+
     pg_it = g_it ? g_it->g_prev : NULL;
     while (g_it &&
 	   (it->timestamp +  board->boards->btab[it->id.sid]->time_shift > 
@@ -1160,7 +1165,7 @@ board_check_my_messages(Board *board, int old_last_post_id) {
 					       boitakon */
       flag_updating_board--;
 
-      if (board_msg_is_ref_to_me(board->boards, it)) {
+      if (board_msg_is_ref_to_me(board->boards, it) && !it->in_boitakon) {
 	flag_updating_board++;
 	it->is_answer_to_me = 1;
 	flag_updating_board--;

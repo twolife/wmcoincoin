@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.85 2002/11/21 18:53:38 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.86 2002/11/30 00:10:39 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -3008,6 +3008,14 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
 	}
       } else if (pw && pw->attr & PWATTR_LOGIN) {
 	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);
+      } else {
+	if (pp->use_minibar == 0) {
+	  pp_minib_show(dock);
+	} else {
+	  pp_minib_hide(dock);
+	}    
+	pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+	pp_refresh(dock, pp->win, NULL);
       }
     } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
       // pp_handle_alt_clic(dock, event);
@@ -3016,16 +3024,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       int use_js = (event->state & ShiftMask) ? 1 : 0;
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
       pp_boardshot_kikoooo(dock, 0, 1, use_js);
-
     }
-  } else if (event->button == Button3) {
-    if (pp->use_minibar == 0) {
-      pp_minib_show(dock);
-    } else {
-      pp_minib_hide(dock);
-    }    
-    pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
-    pp_refresh(dock, pp->win, NULL);
   }
 }
 
@@ -3349,8 +3348,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	}
 	pp->sel_head_x = event->xmotion.x; pp->sel_head_y = event->xmotion.y;
 	pp_selection_refresh(dock);
-      } else if ((event->xmotion.state & ShiftMask) && 
-		 (event->xmotion.state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask))==0) {
+      } else if ((event->xmotion.state & Button2Mask)==Button2Mask) {
 	int decal_y;
 	decal_y = event->xmotion.y - old_mouse_y;
 	decal_y /= 8;

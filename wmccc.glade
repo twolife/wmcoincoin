@@ -85,7 +85,14 @@
 	    <name>text1</name>
 	    <can_focus>True</can_focus>
 	    <editable>False</editable>
-	    <text>PASSAGE DE WMC² 2.3.8 à WMC² 2.4
+	    <text>WMC² 2.4.2
+* bugfixes divers -- tout fonctionne à nouveau sur dlfp, à l'exception du flamophone.
+
+WMC² 2.4.1
+* ajout du menu contextuel
+* pour l'utilisation avec le templeet de linuxfr, voir http://hules.free.fr/wmcoincoin/rtff.html
+
+PASSAGE DE WMC² 2.3.8 à WMC² 2.4
 
 Le format du fichier d'options a beaucoup changé.. du coup il est conseillé d'utiliser le nouveau wmccc pour éditer les options, c'est plus simple. Sinon, lisez le fichier d'options par défaut, c'est expliqué.
 
@@ -847,7 +854,6 @@ Les tabs du pinnipede ont aussi une petite croix en bas à droite: celle-ci perme
 		  <items>no
 linuxfr.org
 woof.lu
-new.linuxfr.org
 mandrakefr.org
 </items>
 		  <initial_choice>0</initial_choice>
@@ -921,7 +927,7 @@ mandrakefr.org
 		  <widget>
 		    <class>GtkText</class>
 		    <name>text_site_cookie</name>
-		    <tooltip>for 'classical' dacode sites, just put something like 'session_id=0934PLOPCOIN', for new.linuxfr.org you have to put 2 cookies, like 'unique_id=0plOP3Co1N;md5=GRUIK5453Pl0p'  (you may also have to fill more specific values in the http panel). Do NOT insert spaces around the '=' character</tooltip>
+		    <tooltip>for 'classical' dacode sites, just put something like 'session_id=0934PLOPCOIN', for new.linuxfr.org you have to put 2 cookies, like 'unique_id=0plOP3Co1N; md5=GRUIK5453Pl0p'  (you may also have to fill more specific values in the http panel). Do NOT insert spaces around the '=' character, and put one space after the ';'. The value of the cookies can be found in the Cookie Manager of your browser.</tooltip>
 		    <can_focus>True</can_focus>
 		    <signal>
 		      <name>changed</name>
