@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.92 2003/06/23 22:43:47 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.93 2003/06/24 22:27:57 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -3656,7 +3656,9 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     } break;
     case XK_Return:
     case XK_KP_Enter: if (!editw_ismapped(dock->editw)) {
-      editw_show(dock, pp->active_tab ? pp->active_tab->site->prefs : 0, 0);
+      if (editw_check_corse(dock, event->xkey.keycode)) {
+        editw_show(dock, pp->active_tab ? pp->active_tab->site->prefs : 0, 0);
+      }
       ret++;
     } break;
     case XK_KP_Up:

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.81 2003/06/21 14:48:45 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.82 2003/06/24 22:27:57 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.82  2003/06/24 22:27:57  pouaite
+  speciale dedicace a nos amis de l'ile de beaute
+
   Revision 1.81  2003/06/21 14:48:45  pouaite
   g cho
 
@@ -563,16 +566,19 @@ char *formate_erreur( char *tribune, char *message_ignoble )
       if ( NULL != debut ) {	
         fin = strstr( debut, "<div" );
         if ( NULL != fin ) {
-          taille = fin - debut;
+          taille = MIN(fin - debut,99999); // pour éviter le petit-suicide du coincoin dans str_printf
           erreur = strdup( debut );
           erreur[taille] = 0;	 // j'ai honte
           
           if ( NULL != strstr( erreur, "XP >=" )	)
             {
+              printf("erreur=%s\nlen=%d", erreur,strlen(erreur));
+              
               joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
                                            "the server answered:<p>%s<p>%s"), tribune, erreur,
                                          _("Check your cookies !") );
             } else {
+              printf("erreur=%s\nlen=%d", erreur,strlen(erreur)); fflush(stdout);
               joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
                                            "the server answered:<p>%s"), tribune, erreur );
             }
@@ -661,7 +667,8 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
   if (dock->post_anonyme) { site->board->just_posted_anonymous = 1; }
 
-  dock->coin_coin_sent_decnt = 50;
+  dock->coin_coin_sent_decnt = 50; /* attention cette valeur est aussi utilisée dans palmipede.c
+                                      (intervention de clipouille pour les corses qui s'endorment sur le clavier) */
   pp_set_download_info(NULL,NULL);
 }
 
@@ -1033,7 +1040,7 @@ update_timers(Dock *dock)
 {
   Site *site;
   if (dock->coin_coin_sent_decnt >= 1) dock->coin_coin_sent_decnt--; /* pour éteindre la led[1] apres un cours délai */
-
+  dock->red_button_send_cnt++;
   if (flag_update_prefs_request) {
     ccqueue_push_prefs_update(flag_update_prefs_request);
     flag_update_prefs_request = 0;

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.13 2003/06/23 22:43:47 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.14 2003/06/24 22:27:57 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.14  2003/06/24 22:27:57  pouaite
+  speciale dedicace a nos amis de l'ile de beaute
+
   Revision 1.13  2003/06/23 22:43:47  pouaite
   shift-enter pour le post anonyme + fix ouinouin
 
@@ -2454,4 +2457,24 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
 		   ew->mini[i].w, ew->mini[i].h, s[i]);
     }
   }
+}
+
+/* on ne s'endort pas sur le bouton rouge */
+int
+editw_check_corse(Dock *dock, unsigned keycode) {
+  if (dock->red_button_send_cnt < 20) {
+    if (!balloon_ismapped(dock)) {
+      int x,y;
+      dock_get_icon_pos(dock, &x, &y);
+      balloon_show_with_image(dock, x, y, 64, 64,
+                              "<p align=center><b>wmCoinCoin Agent - Corsica Edition</b></p>Hmmm on dirait que<br>"
+                              " (a) vous vous êtes endormi sur la touche enter<br>"
+                              " (b) votre clavier est blo<br>"
+                              "<i>Hint:</i>:remove your big finger from the \"Return\" key", 400, 
+                              dock->editw->clippy_pixmap, dock->editw->clippy_w+8, dock->editw->clippy_h);
+    }
+    dock->red_button_send_cnt = 10;
+    balloon_disable_key(dock,keycode); /* desactive temporairement la disparition du ballon au premier KeyPressEvent */
+  } else if (balloon_ismapped(dock)) balloon_hide(dock);
+  return (dock->editw->action == NOACTION && dock->red_button_send_cnt > 20);
 }

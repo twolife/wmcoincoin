@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.33 2003/02/25 23:04:31 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.34 2003/06/24 22:27:57 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.34  2003/06/24 22:27:57  pouaite
+  speciale dedicace a nos amis de l'ile de beaute
+
   Revision 1.33  2003/02/25 23:04:31  pouaite
   cosmetique stats
 
@@ -961,6 +964,7 @@ dock_red_button_check(Dock *dock) {
 				  dock->coin_coin_message);
 	  //	  ccqueue_print();
 	  kikoo = 1;
+          dock->red_button_send_cnt = 0;
 	} else {
 	  myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
 	}

@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.7 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.8 2003/06/24 22:27:56 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.8  2003/06/24 22:27:56  pouaite
+  speciale dedicace a nos amis de l'ile de beaute
+
   Revision 1.7  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -321,6 +324,8 @@ balloon_ismapped(Dock *dock)
   return dock->balloon->mapped;
 }
 
+unsigned check_key=0;
+
 void 
 balloon_check_event(Dock *dock, XEvent *event)
 {
@@ -335,10 +340,17 @@ balloon_check_event(Dock *dock, XEvent *event)
       //case LeaveNotify:
     case KeyPress:
       {
-	balloon_hide(dock);
+        if (event->xkey.keycode != check_key)
+          balloon_hide(dock);
+        check_key = 0;
       } break;
     }
   }
+}
+
+void
+balloon_disable_key(Dock *dock, unsigned keycode) {
+  check_key=keycode;
 }
 
 int

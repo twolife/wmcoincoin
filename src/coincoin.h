@@ -396,7 +396,7 @@ typedef struct _Dock {
      press_state: niveau d'enfoncement (max=5)
   */
   int red_button_press_flag, red_button_press_state;
-
+  int red_button_send_cnt;
   int post_anonyme;
 
   /* le message a caractere informatif en bas */
@@ -619,6 +619,7 @@ void editw_refresh(Dock *dock, EditW *ew);
 void editw_erase(EditW *ew);
 int editw_insert_string(EditW *ew, const unsigned char *s); /* utilise par le pinnipede */
 void editw_move_end_of_line(EditW *ew, int shift_move); /* utilise par le pinnipede */
+int editw_check_corse(Dock *dock, unsigned keycode); /* utilise par le pinnipede */
 
 /* deux fonction d'utilite generale, en depis de leur nom */
 void editw_cb_copy(Dock *dock, Window win, const char *text, int len);
@@ -634,7 +635,7 @@ void balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int 
 void balloon_show_with_image(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth, Pixmap image, int img_w, int img_h);
 int balloon_ismapped(Dock *dock);
 void balloon_check_event(Dock *dock, XEvent *event);
-
+void balloon_disable_key(Dock *dock, unsigned keycode);
 int balloon_test(Dock *dock, int x, int y, int win_xpos, int win_ypos, int bcnt, int bx, int by, int bw, int bh, const char *btxt);
 int balloon_test_with_image(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt, Pixmap image, int img_w, int img_h);
 
