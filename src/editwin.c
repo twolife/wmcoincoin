@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.7 2002/01/12 19:03:54 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.8 2002/01/13 18:19:20 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.8  2002/01/13 18:19:20  pouaite
+  nouvelles suggestions pour clipouille (merci jjb!)
+
   Revision 1.7  2002/01/12 19:03:54  pouaite
   bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
 
@@ -2073,6 +2076,22 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de donner la météo",
     "de dire qu'aucune news n'a été modérée depuis bien longtemps",
     "de demander ce que peuvent bien faire les modérateurs",
+    "de vous renseigner sur la façon d'avoir le meilleur rendu graphique pour votre site web en flash",
+    "de lancer un sondage sur la quantité de sel dans une motte de beurre",
+    "d'aller vous promener dans la forêt",
+    "de vous lamenter sur la triste loi de la nature, appliquée aux oryx et aux requins",
+    "de prendre une photo",
+    "de demander aux moules ce qu'elles utilisent comme langage de programmation",
+    "<i>le COBOL, c'est de la merde !<i>",
+    "un troll de langages de programmation",
+    "14:00 phtérie ?",
+    "<i>wolfenstein cd key</i>",
+    "d'expliquer pourquoi vous n'irez pas passer vos vacances en Bretagne",
+    "de disserter sur la fainéantise des fonctionnaires de ce pays",
+    "de demander à quoi sert le gros bouton rouge",
+    "de poster un lien vers une news sur Britney Spears",
+    "de demander combien Poolpy a de ventouses",
+    "de poster un script permettant de voter en continu pour un sondage en ligne à la con",
     NULL
   };
   char txt[512];
