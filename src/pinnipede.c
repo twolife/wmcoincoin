@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.50 2002/04/11 23:16:54 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.51 2002/04/12 12:49:56 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.51  2002/04/12 12:49:56  pouaite
+  *** empty log message ***
+
   Revision 1.50  2002/04/11 23:16:54  pouaite
   boitakon mega combo
 
@@ -650,11 +653,11 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 
     /* on copie les caractères bizarres qui peuvent preceder le mot */
     while (s_src[src_pos] && strchr(s_bizarre,s_src[src_pos]) && 
-	   dest_pos < sz) { 
+	   dest_pos < sz-1) { 
       s_dest[dest_pos++] = s_src[src_pos++]; 
     }
     if (s_src[src_pos]==0) break;
-
+    if (dest_pos == sz-1) break;
     /* on copie le mot dans s_simple */
     s_len = 0;
     while (s_src[src_pos+s_len] && !strchr(s_bizarre, s_src[src_pos+s_len])) {
@@ -694,7 +697,7 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
     
     if (do_plopify) {
       i = 0; 
-      while (Prefs.plop_words[hache_s][i] && dest_pos < sz) {
+      while (Prefs.plop_words[hache_s][i] && dest_pos < sz-1) {
 	s_dest[dest_pos++] = Prefs.plop_words[hache_s][i++];
       }
       src_pos += s_len;
@@ -3262,7 +3265,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 
   if (pw) {
     tribune_msg_info *mi;
-    unsigned boitakon_state;
+    unsigned boitakon_state=0;
 
     mi = tribune_find_id(trib, pw->parent->id);
 
