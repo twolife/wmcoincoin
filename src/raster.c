@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.10 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.11 2002/04/15 19:56:38 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.11  2002/04/15 19:56:38  pouaite
+  v2.3.7a
+
   Revision 1.10  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -254,6 +257,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
   } *col_tab;
   
   int i, rgb;
+  int err = 0;
 
   assert(sscanf(xpm[0], "%d %d %d %d", &w, &h, &ncolor, &cpp)==4);
   assert(w > 0); assert(h>0); assert(ncolor>0); assert(cpp>0 && cpp <= 4);
@@ -265,11 +269,11 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
     strncpy(col_tab[i].char_color, s, cpp); /* copie les caracteres identifiant la couleur */
 
     s+= cpp;
-    assert(*s == '\t' || *s == ' '); 
+    if (!(*s == '\t' || *s == ' ')) { err = 1; goto ralala; }
     s++;
-    assert(*s == 'c'); /* seulement les fichiers xpms en couleur */
+    if (!(*s == 'c')) {err = 2; goto ralala;} /* seulement les fichiers xpms en couleur */
 
-    s++; assert(*s == ' ');
+    s++; if (!(*s == ' ')) { err=3; goto ralala; }
     s++;
     if (strcasecmp(s, "None") != 0) {
       if (*s != '#') {
@@ -280,7 +284,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
 	}
 	rgb = ((xc.red>>8) << 16) + ((xc.green>>8) << 8) + (xc.blue>>8);
       } else {
-	assert(sscanf(s+1, "%x", &rgb)==1);
+	if (!(sscanf(s+1, "%x", &rgb)==1)) {err = 4; goto ralala; }
       }
       col_tab[i].r = (rgb & 0xff0000) >> 16;
       col_tab[i].g = (rgb & 0x00ff00) >> 8;
@@ -323,6 +327,10 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
 
   free(col_tab);  
   return rimg;
+ ralala:
+  fprintf(stderr, "dommage, vous avez trouvé une pouille dans le 'parseur' de .xpm\n VOTRE fichier .xpm n'est pas conforme à MON standard xpm\nerr=%d, la ligne qui pose problème est: '%s'\n En le réécrivant avec un autre logiciel ça devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n", err, xpm[i]);
+  exit(1);
+  return NULL;
 }
 
 Pixmap

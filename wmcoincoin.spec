@@ -26,11 +26,11 @@ Visionnage du contenu des news (sans les commentaires)
 * Le Palmipède Editor qui permet d'éditer le messages/useragent à poster avec un confort maximal.
 * Une fonction flamophone, parce que vous le valez bien.
 * Le Pinnipède Télétype, un véritable outil de décideur.
-
 Un fichier d'options 'modèle' et largement documenté se trouve avec la doc,
 copiez-le dans ~/.wmcoincoin/ puis éditez-le
 
-%prep %setup
+%prep
+%setup
 
 %build
 %configure

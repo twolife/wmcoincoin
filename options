@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.23 2002/04/13 11:55:19 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.24 2002/04/15 19:56:38 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.24  2002/04/15 19:56:38  pouaite
+#%  v2.3.7a
+#%
 #%  Revision 1.23  2002/04/13 11:55:19  pouaite
 #%  fix kde3 + deux trois conneries
 #%
@@ -123,7 +126,7 @@
 ### 3 -> backend without slip ('<b>' -> ça dépend)
 #tribune.backend_type: 1, 2 ou 3
 
-#tribune.wiki_emulation: http://wiki.wook.lu/index.php?
+#tribune.wiki_emulation: http://wiki.woof.lu/index.php?
 
 ### les couleurs sont en héxadecimal ( '00000' = noir, 'ff0000' = rouge, '00ff00' = vert ...)
 

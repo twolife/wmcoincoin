@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.53 2002/04/14 23:24:22 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.54 2002/04/15 19:56:38 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.54  2002/04/15 19:56:38  pouaite
+  v2.3.7a
+
   Revision 1.53  2002/04/14 23:24:22  pouaite
   re-fix pour kde ..
 
@@ -3203,7 +3206,7 @@ pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 {
   Pinnipede *pp = dock->pinnipede;
 
-  if (pp->last_selected_text) {
+  if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
     pp_set_word_filter(dock, trib, pp->last_selected_text);
   } else {
     PostWord *pw;
@@ -3263,6 +3266,7 @@ pp_handle_alt_clic(Dock *dock, XButtonEvent *ev)
     char *s;
     char *ww;
     ww = str_preencode_for_http(w);
+    if (strlen(ww)>512) ww[512] = 0; /* faut pas pousser grand mère */
     s = str_substitute(Prefs.gogole_search_url, "%s", ww);
     open_url(s, pp->win_xpos + mx-5, pp->win_ypos+my-25, ev->button == Button1 ? 1 : 2);
     free(s); free(ww); 
@@ -3295,7 +3299,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 
   /* shift clic alors que du texte est selectionné: on applique le truc sur le texte selectionné */  
 
-  if (pp->last_selected_text) {
+  if (pp->last_selected_text && strlen(pp->last_selected_text) < 512) {
     *pkl = tribune_key_list_swap(*pkl, pp->last_selected_text, HK_WORD, 0);
   } else {
     PostWord *pw;
@@ -3403,9 +3407,11 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
     if (pw) {
       int changed = 1;
       if (pw->parent->is_my_message) {
-	pp->hilight_my_message_mode = 1-pp->hilight_my_message_mode;
+	/* désactivé car inutile */
+	/* pp->hilight_my_message_mode = 1-pp->hilight_my_message_mode; */
       } else if (pw->parent->is_answer_to_me) {
-	pp->hilight_answer_to_me_mode = 1-pp->hilight_answer_to_me_mode;
+	/* pareil */
+	/* pp->hilight_answer_to_me_mode = 1-pp->hilight_answer_to_me_mode; */
       } else if (pw->parent->is_hilight_key) {
 	tribune_msg_info *mi;
 	KeyList *hk;

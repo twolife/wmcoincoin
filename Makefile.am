@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.6 2002/04/13 11:55:19 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.7 2002/04/15 19:56:38 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.7  2002/04/15 19:56:38  pouaite
+##   v2.3.7a
+##
 ##   Revision 1.6  2002/04/13 11:55:19  pouaite
 ##   fix kde3 + deux trois conneries
 ##
@@ -20,9 +23,9 @@
 
 SUBDIRS = src doc
 EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
-             xpms/coin.xpm  xpms/leds.h  xpms/fleche.xpm xpms/leds.xcf \
-             xpms/porte.xcf xpms/pp_minib.xpm xpms/weekday.xpm xpms/month.xpm \
-             xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm \
+             xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
+             xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
+             xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
              ./wmcoincoin.spec ./wmpanpan ./config.sub ./config.guess \
              ./useragents ./options
 
