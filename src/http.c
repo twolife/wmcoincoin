@@ -688,7 +688,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
   i = 0;
   cnt = 0;
   s[0] = 0;
-  errno = 0;
+  //  errno = 0;
   do {
 
     while (r->error == 0 && (got = http_read(r, s+i, 1)) > 0) {
@@ -704,7 +704,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
     }
 
     if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN) {
-      printf("http_get_line: bizarre, got=0 lors de la lecture de %d/%d [r->error=%d, errmsg='%s']\n", (int)r->chunk_pos, (int)r->content_length, r->error, strerror(errno));
+      printf("http_get_line: bizarre, got=0 lors de la lecture de %d/%d [r->error=%d, errmsg='%s']\n", (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
     }
   } while (got == 0 && LASTERR_EAGAIN && r->error == 0);
 
