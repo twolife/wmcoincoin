@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.8 2002/04/01 01:39:38 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.9 2002/05/29 22:38:12 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.9  2002/05/29 22:38:12  pouaite
+##   bidouilles dans configure.in et cie
+##
 ##   Revision 1.8  2002/04/01 01:39:38  pouaite
 ##   grosse grosse commition (cf changelog)
 ##
@@ -28,8 +31,11 @@ bin_PROGRAMS = wmcoincoin
 
 EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
+#salete d'autoconf j'y comprends rien
+CFLAGS = @CFLAGS@ -DWMCCDATADIR="\"$(pkgdatadir)\""
+
 wmcoincoin_SOURCES = \
-	myprintf.c myprintf.h defaultuseragents.h defaultoptionsfile.h \
+	myprintf.c myprintf.h \
 	raster.c raster.h troll_detector.c troll_data.h \
 	dock.c useragents_file.c tribune_util.c \
 	scrollcoin.h scrollcoin.c \
@@ -42,18 +48,18 @@ wmcoincoin_SOURCES = \
 	regexp.h regexp.c general.h \
 	spell_coin.c spell_coin.h
 
-defaultuseragents.h: ../useragents
-	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h
+#defaultuseragents.h: ../useragents
+#	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h
 
-defaultoptionsfile.h: ../options
-	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/"/\\"/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
+#defaultoptionsfile.h: ../options
+#	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/"/\\"/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
 
 options_list.h: ../options
 	cd ..; /bin/sh ./genoptlst.sh
 
-useragents_file.o: defaultuseragents.h
+#useragents_file.o: defaultuseragents.h
 
-coincoin_prefs.o: defaultoptionsfile.h
+#coincoin_prefs.o: defaultoptionsfile.h
 
 install: install-am
 # petite update merci anvil !

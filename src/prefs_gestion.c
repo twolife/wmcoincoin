@@ -158,6 +158,69 @@ check_wmcoincoin_prefs_dir()
   }
 }
 
+/* alors celle-là est vraiment à chier */
+int
+copy_file(char *dest, char *src) {
+  FILE *in, *out;
+  int c;
+  
+  in = fopen(src, "r");
+  if (!in) {
+    fprintf(stderr, "impossible de lire '%s' : %s\n", src, strerror(errno)); return -1;
+  }
+  out = fopen(dest, "w");
+  if (!out) {
+    fprintf(stderr, "impossible d'écrire dans '%s' : %s\n", dest, strerror(errno)); return -1;
+  }
+
+  while ((c=fgetc(in)) != EOF) {
+    fputc(c, out);
+  }
+  fclose(in); fclose(out);
+  return 0;
+}
+
+
+/* installe un fichier de WMCCDATADIR dans le ~/.wmcoincoin si nécessaire */
+char *
+check_install_data_file(char *data_file_name, char *dot_wmcc_file_name)
+{
+  char *dot_name;
+  char *data_name;
+  struct stat stbuf;
+  int use_data = 0;
+
+
+  dot_name = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), dot_wmcc_file_name); 
+  data_name = str_printf(WMCCDATADIR "/%s", data_file_name);
+
+  if (stat(dot_name, &stbuf)) {
+    fprintf(stderr, "ah ben y'a pas le fichier '%s', on va le créer\n", dot_name);
+    copy_file(dot_name, data_name);
+  }
+
+  if (stat(dot_name, &stbuf)) {
+    fprintf(stderr, "\ndésolé, demerdez-vous pour copier '%s' dans votre ~/.wmcoincoin ..\n", data_file_name);
+    use_data = 1;
+  } else if (!S_ISREG(stbuf.st_mode)) {
+    fprintf(stderr, "\narrêtez de faire n'importe quoi dans votre ~/.wmcoincoin..\n\n");
+    use_data = 1;
+  }
+
+  if (use_data) {
+    if (stat(data_name, &stbuf)) {
+      fprintf(stderr, "wmcoincoin a du être mal installé, je ne trouve pas le fichier '%s' par défaut dans le rép '" WMCCDATADIR "'..\n",
+	      data_name);
+      exit(1);
+    } else {
+      fprintf(stderr, "utilisation du fichier se trouvant dans '%s'\n", data_name);
+    }
+    free(dot_name); return data_name;
+  } else {
+    free(data_name); return dot_name;
+  }
+}
+
 void
 wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
 {
@@ -176,15 +239,18 @@ wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
       break;
     }
   }
+
+  /* creation de ~/.wmcoincoin si necessaire */
   check_wmcoincoin_prefs_dir();
-  options_full_file_name = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), options_file_name); 
+
+  options_full_file_name = check_install_data_file("options", options_file_name);
   assert(options_full_file_name);
   errmsg = wmcc_prefs_read_options(p, options_full_file_name); /* lecture de '.wmcoincoin/options' */
-  free(options_full_file_name);
   if (errmsg) {
-    myprintf("Erreur pendant la lecture de '%s':\n%<YEL %s>\n" , options_file_name, errmsg);
+    myprintf("Erreur pendant la lecture de '%s':\n%<YEL %s>\n" , options_full_file_name, errmsg);
     free(errmsg); exit(1);
   }
+  free(options_full_file_name);
   wmcc_prefs_from_cmdline(argc, argv, p);
 }
 
@@ -335,7 +401,8 @@ wmcc_prefs_relecture(Dock *dock)
 
   memset(&newPrefs, 0, sizeof(structPrefs));
   wmcc_prefs_set_default(&newPrefs);
-  options_full_file_name = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), options_file_name); 
+  options_full_file_name = check_install_data_file("options", options_file_name);
+
   errmsg = wmcc_prefs_read_options(&newPrefs, options_full_file_name);
   if (errmsg) {
     char *s = str_printf("problème pendant la relecture des options [%s]<br>%s",

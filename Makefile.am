@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.8 2002/05/25 10:53:05 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.9 2002/05/29 22:38:12 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.9  2002/05/29 22:38:12  pouaite
+##   bidouilles dans configure.in et cie
+##
 ##   Revision 1.8  2002/05/25 10:53:05  pouaite
 ##   aujourd'hui c'est la saint beugue
 ##
@@ -45,3 +48,5 @@ bin-dist: all
 	cp src/wmcoincoin .
 	strip wmcoincoin
 	tar czvf $(PACKAGE)-$(VERSION)-$(COIN_ARCH).tgz ChangeLog README options useragents wmcoincoin
+
+pkgdata_DATA = options useragents README wmcoincoin.spec

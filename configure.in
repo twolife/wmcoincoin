@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.21  2002/05/29 22:38:12  pouaite
+dnl   bidouilles dans configure.in et cie
+dnl
 dnl   Revision 1.20  2002/05/13 10:51:46  pouaite
 dnl   bugfix lecture xpm
 dnl
@@ -102,29 +105,37 @@ dnl  $X_LIBS -lX11 -lXext)
 
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
-  
+
+dnl AC_DEFINE_UNQUOTED(PKGDATADIR, "$pkgdatadir/wmcoincoin")
+
+YELLOW="\\033\\1331;33m"
+RESET="\\033\\1330m"
+
 case "$host" in
     *-linux-*)
-          echo "vous utilisez GNU/linux, c'est Bien(c)(tm) !"
+          echo -e "\n${YELLOW}vous utilisez GNU/linux, c'est Bien(c)(tm) !${RESET}\n"
           ;;
     *-solaris*)
-          echo "oh oh !! wmcc sur solaris marche a peu pres, bon courage !"
+          echo -e "\n${YELLOW}oh oh !! wmcc sur solaris marche a peu pres, bon courage !${RESET}\n"
           ;;
     *bsd*)
-          echo "bsd detected!"
+          echo -e "\n${YELLOW}bsd detected!${RESET}\n"
 	  ;;
     *-cygwin*)
-	  echo "cygwin detected !"
+	  echo -e "\n${YELLOW}cygwin detected !, bon courage${RESET}\n"
      	  AC_CHECK_LIB(wsock32,select)
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
 	  LIBS="${LIBS} /lib/libregex.a -lm"        
 	  ;;
     *-darwin*)
-          echo "darwin detected !"
+          echo -e "\n${YELLOW}darwin detected !${RESET}\n"
           ;;
+    *GNU*)
+	  echo -e "\n${YELLOW}kikooo kilobug !${RESET}\n"
+	  ;;
     *)
-         echo "vous compilez sur $host , c'est original"
+	  echo -e "\n${YELLOW}vous compilez sur $host , c'est original${RESET}\n"
          ;;
 esac
 

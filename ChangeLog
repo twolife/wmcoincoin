@@ -1,3 +1,9 @@
+2002-05-30  pouaite  <c0in@altern.org>
+
+	* bidouille dans configure.in et cie.. normalement 'options' et 'useragents'
+	sont installés dans $prefix/share/wmcoincoin  , et wmcc les recopie dans le
+	~/.wmcoincoin à la première utilisation.
+
 2002-05-28  pouaite  <c0in@altern.org>
 
 	* ajout d'un petit arbre pour que le pinnipède rame moins quand il

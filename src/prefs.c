@@ -1046,7 +1046,7 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
     if (lvl != 1) {
       *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [%s]\n", filename, strerror(errno));
     } else {
-      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [attention wmcc ne le crée plus tout seul, si vous voulez utiliser les options par défaut, faites juste un 'touch %s', sinon copiez-y le fichier 'options' fourni avec wmc², et abondamment commenté]", filename, filename);
+      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture\n", filename);
       free(filename);
     }
     return 1;

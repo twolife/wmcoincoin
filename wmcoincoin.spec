@@ -1,5 +1,5 @@
 %define name wmcoincoin
-%define version 2.3.7b
+%define version 2.3.7cvs
 %define release 1
 
 Summary: wmcoincoin is a stupid dock app for linuxfr-addicted people
@@ -45,10 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,0755)
-%doc README NEWS COPYING AUTHORS options
+%data README NEWS COPYING AUTHORS options
 %{_bindir}/wmcoincoin
 %{_bindir}/wmcoincoin-kde
-
 
 %changelog
 * Fri Apr 26 2002 pouaite <c0in@altern.org> 2.3.7b-1

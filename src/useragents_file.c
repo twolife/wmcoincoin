@@ -24,9 +24,12 @@
   c'est des choses qui ne sont plus très utiles maintenant ( à part pour les couleurs du trolloscope..)
   Ce fichier a été crée pour désengorger wmcoincoin.c
 
-  rcsid=$Id: useragents_file.c,v 1.5 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: useragents_file.c,v 1.6 2002/05/29 22:38:12 pouaite Exp $
   ChangeLog:
   $Log: useragents_file.c,v $
+  Revision 1.6  2002/05/29 22:38:12  pouaite
+  bidouilles dans configure.in et cie
+
   Revision 1.5  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -72,7 +75,7 @@ DLFP_trib_load_rule_destroy(DLFP_trib_load_rule *r)
 static int
 useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_sz)
 {
-  char filename[1024];
+  char filename[1024], *_filename;
   char s[1024];
   FILE *f;
   int linenum;
@@ -81,11 +84,12 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
   DLFP_trib_load_rule *rule, *ruleprev;
   int err;
 
-  assert(getenv("HOME"));
-  snprintf(filename, 1024, "%s/.wmcoincoin/useragents", getenv("HOME"));
 
-  BLAHBLAH(1, printf("lecture useragents_file '%s'\n", filename));
-  f = fopen(filename, "rt");
+  _filename = check_install_data_file("useragents", "useragents");
+  strncpy(filename, _filename, 1024); filename[1023]=0;
+
+  BLAHBLAH(1, printf("lecture useragents_file '%s'\n", _filename));
+  f = fopen(_filename, "rt"); free(_filename);
   linenum = 0;
   ruleprev = NULL;
   if (f) {
@@ -222,7 +226,7 @@ useragents_file_read_initial(Dock *dock, DLFP *dlfp) {
   int err;
   
   err = useragents_file_read(&dlfp->tribune, errbuff, 1024);
-  if (err == 2) {
+  /*  if (err == 2) {
     char s[1024];
     FILE *f;
 
@@ -243,7 +247,8 @@ useragents_file_read_initial(Dock *dock, DLFP *dlfp) {
 
     fclose(f);
     return 1;
-  } else if (err == 1) {
+    } else*/ 
+  if (err) {
     msgbox_show_modal(dock, errbuff);
   }
   return err;

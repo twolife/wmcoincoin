@@ -705,6 +705,7 @@ void pp_restore_state(Dock *dock, FILE *f);
 void troll_detector(tribune_msg_info *mi);
 
 /* prefs_gestion.c */
+char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);
 void wmcc_prefs_initialize(int argc, char **argv, structPrefs *p);
 void wmcc_prefs_relecture(Dock *dock);
 #endif
