@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.19 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.20 2002/04/24 19:44:00 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.20  2002/04/24 19:44:00  pouaite
+  option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
+
   Revision 1.19  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -366,7 +369,8 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 	  int h,m,s,num;
 	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
 	    /*	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);*/
-	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
+	    if ((h == mi->hmsf[0] || (Prefs.pp_use_AM_PM && (h==mi->hmsf[0]%12) && mi->hmsf[0] > 12))
+		&& m == mi->hmsf[1] && 
 		(mi->hmsf[3] == 0 || (mi->hmsf[2] == s && 
 				      (num == -1 || (num == 0 && mi->sub_timestamp == -1) || num == mi->sub_timestamp)))) {
 	      /*	      printf("ref au message trouvée !\n");*/
@@ -393,14 +397,17 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
   best_mi = NULL;
   best_mi_num = 0;
 
+
   while (mi) {
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
-      if (mi->hmsf[0] == h && mi->hmsf[1] == m && best_mi == NULL) {
+      if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
+	   && mi->hmsf[1] == m && best_mi == NULL) {
 	best_mi = mi;
       }
     } else {
-      if (mi->hmsf[0] == h && mi->hmsf[1] == m && mi->hmsf[2] == s) {
+      if ((mi->hmsf[0] == h  || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
+	  && mi->hmsf[1] == m && mi->hmsf[2] == s) {
 	if (num == -1 || num == best_mi_num) {
 	  best_mi = mi; break;
 	}

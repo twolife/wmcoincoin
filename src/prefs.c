@@ -566,6 +566,8 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->pp_fortune_fgcolor = 0x000000;
   ASSIGN_STRING_VAL(p->pp_fortune_fn_family, "helvetica");
   p->pp_fortune_fn_size = 10;
+
+  p->pp_use_AM_PM = 0;
   
   p->ew_do_spell = 0;                  /*Ca fonctionne (?)
 					 donc je l'active par defaut
@@ -916,6 +918,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_plop_words: {
     char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);
     if (err) return err;
+  } break; 
+  case OPT_pinnipede_use_AM_PM: {
+    CHECK_BOOL_ARG(p->pp_use_AM_PM);
   } break; 
   case OPT_spell_enable: {
     CHECK_BOOL_ARG(p->ew_do_spell);

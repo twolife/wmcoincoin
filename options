@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.24 2002/04/15 19:56:38 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.25 2002/04/24 19:44:00 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.25  2002/04/24 19:44:00  pouaite
+#%  option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
+#%
 #%  Revision 1.24  2002/04/15 19:56:38  pouaite
 #%  v2.3.7a
 #%
@@ -335,6 +338,9 @@
 
 ### liste des mots de substitution pour la plopification
 #pinnipede.plop_words: "plop","grouik","prout"
+
+### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
+#pinnipede.use_AM_PM: off
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker

@@ -161,6 +161,8 @@ typedef struct _structPrefs{
   int enable_troll_detector;
   int force_fortune_retrieval; /* pour forcer le download de myposts.php3 même si on n'a pas fourni le cookie */
 
+  int pp_use_AM_PM; /* pour les horloges à l'anglaise */
+
   /* preferences pour le spelchecker */
   int ew_do_spell;
   char* ew_spell_cmd;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.58 2002/04/23 23:31:02 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.59 2002/04/24 19:44:00 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.59  2002/04/24 19:44:00  pouaite
+  option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
+
   Revision 1.58  2002/04/23 23:31:02  pouaite
   je suis une buse
 
@@ -2136,7 +2139,6 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 	 l'utilisateur n'est pas justement *en train* de selectionner)
        */
       if (pp->lignes_sel) {
-	printf("%f\n",difftime(time(NULL),pp->time_sel));
 	if (difftime(time(NULL),pp->time_sel) > 20.) { /* on accorde 20 sec. de delai */
 	  pp_selection_unselect(pp);
 	} else {
