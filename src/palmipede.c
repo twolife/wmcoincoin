@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.7 2003/01/11 14:10:07 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.8 2003/01/19 18:52:23 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.8  2003/01/19 18:52:23  pouaite
+  patch gle (couleur de fond du palmi)
+
   Revision 1.7  2003/01/11 14:10:07  pouaite
   fix du palmi pour xf 4.3
 
@@ -924,8 +927,9 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   
   /* le texte */
   XSetFont(dock->display, dock->NormalGC, ew->fn->fid);
-  
-  XSetForeground(dock->display, dock->NormalGC, ew->txt_bgpixel);
+  if (!Prefs.pp_use_colored_tabs)
+    XSetForeground(dock->display, dock->NormalGC, ew->txt_bgpixel);
+  else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_bgcolor));
   XFillRectangle(dock->display, d, dock->NormalGC, 
 		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH, EW_TXT_HEIGHT);
 

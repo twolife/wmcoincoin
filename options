@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.51 2003/01/12 18:42:17 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.52 2003/01/19 18:52:20 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.52  2003/01/19 18:52:20  pouaite
+#%  patch gle (couleur de fond du palmi)
+#%
 #%  Revision 1.51  2003/01/12 18:42:17  pouaite
 #%  et une baguette bien cuite pour le monsieur avec l'ornythorinque
 #%
@@ -550,6 +553,7 @@ pinnipede.url_replace: ".ogg" => "[ogg]"
 pinnipede.url_replace: ".pdf" => "[pdf]"
 pinnipede.url_replace: "ftp://" => "[ftp]"
 pinnipede.url_replace: "dtc" => "[dtc]"
+pinnipede.url_replace: "liberation.fr" => "[libé]"
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #[.]pinnipede.use_AM_PM: off
@@ -583,6 +587,15 @@ board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:="un bot!",symb:="circ",color:=
 board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#00ff00"
 ### pour faire plaisir à jr :°)
 board.miniua_rule:  ua:"^jr-lamoule$"  => ua:="JR",symb:="cross",color:="#00ff80"
+
+
+board.miniua_rule: ua:"^RFC 2549" => ua:="zorel"
+board.miniua_rule: ua:"^MOT-TA02/06.03.1FR MIB/1.2.1$" => ua:="zorel"
+board.miniua_rule: ua:"^wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*) \(palmipede; Linux ([0-9]\.[0-9.]+)mh[0-9]? i686\)$" => ua:="glandium"
+board.miniua_rule: ua:"Vaio-powered" => ua:="glandium"
+board.miniua_rule: ua:"^wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*) - olo" => ua:="olo"
+
+
 board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
 board.miniua_rule: ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w*)" => ua="pyc²/\1", color:="#ff8000"

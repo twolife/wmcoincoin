@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.6 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.7 2003/01/19 18:52:23 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.7  2003/01/19 18:52:23  pouaite
+  patch gle (couleur de fond du palmi)
+
   Revision 1.6  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -73,7 +76,7 @@ msgbox_refresh(Dock *dock, Drawable d)
   const char *title;
   int tw;
 
-  title = _("MESSAGE FROM WMCOINCOIN");
+  title = str_printf("%s " VERSION,_("MESSAGE FROM WMCOINCOIN"));
 
   if (m->mapped == 0) return;
   //printf("refresh!\n");
@@ -97,6 +100,7 @@ msgbox_refresh(Dock *dock, Drawable d)
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, m->w-1, 0);
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, 0, m->h-1);
   picohtml_render(dock, m->ph, d, dock->NormalGC, 5, 13);
+  free(title);
 }
 
 

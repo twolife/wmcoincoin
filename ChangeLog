@@ -1,3 +1,8 @@
+--------------------------v2.4.3-c-----------------------------------------
+2003-01-19  pouaite  <c0in@altern.org>
+
+	* src/palmipede.c (editw_draw): patch gle (couleur de fond du palmi)
+
 --------------------------v2.4.3-b-----------------------------------------
 2003-01-12  pouaite  <c0in@altern.org>
 

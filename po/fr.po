@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2003-01-11 18:48+0100\n"
+"POT-Creation-Date: 2003-01-12 19:59+0100\n"
 "PO-Revision-Date: 2002-08-18 21:31+0200\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -976,16 +976,16 @@ msgstr ""
 msgid "I don't fucking know %s"
 msgstr "Je ne connais vraiment pas %s"
 
-#: src/pinnipede_widgets.c:467
+#: src/pinnipede_widgets.c:475
 msgid "FILTER UNDEFINED"
 msgstr "FILTRE NON DÉFINI"
 
-#: src/pinnipede_widgets.c:848 src/pinnipede.c:2692
+#: src/pinnipede_widgets.c:856 src/pinnipede.c:2692
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font>' from %s"
 msgstr ""
 
-#: src/pinnipede_widgets.c:956
+#: src/pinnipede_widgets.c:964
 msgid ""
 "Don't click on this button if you don't have given a cookie to wmcoincoin, "
 "nor activated the 'http.force_fortune_retrieval' option."
@@ -993,31 +993,31 @@ msgstr ""
 "Inutile de cliquer sur ce bouton si vous n'avez ni donné le cookie à "
 "wmcoincoin, ni utilisé l'option 'http.force_fortune_retrieval'."
 
-#: src/pinnipede_widgets.c:1085
+#: src/pinnipede_widgets.c:1093
 msgid "<folop> I have a 61MB file in /proc, is it normal ?<br>"
 msgstr "<folop> J'ai un fichier de 61MB dans /proc, c'est normal ?<br>"
 
-#: src/pinnipede_widgets.c:1107
+#: src/pinnipede_widgets.c:1115
 msgid "Bring some help"
 msgstr "Afficher un peu d'aide"
 
-#: src/pinnipede_widgets.c:1108
+#: src/pinnipede_widgets.c:1116
 msgid "Bring/hide the scrollcoin"
 msgstr "Afficher/cacher la scrollcoin"
 
-#: src/pinnipede_widgets.c:1109
+#: src/pinnipede_widgets.c:1117
 msgid "Activate/deactivate the pseudo-transparency"
 msgstr "Activer/désactiver la pseudo-transparence"
 
-#: src/pinnipede_widgets.c:1110
+#: src/pinnipede_widgets.c:1118
 msgid "Change the display mode of the logins/useragents (5 different modes)"
 msgstr "Changer le mode d'affichage des logins/useragents (5 modes différents)"
 
-#: src/pinnipede_widgets.c:1113
+#: src/pinnipede_widgets.c:1121
 msgid "Bring/hide the fortune (if appropriate)"
 msgstr "Afficher/cacher la fortune (s'il y a lieu)"
 
-#: src/pinnipede_widgets.c:1114
+#: src/pinnipede_widgets.c:1122
 #, fuzzy
 msgid ""
 "Activate/deactivate the <b>filter</b>. To filter the messages, do a <font "
@@ -1029,7 +1029,7 @@ msgstr ""
 "horloge (pour afficher un thread). Pour virer le filtre, il suffit de "
 "cliquer ici"
 
-#: src/pinnipede_widgets.c:1115
+#: src/pinnipede_widgets.c:1123
 #, fuzzy
 msgid ""
 "Change the plopification type (beware, you will also see the messages in the "
@@ -1049,11 +1049,11 @@ msgstr ""
 "dans la <b>boitakon</b>, il faut utiliser le méga combo <font "
 "color=#0000ff>Ctrl+Mod4+Mod1+shift+clic droit</font>."
 
-#: src/pinnipede_widgets.c:1116
+#: src/pinnipede_widgets.c:1124
 msgid "Launch wmccc (wmcoincoin configuration)"
 msgstr "Lancer wmccc (configuration de wmcoincoin)"
 
-#: src/pinnipede_widgets.c:1119
+#: src/pinnipede_widgets.c:1127
 #, fuzzy
 msgid "clic here to cancel the current download"
 msgstr "Cliquer ici pour forcer le rafraîchissement immédiat de la tribune"
@@ -1308,21 +1308,21 @@ msgstr "Erreur pendant la lecture de <tt>.wmcoincoin/useragents</tt>\n"
 msgid "rereading of options '%<YEL %s>' successful\n"
 msgstr "relecture des options '%<YEL %s>' réussie\n"
 
-#: src/prefs_gestion.c:625
+#: src/prefs_gestion.c:627
 msgid "You changed the site/proxy, gethostbyname soon in progress\n"
 msgstr "Vous avez changé le site/proxy, gethostbyname bientôt en cours\n"
 
-#: src/prefs_gestion.c:704
+#: src/prefs_gestion.c:706
 #, c-format
 msgid "site removed: '%s'\n"
 msgstr "site enlevé: '%s'\n"
 
-#: src/prefs_gestion.c:735
+#: src/prefs_gestion.c:737
 #, c-format
 msgid "new site added: '%s'\n"
 msgstr "nouveau site ajouté: '%s'\n"
 
-#: src/wmcoincoin.c:343
+#: src/wmcoincoin.c:346
 #, c-format
 msgid ""
 "this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>You will have "
@@ -1331,7 +1331,7 @@ msgstr ""
 "cette url PUE ! <b>%s</b> (ni ftp://, ni http://)<br>il faudra la lancer à "
 "la main (copier dans le presse-papiers avec clic droit, etc.)"
 
-#: src/wmcoincoin.c:354
+#: src/wmcoincoin.c:357
 #, c-format
 msgid ""
 "You didn't define the external browser in ~/.wmcoincoin/options (%s), no "
@@ -1340,35 +1340,35 @@ msgstr ""
 "Vous n'avez pas défini le browser externe dans ~/.wmcoincoin/options (%s), "
 "inutile de cliquer comme un fou sur les <b>[url]</b>..."
 
-#: src/wmcoincoin.c:420
+#: src/wmcoincoin.c:423
 msgid "Spawning \"%<YEL %s>\"\n"
 msgstr "Lancement de \"%<YEL %s>\"\n"
 
-#: src/wmcoincoin.c:436
+#: src/wmcoincoin.c:439
 msgid "Can't get window attributes.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:536
+#: src/wmcoincoin.c:540
 msgid "message posted: '%<YEL %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:537
+#: src/wmcoincoin.c:541
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:573
+#: src/wmcoincoin.c:577
 #, fuzzy, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr ""
 "Ouups, il y a sans doute eu un petit problème, le serveur a répondu :<p>%s"
 
-#: src/wmcoincoin.c:584
+#: src/wmcoincoin.c:588
 #, fuzzy, c-format
 msgid "[%s] Damned ! There has been an error<p>%s"
 msgstr "Damned ! Y'a une pouille dans le cottage<p>%s"
 
-#: src/wmcoincoin.c:620
+#: src/wmcoincoin.c:624
 #, c-format
 msgid ""
 "Fork failed...(%s)..\n"
@@ -1377,7 +1377,7 @@ msgstr ""
 "Fork a échoué...(%s)..\n"
 " z'êtes nul\n"
 
-#: src/wmcoincoin.c:631
+#: src/wmcoincoin.c:635
 #, c-format
 msgid ""
 "Exec of wmccc failed...(%s)..\n"
@@ -1386,25 +1386,25 @@ msgstr ""
 "Exec de wmccc raté...(%s)..\n"
 " z'êtes nul (wmccc pas dans le path?)\n"
 
-#: src/wmcoincoin.c:663
+#: src/wmcoincoin.c:667
 #, fuzzy, c-format
 msgid "Unable to open '%s' for %s the state of the beast [%s]\n"
 msgstr "Impossible d'ouvrir le fichier '%s' en lecture [%s]\n"
 
-#: src/wmcoincoin.c:663
+#: src/wmcoincoin.c:667
 msgid "reading"
 msgstr ""
 
-#: src/wmcoincoin.c:663
+#: src/wmcoincoin.c:667
 msgid "writing"
 msgstr ""
 
-#: src/wmcoincoin.c:682
+#: src/wmcoincoin.c:686
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr "Impossible d'ouvrir '%s' en lecture pour sauver l'état de la bête\n"
 
-#: src/wmcoincoin.c:719
+#: src/wmcoincoin.c:723
 #, fuzzy
 msgid ""
 "<p align=center><b>Titles of the news</b></p><font color=blue><tt>Left "
@@ -1419,7 +1419,7 @@ msgstr ""
 "immédiate de la liste des news<br><font color=blue><tt>Clic Droit</tt></"
 "font><tab> : ouvrir/fermer la fenêtre des news<br>"
 
-#: src/wmcoincoin.c:726
+#: src/wmcoincoin.c:730
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1448,7 +1448,7 @@ msgstr ""
 "le clignotement, un <font color=blue><tt>Clic Droit</tt></font> suffit. Le "
 "clignotement vert indique un changement de la valeur de vos XP"
 
-#: src/wmcoincoin.c:736
+#: src/wmcoincoin.c:740
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1460,7 +1460,7 @@ msgstr ""
 "cours du dernier transfert.<br><font color=blue><tt>Click Gauche</tt></"
 "font> : affiche le dernier message d'erreur reçu.<br>"
 
-#: src/wmcoincoin.c:740
+#: src/wmcoincoin.c:744
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1480,7 +1480,7 @@ msgstr ""
 "color=blue><tt>Clic Milieu</tt></font><tab>: changer la résolution du "
 "trolloscope"
 
-#: src/wmcoincoin.c:747
+#: src/wmcoincoin.c:751
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
@@ -1491,7 +1491,7 @@ msgstr ""
 "l'article<br><font color=blue><tt>Clic Droit</tt></font><tab>: marquer tous "
 "les articles comme lus"
 
-#: src/wmcoincoin.c:751
+#: src/wmcoincoin.c:755
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1505,7 +1505,7 @@ msgstr ""
 "voir le nouveau message avec le browser externe 2<br><font "
 "color=blue><tt>Click Droite</tt></font> : annuler les nouveaux messages"
 
-#: src/wmcoincoin.c:756
+#: src/wmcoincoin.c:760
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1523,7 +1523,7 @@ msgstr ""
 "votre cookie d'authentification)<br><font color=blue><tt>Click Milieu</tt></"
 "font>: demande de relecture de <tt>~/.wmcoincoin/options</tt>"
 
-#: src/wmcoincoin.c:761
+#: src/wmcoincoin.c:765
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1536,11 +1536,11 @@ msgstr ""
 "color=blue><tt>Clic Droit</tt></font> : montrer/cacher le <b>pinnipède "
 "teletype</b>"
 
-#: src/wmcoincoin.c:767
+#: src/wmcoincoin.c:771
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr "<b><i>PAS DE PANIQUE</i></b>"
 
-#: src/wmcoincoin.c:900
+#: src/wmcoincoin.c:904
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
@@ -1548,80 +1548,80 @@ msgstr ""
 "Reçu un SIGPIPE ! Ou bien ispell a crashé, or vous avez tué\n"
 "violemment le coincoin.\n"
 
-#: src/wmcoincoin.c:913
+#: src/wmcoincoin.c:917
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1326
+#: src/wmcoincoin.c:1330
 msgid "Creating the windows icon. Just tell me if it makes your WM crash.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1458
+#: src/wmcoincoin.c:1462
 msgid "Couldn't create window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1470
+#: src/wmcoincoin.c:1474
 msgid "Couldn't create icon window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1483
+#: src/wmcoincoin.c:1487
 #, c-format
 msgid "Bad dimensions for the pixmap skin (expected 64x320, found %dx%d)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1486
+#: src/wmcoincoin.c:1490
 msgid "Unable to load the pixmap '%<grn %s>'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1563
+#: src/wmcoincoin.c:1567
 msgid "Couldn't create text property\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1577
+#: src/wmcoincoin.c:1581
 msgid "Couldn't create graphics context\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1667 src/wmcoincoin.c:1672 src/wmcoincoin.c:1677
-#: src/wmcoincoin.c:1683 src/wmcoincoin.c:1690 src/wmcoincoin.c:1697
+#: src/wmcoincoin.c:1671 src/wmcoincoin.c:1676 src/wmcoincoin.c:1681
+#: src/wmcoincoin.c:1687 src/wmcoincoin.c:1694 src/wmcoincoin.c:1701
 #, c-format
 msgid ""
 "sigaction: erreur %d (%s)\n"
 " essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1761
+#: src/wmcoincoin.c:1765
 msgid "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 msgstr "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 
-#: src/wmcoincoin.c:1772
+#: src/wmcoincoin.c:1776
 #, c-format
 msgid "locale used: %s\n"
 msgstr "locale utilisée: %s\n"
 
-#: src/wmcoincoin.c:1798
+#: src/wmcoincoin.c:1802
 msgid "%<YEL tags not encoded  >"
 msgstr ""
 
-#: src/wmcoincoin.c:1799
+#: src/wmcoincoin.c:1803
 #, fuzzy
 msgid "%<YEL tags encoded      >"
 msgstr "%<YEL de style moderne>\n"
 
-#: src/wmcoincoin.c:1800
+#: src/wmcoincoin.c:1804
 #, fuzzy
 msgid "%<YEL without underpants>"
 msgstr "%<YEL sans slip>\n"
 
-#: src/wmcoincoin.c:1801
+#: src/wmcoincoin.c:1805
 msgid "%<YEL prrrrrrt          >"
 msgstr ""
 
-#: src/wmcoincoin.c:1898
+#: src/wmcoincoin.c:1902
 #, fuzzy, c-format
 msgid "Unable to load font %s , trying iso8859-1\n"
 msgstr "Impossible de charger la police %s\n"
 
-#: src/wmcoincoin.c:1902
+#: src/wmcoincoin.c:1906
 #, fuzzy, c-format
 msgid "Unable to load font %s, aborting\n"
 msgstr "Impossible de charger la police %s\n"
@@ -1986,23 +1986,23 @@ msgstr "Effacer"
 msgid "Restore the default user-agent"
 msgstr "Restaurer le user-agent par défaut"
 
-#: src/dock.c:438
+#: src/dock.c:444
 msgid "..NO NEWS"
 msgstr "..PAS DE NOUVELLES"
 
-#: src/dock.c:706
+#: src/dock.c:712
 msgid "coin ?.... COIN ?? couic !\n"
 msgstr ""
 
-#: src/dock.c:823
+#: src/dock.c:829
 msgid "%<YEL Troll-o-meter -> going to level> %<GRN 0.00> (max=1.) !!!\n"
 msgstr ""
 
-#: src/dock.c:943
+#: src/dock.c:949
 msgid "Coin !\n"
 msgstr ""
 
-#: src/dock.c:946
+#: src/dock.c:952
 msgid ""
 "<b>Please</b> fill your options file with a valid site equiped with a "
 "board..."
@@ -2010,12 +2010,12 @@ msgstr ""
 "<b>SVP</b> remplissez votre fichier d'options avec un site valide comprenant "
 "une tribune..."
 
-#: src/dock.c:1058
+#: src/dock.c:1078
 #, c-format
 msgid "Error while loading file : '%s' [64x64 pixels XPM, please]"
 msgstr ""
 
-#: src/dock.c:1245 src/dock.c:1441
+#: src/dock.c:1265 src/dock.c:1461
 msgid "No new messages."
 msgstr "Pas de nouveaux messages."
 
@@ -2184,12 +2184,12 @@ msgstr "Valeur invalide pour l'option '%s' (doit être dans l'intervalle %d-%d)"
 msgid "coin ! coin !"
 msgstr ""
 
-#: src/prefs.c:1047
+#: src/prefs.c:1048
 #, c-format
 msgid "Invalid value for option '%s' (must be between %d and %d)"
 msgstr "Valeur invalide pour l'option '%s' (doit être dans l'intervalle %d-%d)"
 
-#: src/prefs.c:1049
+#: src/prefs.c:1050
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a value of type on/off, 1/0, true/"
@@ -2198,7 +2198,7 @@ msgstr ""
 "Valeur invalide pour l'option '%s' : doit être une valeur du type on/off, "
 "1/0, true/false ou yes/no"
 
-#: src/prefs.c:1052
+#: src/prefs.c:1053
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a hexadecimal RGB color, with the "
@@ -2207,12 +2207,12 @@ msgstr ""
 "Valeur invalide pour l'option '%s' : doit être une couleur RGB en "
 "hexadécimal, au format RRGGBB"
 
-#: src/prefs.c:1052
+#: src/prefs.c:1053
 #, c-format
 msgid "Error, the '%s' option only accepts one colour value"
 msgstr "Erreur, l'option '%s' n'accepte qu'une seule valeur de couleur"
 
-#: src/prefs.c:1056
+#: src/prefs.c:1057
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a hexadecimal RGB colour, with the "
@@ -2223,16 +2223,16 @@ msgstr ""
 "hexadécimal, au format RRGGBB (suivie optionnellement d'une deuxième couleur "
 "utilisée pour le mode transparent)"
 
-#: src/prefs.c:1496
+#: src/prefs.c:1500
 msgid "Watch out darling, it's gonnah cut\n"
 msgstr "Attention chérie, ça va couper\n"
 
-#: src/prefs.c:1497
+#: src/prefs.c:1501
 #, c-format
 msgid "the option '%s' is valid but not handled, WHAT A SHAME"
 msgstr "l'option '%s' est valide mais pas traitée, QUELLE HONTE"
 
-#: src/prefs.c:1517
+#: src/prefs.c:1521
 msgid ""
 "I think you're totally dumb with the includes of option files (infinite "
 "recursion ?)\n"
@@ -2240,21 +2240,21 @@ msgstr ""
 "Je crois que vous faites n'importe quoi avec les include de fichier d'option "
 "(sniff !? récursion infinie ?)\n"
 
-#: src/prefs.c:1523
+#: src/prefs.c:1527
 msgid "You didn't tell me of any filename\n"
 msgstr "Vous n'avez pas précisé de nom de fichier\n"
 
-#: src/prefs.c:1534
+#: src/prefs.c:1538
 #, c-format
 msgid "Unable to open file '%s' for reading [%s]\n"
 msgstr "Impossible d'ouvrir le fichier '%s' en lecture [%s]\n"
 
-#: src/prefs.c:1536
+#: src/prefs.c:1540
 #, c-format
 msgid "Unable to open file '%s' for reading\n"
 msgstr "Impossible d'ouvrir le fichier '%s' en lecture\n"
 
-#: src/prefs.c:1557
+#: src/prefs.c:1561
 #, c-format
 msgid ""
 "line %d: attempt to use a site pref before any 'site:' option has been used\n"
@@ -2262,27 +2262,27 @@ msgstr ""
 "ligne %d: tentative d'utiliser une préférence de site avant d'avoir précisé "
 "une option 'site:'\n"
 
-#: src/prefs.c:1574
+#: src/prefs.c:1578
 #, c-format
 msgid "line %d: option '%s' is a site option\n"
 msgstr "ligne %d: l'option '%s' est une option de site\n"
 
-#: src/prefs.c:1578
+#: src/prefs.c:1582
 #, c-format
 msgid "line %d: option '%s' can't be used as a site option\n"
 msgstr "ligne %d: l'option '%s' ne peut être utilisée comme option de site\n"
 
-#: src/prefs.c:1589
+#: src/prefs.c:1593
 #, c-format
 msgid " [line %d] %s\n"
 msgstr " [ligne %d] %s\n"
 
-#: src/prefs.c:1594
+#: src/prefs.c:1598
 #, c-format
 msgid "[line %d] unknown option '%s'"
 msgstr "[ligne %d] l'option '%s' est inconnue"
 
-#: src/prefs.c:1624
+#: src/prefs.c:1628
 msgid ""
 "oooooooh !!! you didn't define at least *ONE* site, you bad boy.\n"
 "i do it for you, but this is the last time\n"
