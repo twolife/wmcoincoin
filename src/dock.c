@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.11 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.12 2002/04/26 08:55:27 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.12  2002/04/26 08:55:27  pouaite
+  fix pour le mode horloge avec l'option '-w'/dock.iconwin (merci gle!)
+
   Revision 1.11  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -990,9 +993,7 @@ dock_build_pixmap_porte(Dock *dock)
 void
 dock_set_horloge_mode(Dock *dock) {
   if (Prefs.draw_border == 0) {
-    XShapeCombineMask(dock->display, dock->win, ShapeBounding, 
-		      0, 0, dock->clock_pixmask, ShapeSet);
-    XShapeCombineMask(dock->display, dock->iconwin, ShapeBounding,
+    XShapeCombineMask(dock->display, DOCK_WIN(dock), ShapeBounding, 
 		      0, 0, dock->clock_pixmask, ShapeSet);
   }
   dock->horloge_mode = 1;
@@ -1001,10 +1002,8 @@ dock_set_horloge_mode(Dock *dock) {
 static void
 dock_unset_horloge_mode(Dock *dock) {
   if (Prefs.draw_border == 0) {
-    XShapeCombineMask(dock->display, dock->win, ShapeBounding, 
+    XShapeCombineMask(dock->display, DOCK_WIN(dock), ShapeBounding, 
 	  	      0, 0, dock->coin_pixmask, ShapeSet);
-    XShapeCombineMask(dock->display, dock->iconwin, ShapeBounding,
-		      0, 0, dock->coin_pixmask, ShapeSet);
   }
   dock->horloge_mode = 0;  
 }
