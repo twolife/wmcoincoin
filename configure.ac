@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.6  2002/09/08 18:21:25  pouaite
+dnl   microfix pou cygwin + compil
+dnl
 dnl   Revision 1.5  2002/09/08 14:28:44  pouaite
 dnl   bugfixes salutaires
 dnl
@@ -179,7 +182,7 @@ dnl GTK_LIBS="`gtk-config --libs`"
 dnl AC_SUBST(GTK_CFLAGS)
 dnl AC_SUBST(GTK_LIBS)
 
-  AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you don\'t have gtk, you won\'t be able to build the wmccc, try running configure with --disable-wmccc))
+  AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you dont have gtk you wont be able to build the wmccc try running configure with --disable-wmccc))
   WMCCC="wmccc"
 fi
 AC_SUBST(WMCCC)

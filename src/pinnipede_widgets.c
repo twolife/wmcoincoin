@@ -918,18 +918,26 @@ pp_refresh_fortune(Dock *dock, Drawable d)
 			 DefaultDepth(dock->display,dock->screennum));
     XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.pp_fortune_bgcolor));
     XFillRectangle(dock->display, fpix, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h);
-    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(220,220,220));
-    XDrawLine(dock->display, fpix, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width - (pp->sc ? SC_W : 0), pp->fortune_h-1);
 
     assert(!picohtml_isempty(pp->ph_fortune));
 
     x = (pp->win_width - pp->fortune_w)/2;
     picohtml_render(dock, pp->ph_fortune, fpix, dock->NormalGC, x, 0);
-    XCopyArea(dock->display, fpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h, 0, 0);
+    XCopyArea(dock->display, fpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h-1, 0, 0);
     XFreePixmap(dock->display, fpix);
+    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(100,100,100));
+
+    XDrawLine(dock->display, d, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width - (pp->sc ? SC_W : 0), pp->fortune_h-1);
   } else { /* nettoyage ligne du haut */
     assert(LINEY0(0)>0);
-    pp_clear_win_area(dock, 0, 0, pp->win_width, LINEY0(0));
+    pp_clear_win_area(dock, 0, 0, pp->win_width, pp->zmsg_y1-1);
+    pp_clear_win_area(dock, 0, pp->zmsg_y1-1, pp->win_width- (pp->sc ? SC_W : 0), 1);
+    /*
+    pp_clear_win_area(dock, 0, 0, pp->win_width- (pp->sc ? SC_W : 0), LINEY0(0));
+    if (pp->sc) {
+      pp_clear_win_area(dock, pp->win_width-SC_W, 0, SC_W, pp->zmsg_y1-2);
+    }
+    */
   }
 }
 

@@ -768,8 +768,8 @@ on_clist_klist_select_row(GtkCList *clist, gint row, gint column,
 
 void
 on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
-  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), "entry_default_ua"); g_assert(wg);
   char default_ua[1024];
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), "entry_default_ua"); g_assert(wg);
   coincoin_default_useragent(default_ua, 1024);
   gtk_entry_set_text(GTK_ENTRY(wg), default_ua);
 }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.13 2002/09/05 23:11:57 pouaite Exp $
+  rcsid=$Id: http.h,v 1.14 2002/09/08 18:21:26 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.14  2002/09/08 18:21:26  pouaite
+  microfix pou cygwin + compil
+
   Revision 1.13  2002/09/05 23:11:57  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -40,22 +43,26 @@
 #ifndef HTTP_H
 #define HTTP_H
 
-#include "global.h"
-
 #ifndef HAVE_WINDOWS_H
 # define SOCKET_ERROR -1
 # define INVALID_SOCKET -1
 # define SOCKET int
 #else /* WIN32 Detected */
-# ifdef __INSIDE_HTTP
-#   define __USE_W32_SOCKETS
-#   include "windows.h"
-# else /* !__INSIDE_HTTP */
+//# ifdef __INSIDE_HTTP
+//#   include "windows.h"
+//# else /* !__INSIDE_HTTP */
+#  ifndef SOCKET_ERROR
 #   define SOCKET_ERROR -1
+#  endif
+#  ifndef INVALID_SOCKET
 #   define INVALID_SOCKET 0
+#  endif
+#  ifndef SOCKET
 #   define SOCKET unsigned int
-# endif
+#  endif
+//# endif
 #endif
+#include "global.h"
 
 
 typedef struct {

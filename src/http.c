@@ -1,4 +1,6 @@
 #ifdef __CYGWIN__
+#  define __USE_W32_SOCKETS
+#  include "windows.h"
 
 #define __INSIDE_HTTP
 #include "global.h"
@@ -11,7 +13,9 @@
 #  include <time.h>
 #  include "myprintf.h"
 #  include "coin_util.h"
+
 #else
+
 #include "../config.h"
 #  include <unistd.h>
 #  include <fcntl.h>
@@ -240,7 +244,7 @@ int base64_encode(const void *data, int size, char **str)
    Returns 1 if FD is accessible, 0 for timeout and -1 for error in
    select().  */
 static int
-http_select_fd (int fd, int maxtime_sec, int maxtime_usec, int writep)
+http_select_fd (SOCKET fd, int maxtime_sec, int maxtime_usec, int writep)
 {
   fd_set fds, exceptfds;
   struct timeval timeout;

@@ -1,7 +1,12 @@
 #ifndef __PREFS_H
 #define __PREFS_H
 #include <string.h>
-#include <sys/types.h> /* obligatoire pour regex.h sous bsd */
+
+#ifndef __CYGWIN__
+#include <sys/types.h> /* obligatoire pour regex.h sous bsd 
+			  mais pas compatible avec les winsock ..
+			*/
+#endif
 #include <regex.h>
 #include "options_list.h" /* liste des noms des options */
 #include "keylist.h"
