@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.26 2002/05/19 01:14:57 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.27 2002/05/20 22:24:36 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.27  2002/05/20 22:24:36  pouaite
+  10000ème bugfix de http.c.. quand je nettoie le code je rajoute des bugs, quand je bugfixe je cradouille le code
+
   Revision 1.26  2002/05/19 01:14:57  pouaite
   bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
 
@@ -145,7 +148,7 @@ gros_read(HttpRequest *r, char *what)
     } else {
       s[bi] = 0;
     }
-    BLAHBLAH(0, myprintf("%s, lu: %<mag %s>\n", what, s));
+    BLAHBLAH(4, myprintf("%s, lu: %<mag %s>\n", what, s));
   }
   return s;
 }

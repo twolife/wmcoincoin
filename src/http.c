@@ -269,8 +269,10 @@ http_iread (SOCKET fd, char *buf, int len)
 	    goto error;
 	  }
 #else
-	  if (res == SOCKET_ERROR)
+	  if (res == SOCKET_ERROR) {
+	    printf("http_iread: socket error, res=%d (%s)\n", res, strerror(errno));
             goto error;
+	  }
 	  if (res == 0) {
 	    printf ("http_iread: Timeout...\n");
 	    goto error;
@@ -521,7 +523,8 @@ http_skip_header(HttpRequest *r)
   char buff[512];
   int i, got, lnum;
   char last;
-  
+  int ok = 0;
+
   lnum = 0;
   i = 0;
   //  printf("http_skip header\n");
@@ -532,9 +535,11 @@ http_skip_header(HttpRequest *r)
   do {
     while((got = http_iread(r->fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
-      BLAHBLAH(VERBOSE_LVL, myprintf("%<GRN %c>", buff[i]););
-      if(buff[i] == '\n' && (last == '\n'))
+      BLAHBLAH(0, myprintf("%<GRN %c>", buff[i]););
+      if(buff[i] == '\n' && (last == '\n')) {
+	ok = 1; /* on vient de lire le header tranquillement */
 	break;
+      }
       if(buff[i] == '\r')
 	continue;
       last = buff[i];
@@ -544,9 +549,13 @@ http_skip_header(HttpRequest *r)
 	  j = 0;
 	  while (buff[j] != ' ' && buff[j]) j++;
 	  if (buff[j] == ' ') {
+	    if (strcasecmp("304 Not Modified\n", buff+j+1) == 0) {
+	      r->content_length = 0; /* ça sert à rien d'essayer de lire un truc vide 
+					c'est pas super joli de faire ça ici mais ça ira pour cette fois
+				      */
+	    } else 
 	    if (strcasecmp("200 OK\n", buff+j+1) != 0 && 
 		strcasecmp("302 Found\n", buff+j+1) != 0 &&
-		strcasecmp("304 Not Modified\n", buff+j+1) != 0 &&
 		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
@@ -577,7 +586,7 @@ http_skip_header(HttpRequest *r)
       }
     }
   } while (got==SOCKET_ERROR && LASTERR_EAGAIN); 
-  if (got == SOCKET_ERROR) {
+  if (got == SOCKET_ERROR || ok == 0) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_skip_header a un problème de chaussette !(%s)", STR_LAST_ERROR);
     r->error = 2;
@@ -590,6 +599,8 @@ http_skip_header(HttpRequest *r)
 
 /* lecture de la REPONSE du serveur 
    (après analyse de l'entête)
+
+   
 */
 int
 http_read(HttpRequest *r, char *buff, int len)
@@ -598,7 +609,7 @@ http_read(HttpRequest *r, char *buff, int len)
   assert(r->error == 0);
 
   if (len>1) {
-    printf("http_read: requete de longueur %d, pos = %ld, chunk=%d (size %ld)\n", len, r->chunk_pos, r->chunk_num, r->chunk_size);
+    BLAHBLAH(2, printf("http_read: requete de longueur %d, pos = %ld, chunk=%d (size %ld)\n", len, r->chunk_pos, r->chunk_num, r->chunk_size));
   }
 
   if (r->is_chunk_encoded == 1) {
@@ -648,14 +659,19 @@ http_read(HttpRequest *r, char *buff, int len)
   got = http_iread(r->fd, buff, len);
   if (got > 0) { r->chunk_pos += got; }
   else if (got == SOCKET_ERROR) {
-    set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_read a eu un problème de chaussette, pos=%d, len=%d !(%s)", (int)r->chunk_pos, (int)len, STR_LAST_ERROR);
-    r->error = 1;
+    if (!LASTERR_EAGAIN) {
+      /* erreur non récupérable */
+      set_http_err();
+      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_read a eu un problème de chaussette, pos=%d, len=%d !(%s)", (int)r->chunk_pos, (int)len, STR_LAST_ERROR);
+      r->error = 1;
+    } else {
+      got = 0; /* on n'a rien lu ce coup-ci, mais ça viendra */
+    }
   }
 
   if (len>1) { // || (r->content_length != -1 && (r->content_length - r->chunk_pos < 200))) {
-    printf("http_read: longueur finalement demandee: %d, reçue: %d, nouvelle pos=%ld\n",
-	   len, got, r->chunk_pos);
+    BLAHBLAH(2,printf("http_read: longueur finalement demandee: %d, reçue: %d, nouvelle pos=%ld\n",
+	   len, got, r->chunk_pos));
   }
 
   return got;
@@ -672,8 +688,8 @@ http_get_line(HttpRequest *r, char *s, int sz)
   i = 0;
   cnt = 0;
   s[0] = 0;
-
-  /*  do { */
+  errno = 0;
+  do {
 
     while (r->error == 0 && (got = http_read(r, s+i, 1)) > 0) {
       cnt++;
@@ -686,11 +702,15 @@ http_get_line(HttpRequest *r, char *s, int sz)
       }
       s[i] = 0;
     }
-    /*  } while (got == SOCKET_ERROR && LASTERR_EAGAIN);*/
+
+    if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN) {
+      printf("http_get_line: bizarre, got=0 lors de la lecture de %d/%d [r->error=%d, errmsg='%s']\n", (int)r->chunk_pos, (int)r->content_length, r->error, strerror(errno));
+    }
+  } while (got == 0 && LASTERR_EAGAIN && r->error == 0);
 
   if (r->error) {
     set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_get_line s'est vautré: %s!", STR_LAST_ERROR);
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_get_line s'est vautré (got=%d): %s!", got, STR_LAST_ERROR);
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
     goto error;
   }
@@ -698,7 +718,10 @@ http_get_line(HttpRequest *r, char *s, int sz)
   flag_http_transfert--;
 
   flag_http_error = 0;
+
+  myprintf("%<yel .>"); fflush(stdout);
   return cnt;
+
 
  error:
   flag_http_error = 1;
@@ -733,6 +756,7 @@ http_request_send(HttpRequest *r)
 
   flag_http_transfert++;
 
+  myprintf("http_request_send: %<grn %s>\n", r->host_path);
 
 
   header = strdup("");
@@ -838,6 +862,7 @@ http_request_send(HttpRequest *r)
   return;
 
  error_close:
+  printf("erreur dans la réponse..\n");
   http_request_close(r); r->fd = SOCKET_ERROR;
  error:
   if (header) free(header);
