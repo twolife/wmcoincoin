@@ -25,5 +25,5 @@ struct spell_err {
 };
 
 ErrList spellString(const char* str, const char* spellCmd, const char* spellDict);
-
+int check_if_should_kill_ispell();
 #endif

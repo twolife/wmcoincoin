@@ -41,6 +41,7 @@
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
 #include <locale.h>
+#include "spell_coin.h"
 
 #ifdef __CYGWIN__
 #include <pthread.h>
@@ -1900,8 +1901,11 @@ void X_loop()
   /* lectures des evenements */
   wmcoincoin_dispatch_events(dock);
 
-  
   timer_cnt++;
+
+  if (timer_cnt % 10 == 0) {
+    check_if_should_kill_ispell();
+  }
 
   if (timer_cnt % 1 == 0) {
     if (dock->horloge_mode == 0) {
