@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.15 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.16 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.16  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.15  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -75,7 +78,6 @@
 #include <X11/Xatom.h>
 
 #include <X11/Xmd.h>
-#include <X11/xpm.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.4 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.5 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.5  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.4  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -333,7 +336,8 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
   sscanf(l_tab[0], "%d %d", w, h);
   pix = RGBACreatePixmapFromXpmData(ctx, l_tab);
 
-  for (; lcnt >= 0; lcnt--) {
+  while (lcnt > 0) {
+    lcnt--;
     free(l_tab[lcnt]);
   }
   return pix;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.5 2002/03/05 21:04:28 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.6 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.6  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.5  2002/03/05 21:04:28  pouaite
   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
 
@@ -16,7 +19,6 @@
 
 */
 
-#include <X11/xpm.h>
 #include "coincoin.h"
 #include "picohtml.h"
 #include "scrollcoin.h"

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.36 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.37 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.37  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.36  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -103,7 +106,6 @@
 
 */
 
-#include <X11/xpm.h>
 #include "coincoin.h"
 #include "time.h"
 #include "scrollcoin.h"

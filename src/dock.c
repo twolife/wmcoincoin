@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.5 2002/03/09 19:45:52 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.6 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.6  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.5  2002/03/09 19:45:52  pouaite
   microbugfix du plopifieur et ajout d'une macro PATCH_LEVEL
 
@@ -42,8 +45,8 @@
 
 */
 
-#include <X11/xpm.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.30 2002/03/18 22:46:49 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.31 2002/03/19 09:55:58 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.31  2002/03/19 09:55:58  pouaite
+  bugfixes compilation
+
   Revision 1.30  2002/03/18 22:46:49  pouaite
   1 ou 2 bugfix mineurs, et surtout suppression de la dependance avec la libXpm .. un premier pas vers wmc² en 8bits
 
@@ -119,8 +122,8 @@
 //#include <sys/types.h>
 #include <sys/stat.h>
 //#include <regex.h>
-#include <X11/xpm.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
