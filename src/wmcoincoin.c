@@ -19,7 +19,14 @@
 
 
  */
+/*
+  rcsid=$Id: wmcoincoin.c,v 1.3 2001/12/02 18:07:03 pouaite Exp $
+  ChangeLog:
+  $Log: wmcoincoin.c,v $
+  Revision 1.3  2001/12/02 18:07:03  pouaite
+  amélioration du support de ispell avec un vilain hack + correction(..pas sur..) d'un bug de clignotement du flammometre
 
+*/
 
 /*
   avertissement au lecteur...
@@ -598,7 +605,7 @@ read_initial_rcfile(DLFP *dlfp) {
       msgbox_show_modal(dock, "IMPOSSIBLE DE CREER <tt>.wmcoincoin/useragents</tt><p><p>Si c'est comme ça, je m'en vais"); return 1; 
     }
     
-#include "defaultrcfile.h"
+#include "defaultuseragents.h"
 
     fclose(f);
     return 1;
@@ -1969,7 +1976,12 @@ void X_loop()
 	  }
 	  update_pix_tribune_load(dock, &dock->dlfp->tribune);
 
-	  if (dock->dlfp->xp_clign_cnt >=0) dock->dlfp->xp_clign_cnt--;
+	  if (dock->dlfp->xp_clign_cnt >=0) {
+	    dock->dlfp->xp_clign_cnt--;
+	    if (dock->dlfp->xp_clign_cnt == -1) {
+	      tribune_load_bgg = 0;
+	    }
+	  }
 	  //	  if (tribune_load_clign_step == 0) {
 	  //	  }
 	} 
@@ -2053,24 +2065,31 @@ void X_loop()
 	  pp_ismapped(dock)==0) {
 	pp_show(dock, &dock->dlfp->tribune);
       }
-      flag_discretion_request = 0;
     } else { /* si on ne vient pas de tout cacher, on considère qu'il faut "raise" les fenetres */
       if (newswin_is_used(dock)) XRaiseWindow(dock->display, newswin_get_window(dock));
       if (editw_ismapped(dock->editw)) XRaiseWindow(dock->display, editw_get_win(dock->editw));
       if (pp_ismapped(dock)) XRaiseWindow(dock->display, pp_get_win(dock));
     }
+    flag_discretion_request = 0;
     dock->discretion_saved_state.last_sig_is_usr1 = 0;
+  }
+
+  /* si ispell vient de se finir, on essaye de réafficher le palmipede pour prendre en compte les erreurs ... */
+  if (editw_ismapped(dock->editw) && flag_spell_finished) {
+    if (flag_spell_finished == 1) {
+      editw_refresh(dock, dock->editw);
+      flag_spell_finished = 0; /* remise a zero APRES le redraw histoire de ne pas relancer un ispell en plein milieu du redraw */
+    } else {
+      flag_spell_finished--; /* y'a un petit delai entre la fin de la correction et 
+				son affichage, c'est juste pour éviter un clignotement trop
+				chiant quand on tape
+			     */
+    }
   }
 
   no_reentrant =  0;
 
   errno = save_errno;
-  //the_timer.it_value.tv_sec = 0;
-  //the_timer.it_value.tv_usec = 10000; /* microsecondes */
-  //the_timer.it_interval.tv_sec = 0;
-  //the_timer.it_interval.tv_usec = 0;
-
-  //setitimer(ITIMER_REAL, &the_timer, NULL);
 }
 
 
@@ -2387,6 +2406,7 @@ void *Network_Thread (void *arg) {
 	dock->tribune_update_request = 1;
       }
     }
+    if (Prefs.ew_do_spell) ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);
 #ifdef __CYGWIN__
     usleep(40000); 
 #else
@@ -2466,7 +2486,7 @@ prepare_pixmap_porte(Dock *dock)
       }
 
       dock->pix_porte = RGBAImage2Pixmap(dock->rgba_context, rgba_porte);
-      XpmWriteFileFromPixmap (dock->display, "pixporte.xpm", dock->pix_porte, 0, NULL);
+      //XpmWriteFileFromPixmap (dock->display, "pixporte.xpm", dock->pix_porte, 0, NULL);
       RGBADestroyImage(rgba_porte);
       XDestroyImage (XiPixPixmap);
     }
@@ -2555,6 +2575,8 @@ main(int argc, char **argv)
 #endif
   srand(time(NULL));
   ALLOC_OBJ(dock, Dock);
+
+  myprintf("%<GRN wmc2> v.%<WHT " VERSION "> [ compile le " __DATE__ " ]\n");
 
   init_default_prefs (argc, argv, &Prefs);
   check_wmcoincoin_dir();
