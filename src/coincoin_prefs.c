@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.12 2002/01/16 10:34:21 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.13 2002/01/18 19:45:58 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.13  2002/01/18 19:45:58  pouaite
+  petit oubli d'un fichier..
+
   Revision 1.12  2002/01/16 10:34:21  pouaite
   ptit patch glandium
 
@@ -1177,7 +1180,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_trollscore_color = 0xff0000;
   The_Prefs->pp_button_color = 0xdae6e6;
   The_Prefs->pp_emph_color = 0xffffff;
-  The_Prefs->pp_my_msg_bgcolor = 0xdae6e6;
+  The_Prefs->pp_my_msg_bgcolor = 0xdae6ff;
   The_Prefs->pp_answer_my_msg_bgcolor = 0xc0c080;
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;
