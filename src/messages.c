@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.4 2002/08/21 23:20:57 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.5 2002/08/22 00:10:14 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.5  2002/08/22 00:10:14  pouaite
+  prout
+
   Revision 1.4  2002/08/21 23:20:57  pouaite
   coin
 
@@ -253,27 +256,6 @@ site_msg_dl_and_update(Site *site)
 	fclose(f);
       }
       
-    } else if (msgcnt > 0) {
-      char fname[2048];
-      FILE *f;
-      site->messages_dl_cnt++;
-      /* si ce n'est pas le premier lancement, on met à jour le fichier */
-      snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_name);
-      if ((f = fopen(fname, "wt"))) {
-	Message *m;
-
-	BLAHBLAH(2, printf(_("Opening '%s' for writing... OK\n"), fname));
-	m = site->msg; 
-	while (m) {
-	  if (m->unreaded == 0) {
-	    fprintf(f, "%d\n", m->mid);
-	  }
-	  m = m->next;
-	}
-	fclose(f);
-      } else {
-	BLAHBLAH(1, printf(_("Unable to open '%s' for writing !\n"), fname));
-      }
     }
     flag_updating_messagerie--;
     free(s);
@@ -286,6 +268,34 @@ site_msg_dl_and_update(Site *site)
   }
 }
 
+
+void
+site_msg_save_state(Site *site)
+{
+  char fname[2048];
+  FILE *f;
+  int nb_lus;
+  Message  *m;
+  
+  site->messages_dl_cnt++;
+  nb_lus = 0;
+  for (m = site->msg; m ; m=m->next) nb_lus += (m->unreaded ? 0 : 1);
+  
+  /* si ce n'est pas le premier lancement, on met à jour le fichier */
+  snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_name);
+  if (nb_lus && (f = fopen(fname, "wt"))) {
+    
+    BLAHBLAH(2, printf(_("Opening '%s' for writing... OK\n"), fname));
+    for (m = site->msg; m ; m=m->next) {
+      if (m->unreaded == 0) {
+	fprintf(f, "%d\n", m->mid);
+      }
+    }
+    fclose(f);
+  } else {
+    BLAHBLAH(1, printf(_("Unable to open '%s' for writing !\n"), fname));
+  }
+}
 
 /* detruit tous les messages */
 void site_msg_destroy(Site *site) {

@@ -557,7 +557,7 @@ void site_msg_printf_messages(Site *dlfp);
 Message *site_msg_find_unreaded(Site *dlfp);
 void site_msg_dl_and_update(Site *dlfp);
 void site_msg_destroy(Site *site);
-
+void site_msg_save_state(Site *site);
 /* palmipede.c  */
 void editw_show(Dock *dock, SitePrefs *sp, int useragent_mode);
 void editw_hide(Dock *dock, EditW *ew); /* rentrer le palmipede */

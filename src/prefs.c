@@ -688,9 +688,16 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
 
 #define SPSTRDUP(x) if (src->x) { sp->x = strdup(src->x); assert(sp->x); }
 
+  /* NE JAMAIS FAIRE DE FREE SUR LES CHAINES DE sp !!!
+     BORDAILE ! sp est d'abord memcopié de src pour eviter la 
+     copie de tous les membres */
+
   *sp = *src; /* splaoutch */
   SPSTRDUP(board_wiki_emulation);
-  SPSTRDUP(user_agent);
+  sp->user_agent = malloc(USERAGENT_MAXMAX_LEN+1);
+  assert(strlen(src->user_agent) <= USERAGENT_MAXMAX_LEN);
+
+  strcpy(sp->user_agent, src->user_agent);
   SPSTRDUP(user_name);
   SPSTRDUP(proxy_auth);
   SPSTRDUP(proxy_name);
