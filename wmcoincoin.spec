@@ -1,6 +1,6 @@
 %define name wmcoincoin
-%define version 2.3.6
-%define release cvs
+%define version 2.3.7a
+%define release 1
 
 Summary: wmcoincoin is a stupid dock app for linuxfr-addicted people
 Name: %{name}
@@ -27,7 +27,7 @@ Visionnage du contenu des news (sans les commentaires)
 * Une fonction flamophone, parce que vous le valez bien.
 * Le Pinnipède Télétype, un véritable outil de décideur.
 
-Le fichier d'options 'modèle' et largement documenté se trouve avec la doc,
+Un fichier d'options 'modèle' et largement documenté se trouve avec la doc,
 copiez-le dans ~/.wmcoincoin/ puis éditez-le
 
 %prep %setup
@@ -51,6 +51,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Sun Apr 14 2002 pouaite <c0in@altern.org> 2.3.7a-1
+- version 2.3.7a
+
 * Sat Mar  9 2002 pouaite <c0in@altern.org> 2.3.6-1
 - version 2.3.6
 

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.39 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.40 2002/04/14 23:24:22 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.40  2002/04/14 23:24:22  pouaite
+  re-fix pour kde ..
+
   Revision 1.39  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -463,7 +466,7 @@ void check_balloons(Dock *dock)
     int x,y;
 
     x = dock->mouse_x; y = dock->mouse_y;
-    if (dock->mouse_win == dock->win || dock->mouse_win == dock->iconwin) {
+    if (dock->mouse_win == dock->win || dock->mouse_win == DOCK_WIN(dock)) {
       int iconx, icony;
       dock_get_icon_pos(dock, &iconx, &icony);
 
@@ -588,7 +591,7 @@ wmcoincoin_dispatch_events(Dock *dock)
 
     /* attention le champ window n'est pas utilise pour les evenement du clavier 
        gare au bug */
-    if (event.xany.window == dock->iconwin || event.xany.window == dock->win) {
+    if ((event.xany.window == dock->iconwin && dock->iconwin) || event.xany.window == dock->win) {
       dock_dispatch_event(dock, &event);
     } else if (event.xany.window == editw_get_win(dock->editw) && event.xany.window) {
       editw_dispatch_event(dock, dock->editw, &event);
@@ -1072,7 +1075,7 @@ void initx(Dock *dock, int argc, char **argv) {
       fprintf(stderr, "Couldn't create icon window\n");
       exit(1);
     }
-  }
+  } else dock->iconwin = None;
 
 
 
@@ -1105,16 +1108,18 @@ void initx(Dock *dock, int argc, char **argv) {
     /* setup shaped window */
     XShapeCombineMask(dock->display, dock->win, ShapeBounding, 
 		      0, 0, dock->coin_pixmask, ShapeSet);
-    XShapeCombineMask(dock->display, dock->iconwin, ShapeBounding,
-		      0, 0, dock->coin_pixmask, ShapeSet);
-  
+    if (Prefs.use_iconwin) {
+      XShapeCombineMask(dock->display, dock->iconwin, ShapeBounding,
+			0, 0, dock->coin_pixmask, ShapeSet);
+    }
 
     /* set window manager hints */
     xwmh = XAllocWMHints();
     xwmh->flags = WindowGroupHint | IconWindowHint | StateHint;
     xwmh->icon_window = dock->iconwin;
     xwmh->window_group = dock->win;
-    xwmh->initial_state = WithdrawnState;
+    xwmh->initial_state = (Prefs.use_iconwin ? WithdrawnState : NormalState);
+
     XSetWMHints(dock->display, dock->win, xwmh);
 
   } else {
@@ -1172,15 +1177,17 @@ void initx(Dock *dock, int argc, char **argv) {
 	       EnterWindowMask | 
 	       LeaveWindowMask |
 	       StructureNotifyMask);
-  XSelectInput(dock->display, dock->iconwin,
-	       ExposureMask |
-	       ButtonPressMask |
-	       ButtonReleaseMask |
-	       PointerMotionMask |
-	       EnterWindowMask | 
-	       LeaveWindowMask |
-	       StructureNotifyMask);
-  
+  if (dock->iconwin) {
+    XSelectInput(dock->display, dock->iconwin,
+		 ExposureMask |
+		 ButtonPressMask |
+		 ButtonReleaseMask |
+		 PointerMotionMask |
+		 EnterWindowMask | 
+		 LeaveWindowMask |
+		 StructureNotifyMask);
+  }
+
   /* set the command line for restarting */
   XSetCommand(dock->display, dock->win, argv, argc);
   

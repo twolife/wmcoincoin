@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.52 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.53 2002/04/14 23:24:22 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.53  2002/04/14 23:24:22  pouaite
+  re-fix pour kde ..
+
   Revision 1.52  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -3537,7 +3540,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       pp_handle_shift_clic(dock, trib, &Prefs.hilight_key_list, mx, my, 0);
     } else if (event->state & ControlMask) {
       pp_handle_control_left_clic(dock, trib, mx, my);
-    } else if (event->state & Mod1Mask) {
+    } else if (event->state & (Mod1Mask | Mod4Mask) ) { /* on est gentil, les deux marchent */
       pp_handle_alt_clic(dock, event);
     } else {
       pp_handle_left_clic(dock, trib, mx, my);
@@ -3564,7 +3567,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       } else if (pw && pw->attr & PWATTR_LOGIN) {
 	pp_open_login_home_in_browser(dock, mx, my, pw->w,2);
       }
-    } else if (event->state & Mod1Mask) {
+    } else if (event->state & (Mod1Mask|Mod4Mask)) { /* les 2 touches marchent */
       pp_handle_alt_clic(dock, event);
     } else {
       /* Ctrl+Middle clic: Et un scrinechote, un ! */
