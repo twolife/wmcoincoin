@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.10 2002/01/13 19:44:48 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.10  2002/01/13 19:44:48  pouaite
+  minifix pour éviter que la commande externe soit lancée sur tous les messages à l'initialisation du coincoin
+
   Revision 1.9  2002/01/13 15:19:00  pouaite
   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
 
@@ -420,7 +423,8 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
   if (last_id != -1) { /* si ce n'est pas le premier appel.. */
     it = tribune_find_id(trib, last_id);
   } else {
-    it = trib->msg;
+    //    it = trib->msg;
+    return; /* à l'initialisation, on évite de passer tous les messages dans le coincoin */
   }
   while (it) {
     char *qlogin;
