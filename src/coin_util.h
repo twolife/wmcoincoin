@@ -74,4 +74,5 @@ char* str_ncat(char *s1, const char *s2, int n);
 char *str_fget_line(FILE *f);
 void str_trim(unsigned char *s);
 char *str_preencode_for_http(const char *in);
+FILE *open_wfile(const char *fname);
 #endif

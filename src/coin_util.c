@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.31 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.32 2002/10/16 20:41:45 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.32  2002/10/16 20:41:45  pouaite
+  killall toto
+
   Revision 1.31  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -94,6 +97,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "coin_util.h"
 
 #include <libintl.h>
@@ -721,4 +727,13 @@ str_ncat(char *s1, const char *s2, int n)
   strncpy(s+l1,s2,l2); s[l1+l2]=0;
   free(s1);
   return s;
+}
+
+FILE*
+open_wfile(const char *fname) {
+  int fd;
+  FILE *f;
+  fd = open (fname, O_CREAT | O_TRUNC | O_RDWR, 0600);
+  if (fd != -1) f = fdopen(fd, "w"); else return NULL;
+  return f;
 }

@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.12 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.13 2002/10/16 20:41:45 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.13  2002/10/16 20:41:45  pouaite
+  killall toto
+
   Revision 1.12  2002/10/15 23:17:28  pouaite
   rustinage à la truelle
 
@@ -289,7 +292,7 @@ extract_news_txt_dacode2(SitePrefs *sp, const char *s, news_extract_t *extr)
     p2 = strstr(p, "<");
     if (p2) {
       extr->auteur = mystrndup(p, MIN(p2-p, 500));
-      myprintf("Auteur = '%s'\n", extr->auteur);
+      BLAHBLAH(2, myprintf("Auteur = '%s'\n", extr->auteur));
     }
   }
   if (extr->auteur == NULL) { extr->auteur = strdup("???"); }
@@ -320,7 +323,7 @@ extract_news_txt_dacode2(SitePrefs *sp, const char *s, news_extract_t *extr)
 
 
 
-  printf("p_txt = '%s'\n", extr->txt);
+  BLAHBLAH(2, printf("TXT = '%s'\n", extr->txt));
 
   /* les urls SAI CHIANT */
   if (extr->txt) { /* si pas de txt , on ne s'acharne pas */
@@ -366,7 +369,7 @@ extract_news_txt_dacode2(SitePrefs *sp, const char *s, news_extract_t *extr)
 	p3 = strstr(p3, "<");
 	if (p3 == NULL) goto stop_url;
 	url_descr = mystrndup(p4, p3-p4);
-	printf("LINK='%s' , DESC='%s'\n", url, url_descr);
+	BLAHBLAH(2, printf("LINK='%s' , DESC='%s'\n", url, url_descr));
 	extr->url_tab[extr->nb_url] = url;
 	extr->url_descr[extr->nb_url] = url_descr;
 	extr->nb_url++;

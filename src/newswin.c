@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.16 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.17 2002/10/16 20:41:45 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.17  2002/10/16 20:41:45  pouaite
+  killall toto
+
   Revision 1.16  2002/10/15 23:17:28  pouaite
   rustinage à la truelle
 
@@ -145,8 +148,12 @@ newswin_parsetxt(Dock *dock, News *n)
     site_newslues_add(site, id_type_lid(n->id));
   }
 
+  if (n->url_path) {
+    picohtml_set_url_path(nw->phv_news.ph, n->url_path);
+  } else {
+    picohtml_unset_url_path(nw->phv_news.ph);
+  }
   picohtml_parse(dock, nw->phv_news.ph, buff, nw->phv_news.w);
-  if (n->url_path) picohtml_set_url_path(nw->phv_news.ph, n->url_path);
 
   free(buff);
 }

@@ -187,7 +187,7 @@ copy_file(char *dest, char *src) {
   if (!in) {
     fprintf(stderr, _("can't read '%s' : %s\n"), src, strerror(errno)); return -1;
   }
-  out = fopen(dest, "w");
+  out = open_wfile(dest);
   if (!out) {
     fprintf(stderr, _("can't write '%s' : %s\n"), dest, strerror(errno)); return -1;
   }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.13 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.14 2002/10/16 20:41:45 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.14  2002/10/16 20:41:45  pouaite
+  killall toto
+
   Revision 1.13  2002/10/15 23:17:28  pouaite
   rustinage à la truelle
 
@@ -75,6 +78,11 @@ get_tok(const unsigned char **p, const unsigned char **np,
 void
 picohtml_set_url_path(PicoHtml *ph, const char *s) {
   ph->url_path = strdup(s);
+}
+
+void
+picohtml_unset_url_path(PicoHtml *ph) {
+  COND_FREE(ph->url_path);
 }
 
 /* ajoute un mot dans la liste */

@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.6 2002/08/29 00:15:53 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.7 2002/10/16 20:41:45 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.7  2002/10/16 20:41:45  pouaite
+  killall toto
+
   Revision 1.6  2002/08/29 00:15:53  pouaite
   cosmétique et capillotraction
 
@@ -289,7 +292,7 @@ site_msg_save_state(Site *site)
   
   /* si ce n'est pas le premier lancement, on met à jour le fichier */
   snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_name);
-  if (nb_lus && (f = fopen(fname, "wt"))) {
+  if (nb_lus && (f = open_wfile(fname))) {
     
     BLAHBLAH(2, printf(_("Opening '%s' for writing... OK\n"), fname));
     for (m = site->msg; m ; m=m->next) {

@@ -1,4 +1,10 @@
+--------------------------v2.4.1-a-----------------------------------------
 2002-10-16  pouaite  <c0in@altern.org>
+
+	* src/coin_util.c: bugfix de sécurité signalé par jjb: le fichier
+	d'options est créé avec le umask par défaut.. du coup si votre
+	$HOME est world-readable, tout le monde peut connaitre votre
+	cookie. Du coup ça va nous faire une 2.4.1 un peu bâtarde.
 
 	* src/regexp.c (extract_news_txt_dacode2): retour experimental des
 	news de linuxfr

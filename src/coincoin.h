@@ -512,6 +512,7 @@ void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 
 /* picohtml.c */
 void picohtml_set_url_path(PicoHtml *ph, const char *s);
+void picohtml_unset_url_path(PicoHtml *ph);
 void picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width);
 void picohtml_gettxtextent(PicoHtml *ph, int *width, int *height);
 void picohtml_render(Dock *dock, PicoHtml *ph, Drawable d, GC gc, int x, int y);
