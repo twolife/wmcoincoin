@@ -476,8 +476,8 @@ wmcc_prefs_relecture(Dock *dock)
     G_INT_OPT_COPY(enable_troll_detector);
 
     /* spell */
-    if (G_INT_OPT_COPY_IF_CHANGED(ew_do_spell) ||
-	G_STR_OPT_COPY_IF_CHANGED(ew_spell_cmd) ||
+    if (G_INT_OPT_COPY_IF_CHANGED(ew_do_spell) +
+	G_STR_OPT_COPY_IF_CHANGED(ew_spell_cmd) +
 	G_STR_OPT_COPY_IF_CHANGED(ew_spell_dict)) {
       check_if_should_kill_ispell(1);
     }
@@ -489,44 +489,46 @@ wmcc_prefs_relecture(Dock *dock)
 
     /* maintenant les options generales qui demande un peu de boulot */
 
-    if (G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) ||
-	G_BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) || 
-	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) ||
-	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_emphasized_color) ||
-	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_color) ||
-	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) ||
+    if (G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) +
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bg_dark_color) + 
+	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_normal_color) +
+	G_BIC_OPT_COPY_IF_CHANGED(sc_arrow_emphasized_color) +
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_color) +
+	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_light_color) +
 	G_BIC_OPT_COPY_IF_CHANGED(sc_bar_dark_color)) {
       rebuild_newswin = 1;
       rebuild_pinni = 1;
     }
 
     /* modifs sur l'apparence de la fenêtre des news */
-    if (G_STR_OPT_COPY_IF_CHANGED(news_fn_family) || G_INT_OPT_COPY_IF_CHANGED(news_fn_size) ||
-	G_INT_OPT_COPY_IF_CHANGED(news_bgcolor) || G_INT_OPT_COPY_IF_CHANGED(news_fgcolor) ||
-	G_INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) ||
-	G_INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) ||
+    if (G_STR_OPT_COPY_IF_CHANGED(news_fn_family) + 
+	G_INT_OPT_COPY_IF_CHANGED(news_fn_size) +
+	G_INT_OPT_COPY_IF_CHANGED(news_bgcolor) + 
+	G_INT_OPT_COPY_IF_CHANGED(news_fgcolor) +
+	G_INT_OPT_COPY_IF_CHANGED(news_titles_bgcolor) +
+	G_INT_OPT_COPY_IF_CHANGED(news_titles_fgcolor) +
 	G_INT_OPT_COPY_IF_CHANGED(news_emph_color)) {
       rebuild_newswin = 1;
     }
 
     /* déplacement du dock dans le cas ou la fenetre est en override redirect */
-    if ((G_INT_OPT_COPY_IF_CHANGED(dock_xpos) || G_INT_OPT_COPY_IF_CHANGED(dock_ypos)) && 
+    if ((G_INT_OPT_COPY_IF_CHANGED(dock_xpos) + G_INT_OPT_COPY_IF_CHANGED(dock_ypos)) && 
 	Prefs.draw_border && Prefs.use_iconwin==0) {
       XMoveWindow(dock->display, DOCK_WIN(dock), newPrefs.dock_xpos, newPrefs.dock_ypos);
     }
 
-    if (G_STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) || G_INT_OPT_COPY_IF_CHANGED(dock_bgcolor)
-	|| G_INT_OPT_COPY_IF_CHANGED(dock_fgcolor)) {
+    if (G_STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) + G_INT_OPT_COPY_IF_CHANGED(dock_bgcolor)
+	+ G_INT_OPT_COPY_IF_CHANGED(dock_fgcolor)) {
       reset_dock_pix = 1;
     }
 
     /* test sur les grosses options du pinnipede */
-    if (G_STR_OPT_COPY_IF_CHANGED(pp_fn_family) || 
-	G_INT_OPT_COPY_IF_CHANGED(pp_fn_size) ||
-	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) || 
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) ||
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) ||
+    if (G_STR_OPT_COPY_IF_CHANGED(pp_fn_family) +
+	G_INT_OPT_COPY_IF_CHANGED(pp_fn_size) +
+	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) +
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) +
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) +
         G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor)) {
       rebuild_pinni = 1;
     }
@@ -537,26 +539,26 @@ wmcc_prefs_relecture(Dock *dock)
     }
 
     /* les options plus light se négocient avec un bon gros refresh */
-    if (G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_msgcnt_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_updlcnt_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_progressbar_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_emph_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_bgcolor) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[0]) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[1]) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[2]) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[3]) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[4]) ||
-        G_BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
-	G_TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
-        G_INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) ||
-	G_KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
+    if (G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_bgcolor) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_fgcolor) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_msgcnt_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_updlcnt_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_buttonbar_progressbar_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_emph_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_popup_bgcolor) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[0]) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[1]) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[2]) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[3]) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[4]) +
+        G_BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) +
+	G_TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) +
+        G_INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) +
+	G_KEY_LIST_COPY_IF_CHANGED(hilight_key_list) +
 	G_STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words)) {
       redraw_pinni = 1;
     }
@@ -583,7 +585,7 @@ wmcc_prefs_relecture(Dock *dock)
       SP_STR_OPT_COPY(user_agent);
       SP_STR_OPT_COPY(proxy_auth);
       
-      if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) ||
+      if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) +
 	  SP_STR_OPT_COPY_IF_CHANGED(site_root)) {
 	myprintf(_("You changed the site/proxy, gethostbyname soon in progress\n"));
       }
@@ -602,18 +604,18 @@ wmcc_prefs_relecture(Dock *dock)
       SP_STR_OPT_COPY(user_login);
       SP_INT_OPT_COPY(force_fortune_retrieval);
 
-      if (SP_INT_OPT_COPY_IF_CHANGED(palmi_msg_max_len) ||
+      if (SP_INT_OPT_COPY_IF_CHANGED(palmi_msg_max_len) +
 	  SP_INT_OPT_COPY_IF_CHANGED(palmi_ua_max_len)) {
 	rebuild_palmi = 1;
       }
 
-      if (SP_BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
-	  SP_INT_OPT_COPY_IF_CHANGED(pp_bgcolor) ||
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) ||
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_login_color) ||
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_url_color) ||
+      if (SP_BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) +
+	  SP_INT_OPT_COPY_IF_CHANGED(pp_bgcolor) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_login_color) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_url_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_strike_color)) {
 	redraw_pinni = 1;
       }
@@ -621,9 +623,9 @@ wmcc_prefs_relecture(Dock *dock)
 	rebuild_pinni = 1;
       }
 
-      if (SP_INT_OPT_COPY_IF_CHANGED(check_news) ||
-	  SP_INT_OPT_COPY_IF_CHANGED(check_board) ||
-	  SP_INT_OPT_COPY_IF_CHANGED(check_comments) ||
+      if (SP_INT_OPT_COPY_IF_CHANGED(check_news) +
+	  SP_INT_OPT_COPY_IF_CHANGED(check_board) +
+	  SP_INT_OPT_COPY_IF_CHANGED(check_comments) +
 	  SP_INT_OPT_COPY_IF_CHANGED(check_messages)) {
 	Site *site;
 	rebuild_pinni = 1;

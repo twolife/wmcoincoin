@@ -59,8 +59,6 @@ struct _PostVisual {
 			  =2, le message est plopifié (mots remplacés par plop, grouik..)
 			  =3, le message est superplopifié (message remplacé par 'plop')
 			*/
-  int    new_decnt; /* compteur decrementé jusqu'à zéro pour les messages qui viennent d'être recus
-		       (pour fait une animation ) */
   struct _PostVisual *next;
 };
 
@@ -117,7 +115,7 @@ struct _Pinnipede {
     hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
     plopify_pixel, 
     minib_pixel, minib_dark_pixel, minib_msgcnt_pixel, 
-    minib_updlcnt_pixel, minib_progress_bar_pixel;
+    minib_updlcnt_pixel, progress_bar_pixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
 

@@ -80,6 +80,9 @@ pp_tabs_build(Dock *dock) {
       pp->nb_tabs++;
     }
   }
+
+  printf("nb_tabs = %d\n",pp->nb_tabs);
+
   ALLOC_VEC(pp->tabs, pp->nb_tabs, PinnipedeTab);
   for (s = dock->sites->list, pt = pp->tabs; s; s = s->next) {
     if (s->board) {
@@ -120,39 +123,64 @@ pp_tabs_refresh(Dock *dock)
     if (pp->tabs_pos == PPT_DOWN) {
       int tmp = y1; y1 = y2; y2 = tmp; 
     }
+
+
+    
+    XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+    XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
+		   0, 0, pp->win_width, pp->fn_h);
+    
+
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, y1, pp->tabs_width, y1);
+    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->tabs_width, 0);
     for (i=0; i < pp->nb_tabs; i++) {
-      if (pp->tabs[i].selected) {
-	XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
-      } else {
-	XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
-      }
-      XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
-		       pp->tabs[i].x+1, 1, pp->tabs[i].w-2, PPT_H-2);
+      PinnipedeTab *pt = pp->tabs+i;
+      int x = pt->x, w = pt->w, h=pt->h;
+      unsigned long bar_pixel = pp->progress_bar_pixel;
+      Board *board = pt->site->board;
+
       XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-      XDrawLine(dock->display, pp->lpix, dock->NormalGC, pp->tabs[i].x, 0, pp->tabs[i].w, 0);
-      if (i < pp->nb_tabs-1 && pp->tabs[i].selected && pp->tabs[i+1].selected) {
-	XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0xff0000));
-      } else {
+      XDrawLine(dock->display, pp->lpix, dock->NormalGC, pt->x+pt->w-1, 
+		0, pt->x+pt->w-1, PPT_H-1);
+      
+      if (pt->site->board->enabled) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-6, x+w-2, h-1);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-1, x+w-2, h-6);
       }
-      XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
-		pp->tabs[i].x+pp->tabs[i].w, 1, pp->tabs[i].x + pp->tabs[i].w, PPT_H-2);
-      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x006000));
-      XDrawString(dock->display, pp->lpix, dock->NormalGC, pp->tabs[i].x + 3, 
-		  pp->fn_minib->ascent+1 + pp->tabs[i].clicked*2, 
-		  pp->tabs[i].site->prefs->site_name, 
-		  strlen(pp->tabs[i].site->prefs->site_name));
+
+      XSetForeground(dock->display, dock->NormalGC, bar_pixel);
+      if (board->board_refresh_delay > 0) {
+	int zw = ((w-7)*MIN(board->board_refresh_cnt,board->board_refresh_delay))/board->board_refresh_delay;
+	zw = (w-7 - zw);
+	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
+	if (zw > 0) {
+	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, h-4, zw, 3);
+	}
+      }
+
+      {
+	const char *t = pp->tabs[i].site->prefs->site_name;
+	int tw = strlen(t) * MINIB_FN_W;
+	int tx = pt->x + (pt->w - tw)/2;
+	int ty = pp->fn_minib->ascent+1 + pp->tabs[i].clicked*2;
+	if (!pt->selected) {
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x808080));
+	} else {
+	  if (pt == pp->active_tab) {
+	    XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x80ff80));
+	    XDrawString(dock->display, pp->lpix, dock->NormalGC, tx+1, ty+1, t, strlen(t));
+	  }
+	  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x006000));
+	}
+	XDrawString(dock->display, pp->lpix, dock->NormalGC, tx, ty, t, strlen(t));
+      }
     }
-    /* derniere ligne verticale */
-    XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-    XDrawLine(dock->display, pp->lpix, dock->NormalGC, 
-		pp->tabs[i].x+pp->tabs[i].w, 1, pp->tabs[i].x + pp->tabs[i].w, PPT_H-2);
   }
   /* et hop */
   XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
 	    0,0,pp->tabs_width, PPT_H, pp->tabs[0].x,pp->tabs[0].y);
+  printf("tabs_w = %d, mb_w = %d\n", pp->tabs_width, pp->mb_buttonbar_width);
 }
 
 static PinnipedeTab *
@@ -200,11 +228,21 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
   int i,ret = 0, need_refresh=0;
   pt = pp_tabs_at_xy(dock, event->x, event->y);
   if (pt && pt->clicked == 1) {
+    Board *board = pt->site->board;
     if (event->button == Button1) {
-      pt->selected = 1-pt->selected;
+      if (event->x > pt->x + pt->w - 6 && event->y > pt->y + pt->h - 6) {
+	board->enabled = 1-board->enabled;
+      } else {
+	for (i=0; i < pp->nb_tabs; i++) pp->tabs[i].selected = 0;
+	pp->active_tab = pt;
+	pt->selected = 1;
+      }
+    } else if (event->button == Button2) {
+      board->update_request = 1;
     } else if (event->button == Button3) {
-      pt->selected = 1;
-      pp->active_tab = pt;
+      if (pt->selected == 0) pt->selected = 1;
+      else if (pp->active_tab != pt) pp->active_tab = pt;
+      else pt->selected = 0;
     }
 
     pp_tabs_set_visible_sites(pp);
@@ -551,7 +589,8 @@ pp_minib_refresh(Dock *dock)
 
   /* et hop */
   XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
-	    0,0,pp->win_width, MINIB_H, 0, MINIB_Y0);
+	    pp->mb_x0,0,pp->win_width - pp->mb_x0, MINIB_H, 
+	    pp->mb_x0, MINIB_Y0);
 
 }
 

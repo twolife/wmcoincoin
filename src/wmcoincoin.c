@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.51 2002/08/19 00:21:29 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.52 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.52  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.51  2002/08/19 00:21:29  pouaite
   "troll du soir, espoir"
 
@@ -1310,6 +1313,7 @@ void initx(Dock *dock, int argc, char **argv) {
   xgcv.background = RGB2PIXEL(255,255,255);
 
   dock->NormalGC = XCreateGC(dock->display, dock->win, GCForeground | GCBackground, &xgcv);
+
   if(!dock->NormalGC) {
     fprintf(stderr, _("Couldn't create graphics context\n"));
     exit(1);
@@ -1448,8 +1452,14 @@ void *Net_loop (Dock *dock) {
       ALLOW_X_LOOP;
     }
 
+    if (flag_update_prefs_request) {
+      wmcc_prefs_relecture(dock); flag_update_prefs_request = 0;
+    }
+
     /* update loop for all sites */
     for (site = dock->sites->list; site; site = site->next) {
+      if (flag_update_prefs_request) break; /* priorité !! */
+
       if (site->prefs->check_board && site->board->update_request > 1)
 	site->board->update_request--;
 
@@ -1466,10 +1476,14 @@ void *Net_loop (Dock *dock) {
 	  dock->wmcc_state_info = WMCC_UPDATING_NEWS;
 	  site_news_dl_and_update(site); ALLOW_X_LOOP;
 	}
+	if (flag_update_prefs_request) break; /* priorité !! */
+
 	if (site->prefs->check_comments) {
 	  dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
 	  site_yc_dl_and_update(site); ALLOW_X_LOOP;
 	}
+	if (flag_update_prefs_request) break; /* priorité !! */
+
 	if (site->prefs->check_messages) {
 	  dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
 	  site_msg_dl_and_update(site); ALLOW_X_LOOP;
@@ -1484,6 +1498,8 @@ void *Net_loop (Dock *dock) {
 	site->board->board_refresh_cnt = 0;
 	site->board->board_refresh_delay = 
 	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay);
+
+	if (flag_update_prefs_request) break; /* priorité !! */
 
 	dock->wmcc_state_info = WMCC_UPDATING_BOARD;
 	board_update(site->board);
@@ -1509,7 +1525,7 @@ void *Net_loop (Dock *dock) {
     ALLOW_X_LOOP;
     for (site = dock->sites->list; site; site = site->next) {
       site->news_refresh_cnt++;
-      if (site->board) site->board->board_refresh_cnt++;
+      if (site->board && site->board->enabled) site->board->board_refresh_cnt++;
     }
     temps_depuis_dernier_event++;
     save_state_cnt++;

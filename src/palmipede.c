@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.3 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.3  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -1083,6 +1086,15 @@ editw_undo(Dock *dock, EditW *ew) {
   }
 }
 
+int
+editw_get_site_id(Dock *dock) {
+  int i;
+  for (i=0; i < MAX_SITES; i++) {
+    if (dock->editw->prefs == Prefs.site[i]) return i;
+  }
+  return -1;
+}
+
 /* changement de buffer edite: message <-> useragent */
 static void
 editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
@@ -1504,7 +1516,7 @@ editw_rebuild(Dock *dock)
   Site *s;
   EditW *ew = dock->editw;
   int show = 0;
-  if (editw_ismapped) { editw_unmap(dock, ew); show = 1; }
+  if (editw_ismapped(ew)) { editw_unmap(dock, ew); show = 1; }
   editw_reload_colors(dock, ew);
   ew->prefs = NULL;
   for (s = dock->sites->list; s; s = s->next) {

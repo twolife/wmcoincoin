@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.69 2002/08/19 00:21:29 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.70 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.70  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.69  2002/08/19 00:21:29  pouaite
   "troll du soir, espoir"
 
@@ -650,18 +653,6 @@ pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
 
-  pv->new_decnt = MAX((time(NULL) - (pv->tstamp + board->time_shift)),0);
-  //printf("new_decnt = %d\n", pv->new_decnt);
-  if (pv->new_decnt < 20) {
-    //    static int i = 1;
-
-    //    if (i == 1) {
-      myprintf("id=%d %<YEL set decnt %d>\n", id_type_lid(pv->id), 20-pv->new_decnt);
-      pv->new_decnt = ((20-pv->new_decnt) * (1000/WMCC_TIMER_DELAY_MS));
-      //    } else pv->new_decnt = 0;
-      //    i = 0;
-  } else pv->new_decnt = 0;
-  
   pv->sub_tstamp = mi->sub_timestamp;
   pv->is_my_message = mi->is_my_message;
   pv->is_answer_to_me = mi->is_answer_to_me;
@@ -949,7 +940,7 @@ pp_pv_add(Pinnipede *pp, Boards *boards, id_type id)
 			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify,
 			board_key_list_test_mi(boards, mi, Prefs.plopify_key_list),
 			board_key_list_test_mi(boards, mi, Prefs.hilight_key_list)); 
-    pv_justif(pp, pv, 8, pp->win_width - (pp->sc ? SC_W-1 : 0));
+    pv_justif(pp, pv, 11, pp->win_width - (pp->sc ? SC_W-1 : 0));
     assert(pv);
     pv->next = pp->pv;
     pp->pv = pv;
@@ -1209,6 +1200,21 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
     XCopyArea(dock->display, pp->bg_pixmap, pp->lpix, dock->NormalGC, 0, dest_y, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, 0);
   }
 
+
+  XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
+  XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 5, pp->fn_h);
+  XFillRectangle(dock->display, lpix, dock->NormalGC, pp->win_width-6-(pp->sc ? SC_W : 0), 0, 5, pp->fn_h);
+
+  /* verifie si c'est un nouveau message */
+  if (pw) {
+    Board *board = dock->sites->boards->btab[id_type_sid(pw->parent->id)];
+    if (id_type_lid(pw->parent->id) > board->last_post_id_prev) {
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x8080ff));
+      XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 5, pp->fn_h);
+    }
+  }
+
+  /* couleur de la zone selectionnée */
   if (sel_info) {
     if (sel_info->x0 < sel_info->x1) {
       XSetForeground(dock->display, dock->NormalGC, pp->sel_bgpixel);
@@ -1273,10 +1279,10 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
       
       if (do_hilight) {
 	XSetForeground(dock->display, dock->NormalGC, pixel);
-	XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 3, pp->fn_h);
-	XDrawLine(dock->display, lpix, dock->NormalGC, 2,first_line,  2, pp->fn_h-1-last_line);
-	if (first_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,0,5, 0);
-	if (last_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,pp->fn_h-1,5, pp->fn_h-1);
+	XFillRectangle(dock->display, lpix, dock->NormalGC, 4, 0, 3, pp->fn_h);
+	XDrawLine(dock->display, lpix, dock->NormalGC, 6,first_line,  6, pp->fn_h-1-last_line);
+	if (first_line) XDrawLine(dock->display, lpix, dock->NormalGC, 7,0,9, 0);
+	if (last_line) XDrawLine(dock->display, lpix, dock->NormalGC, 7,pp->fn_h-1,9, pp->fn_h-1);
 
 	if (first_line) {
 	  pw2 = pw;
@@ -1284,7 +1290,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	  if (pw2) {
 	    int x0,width;
 	    x0 = pw2->xpos-2; width = pw2->xwidth+3;
-	    XDrawLine(dock->display, lpix, dock->NormalGC, 6, 0, x0, 0);
+	    XDrawLine(dock->display, lpix, dock->NormalGC, 10, 0, x0, 0);
 	    XDrawRectangle(dock->display, lpix, dock->NormalGC, x0,0,width,pp->fn_h-1);
 	  }
 	}
@@ -1610,6 +1616,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 }
 
 #define MAXAGE 30
+/*
 void
 pp_hilight_newest_messages(Dock *dock)
 {
@@ -1618,9 +1625,6 @@ pp_hilight_newest_messages(Dock *dock)
   int l = 0;
 
 
-
-
-  return;
 
 
   if (pp->lignes == NULL) return;
@@ -1643,15 +1647,15 @@ pp_hilight_newest_messages(Dock *dock)
 	int pos[2], x[3], y[3];
 	int side[2];
 	int halfperim, j;
-	/*
+//	
+//
+//          _______0_______
+//         |               | 
+//       3 |_______________|1
+//                 2
 
-	  _______0_______
-         |               | 
-       3 |_______________|1
-                 2
-	 */
 
-	unsigned long pix;
+ 	unsigned long pix;
 	halfperim = (rw-2+rh);
 	pos[0] = ((spot * 2* halfperim)/10 + 100000 - pv->new_decnt);
 	pos[1] = pos[0] + 200;
@@ -1668,22 +1672,7 @@ pp_hilight_newest_messages(Dock *dock)
 	}
 	
 	j = 0;
-	//	printf("j=%d, halfperim=%d, rw=%d, rh=%d, pos=%4d side =%d x=%3d, y=%3d\n", j, halfperim, rw, rh, pos[j], side[j], x[j], y[j]-ry0); 
 
-	/*
-	if (side0 != side1) {
-	  switch (side0) {
-	  case 0: x[2] = rx0 + rw-1; y[2] = ry0; break;
-	  case 1: x[2] = rx0 + rw-1; y[2] = ry0+rh-1; break;
-	  case 2: x[2] = rx0; y[2] = ry0+rh-1; break;
-	  case 3: x[2] = rx0; y[2] = ry0; break;
-	  }
-	  XDrawLine(dock->display, pp->win, dock->NormalGC, x0, y0, x[2],y[2]);
-	  XDrawLine(dock->display, pp->win, dock->NormalGC, x[2], y[2], x1,y1);
-	} else {
-	  XDrawLine(dock->display, pp->win, dock->NormalGC, x0, y0, x1,y1);
-	}
-	*/
 	pix = RGB2PIXEL(0xff,0,0);
 	XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
 	XDrawPoint(dock->display, pp->win, dock->NormalGC, x[0], y[0]);
@@ -1699,6 +1688,35 @@ pp_hilight_newest_messages(Dock *dock)
     } while (l < pp->nb_lignes && (pp->lignes[l]==NULL || pv == pp->lignes[l]->parent));
   }
 }
+*/
+void
+pp_hilight_newest_messages(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  
+  return;
+  /*
+  int l = 0;
+  if (pp->lignes == NULL) return;
+  while (l < pp->nb_lignes) {
+    PostVisual *pv;
+    if (pp->lignes[l] == NULL) { l++; continue; }
+    pv = pp->lignes[l]->parent;
+
+    if (pv->new_decnt > 0) {
+      int y0 = LINEY0(l);
+
+      XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(0x0000ff));
+      XDrawLine(dock->display, pp->win, dock->NormalGC, 0, y0, 0, y0+pp->fn_h-1);
+      XDrawLine(dock->display, pp->win, dock->NormalGC, 1, y0, 1, y0+pp->fn_h-1);
+      XDrawLine(dock->display, pp->win, dock->NormalGC, 2, y0, 2, y0+pp->fn_h-1);
+      pv->new_decnt--;
+    }
+    l++;
+    }*/
+
+}
+
 
 
 /* appelée depuis wmcoincoin.c, pour gèrer l'autoscroll et rafraichir l'affichage */
@@ -1844,7 +1862,7 @@ pp_set_prefs_colors(Dock *dock)
   pp->minib_dark_pixel = GET_BICOLOR(Prefs.pp_buttonbar_fgcolor);
   pp->minib_msgcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_msgcnt_color);
   pp->minib_updlcnt_pixel = GET_BICOLOR(Prefs.pp_buttonbar_updlcnt_color);
-  pp->minib_progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
+  pp->progress_bar_pixel = GET_BICOLOR(Prefs.pp_buttonbar_progressbar_color);
   pp->sel_bgpixel = GET_BICOLOR(Prefs.pp_sel_bgcolor);
   pp->emph_pixel = GET_BICOLOR(Prefs.pp_emph_color);
   pp->hilight_my_msg_pixel = GET_BICOLOR(Prefs.pp_my_msg_color);
@@ -2354,7 +2372,9 @@ pp_unmap(Dock *dock)
 
   /* le pp_refresh a juste pour but de 'delocker' le PostVisual sauvé dans le cache
      oui c'est de la bidouille qui sent les remugles nauséabonds */
-  pp_refresh(dock, pp->win, NULL);
+
+  /*  d'ailleurs je le vire, c'est incompatible avec l'update des prefs */
+  //  pp_refresh(dock, pp->win, NULL);
 
   /* on sauve la position de la fenetre (en prenant en compte les decorations du WM ) */
   get_window_pos_with_decor(dock->display, pp->win, &pp->win_xpos, &pp->win_ypos);
@@ -2987,7 +3007,11 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
 	editw_refresh(dock, dock->editw);
       } else {
 	char s[60];
-	snprintf(s, 60, "%s ", s_ts);
+	if (editw_get_site_id(dock) == id_type_sid(pw->parent->id)) {
+	  snprintf(s, 60, "%s ", s_ts);
+	} else { 
+	  snprintf(s, 60, "%s@%s ", s_ts, Prefs.site[id_type_sid(pw->parent->id)]->site_name); 
+	}
 	editw_insert_string(dock->editw, s);
 	editw_refresh(dock, dock->editw);
       }

@@ -2,7 +2,7 @@
 #include "coincoin.h"
 #include "site.h"
 
-void
+static void
 sl_build_site_names_hash(SiteList *sl)
 {
   Site *site;
@@ -49,7 +49,6 @@ static Boards *
 boards_create() {
   Boards *b;
   ALLOC_OBJ(b, Boards);
-  b->nb_msg = 0;
   b->first = NULL;
   b->last = NULL;
   return b;
@@ -76,7 +75,6 @@ sl_create() {
     }
   }
   boards_init_sites(sl);
-  sl_build_site_names_hash(sl);
   return sl;
 }
 
@@ -136,7 +134,7 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
   pp = sl->list; while (pp && pp->next) pp = pp->next;
   if (pp) pp->next = site; else sl->list = site;
 
-  sl_build_site_names_hash(sl);
+  boards_init_sites(sl);
 }
 
 /* suppression d'un site */
@@ -164,7 +162,7 @@ sl_delete_site(SiteList *sl, Site *site)
   if (site->fortune) free(site->fortune);
 
   free(site);
-  sl_build_site_names_hash(sl);
+  boards_init_sites(sl);
 }
 
 Site*

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.3 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: board.c,v 1.4 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.4  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.3  2002/08/18 19:00:28  pouaite
   plop
 
@@ -177,6 +180,8 @@ board_create(Site *site, Boards *boards)
   strncpy(board->last_post_time, "xx:xx", 5);
   board->msg = NULL;
   board->last_post_id = -1;
+  board->last_post_id_prev = -1;
+  board->wmcc_tic_cnt_last_check = 0;
   board->last_post_timestamp = 0;
   board->nbsec_since_last_msg = 0;
   board->local_time_last_check = time(NULL);
@@ -196,7 +201,7 @@ board_create(Site *site, Boards *boards)
   board->time_shift_min = LONG_MIN;
   board->time_shift_max = LONG_MAX;
   board->time_shift = 0;
-  
+  board->enabled = 1;
   return board;
 }
 
@@ -220,12 +225,9 @@ board_global_unlink_msg(Boards *boards, board_msg_info *mi)
     boards->last = mi->g_prev;
     if (boards->last) boards->last->g_next = NULL;
   }
-  boards->nb_msg--;
-  assert(boards->nb_msg >= 0);
-  if (boards->first == NULL || boards->nb_msg || boards->last == NULL) {
+  if (boards->first == NULL || boards->last == NULL) {
     assert(boards->last == NULL);
     assert(boards->first == NULL);
-    assert(boards->nb_msg == 0);
   }
 }
 
@@ -351,7 +353,7 @@ miniua_eval_from_ua(MiniUARules *rules, board_msg_info *mi)
   mua->G = 0x80;
   mua->B = 0x80;
   mua->symb = 0;
-  make_short_name_from_ua(mi->useragent, mua->name, MINIUA_SZ);
+  make_short_name_from_ua(mi->useragent, mua->name, MIN(MINIUA_SZ,15));
 
   for (r = rules->first; r; r = r->next) {
     int res;
@@ -1195,6 +1197,10 @@ board_update(Board *board)
   board->local_time_last_check_old = board->local_time_last_check;
   board->local_time_last_check = time(NULL);
 
+  /* ça c'est pour le pinni */
+  board->wmcc_tic_cnt_last_check = wmcc_tic_cnt;
+  board->last_post_id_prev = old_last_post_id;
+
   board->nbsec_since_last_msg += difftime(board->local_time_last_check, board->local_time_last_check_old);
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
   board->nbsec_since_last_msg = MAX(board->nbsec_since_last_msg,0);
@@ -1365,7 +1371,9 @@ board_update(Board *board)
   board_update_time_shift(board, old_last_post_id);
 
   flag_board_updated = 1;  
+
   if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     board_call_external(board, old_last_post_id);    
   }
+
 }

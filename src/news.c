@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.3 2002/08/18 20:52:15 pouaite Exp $
+  rcsid=$Id: news.c,v 1.4 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.4  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.3  2002/08/18 20:52:15  pouaite
   les locales des sites fonctionnent (c bon pour les news)
 
@@ -546,6 +549,8 @@ open_site_file(Site *site, char *base_name)
   /* attention aux ames sensibles */
   snprintf(fname,2048,"%s/.wmcoincoin/%s/%s", getenv("HOME"), site->prefs->site_name, base_name);
   if ((fsave = fopen(fname, "rt")) == NULL) {
+    printf("can't open '%s' [%s]\n", fname, strerror(errno));
+
     for (tantpis = 0, retry = 0; retry < 3; retry++) {
       if ((fsave = fopen(fname, "wt")) == NULL) {
 	if (retry == 2) {

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.11 2002/08/17 18:33:38 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.12 2002/08/21 01:11:48 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.12  2002/08/21 01:11:48  pouaite
+##   commit du soir, espoir
+##
 ##   Revision 1.11  2002/08/17 18:33:38  pouaite
 ##   grosse commition
 ##
@@ -56,7 +59,7 @@ wmcoincoin_SOURCES = \
 	news.c \
 	comments.c \
 	messages.c \
-	site.c \
+	site.c site.h \
         keylist.c keylist.h \
 	scrollcoin.h scrollcoin.c \
 	newswin.c newswin.h \

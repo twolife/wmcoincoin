@@ -630,6 +630,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
 
 void
 wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
+  int i;
   assert(sp); assert(src);
 
 #define SPSTRDUP(x) if (src->x) { sp->x = strdup(src->x); assert(sp->x); }
@@ -651,7 +652,10 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
   SPSTRDUP(path_messages);
   SPSTRDUP(user_cookie);
   SPSTRDUP(user_login);
-  SPSTRDUP(site_name);
+  
+  ALLOC_VEC(sp->all_names, src->nb_names, char *);
+  for (i=0; i < src->nb_names; i++) sp->all_names[i] = strdup(src->all_names[i]);
+  sp->site_name = sp->all_names[0];
 }
 
 void
@@ -743,7 +747,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   BICOLOR_SET(p->pp_buttonbar_fgcolor,0x606060,0x606060);
   BICOLOR_SET(p->pp_buttonbar_msgcnt_color, 0x7070af, 0x7070af);
   BICOLOR_SET(p->pp_buttonbar_updlcnt_color, 0x7070af, 0x7070af);
-  BICOLOR_SET(p->pp_buttonbar_progressbar_color, 0xffffff, 0xffffff);
+  BICOLOR_SET(p->pp_buttonbar_progressbar_color, 0x65bc7b, 0x65bc7b);
   
   BICOLOR_SET(p->sc_bg_color, 0xcdcdcd, 0xcdcdcd);
   BICOLOR_SET(p->sc_bg_light_color, 0xffffff, 0xffffff);

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.19 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.20 2002/08/21 01:11:49 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.20  2002/08/21 01:11:49  pouaite
+  commit du soir, espoir
+
   Revision 1.19  2002/08/18 19:00:28  pouaite
   plop
 
@@ -1375,17 +1378,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	   bouton du milieu sur le trollometre:
 	   relire le fichier d'options
 	 */
-	wmcc_prefs_relecture(dock);	
-      } else {
-	/* shift+bouton milieu sur le trollometre:
-	   relire le .wmcoincoin/useragents
-	*/
-	// int err;
-
-	msgbox_show(dock, "désactivé...");
-		
-	//	err = useragents_file_reread(dock, dock->dlfp);
-	//	BLAHBLAH(2, printf(_("Re-reading of RC file return an error code %d\n"), err));
+	flag_update_prefs_request = 1;
       }
     }
   }

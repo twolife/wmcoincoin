@@ -172,7 +172,7 @@ struct _board_msg_info {
   /* utilisé par board_key_list_test_thread pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
   int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
-  short nb_refs;
+  short nb_refs:15;
   board_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 
   /* pointeurs inter-sites: le point de depart est dans la structure boards,
@@ -185,10 +185,14 @@ struct _Board {
 
   int last_post_timestamp; /* en secondes */
   int last_post_id;
+  int last_post_id_prev;
 
   /* log des 'last_post_id' au cours des 'nb_trollo_log' derniers check de la board,
      utilise pour calculer le nb moyen de messages postes / seconde */
   board_msg_info *msg;
+
+  /* valeur du wmcc_tic_cnt lors du dernier check positif */
+  int wmcc_tic_cnt_last_check;
 
   /* nombre de secondes ecoulees depuis que le dernier message a ete recu */
   int nbsec_since_last_msg;
@@ -231,6 +235,7 @@ struct _Board {
      etc...     
   */
   volatile int update_request;
+  volatile int enabled;
 };
 
 typedef struct _SiteNameHash {
@@ -241,7 +246,6 @@ typedef struct _SiteNameHash {
 struct _Boards {
   board_msg_info *first;
   board_msg_info *last;
-  int nb_msg;
   Board *btab[MAX_SITES];
 
   int nb_aliases;
@@ -563,6 +567,7 @@ void editw_rebuild(Dock *dock);
 void editw_set_kbfocus(Dock *dock, EditW *ew, int get_it);
 void editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event);
 Window editw_get_win(EditW *ew);
+int editw_get_site_id(Dock *dock);
 void editw_action(Dock *dock, EditW *ew);
 int editw_ismapped(EditW *ew);
 void editw_balloon_test(Dock *dock, EditW *ew, int x, int y);
