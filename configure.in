@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.24  2002/06/02 12:37:36  pouaite
+dnl   fix gethostbyname --> version 2.3.8b
+dnl
 dnl   Revision 1.23  2002/06/01 20:21:18  pouaite
 dnl   version 2.3.8a
 dnl
@@ -72,7 +75,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8a)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.8b)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name

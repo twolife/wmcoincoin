@@ -1,5 +1,5 @@
 %define name wmcoincoin
-%define version 2.3.8a
+%define version 2.3.8b
 %define release 1
 
 Summary: wmcoincoin is a stupid dock app for linuxfr-addicted people

@@ -213,7 +213,7 @@ int base64_encode(const void *data, int size, char **str)
    Returns 1 if FD is accessible, 0 for timeout and -1 for error in
    select().  */
 static int
-http_select_fd (int fd, int maxtime_sec, int writep)
+http_select_fd (int fd, int maxtime_sec, int maxtime_usec, int writep)
 {
   fd_set fds, exceptfds;
   struct timeval timeout;
@@ -224,7 +224,7 @@ http_select_fd (int fd, int maxtime_sec, int writep)
   FD_ZERO (&exceptfds);
   FD_SET (fd, &exceptfds);
   timeout.tv_sec = maxtime_sec;
-  timeout.tv_usec = 0;
+  timeout.tv_usec = maxtime_usec;
   ALLOW_X_LOOP_MSG("http_select_fd.1"); ALLOW_ISPELL;  
   /* HPUX reportedly warns here.  What is the correct incantation?  */
   CYGWIN_ENABLE_THREAD_X_LOOP;
@@ -259,7 +259,7 @@ http_iread (SOCKET fd, char *buf, int len)
 	  tic0 = wmcc_tic_cnt;
 	  do
 	    {
-	      res = http_select_fd (fd, Prefs.http_timeout, 0);	
+	      res = http_select_fd (fd, Prefs.http_timeout, 0, 0);	
 	      ALLOW_X_LOOP; ALLOW_ISPELL; 
 	      if ((wmcc_tic_cnt - tic0) > Prefs.http_timeout*(1000/WMCC_TIMER_DELAY_MS)) {
 		SETERR_TIMEOUT;
@@ -332,7 +332,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 #ifdef HAVE_SELECT
       if (Prefs.http_timeout) {
 	do {
-	  res = http_select_fd (fd, Prefs.http_timeout, 1);
+	  res = http_select_fd (fd, Prefs.http_timeout, 0, 1);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
 	} while (res == SOCKET_ERROR && LASTERR_EINTR);
 #ifndef __CYGWIN__
@@ -438,7 +438,7 @@ http_connect(const char *host_name, int port)
   */
 
   
-  //  flag_changed_http_params = 1;
+    flag_changed_http_params = 1;
 
   for (num_try = 0; num_try < 2; num_try++) 
     {

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.11 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.12 2002/06/02 12:37:36 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.12  2002/06/02 12:37:36  pouaite
+  fix gethostbyname --> version 2.3.8b
+
   Revision 1.11  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -168,6 +171,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     if (close(tube[0]) == -1) {
       fprintf(stderr, "fiston: tube bouché (%s)\n", strerror(errno)); close(tube[1]); exit(-1);
     }
+
     BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname en cours..\n"));
     phost=gethostbyname(hostname);
     BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname terminé..\n"));
@@ -179,27 +183,61 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
       n = write( tube[1], &l, 1); BLAHBLAH(VERBOSE_LVL,printf("write len %d [%s]\n", n, strerror(errno)));
       n = write( tube[1], phost->h_addr_list[0] , phost->h_length); BLAHBLAH(VERBOSE_LVL,printf("write adr %d [%s]\n", n, strerror(errno)));
     } else {
-      fprintf(stderr, "échec de gethostbyname sur '%s'\n", hostname);
+      fprintf(stderr, "fiston: échec de gethostbyname sur '%s'\n", hostname);
     }
     exit(phost == NULL );
     break;
   }
   default: { /* pôpa */
     int cnt, got, len, cstat;
-
+    time_t time_debut;
     if (close(tube[1]) == -1) {
       fprintf(stderr, "pôpa: tube bouché (%s), que va devenir fiston ?\n", strerror(errno)); close(tube[0]);
     }
-    fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
+    
+    //fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
     cnt = 0; len = -1;
-    do {
+    time_debut = time(NULL);
+    while (1) {
+      int retval;
+
       ALLOW_X_LOOP_MSG("pôpa écoute fiston"); ALLOW_ISPELL;
 
-      got = read(tube[0], addr+cnt, (len == -1 ? 65 : len+1-cnt)); 
-      if (got > 0) cnt += got;
-      if (cnt >= 1) len = addr[0];
-    } while ((got == -1 && (errno == EAGAIN || errno == EINTR)) ||
-	     len == -1 || cnt < len+1);
+      retval = http_select_fd(tube[0], 0, 10000, 0);
+      BLAHBLAH(4,fprintf(stderr, "select : retval = %d %s\n", retval, (retval == -1) ? strerror(errno) : "ok"));
+
+      /* tube prêt ? */
+      if (retval > 0) {
+	got = read(tube[0], addr+cnt, (len == -1 ? 65 : len+1-cnt)); 
+	
+	/* problème : got = 0 peut vouloir dire que 
+	   (a) fiston n'a pas encore écrit dans le tube
+	   (b) fiston {a écrit|a raté son gethostbyname} et fermé le tube
+	*/
+
+	if (got == 0) {
+	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,"fiston a rebouché le tube!\n"));
+	  break;
+	} else if (got == -1) {
+	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,"c'est quoi ce tube pourri! %s\n", strerror(errno))); break;
+	}
+	cnt += got;
+	if (cnt >= 1) len = addr[0];
+      } else if (retval == 0) { /* rien a lire pour l'instant */
+	BLAHBLAH(4,fprintf(stderr, "select .. on attend\n"));
+      } else if (errno == EINTR) {
+	BLAHBLAH(4,fprintf(stderr, "select .. interrompu\n"));
+      } else {
+	BLAHBLAH(4,fprintf(stderr, "select .. probleme : %s\n", strerror(errno)));
+      }
+      /*
+      if (difftime(time(NULL),time_debut) > 4) {
+	fprintf(stderr, "fiston est trop lent, ou bien il s'est vautré, qu'il crève !\n");
+	break;
+      }
+      */
+    } /* while ((got == -1 && (errno == EAGAIN || errno == EINTR)) ||
+         	 len == -1 || cnt < len+1); */
 
     close(tube[0]);
 
