@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.17 2002/01/30 21:03:48 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.18 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.18  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.17  2002/01/30 21:03:48  pouaite
   correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
 
@@ -2064,7 +2067,7 @@ pp_thread_filter_add_backrefs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tr
 	  
 	  /* si le message n'a pas encore ete traite on l'ajoute */
 	  if (pp_thread_filter_find_id(f, mi->id)==0) {
-	    myprintf("backref(%d): ajout de %<YEL %d> --> %<MAG %d>\n", f->nid, mi->id, base_mi->id);
+	    //myprintf("backref(%d): ajout de %<YEL %d> --> %<MAG %d>\n", f->nid, mi->id, base_mi->id);
 	    
 	    f->id[f->nid++] = mi->id;
 	    /* et hop ça recurse un coup */

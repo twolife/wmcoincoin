@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.14 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.15 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.15  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.14  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -371,6 +374,17 @@ option_proxy_nocache (const char  *optarg,
     The_Prefs->proxy_nocache = 1;
   } else {
     The_Prefs->proxy_nocache = option_get_bool_val(optarg);
+  }
+}
+
+static void
+option_use_if_modified_since (const char  *optarg,
+		    structPrefs *The_Prefs)
+{
+  if (optarg == NULL || optarg[0] == 0) {
+    The_Prefs->use_if_modified_since = 0;
+  } else {
+    The_Prefs->use_if_modified_since = !option_get_bool_val(optarg);
   }
 }
 
@@ -954,6 +968,10 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("http.proxy_use_nocache:",1) {
 	option_proxy_nocache(optarg,The_Prefs); ok++;
       }
+      TEST_OPTION("http.disable_if_modified_since:", 0) {
+	option_use_if_modified_since(optarg,The_Prefs); ok++;	
+      }
+
       TEST_OPTION("pinnipede.font_family:", 1) {
 	if (The_Prefs->pp_fn_family) free(The_Prefs->pp_fn_family);
 	The_Prefs->pp_fn_family = strdup(optarg); ok++;
@@ -1155,6 +1173,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->proxy_name = NULL;
   The_Prefs->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   The_Prefs->proxy_nocache = 0;
+  The_Prefs->use_if_modified_since = 1;
   The_Prefs->no_balloons = 0;
   The_Prefs->balloon_fn_family = strdup("helvetica");
   The_Prefs->balloon_fn_size = 10;

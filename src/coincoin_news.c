@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.14 2002/01/31 23:45:00 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.15 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.15  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.14  2002/01/31 23:45:00  pouaite
   plop
 
@@ -405,7 +408,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     snprintf(URL, 512, "%s%s",n->url, Prefs.path_end_news_url);
     BLAHBLAH(1,printf("get %s\n",URL));
     fd = http_get(Prefs.site_root, Prefs.site_port, URL, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,NULL);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,NULL,0);
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", getenv("HOME"), n->id);
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", URL);
@@ -700,7 +703,7 @@ dlfp_updatenews(DLFP *dlfp)
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
     fd =  http_get(Prefs.site_root, Prefs.site_port, path, 
-		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,news_last_modified);
+		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,news_last_modified, 512);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
@@ -1007,7 +1010,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/posts.php3", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
@@ -1315,7 +1318,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);

@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.12 2002/01/20 22:49:38 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.13 2002/02/02 23:49:17 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.13  2002/02/02 23:49:17  pouaite
+#%  plop
+#%
 #%  Revision 1.12  2002/01/20 22:49:38  pouaite
 #%  ça va releaser
 #%
@@ -148,6 +151,11 @@
 
 ### décommenter cette ligne si votre proxy a tendance à cacher comme un salaud
 #http.proxy_use_nocache: on
+
+### décommenter si vous trouvez que ça rame un peu trop, ou bien si vous ne voyez pas
+### apparaitre vos messages dans le pinnipede tout de suite après avoir posté 
+### (par contre c'est un peu moins gentil avec linuxfr)
+#http.disable_if_modified_since: 1
 
 # ## L'option 'http.browser' permet d'utiliser un navigateur externe, pour
 # ## lire les commentaires détecté par le flamophone, et pour afficher les [url] du

@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.11 2002/01/20 02:17:13 pouaite Exp $
+  rcsid=$Id: global.h,v 1.12 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.12  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.11  2002/01/20 02:17:13  pouaite
   modifs d'ordre esthetique (!) sans grand interet
 
@@ -53,6 +56,12 @@
 # define DECL_GLOB_INIT(x,y) extern x
 #endif
 
+#ifndef NO_BLAHBLAH
+# define BLAHBLAH(n,x) if (Prefs.verbosity >= n) { x; fflush(stdout); }
+#else
+# define BLAHBLAH(n,x)
+#endif
+
 #define WMCC_TIMER_DELAY_MS 40 /* un bip toutes les 40 millisecondes */
 
 /* les preferences sont stockees dans cette structure */
@@ -85,7 +94,7 @@ typedef struct _structPrefs{
 
   int http_timeout; /* en secondes */
   int proxy_nocache; /* desactive le cache du proxy lors des requetes */
-
+  int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
   /* user_agent (defaut: wmCoinCoin) */
   char *user_agent;
 
@@ -161,7 +170,6 @@ typedef struct _structPrefs{
 
 /* variables communes ici: */
 
-#ifndef __CYGWIN__
 /*
   il faut des protections pour les appels systèmes non reentrant :-( (malloc...)
   (la cause des bugs bizarres du "mur vert" ?)
@@ -171,11 +179,6 @@ void ispell_run_background(const char* spellCmd, const char* spellDict);
 #define ALLOW_ISPELL if (Prefs.ew_do_spell) {ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);}
 #define ALLOW_X_LOOP if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf("%s, ligne %d : X_loop_request=%d!\n", __FILE__, __LINE__, X_loop_request); }X_loop(); }
 #define ALLOW_X_LOOP_MSG(m) if (X_loop_request) { if (X_loop_request > 1 && Prefs.verbosity) { printf(m " : X_loop_request=%d!\n", X_loop_request); }  X_loop(); }
-#else /* utilise les pthreads, pas besoin de protection */
-#define ALLOW_X_LOOP
-#define ALLOW_X_LOOP_MSG(m)
-#endif
-
 
 
 DECL_GLOB(structPrefs Prefs);

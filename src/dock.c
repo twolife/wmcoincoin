@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.2 2002/01/31 23:45:00 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.3 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.3  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.2  2002/01/31 23:45:00  pouaite
   plop
 
@@ -44,6 +47,9 @@
 /* image */
 #include "../xpms/leds.h"
 
+/* au max un defilement toutes les 15 secondes */
+#define TROLLO_MAX_SPEED 15
+
 void
 dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 {
@@ -55,8 +61,8 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
   
   
 
-  /* nombre de minutes regroupees dans une meme colonne du graphique */
-  int col_nb_min = 0;
+  /* nombre de secondes regroupees dans une meme colonne du graphique */
+  int col_nb_sec = 0;
   int trib_nrow, trib_ncol;
 
   if (flag_updating_tribune) return;
@@ -72,11 +78,11 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
   if (trolloscope_bgb>255) { trolloscope_bgb = ((280-trolloscope_bgb)*255)/(280-255); }
 
   if (dock->trolloscope_resolution == 5) {
-    col_nb_min = 1*dock->trolloscope_speed;
+    col_nb_sec = 1*dock->trolloscope_speed*TROLLO_MAX_SPEED;
   } else if (dock->trolloscope_resolution == 2) {
-    col_nb_min = 2*dock->trolloscope_speed;
+    col_nb_sec = 2*dock->trolloscope_speed*TROLLO_MAX_SPEED;
   } else if (dock->trolloscope_resolution == 1) {
-    col_nb_min = 4*dock->trolloscope_speed;
+    col_nb_sec = 4*dock->trolloscope_speed*TROLLO_MAX_SPEED;
   } else assert(0);
 
   trib_nrow = (TROLLOSCOPE_HEIGHT + dock->trolloscope_resolution - 1) / dock->trolloscope_resolution;
@@ -91,7 +97,7 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
 
   it = trib->msg;
 
-  tnow = (tribune_get_time_now(trib)/60 + col_nb_min - 1)/col_nb_min;
+  tnow = (tribune_get_time_now(trib) + col_nb_sec - 1)/col_nb_sec;
 
   /* construction de trolloscope */
   while (it) {
@@ -99,8 +105,8 @@ dock_update_pix_trolloscope(Dock *dock, DLFP_tribune *trib)
       int age;
 
       //      age = tribune_get_msg_age(trib, it) / 60 / col_nb_min;
-      age = (tnow - (it->timestamp/60 + col_nb_min - 1)/col_nb_min + ((24*60)/col_nb_min))%((24*60)/col_nb_min);
-      BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_min=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_min,tnow));
+      age = (tnow - (it->timestamp + col_nb_sec - 1)/col_nb_sec + ((24*60*60)/col_nb_sec))%((24*60*60)/col_nb_sec);
+      BLAHBLAH(4, myprintf("id=%<YEL %d>, age=%<RED %d> ts=%d, col_nb_sec=%d, tnow=%d\n", it->id, age,it->timestamp,col_nb_sec,tnow));
       assert(age >= 0);
       if (age < trib_ncol) {
 	/* on empile les message sur la pile d'age 'age' (je suis clair?)*/
@@ -510,6 +516,8 @@ refresh_msginfo(Dock *dock)
 void
 dock_refresh_normal(Dock *dock)
 {
+  if ((Prefs.debug & 4) && ((wmcc_tic_cnt % 25) != 0 )) return;
+
   refresh_msginfo(dock);
   switch (dock->door_state) {
   case OPENED:
@@ -920,9 +928,10 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	clic bouton 1 sur la 1ere led ->
 	voir la derniere erreur http
       */
-      if (flag_http_error) {
-	msgbox_show(dock, http_error());
-      } else msgbox_show(dock, "no problemo");
+      char *err_msg;
+      err_msg = http_complete_error_info();
+      msgbox_show(dock, err_msg);
+      free(err_msg);
     }else if (IS_INSIDE(x,y,dock->leds.led[1].xpos,dock->leds.led[1].ypos - MIN(dock->door_state_step,13),
 			dock->leds.led[1].xpos+8, dock->leds.led[1].ypos +3 - MIN(dock->door_state_step,13))) {
       /*

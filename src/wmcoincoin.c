@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.16 2002/01/31 23:45:00 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.17 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.17  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.16  2002/01/31 23:45:00  pouaite
   plop
 
@@ -314,7 +317,7 @@ exec_coin_coin(Dock *dock)
   if (fd != INVALID_SOCKET) {
     int got;
     
-    if (http_skip_header(fd, NULL) < 0) {
+    if (http_skip_header(fd, NULL, 0) < 0) {
       /* si la reponse n'est pas un 302 Found */
       snprintf(s, 2048, "Damned ! y'a une pouille dans le cotage<p>%s", http_error());
       msgbox_show(dock, s);
@@ -649,7 +652,7 @@ void X_loop()
       }
 
       if (flag_tribune_answer_to_me) {
-	flag_tribune_answer_to_me;
+	flag_tribune_answer_to_me = 0;
 	dock->flamometre.tribune_answer_decnt += (((FLAMOMETRE_TRIB_DUREE*(1000/WMCC_TIMER_DELAY_MS))/
 						   FLAMOMETRE_TRIB_CLIGN_SPEED)*FLAMOMETRE_TRIB_CLIGN_SPEED);
       }
@@ -1049,16 +1052,23 @@ static int faut_il_rafraichir(int count,int delay, int offset)
   return 0;
 }
 
-
+#ifdef __CYGWIN__
+void *Timer_Thread(void *arg)
+{
+  while (1) {
+    usleep (40000);
+    X_loop_request++; wmcc_tic_cnt++;
+  }
+}
+#endif 
 
 /* ----------------------------------- */
 /*        Main Network thread          */
 /* ----------------------------------- */
-void *Network_Thread (void *arg) {
+void *Net_loop () {
   int compteur_news = 1000000;
   int compteur_tribune = 1000000;
 
-  arg = arg;
   strcpy(dock->newstitles, "transfert en cours...");
 
   while (1) {
@@ -1097,13 +1107,13 @@ void *Network_Thread (void *arg) {
       }
     }
     if (Prefs.ew_do_spell) ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);
+    ALLOW_X_LOOP;
 #ifdef __CYGWIN__
-    usleep(40000); 
+    usleep(10000); 
 #else
-    ALLOW_X_LOOP;
     pause(); 
-    ALLOW_X_LOOP;
 #endif
+    ALLOW_X_LOOP;
     compteur_news++;
     compteur_tribune++;
     temps_depuis_dernier_event++;
@@ -1263,7 +1273,7 @@ int
 main(int argc, char **argv)
 {
 #ifdef __CYGWIN__
-  pthread_t net_thread;
+  pthread_t timer_thread;
 #endif
   srand(time(NULL));
   ALLOC_OBJ(dock, Dock);
@@ -1416,12 +1426,8 @@ main(int argc, char **argv)
   /* launching the network update thread */
 
 #ifdef __CYGWIN__ 
-  pthread_create (&net_thread, NULL, Network_Thread, NULL);
+  pthread_create (&timer_thread, NULL, Timer_Thread, NULL);
 
-  while (1) {
-    X_loop ();
-    usleep (40000);
-  }
 #else
   {
     struct itimerval the_timer;
@@ -1431,7 +1437,7 @@ main(int argc, char **argv)
 
     setitimer(ITIMER_REAL, &the_timer, NULL);
   }
-  Network_Thread(NULL);
 #endif  
+  Net_loop();
   return 0;
 }

@@ -24,9 +24,12 @@
   c'est des choses qui ne sont plus très utiles maintenant ( à part pour les couleurs du trolloscope..)
   Ce fichier a été crée pour désengorger wmcoincoin.c
 
-  rcsid=$Id: useragents_file.c,v 1.1 2002/01/16 21:27:35 pouaite Exp $
+  rcsid=$Id: useragents_file.c,v 1.2 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: useragents_file.c,v $
+  Revision 1.2  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.1  2002/01/16 21:27:35  pouaite
   gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
 
@@ -142,7 +145,7 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
 	free(regex_errbuf);
 	return 1;
       }
-      BLAHBLAH(2, myprintf("un tatouage de plus: shape = '%<MAG %s>', coul[r=%<RED %02x>, g=%<GRN %02x>, b=%<BLU %02x>], regex='%<MAG %s>'\n", s_shape, coulr, coulg, coulb, s_regex));
+      BLAHBLAH(3, myprintf("un tatouage de plus: shape = '%<MAG %s>', coul[r=%<RED %02x>, g=%<GRN %02x>, b=%<BLU %02x>], regex='%<MAG %s>'\n", s_shape, coulr, coulg, coulb, s_regex));
     } while (!feof(f));
     fclose(f);
   } else {

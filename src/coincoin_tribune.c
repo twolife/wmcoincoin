@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.17 2002/01/20 20:53:22 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.18 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.18  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.17  2002/01/20 20:53:22  pouaite
   bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
 
@@ -598,7 +601,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
   snprintf(s, 8192, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   if ((Prefs.debug & 2) == 0) {
     fd = http_get(Prefs.site_root, Prefs.site_port, s, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified, 512);
   } else {
     snprintf(s, 8192, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);

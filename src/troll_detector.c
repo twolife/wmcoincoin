@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.4 2002/01/30 21:03:51 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.5 2002/02/02 23:49:17 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.5  2002/02/02 23:49:17  pouaite
+  plop
+
   Revision 1.4  2002/01/30 21:03:51  pouaite
   correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
 
@@ -395,7 +398,7 @@ troll_detector(tribune_msg_info *mi) {
     if (i == MI_MAX_LEN-1) break;
   }
   txt_simple[i] = 0;
-  BLAHBLAH(1,myprintf("troll_detector, message initial: %<YEL %s>\n", mi->msg));
+  BLAHBLAH(2,myprintf("troll_detector, message initial: %<YEL %s>\n", mi->msg));
   //  myprintf("message filtré : %<GRN %s>\n", txt_simple);
   /*
     passe deux: construction de la liste de mots avec identification des tags, 
@@ -510,7 +513,7 @@ troll_detector(tribune_msg_info *mi) {
       }
 
       if (w->nb_td_idx > 0) {
-	BLAHBLAH(1,myprintf("mot troll trouvé: '%<MAG %.*s>' (idx = ", w->len,w->w);
+	BLAHBLAH(2,myprintf("mot troll trouvé: '%<MAG %.*s>' (idx = ", w->len,w->w);
 		 for (i=0; i < w->nb_td_idx; i++) printf("%d ", w->td_idx[i]); printf(")\n"));
       }
       w = w->next;
@@ -586,27 +589,27 @@ troll_detector(tribune_msg_info *mi) {
       /* recherche du plus gros troll dans la liste de mots */
       sub_score = eval_best_troll(wlst, nb_mots, 0, 1, 0, selection, &trouve);
       if (cnt_anti_blocage > MAX_CNT_ANTI_BLOCAGE) {
-	BLAHBLAH(1,myprintf("%<RED celui-ci était un troll trop complexe> ! (nb_mots = %d)\n txt='%s'\n", nb_mots, mi->msg));
+	BLAHBLAH(2,myprintf("%<RED celui-ci était un troll trop complexe> ! (nb_mots = %d)\n txt='%s'\n", nb_mots, mi->msg));
       }
 
       if (trouve == 0) {
-	BLAHBLAH(1,printf(" -> impossible d'utiliser les mots restant dans un troll, c'est fini\n"));
+	BLAHBLAH(2,printf(" -> impossible d'utiliser les mots restant dans un troll, c'est fini\n"));
 	break;
       }
       
       score += sub_score;
 
-      BLAHBLAH(1,myprintf("score = %<YEL %d> (sub_score=%<YEL %d>), les mots suivants ont été utilisés: ", score, sub_score));
+      BLAHBLAH(2,myprintf("score = %<YEL %d> (sub_score=%<YEL %d>), les mots suivants ont été utilisés: ", score, sub_score));
       /* on marque les mots selectionnés pour la suppression à la prochaine étape */
       w = wlst;
       while (w) {
 	if (selection[w->num]) { 
 	  w->nb_td_idx = 0; 
-	  BLAHBLAH(1,myprintf("'%<CYA %.*s>' (lvl=%d) ", w->len,w->w,  selection[w->num]));
+	  BLAHBLAH(2,myprintf("'%<CYA %.*s>' (lvl=%d) ", w->len,w->w,  selection[w->num]));
 	}
 	w = w->next;
       }
-      BLAHBLAH(1,printf("\n"));
+      BLAHBLAH(2,printf("\n"));
 
       free(selection);
     }
@@ -623,14 +626,14 @@ troll_detector(tribune_msg_info *mi) {
       if (majuscule_cnt > msglen*4/5 && msglen > 10) {
 	bonus += 1;
       }
-      BLAHBLAH(1,myprintf("bonus pour majuscules: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf("bonus pour majuscules: %<YEL %d>\n", bonus));
       score += bonus;
     }
     
     if (exclamation_cnt > 4 && msglen > 6) {
       bonus = 1;
       if (exclamation_cnt > 8) bonus += 3;
-      BLAHBLAH(1,myprintf("bonus pour usage abusif des points d'exclamation: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf("bonus pour usage abusif des points d'exclamation: %<YEL %d>\n", bonus));
       score += bonus;
     }
     if (bizarre_cnt > 2 && msglen > 2) {
@@ -638,25 +641,25 @@ troll_detector(tribune_msg_info *mi) {
       if (bizarre_cnt > msglen/4) {
 	bonus += 3;
       }
-      BLAHBLAH(1,myprintf("bonus pour usage abusif de caractères bizarres: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf("bonus pour usage abusif de caractères bizarres: %<YEL %d>\n", bonus));
       score += bonus;
     }
     if (tag_cnt>1) {
       bonus = MIN(tag_cnt/2, 6);
-      BLAHBLAH(1,myprintf("bonus pour usage abusif de tags html: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf("bonus pour usage abusif de tags html: %<YEL %d>\n", bonus));
       score += bonus;
     }
     if (boldwords_cnt > 1) {
       bonus = MIN(boldwords_cnt/2, 6);
-      BLAHBLAH(1,myprintf("bonus pour usage abusif du BOLD: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf("bonus pour usage abusif du BOLD: %<YEL %d>\n", bonus));
       score += bonus;
     }
     if (smiley_flag) { /* attenuateur de troll */
       score /= 2;
-      BLAHBLAH(1,myprintf("%<bld attenuation pour usage de smiley>\n"));
+      BLAHBLAH(2,myprintf("%<bld attenuation pour usage de smiley>\n"));
     }
     
-    BLAHBLAH(1,myprintf("%<WHT score final: >%<YEL %d>\n\n", score));
+    BLAHBLAH(2,myprintf("%<WHT score final: >%<YEL %d>\n\n", score));
   }
 
 
