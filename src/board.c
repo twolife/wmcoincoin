@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.23 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: board.c,v 1.24 2004/02/29 19:01:26 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.24  2004/02/29 19:01:26  pouaite
+  et hop
+
   Revision 1.23  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -385,8 +388,9 @@ board_create(Site *site, Boards *boards)
   board->time_shift_min = LONG_MIN;
   board->time_shift_max = LONG_MAX;
   board->time_shift = 0;
-  board->auto_refresh = sp->board_auto_refresh;
+  board->auto_refresh = 1; //sp->board_auto_refresh;
   board->oldmd5 = NULL;
+  board->rss_title = NULL;
   return board;
 }
 
@@ -460,6 +464,7 @@ board_destroy(Board *board)
 
   board->msg = NULL;
   if (board->last_modified) free(board->last_modified);
+  if (board->rss_title) free(board->rss_title);
   release_md5_array(board);
   free(board);
 }
@@ -560,10 +565,14 @@ miniua_eval_from_ua(MiniUARules *rules, board_msg_info *mi)
   mua->G = (coul >> 8) & 0xff;
   mua->B = coul & 0xff;
   if (Prefs.site[id_type_sid(mi->id)]->backend_type > 3) { mua->symb = 1; }
-  else if (mi->login && strlen(mi->login)) { mua->symb = (((unsigned)str_hache(mi->login, -1)>>5) % 8)+2; }
-  else if (mi->useragent && strlen(mi->useragent)) { mua->symb = (((unsigned)str_hache(mi->useragent, -1)>>5) % 8)+2; }
-  else { mua->symb = 13; }
-
+  else {
+    md5_byte_t md5[16];    
+    if (mi->login && strlen(mi->login)) { 
+      md5_digest(mi->login, md5); mua->symb = (md5[0]%8)+2; 
+    } else if (mi->useragent && strlen(mi->useragent)) { 
+      md5_digest(mi->useragent, md5); mua->symb = (md5[0]%8)+2;
+    } else { mua->symb = 13; }
+  }
   make_short_name_from_ua(mi->useragent, mua->name, MIN(MINIUA_SZ,15));
 
   for (r = rules->first; r; r = r->next) {
@@ -1908,6 +1917,11 @@ rss_board_update(Board *board, char *path) {
   rss_title = str_ndup(xmlb.content, xmlb.content_len);
   myprintf("got TITLE: '%<YEL %s>'\n", rss_title);
 
+  if (board->rss_title) {
+    free(board->rss_title);
+  }
+  board->rss_title = str_ndup(rss_title, 100);
+
   if (get_XMLBlock(rsstxt, strlen(rsstxt), "ttl", &xmlb) >= 0) {
     refresh_request = atoi(xmlb.content) * 60; /* en minutes */
     printf("ttl detected, %d\n", refresh_request);
@@ -2187,7 +2201,7 @@ board_update(Board *board)
 
   pp_set_download_info(NULL, NULL);
 
-  flag_board_updated = 1;  
+  flag_board_updated = (board->last_post_id != old_last_post_id) ? 1 : 0;  
 
   if (board->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
     board_call_external(board, old_last_post_id);    

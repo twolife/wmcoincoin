@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.87 2004/02/29 15:01:20 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.88 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.88  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.87  2004/02/29 15:01:20  pouaite
   May the charles bronson spirit be with you
 
@@ -833,20 +836,18 @@ void check_balloons(Dock *dock)
 	balloon_test(dock,x,y,iconx,icony,0,TROLLOSCOPE_X,TROLLOSCOPE_Y,TROLLOSCOPE_WIDTH,TROLLOSCOPE_HEIGHT,
 		     _("<p align=center><b>This is a professionnal <font color=#a00000><i>Trolloscope</i></font></b></p>"
 		     "It displays symbols corresponding to the user-agents of the last messages posted on the board. "
-		     "The relationships between useragent and (colour,symbol) are defined in the <tt>~/.wmcoincoin/useragents</tt> file<br>"
+		     "The relationships between useragent and (colour,symbol) are defined in the <tt>~/.wmcoincoin/options</tt> file<br>"
 		     "<font color=blue><tt>Left Click</tt></font><tab>: displays the useragent<br>"
-		     "<font color=blue><tt>Middle Click</tt></font><tab>: instant refresh<br>"
+		     "<font color=blue><tt>Middle Click</tt></font><tab>: instant refresh of all boards<br>"
 		     "Note: if you have given your authentication cookie to wmCoinCoin and if it "
-		     "blinks red, this shows someone answered to one of your comments. "
-		     "To see the answers in the configured browser (if available): <font color=blue><tt>Left Click</tt></font>. "
-		     "To stop the blinking, a <font color=blue><tt>Right Click</tt></font> is enough. The green blinking shows a change in the value of your XP"));
+                       "blinks blue, then someone just answered to one of your posts. "));
 	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[0].xpos, dock->leds.led[0].ypos, 9, 4,
 		     _("When this led is blue, a <b>http transfer</b> is underway. "
 		     "A <b><font color=red>red</font></b> blinking indicates a problem during the last transfer.<br>"
 		     "<font color=blue><tt>Left Click</tt></font>: shows the last error message<br>"));
 	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[1].xpos, dock->leds.led[1].ypos, 9, 4,
-		     _("This led blinks when you have just sent a message on the board, and it is waiting for its delivery.<br>"
-		     "It is blue when the message is being sent, and green half a second after the effective sending.<br>"
+                     _("This led does no blink anymore.<br>" //blinks when you have just sent a message on the board, and it is waiting for its delivery.<br>"
+		     "It is blue when the message is being sent by the palmipede, and green half a second after the effective sending.<br>"
 		     "A click on this led allows to change the scroll speed of the trolloscope:<br>"
 		     "<font color=blue><tt>Left Click</tt></font><tab>: slower<br>"
 		     "<font color=blue><tt>Right Click</tt></font><tab>: faster<br>"
@@ -1273,7 +1274,7 @@ void X_loop()
     }
 
 
-    dock_checkout_newstitles(dock);
+    //dock_checkout_newstitles(dock);
     check_if_board_was_updated(dock);
 
     /* 
@@ -1320,7 +1321,7 @@ void X_loop()
   }
 
   /* le chef est-il dans le bureau ? */
-  if (flag_discretion_request == +1) {
+  if (flag_discretion_request == +1 && !Prefs.auto_swallow) {
     if ((dock->discretion_saved_state.palmipede_used = editw_ismapped(dock->editw))) {
       editw_unmap(dock, dock->editw);
     }
@@ -1515,6 +1516,7 @@ void initx(Dock *dock, int argc, char **argv) {
   XTextProperty xtp;
   char coin_mask[64*64/8];
   char clock_mask[64*64/8];
+  int use_iconwin = Prefs.use_iconwin && !Prefs.auto_swallow;
 	
   /* connect to default display */
   dock->display = XOpenDisplay(getenv("DISPLAY"));
@@ -1608,7 +1610,7 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   
-  if (Prefs.use_iconwin) {
+  if (use_iconwin) {
     /* create icon window */
     dock->iconwin = XCreateSimpleWindow(dock->display, dock->rootwin,
 					xsh.x, xsh.y, xsh.width, xsh.height, 0,
@@ -1664,7 +1666,7 @@ void initx(Dock *dock, int argc, char **argv) {
     /* setup shaped window */
     XShapeCombineMask(dock->display, dock->win, ShapeBounding, 
 		      0, 0, dock->coin_pixmask, ShapeSet);
-    if (Prefs.use_iconwin) {
+    if (use_iconwin) {
       XShapeCombineMask(dock->display, dock->iconwin, ShapeBounding,
 			0, 0, dock->coin_pixmask, ShapeSet);
     }
@@ -1674,7 +1676,7 @@ void initx(Dock *dock, int argc, char **argv) {
     xwmh->flags = WindowGroupHint | IconWindowHint | StateHint;
     xwmh->icon_window = dock->iconwin;
     xwmh->window_group = dock->win;
-    xwmh->initial_state = (Prefs.use_iconwin ? WithdrawnState : NormalState);
+    xwmh->initial_state = (use_iconwin ? WithdrawnState : NormalState);
 
     XSetWMHints(dock->display, dock->win, xwmh);
     
@@ -2028,11 +2030,13 @@ int main(int argc, char **argv)
   }
 
   ALLOC_VEC(dock->newstitles,MAX_NEWSTITLES_LEN, unsigned char);
+  #if 0
   ALLOC_VEC(dock->newstitles_id,MAX_NEWSTITLES_LEN, id_type);
   {
     int i;
     for (i=0; i < MAX_NEWSTITLES_LEN; i++) dock->newstitles_id[i]= id_type_invalid_id();
   }
+#endif
   ALLOC_VEC(dock->msginfo,MAX_MSGINFO_LEN, unsigned char);
   /* le trolloscope */
   {

@@ -2,7 +2,7 @@
 #define NB_MAX_CC_COLORS 300
 #include <assert.h>
 #include <stdlib.h>
-#include <Xft.h>
+#include <X11/Xft/Xft.h>
 #include "coin_util.h"
 
 typedef int CCFontId;
@@ -39,6 +39,20 @@ void ccfont_initialize(Display *display_, int screen_, Visual *visual_, Colormap
   xd = XftDrawCreate(display, d, visual, colormap);
 }
 
+void
+ccfont_release(CCFontId *pid) {
+  CCFontId id = *pid;
+  if (id == -1) return;
+  assert(ccfonts[id]);
+  assert(ccfonts[id]->refcnt > 0);
+  if (--(ccfonts[id]->refcnt) == 0) {
+    if (ccfonts[id]->xfn) { XftFontClose(display, ccfonts[id]->xfn); ccfonts[id]->xfn = NULL; }
+    if (ccfonts[id]->fontname) { free(ccfonts[id]->fontname); ccfonts[id]->fontname = NULL; }
+    free(ccfonts[id]); ccfonts[id] = NULL;
+  }
+  *pid = -1;
+}
+
 CCFontId
 ccfont_get(char *fontdesc) {
   int i, ifn = -1;
@@ -54,7 +68,10 @@ ccfont_get(char *fontdesc) {
     cf->refcnt = 1;
     cf->fontname = strdup(fontdesc);
     cf->xfn = XftFontOpenName(display, screen, fontdesc);
-    assert(cf->xfn);
+    if (!cf->xfn) { 
+      fprintf(stderr, "fontcoincoin could not find any font matching '%s'\n", fontdesc); 
+      ccfont_release(&ifn); 
+    }
   } else { 
     fprintf(stderr, "max fonts exhausted... leak ?\n");
     assert(0);
@@ -62,17 +79,11 @@ ccfont_get(char *fontdesc) {
   return ifn;
 }
 
-void
-ccfont_release(CCFontId *pid) {
-  CCFontId id = *pid;
-  if (id == -1) return;
+CCFontId ccfont_incref(CCFontId id) {
   assert(ccfonts[id]);
-  if (--(ccfonts[id]->refcnt) == 0) {
-    if (ccfonts[id]->xfn) { XftFontClose(display, ccfonts[id]->xfn); ccfonts[id]->xfn = NULL; }
-    if (ccfonts[id]->fontname) { free(ccfonts[id]->fontname); ccfonts[id]->fontname = NULL; }
-    free(ccfonts[id]); ccfonts[id] = NULL;
-  }
-  *pid = -1;
+  assert(ccfonts[id]->refcnt >= 0);
+  ccfonts[id]->refcnt++;
+  return id;
 }
 
 CCColorId
@@ -121,11 +132,19 @@ cccolor_from_name(const char *name) {
   } else return -1;
 }
 
+CCColorId cccolor_incref(CCColorId id) {
+  assert(cccolors[id]);
+  assert(cccolors[id]->refcnt >= 0);
+  cccolors[id]->refcnt++;
+  return id;
+}
+
 void 
 cccolor_release(CCColorId *pid) {
   CCColorId id = *pid;
   if (id == -1) return;
   assert(cccolors[id]);
+  assert(cccolors[id]->refcnt > 0);
   if (--(cccolors[id]->refcnt) == 0) {
     XftColorFree(display, visual, colormap, &cccolors[id]->xfc);
     free(cccolors[id]); cccolors[id] = NULL;

@@ -1,4 +1,12 @@
 2004-02-*  pouaite  <c0in@altern.org>
+	
+	* ajout de fontcoincoin, un wrapper d'une puissance rare qui
+	arrache les poils de pango. Du coup wmcc est maintenant dépendant
+	de Xft.
+	
+	* sauvegarde dans wmcc_state de l'etat du pinnipede: refresh auto
+	et tabs active
+	
 	* lecture de l'encoding des backends et conversion en iso8859 à
 	grands coups de iconv
 	
@@ -24,7 +32,8 @@
 	
 	* src/totoz_bookmark.c: bookmarks pour les [:totoz]
 
-	* src/palmipede.c: enlargement du palmipede (de 16 pixels)
+	* src/palmipede.c: enlargement du palmipede (de 16 pixels) --
+	compatibilité avec les locales UTF8
 
 --------------------------v2.4.6-b-----------------------------------------
 2003-08-26  pouaite  <c0in@altern.org>

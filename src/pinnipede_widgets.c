@@ -184,9 +184,15 @@ pp_tabs_check_active(Pinnipede *pp) {
   int i;
   if (pp->active_tab == NULL || pp->active_tab->selected == 0) {
     pp->active_tab = NULL;
-    for (i=0; i < pp->nb_tabs; i++) {
-      if (pp->tabs[i].selected) { pp->active_tab = pp->tabs+i; break; }
-    }
+    for (i=0; i < pp->nb_tabs; i++)
+      if (pp->tabs[i].selected && pp->tabs[i].site->board->auto_refresh) { 
+        pp->active_tab = pp->tabs+i; break; 
+      }
+    if (pp->active_tab == NULL)
+      for (i=0; i < pp->nb_tabs; i++)
+        if (pp->tabs[i].selected) {
+          pp->active_tab = pp->tabs+i; break; 
+        }
     assert(pp->active_tab);
   }
 }
@@ -232,7 +238,7 @@ pp_tabs_restore_state(Dock *dock, FILE *f)
             for (j=0; j < pp->nb_tabs; j++) {
               if (s == pp->tabs[j].site) {
                 //printf("pp_tabs_restore_state: restoring %s\n", sname);
-                pp->tabs[j].selected = act ? 1 : 0;
+                pp->tabs[j].selected = pp->tabs[j].was_selected = act ? 1 : 0;
                 if (act > 1) pp->active_tab = pp->tabs+j;
               }
             }
@@ -243,7 +249,9 @@ pp_tabs_restore_state(Dock *dock, FILE *f)
       free(s);
     }
   } else {
-    printf("pp_tabs_restore_state : failed\n");
+    printf("pp_tabs_restore_state : failed\n"); 
+    for (i=0; i < 10; ++i) printf("%s\n",str_fget_line(f));
+    exit(1);
   }
   pp_tabs_check_active(pp);
 }
@@ -268,7 +276,7 @@ pp_tabs_build(Dock *dock) {
   for (s = dock->sites->list, pt = pp->tabs; s; s = s->next) {
     if (s->board) {
       pt->site = s;
-      if (s->prefs->board_auto_refresh && pp->active_tab == NULL) {
+      if (s->board->auto_refresh && pp->active_tab == NULL) {
         pt->selected = 1; pp->active_tab = pt;
       } else pt->selected = 0;
       pt->was_selected = pt->selected;
@@ -1463,6 +1471,36 @@ pp_check_balloons(Dock *dock, int x, int y)
       balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-15, 0, 
 		   pp->mb[i].x, MINIB_Y0, 
 		   pp->mb[i].w, MINIB_H, msg);
+    }
+    for (i=0; i < pp->nb_tabs; ++i) {
+      if (balloon_test_nomsg(dock, x, y, 0, 
+                             pp->tabs[i].x, pp->tabs[i].y,
+                             pp->tabs[i].w, pp->tabs[i].h)) {
+        Site *s = pp->tabs[i].site;
+        Board *board = pp->tabs[i].site->board;
+        char *msg;
+        if (board_is_rss_feed(board)) {
+          msg = str_printf("<p align=center>RSS Feed: <b>%s</b></p><br>",
+                           board->rss_title ? board->rss_title : s->prefs->site_name);
+        } else {
+          msg = str_printf("<p align=center>Regular board: <b>%s</b></p>"
+                           "time shift: <font color=blue>%+02d:%02d:%02d</font><br>", 
+                           s->prefs->site_name,
+                           (int)(board->time_shift/3600), 
+                           (int)((abs(board->time_shift)/60)%60), 
+                           (int)(abs(board->time_shift)%60));
+        }
+        msg = str_cat_printf(msg, "backend: <font color=blue>%s/%s</font><br>"
+                             "auto_refresh: %s (use ctrl-clic to switch)<br>"
+                             "refresh frequency: <font color=blue>%d</font> sec",
+                             s->prefs->site_root, s->prefs->path_board_backend, 
+                             board->auto_refresh ? "<font color=blue>yes</font>" : "<font color=red>no</font>",
+                             board->board_refresh_delay / (1000/WMCC_TIMER_DELAY_MS));
+        balloon_test(dock, x, y, pp->win_real_xpos, pp->win_real_ypos-10, 0, 
+                     pp->tabs[i].x, pp->tabs[i].y,
+                     pp->tabs[i].w, pp->tabs[i].h, msg);
+        free(msg);
+      }
     }
   }
 }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.h,v 1.5 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: picohtml.h,v 1.6 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: picohtml.h,v $
+  Revision 1.6  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.5  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -44,8 +47,8 @@ struct _PicoHtmlItem {
 
 struct _PicoHtml {
   PicoHtmlItem *txt;
-  CCFontId fn_base, fn_ital, fn_bold, fn_tt;
-  //XFontStruct *fn_base, *fn_ital, *fn_bold, *fn_tt;
+  CCFontId fn_base, fn_it, fn_bd, fn_mono;
+  //XFontStruct *fn_base, *fn_it, *fn_bd, *fn_mono;
   CCColorId default_color;
   CCColorId url_color;
   float parag_fskip, line_fskip;

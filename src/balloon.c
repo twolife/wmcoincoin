@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.11 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.12 2004/02/29 19:01:26 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.12  2004/02/29 19:01:26  pouaite
+  et hop
+
   Revision 1.11  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -143,8 +146,8 @@ balloon_destroy(Dock *dock) {
 static void
 balloon_draw_frame(Display *dpy, Pixmap pix, GC gc, int x, int y, int w, int h, int side)
 {
-  int rad = 6; //h*3/10;
-  XPoint pt[3];
+  //int rad = 6; //h*3/10;
+  //XPoint pt[3];
   
   /*
     XFillArc(dpy, pix, gc, x, y, rad, rad, 90*64, 90*64);
@@ -178,6 +181,7 @@ balloon_draw_frame(Display *dpy, Pixmap pix, GC gc, int x, int y, int w, int h, 
   }
   XFillPolygon(dpy, pix, gc, pt, 3, Convex, CoordModeOrigin);
   */
+  side=0;
 }
 
 static void
@@ -215,6 +219,7 @@ balloon_makepixmap(Dock *dock, Balloon *b, int bx, int by, int width, int height
 
     *mask = bitmap;
     *pix = pixmap;
+    bx = by = 0;
 }
 
 void
@@ -261,7 +266,7 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   assert(picohtml_isempty(b->ph));
   
   width = bwidth; //300; //w - 10;
-  picohtml_parse(dock, b->ph, text, width);
+  picohtml_parse(b->ph, text, width);
   picohtml_gettxtextent(b->ph, &width, &height);
   
   height = MAX(height, b->imgpix_h);
@@ -301,7 +306,7 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   
   balloon_makepixmap(dock, b, bx, by, width, height, side, &b->pix, &mask);
 
-  picohtml_render(dock, b->ph, b->pix, dock->NormalGC, 5+b->imgpix_w, 3+ty);
+  picohtml_render(b->ph, b->pix, 5+b->imgpix_w, 3+ty);
 
   if (b->imgpix != None) {
     XCopyArea(dock->display, b->imgpix, b->pix, dock->NormalGC, 0, 0, b->imgpix_w, b->imgpix_h, 3, 3);
@@ -367,12 +372,21 @@ balloon_disable_key(Dock *dock UNUSED, unsigned keycode) {
 }
 
 int
-balloon_test(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt) {
+balloon_test_nomsg(Dock *dock, int x, int y, int bcnt, int bx, int by, int bw, int bh) {
   if (dock->mouse_cnt >= (bcnt)) {
     if (IS_INSIDE(x,y,(bx),(by),(bx)+(bw)-1,(by)+(bh)-1)) {
-      balloon_show(dock, winx+(bx), winy+(by), (bw), (bh), (btxt), 300);
       return 1;
     }
+  }
+  return 0;
+}
+
+
+int
+balloon_test(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt) {
+  if (balloon_test_nomsg(dock,x,y,bcnt,bx,by,bw,bh)) {
+    balloon_show(dock, winx+(bx), winy+(by), (bw), (bh), (btxt), 300);
+    return 1;
   }
   return 0;
 }

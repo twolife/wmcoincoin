@@ -736,7 +736,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->time_difference = 0;
   p->mark_id_gaps = 1;
   p->check_board = 1;
-  p->board_auto_refresh = 1;
+  //p->board_auto_refresh = 1;
 }
 
 void
@@ -820,7 +820,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   ASSIGN_STRING_VAL(p->balloon_fn_family, "helvetica");
   p->balloon_fn_size = 10;
   p->use_iconwin = 1; /* style windowmaker par defaut */
-  p->auto_swallow = 0;
+  p->auto_swallow = 1;
   p->draw_border = 0; /* idem */
   p->palmipede_override_redirect = 1;
   p->dock_xpos = p->dock_ypos = 0;
@@ -1049,8 +1049,10 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg, int is_RSS
     }
     if (strlen(url)) { memmove(sp->all_names[sp->nb_names-1], url, strlen(url)+1); }
   }
-
   sp->site_name = sp->all_names[0];
+  if (wmcc_prefs_find_site(p, sp->site_name) != sp) {
+    return str_printf("Duplicated site_name: a site named '%s' already exists!", sp->site_name);
+  }
   return NULL;
 }
 
@@ -1085,8 +1087,8 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTS_check_board: {
     CHECK_BOOL_ARG(sp->check_board);
   } break; 
-  case OPTSG_board_auto_refresh: {
-    CHECK_BOOL_ARG(sp->board_auto_refresh);
+  case OPTSG_board_auto_refresh: { /* OBSOLETE */
+    //CHECK_BOOL_ARG(sp->board_auto_refresh);
   } break;
   case OPT_verbosity_underpants: {
     CHECK_INTEGER_ARG(0,10, p->verbosity_underpants);

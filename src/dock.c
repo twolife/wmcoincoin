@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.38 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.39 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.39  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.38  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -390,11 +393,11 @@ dock_update_pix_trolloscope(Dock *dock)
 }
 
 static void
-refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
+refresh_docktxt_bottom(Dock *dock, int x, int y, int w)
 {
   int cx;
   XRectangle xr;
-
+  
   xr.x = x; xr.y = y; xr.width = w; xr.height = 11;
   XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.dock_fgcolor));
   XSetFont(dock->display, dock->NormalGC, dock->fixed_font->fid);
@@ -411,8 +414,13 @@ refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
     XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, minimsg, strlen(minimsg));
 
   } 
-#if 0
   else if (id_type_is_invalid(dock->view_id_in_newstitles)) {
+    time_t t=time(NULL);
+    char s[20];
+    snprintf(s,20, "%02d:%02d:%02d", (int)((t/3600)%24),(int)((t/60)%60),(int)(t%60));
+    XDrawString(dock->display, dock->coinpix, dock->NormalGC, x + (56-strlen(s)*DOCK_FIXED_FONT_W)/2, 
+                y+dock->fixed_font->ascent+1, s, strlen(s));
+#if 0
     int  cnt, dec;
     dec = dock->newstitles_char_dec;
     cx = x - dec;
@@ -420,13 +428,12 @@ refresh_docktxt_bottom(Dock *dock, unsigned char *msg, int x, int y, int w)
     /* if (msg[cnt] == 0) return; */
     do {
       XDrawString(dock->display, dock->coinpix, dock->NormalGC, cx, y+dock->fixed_font->ascent+1, &msg[cnt], 1);
-      /* XCopyArea(dock->display, pixmap_letters, dock->coinpix, dock->and_GC, char2bitmap[msg[cnt]]+dec,0,MIN(cx+6, x+w)-MAX(cx,x),12,MAX(cx,x),y); */
       cx += 6;
       cnt++; if (msg[cnt] == 0) cnt = 0;
       dec = 0;
     } while (cx < x+w);
-  } 
 #endif
+  } 
   else {
     unsigned char minimsg[10];
     minimsg[0] = 0;
@@ -506,10 +513,10 @@ textout_msginfo(Dock *dock, int x, int y)
 
 
 /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
+#if 0
 void
 dock_checkout_newstitles(Dock *dock)
 {
-#if 0
   SiteList *sites = dock->sites;
   if (flag_updating_news == 0) {
     int news_updated = 0;
@@ -563,9 +570,8 @@ dock_checkout_newstitles(Dock *dock)
       }
     }
   }
-#endif
 }
-
+#endif
 static void
 led_create(Led *l, int x, int y)
 {
@@ -756,7 +762,7 @@ dock_refresh_normal(Dock *dock)
 
 
       XSetClipMask(dock->display, dock->NormalGC, None);
-      refresh_docktxt_bottom(dock, dock->newstitles, 3, 3-dock->door_state_step, 57);
+      refresh_docktxt_bottom(dock, 3, 3-dock->door_state_step, 57);
 
 
 
@@ -782,7 +788,7 @@ dock_refresh_normal(Dock *dock)
   case CLOSED:
     {
       XCopyArea(dock->display, dock->pix_porte, dock->coinpix, dock->NormalGC, 0, 0, 64, 64, 0, 0);
-      refresh_docktxt_bottom(dock, dock->newstitles, 3, 3, 57);
+      refresh_docktxt_bottom(dock, 3, 3, 57);
 
       textout_msginfo(dock, 4, 49+MAX(0,dock->door_state_step - TROLLOSCOPE_HEIGHT + 5));
 
@@ -1302,15 +1308,16 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 
     } else if (IS_INSIDE(x,y,2,2,59,13) && 
 	       (dock->door_state == CLOSED)) {
+#if 0
       id_type id;
       /* clic gauche sur la zone des news défilantes -> on affiche la news et on 'raise' la fenetre */
-      BLAHBLAH(4,printf("newswin_show\n"));
       if (strlen(dock->newstitles)) {
 	int pos;
 	pos = (dock->newstitles_pos + ((xbevent->x - 7)+3)/6) % strlen(dock->newstitles);
 	id = dock->newstitles_id[pos];
       } else { id = id_type_invalid_id(); }
       //newswin_show(dock, id); XRaiseWindow(dock->display, newswin_get_window(dock));
+#endif
     } else if (IS_INSIDE(x,y,dock->leds.led[0].xpos,dock->leds.led[0].ypos - MIN(dock->door_state_step,13),
 			 dock->leds.led[0].xpos+8, dock->leds.led[0].ypos +3 - MIN(dock->door_state_step,13))) {
       /*
@@ -1443,7 +1450,8 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       //dock_show_tribune_frequentation(dock);
       show_http_stats(dock);
     } else if (IS_INSIDE(x,y,3,49,3+57,49+12) && 
-	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
+	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT) && 
+               !Prefs.auto_swallow) {
       /* montre le pinnipede teletype */
       if (!pp_ismapped(dock)) {
 	if (flag_updating_board == 0) {

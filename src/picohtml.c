@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.17 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.18 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.18  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.17  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -209,7 +212,7 @@ justif_ligne(PicoHtmlItem *it_debut_ligne, int xmax, int parag_align)
 
 /* construction du texte avec ses quelques attributs */
 void
-picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
+picohtml_parse(PicoHtml *ph, const char *buff, int width)
 {
   #define MAX_TOK_LEN 500
   const unsigned char *p, *np;
@@ -428,9 +431,9 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 
     if (flag_item_to_add) {
       int len;
-      if (attrib & CATTR_TT) cur_fn = ph->fn_tt;
-      else if (attrib & CATTR_BOLD) cur_fn = ph->fn_bold;
-      else if (attrib & CATTR_ITAL) cur_fn = ph->fn_ital;
+      if (attrib & CATTR_TT) cur_fn = ph->fn_mono;
+      else if (attrib & CATTR_BOLD) cur_fn = ph->fn_bd;
+      else if (attrib & CATTR_ITAL) cur_fn = ph->fn_it;
       else cur_fn = ph->fn_base;
 
       if (new_parag) {
@@ -503,7 +506,7 @@ picohtml_gettxtextent(PicoHtml *ph, int *width, int *height)
   affiche l'html dans le pixmap
 */
 void
-picohtml_render(Dock *dock, PicoHtml *ph, Drawable d, GC gc, int x, int y)
+picohtml_render(PicoHtml *ph, Drawable d, int x, int y)
 {
   PicoHtmlItem *it;
   
@@ -564,12 +567,12 @@ CCFontId picohtml_get_fn_base(PicoHtml *ph)
 
 CCFontId picohtml_get_fn_bold(PicoHtml *ph)
 {
-  return ph->fn_bold;
+  return ph->fn_bd;
 }
 
 static
 int
-picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size, char *encoding)
+picohtml_try_loadfonts(PicoHtml *ph, char *fn_family, int fn_size)
 {
   char base_name[512];
   char ital_name[512];
@@ -581,9 +584,13 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   snprintf(bold_name, 512, "%s:pixelsize=%d:bold", fn_family, fn_size);
   snprintf(tt_name, 512, "%s:pixelsize=%d:monospace", fn_family, fn_size);
   ph->fn_base = ccfont_get(base_name);
-  ph->fn_ital = ccfont_get(ital_name);
-  ph->fn_bold = ccfont_get(bold_name);
-  ph->fn_tt = ccfont_get(tt_name);
+  ph->fn_it = ccfont_get(ital_name);
+  ph->fn_bd = ccfont_get(bold_name);
+  ph->fn_mono = ccfont_get(tt_name);
+  if (ph->fn_base == (CCFontId)(-1)) return -1;
+  if (ph->fn_it == (CCFontId)(-1)) ph->fn_it = ccfont_incref(ph->fn_base);
+  if (ph->fn_bd == (CCFontId)(-1)) ph->fn_bd = ccfont_incref(ph->fn_base);
+  if (ph->fn_mono == (CCFontId)(-1)) ph->fn_mono = ccfont_incref(ph->fn_base);
 
 #if 0
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
@@ -597,55 +604,49 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
 
   /* police italique -> on cherche d'abord la police oblique */
   snprintf(ital_name, 512, "-*-%s-medium-o-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
-  ph->fn_ital = XLoadQueryFont(display, ital_name);
-  if (!ph->fn_ital) {
+  ph->fn_it = XLoadQueryFont(display, ital_name);
+  if (!ph->fn_it) {
     /* puis la police italique */
     BLAHBLAH(1, fprintf(stderr, _("Slanted font '%s' not found -> we're looking for the italic font\n"), ital_name));
     snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
-    ph->fn_ital = XLoadQueryFont(display, ital_name);
-    if (!ph->fn_ital) {
+    ph->fn_it = XLoadQueryFont(display, ital_name);
+    if (!ph->fn_it) {
       myfprintf(stderr, _("%<RED WARNING>: error while looking for the italic font: '%s'\n"), ital_name);
       myfprintf(stderr, _("We'll use the base font.\n"));
 
       /* pas de copie de pointer pour pas poser de pbs dans picohtml_destroy */
-      ph->fn_ital = XLoadQueryFont(display, base_name); assert(ph->fn_ital);
+      ph->fn_it = XLoadQueryFont(display, base_name); assert(ph->fn_it);
     }
   }
 
   /* police bold */
   snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, encoding);
-  ph->fn_bold = XLoadQueryFont(display, bold_name);
-  if (!ph->fn_bold) {
+  ph->fn_bd = XLoadQueryFont(display, bold_name);
+  if (!ph->fn_bd) {
     myfprintf(stderr, _("%<RED WARNING>: error while looking for the bold font: '%s'\n"), bold_name);
     myfprintf(stderr, _("We'll use the base font.\n"));
-    ph->fn_bold = XLoadQueryFont(display, base_name); assert(ph->fn_bold);
+    ph->fn_bd = XLoadQueryFont(display, base_name); assert(ph->fn_bd);
   }
 
   /* police courier */
   snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-%s", fn_size, encoding);
-  ph->fn_tt = XLoadQueryFont(display, tt_name);
-  if (!ph->fn_tt) {
+  ph->fn_mono = XLoadQueryFont(display, tt_name);
+  if (!ph->fn_mono) {
     myfprintf(stderr, _("%<RED WARNING>: error while looking for the courier font: '%s'\n"), tt_name);
     myfprintf(stderr, _("We'll use the base font.\n"));
-    ph->fn_tt = XLoadQueryFont(display, base_name); assert(ph->fn_tt);
+    ph->fn_mono = XLoadQueryFont(display, base_name); assert(ph->fn_mono);
   }
 #endif
   return 0;
 }
 
 static void
-picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size) {
-  if (picohtml_try_loadfonts(ph,display,fn_family,fn_size,Prefs.font_encoding)==-1) {
-    myfprintf(stderr, _("Now we try helvetica/12\n"));
-    if (picohtml_try_loadfonts(ph,display,"helvetica",12,Prefs.font_encoding)==-1) {
-      myfprintf(stderr, _("Uuuurg, no helvetica/12 , we try another encoding\n"));
-      if (picohtml_try_loadfonts(ph,display,fn_family,fn_size,"iso8859-1")==-1) {
-	myfprintf(stderr, _("Now we try helvetica/12 - iso8859-1\n"));
-	if (picohtml_try_loadfonts(ph,display,"helvetica",12,"iso8859-1")==-1) {
-	  myfprintf(stderr, _("Uuuurg, no helvetica/12 - iso8859 , I prefer to die.\n"));
-	  exit(-1);
-	}
-      }
+picohtml_loadfonts(PicoHtml *ph, char *fn_family, int fn_size) {
+  if (picohtml_try_loadfonts(ph,fn_family,fn_size)==-1) {
+    myfprintf(stderr, _("Now we try sans/12\n"));
+    if (picohtml_try_loadfonts(ph,"sans",12)==-1) {
+      myfprintf(stderr, _("Uuuurg, no sans/12 , I prefer to die\n"));
+      exit(-1);
     }
   }
 }
@@ -662,7 +663,7 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
     ph->default_color = cccolor_get(0x000000); //BlackPixel(dock->display, dock->screennum);
   }
   ph->url_color = dock->blue_color;
-  picohtml_loadfonts(ph, dock->display, base_family, base_size);
+  picohtml_loadfonts(ph, base_family, base_size);
   ph->parag_fskip = 1.3;
   ph->line_fskip = 1.0;
   ph->tabul_skip = 20;
@@ -679,12 +680,12 @@ picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix)
   ph->default_pixel_color = pix;
 }
 */
-void picohtml_destroy(Display *display, PicoHtml *ph)
+void picohtml_destroy(PicoHtml *ph)
 {
   ccfont_release(&ph->fn_base);
-  ccfont_release(&ph->fn_ital);
-  ccfont_release(&ph->fn_bold);
-  ccfont_release(&ph->fn_tt);
+  ccfont_release(&ph->fn_it);
+  ccfont_release(&ph->fn_bd);
+  ccfont_release(&ph->fn_mono);
   cccolor_release(&ph->default_color);
   COND_FREE(ph->url_path);
   if (ph->txt) picohtml_freetxt(ph);

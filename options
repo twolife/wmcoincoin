@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.58 2004/02/29 15:01:18 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.59 2004/02/29 19:01:26 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.59  2004/02/29 19:01:26  pouaite
+#%  et hop
+#%
 #%  Revision 1.58  2004/02/29 15:01:18  pouaite
 #%  May the charles bronson spirit be with you
 #%
@@ -228,6 +231,7 @@
 
 ### permet de desactiver l'auto-refresh sur la tribune (genre pour limiter le nb de hits
 ### sur le proxy de la boite quand on a 15 tribunes dans le coincoin)
+### options OBSOLETE (gere directement par le pinni)
 #[.]board.auto_refresh: on
 
 ### active la reconnaissance auto des mots du style [:totoz]

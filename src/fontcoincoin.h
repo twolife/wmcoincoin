@@ -8,10 +8,12 @@ typedef int CCColorId;
 
 void ccfont_initialize(Display *display_, int screen_, Visual *visual_, Colormap colormap_, Drawable d);
 CCFontId ccfont_get(char *fontdesc);
+CCFontId ccfont_incref(CCFontId id);
 void ccfont_release(CCFontId *id);
 CCColorId cccolor_get(unsigned argb);
 CCColorId cccolor_get_rgb(int r255, int g255, int b255);
 CCColorId cccolor_from_name(const char *name);
+CCColorId cccolor_incref(CCColorId id);
 void cccolor_release(CCColorId *id);
 void cccolor_reset(CCColorId *pid, unsigned argb);
 unsigned long cccolor_pixel(CCColorId cid);

@@ -217,6 +217,8 @@ struct Board_ {
   volatile int auto_refresh; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
 
   md5_and_time *oldmd5; /* utilise de maniere transitoire par les feeds rss */
+
+  char *rss_title; /* nul sur les boards non rss */
 };
 
 typedef struct SiteNameHash_ {
@@ -318,7 +320,7 @@ typedef struct Leds {
 
 
 
-#define DOCK_WIN(d) ((Prefs.use_iconwin ? (d)->iconwin : (d)->win))
+#define DOCK_WIN(d) ((Prefs.use_iconwin && !Prefs.auto_swallow ? (d)->iconwin : (d)->win))
 
 
 typedef struct TL_item_ {
@@ -366,8 +368,6 @@ typedef struct Dock_ {
   */
   int nb_newstitles;
   unsigned char *newstitles;
-  /* permet de lier un caractere du message a l'ID d'une news */
-  id_type *newstitles_id;
   int newstitles_pos, newstitles_char_dec;
 
   /* ouverture,fermeture,enfoncage de bouton..*/
@@ -534,9 +534,9 @@ void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 /* picohtml.c */
 void picohtml_set_url_path(PicoHtml *ph, const char *s);
 void picohtml_unset_url_path(PicoHtml *ph);
-void picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width);
+void picohtml_parse(PicoHtml *ph, const char *buff, int width);
 void picohtml_gettxtextent(PicoHtml *ph, int *width, int *height);
-void picohtml_render(Dock *dock, PicoHtml *ph, Drawable d, GC gc, int x, int y);
+void picohtml_render(PicoHtml *ph, Drawable d, int x, int y);
 void picohtml_freetxt(PicoHtml *ph);
 int  picohtml_isempty(PicoHtml *ph);
 void picohtml_set_parag_indent(PicoHtml *ph, int parag_indent);
@@ -546,7 +546,7 @@ void picohtml_set_tabul_skip(PicoHtml *ph, int tabul_skip);
 CCFontId picohtml_get_fn_base(PicoHtml *ph);
 CCFontId picohtml_get_fn_bold(PicoHtml *ph);
 PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int white_txt);
-void picohtml_destroy(Display *display, PicoHtml *ph);
+void picohtml_destroy(PicoHtml *ph);
 void picohtml_set_default_pixel_color(PicoHtml *ph, unsigned long pix);
 
 /* cc_queue.c */
@@ -606,6 +606,7 @@ void balloon_show_with_image(Dock *dock, int x, int y, int h, int w, const char 
 int balloon_ismapped(Dock *dock);
 void balloon_check_event(Dock *dock, XEvent *event);
 void balloon_disable_key(Dock *dock, unsigned keycode);
+int balloon_test_nomsg(Dock *dock, int x, int y, int bcnt, int bx, int by, int bw, int bh);
 int balloon_test(Dock *dock, int x, int y, int win_xpos, int win_ypos, int bcnt, int bx, int by, int bw, int bh, const char *btxt);
 int balloon_test_with_image(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt, Pixmap image, int img_w, int img_h);
 

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.98 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.99 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -1764,13 +1764,14 @@ pp_update_bg_pixmap(Dock *dock)
 }
 
 static int
-pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
+pp_load_fonts(Pinnipede *pp, char *fn_family, int fn_size)
 {
-#if 0
   char base_name[512];
   char ital_name[512];
   char bold_name[512];
   char itbd_name[512];
+  char mono_name[512];
+#if 0
 
   /* police de base ... si on ne la trouve pas, c'est une erreur fatale */
   pp->font_base = ccfont_get("times-12");
@@ -1829,14 +1830,30 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
 
 
 #endif
-  pp->fn_base = ccfont_get("verdana-8"); 
+  if ((pp->fn_minib = ccfont_get("sans:pixelsize=10")) == (CCFontId)(-1)) {
+    printf("your fonts suck\n"); exit(1);
+  }
+  snprintf(base_name, 512, "%s:pixelsize=%d", fn_family, fn_size);
+  snprintf(ital_name, 512, "%s:pixelsize=%d:slant=italic,oblique", fn_family, fn_size);
+  snprintf(bold_name, 512, "%s:pixelsize=%d:bold", fn_family, fn_size);
+  snprintf(itbd_name, 512, "%s:pixelsize=%d:bold:slant=italic,oblique", fn_family, fn_size);
+  snprintf(mono_name, 512, "%s:pixelsize=%d:monospace", fn_family, fn_size);
+  pp->fn_base = ccfont_get(base_name);
+  pp->fn_it = ccfont_get(ital_name);
+  pp->fn_bd = ccfont_get(bold_name);
+  pp->fn_itbd = ccfont_get(itbd_name);
+  pp->fn_mono = ccfont_get(mono_name);
+  
+  if (pp->fn_base == (CCFontId)(-1)) {
+    return -1;
+  }
+  if (pp->fn_it == (CCFontId)(-1)) pp->fn_it = ccfont_incref(pp->fn_base);
+  if (pp->fn_bd == (CCFontId)(-1)) pp->fn_bd = ccfont_incref(pp->fn_base);
+  if (pp->fn_itbd == (CCFontId)(-1)) pp->fn_itbd = ccfont_incref(pp->fn_it);
+  if (pp->fn_mono == (CCFontId)(-1)) pp->fn_mono = ccfont_incref(pp->fn_base);
+
   pp->fn_base_space_w = ccfont_text_width8(pp->fn_base, "  ", 2);
   printf("fn_base_space_w = %d\n", pp->fn_base_space_w);
-  pp->fn_it = ccfont_get("verdana-8:slant=italic,oblique");
-  pp->fn_bd = ccfont_get("verdana-8:bold");
-  pp->fn_itbd = ccfont_get("verdana-8:slant=italic,oblique:bold");
-  pp->fn_mono = ccfont_get("monospace-8");
-  pp->fn_minib = ccfont_get("sans-7");
   pp->fn_h = ccfont_height(pp->fn_base)+1;
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_it));
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_bd));
@@ -1846,7 +1863,7 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
 
 
 static void
-pp_free_fonts(Pinnipede *pp, Display *display)
+pp_free_fonts(Pinnipede *pp)
 {
   ccfont_release(&pp->fn_base);
   ccfont_release(&pp->fn_it);
@@ -2046,7 +2063,7 @@ pp_destroy(Dock *dock)
   if (pp->mapped) pp_unmap(dock);
   assert(pp->pv == NULL); assert(pp->sc == NULL); 
   assert(pp->lignes_sel == NULL); assert(pp->lignes == NULL);
-  pp_free_fonts(pp, dock->display);
+  pp_free_fonts(pp);
   pp_free_colors(pp);
   pp_tabs_destroy(pp);
   pp_totoz_destroy(dock);
@@ -2059,10 +2076,10 @@ pp_rebuild(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
   pp_pv_destroy(pp);
   pp->survol_hash = 0;
-  pp_free_fonts(pp, dock->display);
-  if (pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
-    myprintf(_("Failed to load the '%s' fonts with size '%d'\nLet's try with helvetica/12.\n"),Prefs.pp_fn_family, Prefs.pp_fn_size);
-    if (pp_load_fonts(pp, dock->display, "helvetica", 12)==-1) {
+  pp_free_fonts(pp);
+  if (pp_load_fonts(pp, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
+    myprintf(_("Failed to load the '%s' fonts with size '%d'\nLet's try with sans/12.\n"),Prefs.pp_fn_family, Prefs.pp_fn_size);
+    if (pp_load_fonts(pp, "sans", 12)==-1) {
       myprintf(_("Uuuurg !! No helvetica, I shoot my nose.\n")); exit(-1);
     }
   }
@@ -3923,6 +3940,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
 int
 pp_handle_keyrelease(Dock *dock, XEvent *event)
 {
+  dock = 0; event = 0;
   return 0;
 }
 
@@ -3941,12 +3959,12 @@ pp_dispatch_event(Dock *dock, XEvent *event)
   if (event->xany.window == None || event->xany.window != pp->win) return 0;
 
   /* le pinnipede ne fait RIEN quand la tribune est en cours de mise à jour ... */
-  if (flag_updating_board) {
+  /*if (flag_updating_board) {
     printf("%s et merde .. event type %d pendant que flag_updating_board = %d\n", ctime(time(NULL)), event->type, flag_updating_board);
     dump_backtrace();
     return 0;
   }
-
+  */
   switch (event->type) {
   case DestroyNotify: 
     {

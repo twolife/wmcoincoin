@@ -146,7 +146,7 @@ typedef struct _SitePrefs {
   long time_difference; /* decalage horaire du site */
   int mark_id_gaps; /* la ligne rouge pointillée */
   int check_board;
-  int board_auto_refresh;
+  //int board_auto_refresh;
 
 } SitePrefs;
 

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.35  2004/02/29 19:01:26  pouaite
+dnl   et hop
+dnl
 dnl   Revision 1.34  2004/02/29 15:01:18  pouaite
 dnl   May the charles bronson spirit be with you
 dnl
@@ -190,7 +193,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.6c, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.99, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -229,7 +232,7 @@ if test x$GCC = xyes; then
   CFLAGS="$CFLAGS -Wall -W -fsigned-char";
   LDFLAGS="$LDFLAGS -rdynamic"; dnl juste pour avoir les noms de fonction dans le backtrace /o\
 else
-  echo "Vous n'utilisez pas gcc .. attention coincoin peut avoir quelque bugs si les char ne sont pas signés"
+          echo "Vous n'utilisez pas gcc .. attention coincoin peut avoir quelque bugs si les char ne sont pas signés"
 fi
 
 YELLOW="\\033\\1331;33m"
@@ -249,8 +252,14 @@ dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)
 
-LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS} -lXft"
-CFLAGS="$CFLAGS $X_CFLAGS -I/usr/include/X11/Xft -I/usr/include/freetype2"
+
+LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
+CFLAGS="$CFLAGS $X_CFLAGS"
+dnl  -I/usr/include/X11/Xft -I/usr/include/freetype2"
+
+PKG_CHECK_MODULES(XFT, [xft])
+AC_SUBST(XFT_CFLAGS)
+AC_SUBST(XFT_LIBS)
 
 dnl XINERAMA support (stolen from wmaker)
 dnl ================

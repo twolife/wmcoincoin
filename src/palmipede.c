@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.19 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.20 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.20  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.19  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -1066,13 +1069,13 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     ccfont_draw_string8(ew->fn, ew->light_color, d, 
                         x_title - 1, EW_HEIGHT - 3 -1, 
                         title, strlen(title));
-    ccfont_draw_string8(ew->fn, ew->light_color, d, 
+    /*ccfont_draw_string8(ew->fn, ew->light_color, d, 
                         x_name - 1, EW_HEIGHT - 3 -1, 
-                        site_name, strlen(site_name));
+                        site_name, strlen(site_name));*/
     ccfont_draw_string8(ew->fn, ew->dark_color, d, 
                         x_title, EW_HEIGHT - 3, 
                         title, strlen(title));
-    ccfont_draw_string8(ew->fn, ew->dark_color, d,
+    ccfont_draw_string8(ew->fn, dock->blue_color, d,
                         x_name, EW_HEIGHT - 3, 
                         site_name, strlen(site_name));
     /*

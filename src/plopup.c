@@ -70,7 +70,7 @@ plopup_pushentry(Dock *dock, char *txt, int id)
   picohtml_set_line_skip(n->ph, 1.0);
   picohtml_set_parag_indent(n->ph, 0);
   picohtml_set_tabul_skip(n->ph, 10);
-  picohtml_parse(dock, n->ph, txt, 300);
+  picohtml_parse(n->ph, txt, 300);
   picohtml_gettxtextent(n->ph, &n->ph_width, &n->ph_height);
   plopup_push(pup, n);
 }
@@ -130,7 +130,7 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
   pup->descr_height = 0;
   if (pup->descr) {
     ph_descr = picohtml_create(dock, Prefs.balloon_fn_family, Prefs.balloon_fn_size, 0);
-    picohtml_parse(dock, ph_descr, pup->descr, pup->win_width);
+    picohtml_parse(ph_descr, pup->descr, pup->win_width);
     picohtml_gettxtextent(ph_descr, &pup->descr_width, &pup->descr_height);
   }
 
@@ -168,7 +168,7 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
   XDrawLine(dock->display, pup->pix, dock->NormalGC, 0, pup->win_height-1, pup->win_width-1, pup->win_height-1);
 
   if (ph_descr) {
-    picohtml_render(dock, ph_descr, pup->pix, dock->NormalGC, 4, 0);
+    picohtml_render(ph_descr, pup->pix, 4, 0);
   }
   for (y = 1+pup->descr_height, e = pup->first; e; e = e->next) {
     e->y = y+2;
@@ -176,7 +176,7 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
     e->w = pup->win_width - 8;
     e->h = e->ph_height;
     if (e->is_separ == 0) {
-      picohtml_render(dock, e->ph, pup->pix, dock->NormalGC, 4, y);
+      picohtml_render(e->ph, pup->pix, 4, y);
     }
     if (e->is_separ || (e == pup->first && ph_descr)) {
       int Y = y;
@@ -194,7 +194,7 @@ plopup_show(Dock *dock, int winx, int winy, plopup_callback_t cback)
   XMoveWindow(dock->display, pup->win, pup->win_xpos, pup->win_ypos);
   XMapRaised(dock->display, pup->win);
   if (ph_descr)
-    picohtml_destroy(dock->display, ph_descr);
+    picohtml_destroy(ph_descr);
 }
 
 static Plopup_entry *
@@ -258,7 +258,7 @@ plopup_unmap(Dock *dock)
   for (e = pup->first; e; e = e_next) {
     e_next = e->next;
     if (e->ph)
-      picohtml_destroy(dock->display, e->ph);
+      picohtml_destroy(e->ph);
     free(e);
   }
   if (pup->descr) free(pup->descr);

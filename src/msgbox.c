@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.10 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.11 2004/02/29 19:01:27 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.11  2004/02/29 19:01:27  pouaite
+  et hop
+
   Revision 1.10  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -109,7 +112,7 @@ msgbox_refresh(Dock *dock, Drawable d)
   XSetForeground(dock->display, dock->NormalGC, cccolor_pixel(m->light_color));
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, m->w-1, 0);
   XDrawLine(dock->display, d, dock->NormalGC, 0, 0, 0, m->h-1);
-  picohtml_render(dock, m->ph, d, dock->NormalGC, 5, 13);
+  picohtml_render(m->ph, d, 5, 13);
   free(title);
 }
 
@@ -154,7 +157,7 @@ msgbox_show(Dock *dock, char *text)
   picohtml_set_tabul_skip(m->ph, 10);
 
   m->w = 300;
-  picohtml_parse(dock, m->ph, text, m->w);
+  picohtml_parse(m->ph, text, m->w);
   picohtml_gettxtextent(m->ph, &m->w, &m->h);
 
   m->w = MAX(m->w, 150);
@@ -205,7 +208,7 @@ msgbox_hide(Dock *dock)
   if (m->mapped) {
     m->mapped = 0;
     
-    picohtml_destroy(dock->display, m->ph); m->ph = NULL;
+    picohtml_destroy(m->ph); m->ph = NULL;
     XDestroyWindow(dock->display, m->win);
     m->win = None;
   }

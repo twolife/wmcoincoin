@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.22 2004/02/29 15:01:19 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.23 2004/02/29 19:01:26 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.23  2004/02/29 19:01:26  pouaite
+##   et hop
+##
 ##   Revision 1.22  2004/02/29 15:01:19  pouaite
 ##   May the charles bronson spirit be with you
 ##
@@ -104,6 +107,12 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
         coin_xutil.c coin_xutil.h \
 	prefs.c prefs.h options_list.h prefs_gestion.c\
 	spell_coin.c spell_coin.h
+
+wmcoincoin_CFLAGS = \
+	@XFT_CFLAGS@
+
+wmcoincoin_LDADD = \
+	@XFT_LIBS@
 
 wmccc_CFLAGS = \
 	@GTK_CFLAGS@
