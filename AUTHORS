@@ -1,4 +1,15 @@
 j. pommier (c0in@altern.org)
-sauf (http_win.c, le port cygwin) -> jérome lambourg
-et des patchs de Laurent Mazet, kadreg (pixmap de fond), Mike Hommey, Josselin Mouette, Gael le Mignot, Frederic Py, shift,  et d'autres (...)
-et des morceaux de wmpinboard et wget
+mais aussi:
+* Jérome Lambourg (http_win.c, le port cygwin)
+* Laurent Mazet (patch)
+* kadreg (pixmap de fond)
+* Mike Hommey (mode horloge, if-encoded-since, aide précieuse pour les pb de chunk encoding)
+* Josselin Mouette (ralentissement du coincoin)
+* Gael le Mignot (regexp.c)
+* Frederic Py (ispell)
+* Shift (commande externe)
+* Loic Restoux (plateau de fruits de mer)
+* Vincent Creuzillet (plop_words) 
+et d'autres (...) que j'ai oublié car c'est le bordaile dans ma bal
+
+et aussi de vrais morceaux de wmpinboard et wget

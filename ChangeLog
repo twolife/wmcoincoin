@@ -1,9 +1,24 @@
+2002-03-06  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (plopify_word): integration du patch d'estian
+	(nouvelle option pinnipede.plop_words)
+
+	* src/http.c (http_skip_header), src/wmcoincoin.c
+	(exec_coin_coin): detection des reponses chunk-encodée
+	
+	* src/pinnipede.c (pp_build): l'option pinnipede.login_color
+	fonctionne (jjb)
+
 2002-03-05  pouaite  <c0in@altern.org>
+
+	* src/coincoin_prefs.c (init_default_prefs): changement du backend
+	par défaut pour les news (maintenant backend.rss)
 
 	* src/pinnipede.c (plopify_word): amélioration du plopifieur,
 	retour (suite à une forte pression moulesque) de l'ancien
 	comportement du clic sur une horloge (affiche le post en BAS du
-	pinnipède). Bugfix très partiel du "ouups linufr a repondu O"
+	pinnipède). Correction du problème avec la scrollbar dans les
+	news. Bugfix très partiel du "ouups linufr a repondu O"
 	(d'où vient ce bug, pourquoi ne se produit-il que sur certaines
 	machines?)
 

@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.14 2002/02/24 22:13:56 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.15 2002/03/07 18:54:34 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.15  2002/03/07 18:54:34  pouaite
+#%  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
+#%
 #%  Revision 1.14  2002/02/24 22:13:56  pouaite
 #%  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 #%
@@ -235,6 +238,9 @@
 #pinnipede.nick_mode: 4
 #pinnipede.show_troll_score: on
 #pinnipede.show_fortune: on
+
+### mots utilisés lors de la plopification (a séparer par des VIRGULES, sans espace)
+#pinnipede.plop_words: plop,grouik,prout
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker

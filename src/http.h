@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.4 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: http.h,v 1.5 2002/03/07 18:54:34 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.5  2002/03/07 18:54:34  pouaite
+  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
+
   Revision 1.4  2002/02/02 23:49:17  pouaite
   plop
 
@@ -52,7 +55,7 @@ SOCKET http_post_with_cookie(const char *host_name, int host_port, const char *h
 			     const char *proxy, const char *userpass, int proxy_port, 
 			     const char *user_agent, const unsigned char *referer, 
 			     const char *cookie, const unsigned char *post);
-int http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz);
+int http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding);
 int http_close (SOCKET fd);
 
 #endif

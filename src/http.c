@@ -442,7 +442,7 @@ http_connect(const char *host_name, int port)
   si il y a une connexion timeout, on renvoie -2
 */
 int
-http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz)
+http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding)
 {
   char buff[512];
   int i, got, lnum;
@@ -453,7 +453,8 @@ http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz)
   //  printf("http_skip header\n");
   buff[511] = 0;
   last = 0;
-  
+
+  *chunk_encoding = 0;
   do {
     while((got = http_iread(fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
@@ -479,10 +480,15 @@ http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz)
 	      return -1;
 	    }
 	  }
-	} else if (last_modified) {
-	  if (strncmp(buff,"Last-Modified: ",15) == 0) {
-	    strncpy(last_modified, buff + 15, last_modified_sz); /* oula pas tres joli le strncpy on connait pas la taille de last_modified.. */
-	    last_modified[last_modified_sz-1] = 0;
+	} else {
+	  if (last_modified) {
+	    if (strncmp(buff,"Last-Modified: ",15) == 0) {
+	      strncpy(last_modified, buff + 15, last_modified_sz); /* oula pas tres joli le strncpy on connait pas la taille de last_modified.. */
+	      last_modified[last_modified_sz-1] = 0;
+	    }
+	  }
+	  if (strncmp(buff, "Transfer-Encoding: chunked", 26) == 0) {
+	    *chunk_encoding = 1;
 	  }
 	}
 	lnum++;
@@ -563,6 +569,7 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   char cookie_s[512];
   const char *pnocache;
   char last_modified_s[512];
+  int chunk_encoding;
 
   flag_http_transfert++;
 
@@ -637,9 +644,19 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   //  write(sockfd, buff, strlen(buff));
   BLAHBLAH(2,printf("ok, sent\n"));
   
-  if (http_skip_header(sockfd, last_modified, last_modified_sz) != 0) {
+  if (http_skip_header(sockfd, last_modified, last_modified_sz,&chunk_encoding) != 0) {
     http_close(sockfd);
     goto error;
+  }
+
+  if (chunk_encoding) {
+    /* 
+       normalement ça ne devrait pas être trop perturber le coincoin, mais faut voir... 
+       en même temps ça me fait méga chier de gèrer ça proprement, d'autant que sur ma machine perso
+       c'est jamais chunk encodé
+    */
+    BLAHBLAH(1, myprintf("%<mag http_get: la réponse est chunk encodée :-/\n"));
+    //    myprintf("%<YEL wmcoincoin ne parle pas le chunk encoding, car ça suce. Envoyez un mail d'insultes à l'auteur\n");
   }
 
   flag_http_error = 0;

@@ -20,11 +20,11 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.25 2002/03/05 22:08:48 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.26 2002/03/07 18:54:34 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
-  Revision 1.25  2002/03/05 22:08:48  pouaite
-  maintenant le 'oups linuxfr a repondu O' ne doit plus etre affichee (mais la reponse est tuojours presente, d'ou vient elle ? dans quel but ? bordaile)
+  Revision 1.26  2002/03/07 18:54:34  pouaite
+  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
 
   Revision 1.24  2002/03/05 21:04:28  pouaite
   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
@@ -344,12 +344,14 @@ exec_coin_coin(Dock *dock)
 
   if (fd != INVALID_SOCKET) {
     int got;
-    
-    if (http_skip_header(fd, NULL, 0) < 0) {
+    int chunk_encoding;
+
+    if (http_skip_header(fd, NULL, 0, &chunk_encoding) < 0) {
       /* si la reponse n'est pas un 302 Found */
       snprintf(s, 2048, "Damned ! y'a une pouille dans le cotage<p>%s", http_error());
       msgbox_show(dock, s);
     } else {
+      char reponse[2048];
       int l;
       BLAHBLAH(1, myprintf(" --> OK, message envoye avec succes\n"));
 
@@ -357,12 +359,33 @@ exec_coin_coin(Dock *dock)
       l = strlen(s);
       /* test si la reponse est du style 'pas 2 msg a la suite',
 	 'vous etes blackliste', ou 'mot interdit', ou autre .. */
-      if ((got=http_iread(fd, s+l, 2047-l))>0) {
-	s[l+got] = 0;
- 	while ((unsigned char)s[l+got-1] < ' ' && got > 0) { got--; s[l+got] = 0; }
-
-	myprintf("REPONSE RECUE: '%<YEL %s>' [got=%d]\n", s,got);
-	if (got > 1) {
+      if ((got=http_iread(fd, reponse, 2047))>0) {
+	char *s_reponse = NULL;
+	reponse[l+got] = 0;
+	if (chunk_encoding) { /* pffff c'est passe-pouille */
+	  int sz = -1;
+	  sscanf(reponse, "%x", &sz);
+	  if (sz > 0) {
+	    int i = 0;
+	    myprintf("la réponse (chunkencodée) complete (taille %d) au POST est : %<YEL %s>\n", sz, reponse);
+	    while (reponse[i] && reponse[i] != '\n') i++;
+	    if (strlen(reponse+i)>(unsigned)sz) {
+	      reponse[i+sz+1] = 0;
+	      s_reponse = reponse+i+1;
+	    } else {
+	      snprintf(reponse, 2048, "<b>un truc chunkencodé que coincoin lapin compris, vous avez le droit d'insulter l'auteur</b>");
+	      s_reponse = reponse;
+	    }
+	  } else {
+	    BLAHBLAH(2,myprintf("%<yel le serveur a repondu %s en chunkencodé (ça roule)\n", reponse));
+	  }
+	} else {
+	  s_reponse = reponse;
+	  myprintf("la réponse (non chunkencodée) est: '%<YEL %s>' [got=%d]\n", reponse, got);
+	}
+	if (s_reponse) {
+	  snprintf(s, 2048, "Ouups, il y a sans doute eu un petit probleme, "
+		   "<b>LinuxFr</b> a répondu:<p>%s", s_reponse);
 	  msgbox_show(dock, s);
 	}
       }

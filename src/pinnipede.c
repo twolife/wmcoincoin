@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.29 2002/03/05 21:04:28 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.30 2002/03/07 18:54:34 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.30  2002/03/07 18:54:34  pouaite
+  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
+
   Revision 1.29  2002/03/05 21:04:28  pouaite
   bugfixes suite à l'upgrade de dlfp [et retour au comportement à l'ancienne du clic sur les horloges pour les moules ronchonnes]
 
@@ -504,24 +507,11 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
   static unsigned nb_not_plop = 0;
   static unsigned *not_plop_hached = NULL;
 
-  static unsigned nb_plop_subst = 0;
-  static char *plop[] = {"plop", "grouik", "gruiiiik", "miaou", "slurpppe", "côôoot", 
-			 "pikaaaa", "kaa-pika", "chuuu", "prout", "uuurrrg", "blob", 
-			 "ploop", "pl0p", "c0in", "pouet", "coin!", "flebelebelblbll", 
-			 "blop", "gloup",
-			 NULL};
-
-  /*
-  static char *terminaisons[] = {"ant", "ants", "ante", "antes", "erais", "erai", 
-				 "ement", "ique", "eux", "ions", "iez", "ons", "er", 
-				 "ez", "é", "ée", "és", "es", "s", "e"};
-  */
-
   unsigned i;
   unsigned hache_s;
   unsigned src_pos, dest_pos, s_len;
 
-
+  const char *s_bizarre = "'\",;:/!+=)]@^_\\-|([{}#~?.*$³²¹";
 
   /* comptage des mots à ne pas plopifier, et 'hachage' des ces mots
      (pour les detecter plus rapidement) 
@@ -537,10 +527,6 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
       not_plop_hached[i] = str_hache(not_plop[i], strlen(not_plop[i]));
     }
   }
-  if (nb_plop_subst == 0) {
-    while (plop[nb_plop_subst]) nb_plop_subst++;
-  }
-
 
   /* enleve les accents et vérifie que le mot ne contient que des lettres */
   
@@ -551,7 +537,7 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
     do_plopify = 1;
 
     /* on copie les caractères bizarres qui peuvent preceder le mot */
-    while (s_src[src_pos] && strchr("'\",;:/!+=)]@^_\\-|([{}#~",s_src[src_pos]) && 
+    while (s_src[src_pos] && strchr(s_bizarre,s_src[src_pos]) && 
 	   dest_pos < sz) { 
       s_dest[dest_pos++] = s_src[src_pos++]; 
     }
@@ -559,7 +545,7 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 
     /* on copie le mot dans s_simple */
     s_len = 0;
-    while (s_src[src_pos+s_len] && !strchr("'\",;:/!+=)]@^_\\-|([{}#~", s_src[src_pos+s_len])) {
+    while (s_src[src_pos+s_len] && !strchr(s_bizarre, s_src[src_pos+s_len])) {
       s_simple[s_len] = s_src[src_pos+s_len]; s_len++;
     }
     s_simple[s_len] = 0;    assert(s_len > 0);
@@ -573,7 +559,9 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 	do_plopify = 0; break;
       }
     }
-    
+
+    if (s_len < 3) do_plopify = 0;
+
     if (do_plopify) {
       hache_s = str_hache(s_simple, s_len);
       for (i=0; i < nb_not_plop; i++) {
@@ -581,16 +569,21 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
       }
     }
 
+    /* j'ai pas été très inspiré en écrivant tout ça, l'est po clair */
+
     if (do_plopify) {
-      /* longeur > 15 => substitution assurée */
-      hache_s = (hache_s + bidon) % (nb_plop_subst + ((15-MIN(s_len,15))*nb_plop_subst)/8);
-      if (hache_s >= nb_plop_subst) do_plopify = 0;
+      /* longeur > 10 => substitution assurée,
+         longuer 0 => 1/2 chance sur deux */
+      int mod = Prefs.nb_plop_words + (10-MIN(s_len,10))*Prefs.nb_plop_words/10;
+
+      hache_s = (hache_s ^ bidon) % mod;
+      if (hache_s >= Prefs.nb_plop_words) do_plopify = 0;
     }
     
     if (do_plopify) {
       i = 0; 
-      while (plop[hache_s][i] && dest_pos < sz) {
-	s_dest[dest_pos++] = plop[hache_s][i++];
+      while (Prefs.plop_words[hache_s][i] && dest_pos < sz) {
+	s_dest[dest_pos++] = Prefs.plop_words[hache_s][i++];
       }
       src_pos += s_len;
     } else {
@@ -2020,7 +2013,7 @@ pp_build(Dock *dock)
   pp->popup_fgpixel = RGB2PIXEL(0, 0, 0);
   pp->popup_bgpixel = RGB2PIXEL(228, 228, 192);
   pp->nick_pixel = IRGB2PIXEL(Prefs.pp_useragent_color);
-  pp->login_pixel = IRGB2PIXEL(0xff0000);
+  pp->login_pixel = IRGB2PIXEL(Prefs.pp_login_color);
   pp->minib_pixel = IRGB2PIXEL(0xcdcdcd);
   pp->minib_dark_pixel = IRGB2PIXEL(0x626262);
 

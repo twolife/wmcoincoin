@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.16 2002/03/03 10:10:04 pouaite Exp $
+  rcsid=$Id: global.h,v 1.17 2002/03/07 18:54:34 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.17  2002/03/07 18:54:34  pouaite
+  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
+
   Revision 1.16  2002/03/03 10:10:04  pouaite
   bugfixes divers et variés
 
@@ -191,6 +194,9 @@ typedef struct _structPrefs{
   char *post_cmd; /* commande exécutée après chaque nouveau post lu ($m=message, $l=login, $t=timestamp, $u=ua, $i=id, $s=troll_score) */
   /* Nom du fichier de scrinechote */
   char* tribune_scrinechote;
+
+  char **plop_words; /* un tableau de string pour ranger les mots-plop (patch estian)*/
+  unsigned  nb_plop_words;
 } structPrefs;
 
 /* variables communes ici: */

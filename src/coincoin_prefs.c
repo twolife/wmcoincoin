@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.17 2002/02/24 22:13:56 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.18 2002/03/07 18:54:34 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.18  2002/03/07 18:54:34  pouaite
+  raaa .. fix login_color (jjb) patch plop_words (estian) et bidouille pour le chunk encoding (a tester)
+
   Revision 1.17  2002/02/24 22:13:56  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -692,6 +695,51 @@ option_editwin_spell_lang(const char *optarg, structPrefs *The_Prefs)
   assert(strlen(The_Prefs->ew_spell_dict)>0);
 }
 
+/* stocke une liste de mots-plops séparés par une virgule */
+static void
+option_plop_words(const char *optarg, structPrefs *p)
+{
+  char *s;
+  char *sep = ",";
+  char *prov;
+  int i;
+
+  s = strdup(optarg); assert(s); /* pour ne pas planter le strtok, il faut s'assurer que la chaine
+				    est modifiable */
+
+  /* libération de la mémoire précedemment allouée */
+  if (p->plop_words) {
+    for (i=0; p->plop_words[i]; i++) {
+      free(p->plop_words[i]);
+    }
+    free(p->plop_words); p->plop_words = NULL;
+  }
+
+  /* comptage des mots */
+  p->nb_plop_words = 0;
+  for (i=0; s[i]; i++) { if (s[i]==*sep) p->nb_plop_words++; }
+
+  if (p->nb_plop_words == 0) {
+    myprintf("vous ètes prié de séparer les mots-plops par des %<YEL VIRGULES>, tous les autres caractères sont stockés dans les mots\n");
+    exit(0);
+  }
+
+  p->plop_words=(char**)malloc((p->nb_plop_words+1)*sizeof(char *)); assert(p->plop_words);
+
+  for(i=0;i<(int)p->nb_plop_words;i++) {
+    if(i==0){
+      prov = strtok(s,sep);
+    } else {
+      prov = strtok(NULL,sep);
+    }
+    assert(prov); /* sinon y'a un truc bizarre */
+    p->plop_words[i]=strdup(prov);
+  }
+  p->plop_words[i] = NULL;
+  
+  free(s);
+}
+
 void
 parse_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 {
@@ -1082,6 +1130,9 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("pinnipede.fortune_font_size:", 1) {
 	option_pinnipede_fortune_font_size(optarg,The_Prefs); ok++;
       }
+      TEST_OPTION("pinnipede.plop_words:",1){
+	option_plop_words(optarg,The_Prefs);ok++;
+      }
       TEST_OPTION("spell.enable:", 0) {
 	option_editwin_spell_enable(optarg,The_Prefs); ok++;
       }
@@ -1213,7 +1264,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->site_port = 80;
   The_Prefs->site_path = strdup("");
   The_Prefs->path_tribune_backend = strdup("board/remote.xml");
-  The_Prefs->path_news_backend = strdup("backend.rdf");
+  The_Prefs->path_news_backend = strdup("backend.rss");
   The_Prefs->path_end_news_url = strdup(",0,-1,6.html");
   The_Prefs->path_tribune_add = strdup("board/add.php3");
   The_Prefs->path_myposts = strdup("users/myposts.php3?order=id");
@@ -1241,6 +1292,9 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_keyword_color = 0x008080;
   The_Prefs->pp_plopify_color = 0xa0a0a0;
 
+  The_Prefs->plop_words = NULL;
+  option_plop_words("plop,grouik,gruiiik,glop,buurp,miaou,sluurpe,côôoot,pika,pikaaaa,ka-pika,"
+		    "chuuu,prout,uuuurg,blob,ploop,pl0p,c0in,pouet,coin!,flebelebelblbll,blop,gloup", The_Prefs);
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;
   The_Prefs->pp_width = 300;
