@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.20 2002/03/10 22:45:36 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.21 2002/03/24 23:26:38 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.21  2002/03/24 23:26:38  pouaite
+  patch de lordoric + bricoles à deux francs
+
   Revision 1.20  2002/03/10 22:45:36  pouaite
   <mavie>dernier commit avant de passer la nuit dans le train</mavie> , spéciale dédicace à shift et à son patch ;)
 
@@ -941,14 +944,6 @@ read_coincoin_options (structPrefs *The_Prefs)
       }
       TEST_OPTION("news.font_size:", 1) {
 	option_set_news_font_size(optarg,The_Prefs); ok++;
-      }
-      TEST_OPTION("news.use_transparency:", 0) {
-	printf("news.use_transparency: cette option est obsolète (cause:trop pourrie), veuillez la virer de votre ~/.wmcoincoin/options\n");
-	exit(0);
-      }
-      TEST_OPTION("news.transparency_coef:", 1) {
-	printf("news.transparency_coef: cette option est obsolète (cause:trop naze), veuillez la virer de votre ~/.wmcoincoin/options\n");
-	exit(0);
       }
       TEST_OPTION("news.bg_color:", 1) {
 	option_set_news_bgcolor(optarg,The_Prefs); ok++;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.38 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.39 2002/03/24 23:26:38 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.39  2002/03/24 23:26:38  pouaite
+  patch de lordoric + bricoles à deux francs
+
   Revision 1.38  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -2320,6 +2323,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
   {
     XTextProperty window_title_property;
     char* window_title = "pinnipede teletype";
+    char* icon_title = "pinnipede";
     XSizeHints* win_size_hints;
     int rc;
     //    XWMHints* win_hints;
@@ -2327,10 +2331,17 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     XWMHints *wm_hint;
     char s[512];
 
+    /* nom de la fenetre */
     rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
     XSetWMName(dock->display, pp->win, &window_title_property);
+    XFree(window_title_property.value);
+
+    /* nom de la fenetre iconifiée */
+    rc = XStringListToTextProperty(&icon_title,1, &window_title_property); assert(rc);
     XSetWMIconName(dock->display, pp->win, &window_title_property);
     win_size_hints= XAllocSizeHints(); assert(win_size_hints);
+    XFree(window_title_property.value);
+
 
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
        dans les options ) */
@@ -2614,41 +2625,80 @@ int pp_ismapped(Dock *dock) {
 }
 
 
+/* --------------------------- section plateau de fruit de mer, veuillez insulter lordOric 
+   pour tous les bugs liès à cette partie ;) ---------------------------------------------
+*/
+
+/* 23/03/2002 pitit patch pour protéger les > et < pour le validator */
+char *
+pp_tribuneshot_encode( const char *chaine )
+{
+  char *tmp;
+  char *retour;
+
+  const char *key[] = { "<", ">", "&" };
+  const char *subst[] = { "&lt;", "&gt;", "&amp;" };
+  const char *key2[] = { "\t&lt;", "\t&gt;" };
+  const char *subst2[] = { "<", ">" };
+  
+  if (chaine == NULL) return NULL;
+
+  /* Passage des <> en &lt; et &gt; */
+  tmp = str_multi_substitute( chaine, key, subst, 3 );
+  
+  /* Restauration des balises '<' et '>' précédés d'une tabulation (cad ceux qui sont
+     d'authentiques tags */
+  retour = str_multi_substitute( tmp, key2, subst2, 2 );
+  free(tmp);
+  return retour;
+}
+
 /* --------- patch de lordOric, aka "plateau de fruits de mer" ------------*/
 /* Scrinchote d'un message */
 int 
 pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
 {
-   char time[10];
-   
-   assert(file); assert(mi);
-
-   snprintf(time, 10, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
-   
-   if ( mi->troll_score )
-     fprintf( file, "<tr><td><FONT color=red><b>%d</b></FONT></td>\n",mi->troll_score);
-   else
-     fprintf( file, "<tr><td></td>\n");
-   
-   fprintf(file,"<td> <span title='%s'> %s </span> </td>\n",mi->useragent, time);
-
-   if ( mi->login && strlen(mi->login))
-     fprintf(file,"<td><FONT color=red><center>%s</center></FONT></td>\n",mi->login);
-   else {
-     char *p;
-     char short_ua[15];
-     if (mi->tatouage) {
-       p = mi->tatouage->name;
-       if (strcmp(mi->tatouage->name, "?") == 0) {
-	 make_short_name_from_ua(mi->useragent, short_ua, 15);
-	 p = short_ua;
-       }
-     } else p = "[???]";
-     fprintf( file, "<td><FONT color=brown><center>%.12s</center></FONT></td>\n",p);
-   }
-   fprintf( file,"<td>%s</td></tr>\n", mi->msg);
-
-   return 0;
+  char time[10];
+  
+  char *tmp;
+  
+  assert(file); assert(mi);
+	
+  snprintf(time, 10, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
+	
+  if ( mi->troll_score )
+    fprintf( file, "<tr><td><FONT color=red><b>%d</b></FONT></td>\n",mi->troll_score);
+  else
+    fprintf( file, "<tr><td></td>\n");
+	
+  tmp = pp_tribuneshot_encode( mi->useragent );
+  fprintf(file,"<td> <span title='%s'> %s </span> </td>\n",tmp, time);	 
+  free (tmp);
+	
+  if ( mi->login && strlen(mi->login)) {
+    tmp = pp_tribuneshot_encode( mi->login );
+    fprintf(file,"<td align=CENTER><FONT color=red>%s</FONT></td>\n", tmp);
+    free(tmp);
+  } else {
+    char *p;
+    char short_ua[15];
+    if (mi->tatouage) {
+      p = mi->tatouage->name;
+      if (strcmp(mi->tatouage->name, "?") == 0) {
+	make_short_name_from_ua(mi->useragent, short_ua, 15);
+	p = short_ua;
+      }
+    } else p = "[???]";
+    tmp = pp_tribuneshot_encode(p);
+    fprintf( file, "<td align=CENTER><FONT color=brown>%.12s</FONT></td>\n", tmp);
+    free(tmp);
+  }
+	
+  tmp = pp_tribuneshot_encode(mi->msg);
+  fprintf( file,"<td>%s</td></tr>\n", tmp);
+  free(tmp);
+  
+  return 0;
 }
 
 
@@ -2678,15 +2728,16 @@ pp_tribuneshot_kikoooo(Dock *dock, DLFP_tribune *tribune )
   
   if ( ! file_exist ) {
     fprintf( file, 
-	     "<html><head><title>Archive tribune</title>"
+	     "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+	     "<html><head><title>Scrinechote tribune</title>"
 	     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-15\">"
 	     "</head>");
-    fprintf( file, "<body><center>");
+    fprintf( file, "<body>");
   }
   
   time( &time_shot );
-  fprintf( file, "<br><br> *** Scrinechote - %s *** <br>", ctime( &time_shot ) );
-  fprintf( file, "<table>");
+  fprintf( file, "<br><br><center><h2> *** Scrinechote - %s *** </h2></center><br>", ctime( &time_shot ) );
+  fprintf( file, "<table align=CENTER>");
   
   while ( msg ) {
     pp_tribuneshot_save_msg(msg, file);

@@ -1,3 +1,9 @@
+2002-03-25  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (pp_tribuneshot_kikoooo): patch de lordOric,
+	pour que les plateaux de fruits de mer soient w3c compliant. Ajout
+	d'une icone toute pourrie au pinnipede et à la fenêtre de news.
+
 2002-03-18  pouaite  <c0in@altern.org>
 
 	* configure.in src/raster.c (RGBACreatePixmapFromXpmData) etc..:

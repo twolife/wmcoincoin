@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.7 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.8 2002/03/24 23:26:38 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.8  2002/03/24 23:26:38  pouaite
+  patch de lordoric + bricoles à deux francs
+
   Revision 1.7  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -371,12 +374,19 @@ newswin_createXWindow(Dock *dock)
   nw->window = XCreateSimpleWindow(dock->display, dock->rootwin, xpos, ypos, nw->win_width, nw->win_height, 0, 
 				   nw->win_bgpixel, nw->win_bgpixel);
 
-  XSelectInput(dock->display, nw->window, ButtonPressMask | ExposureMask | ButtonReleaseMask | PointerMotionMask | EnterWindowMask | LeaveWindowMask | StructureNotifyMask);
+  XSelectInput(dock->display, nw->window, 
+	       ButtonPressMask | ExposureMask | ButtonReleaseMask | PointerMotionMask | 
+	       EnterWindowMask | LeaveWindowMask | StructureNotifyMask);
 
   snprintf(s, 512, "news de %s", Prefs.site_root);
   window_title = s;
+
+  /* nom de la fenetre (et de la fenetre iconifiée) */
   rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
   XSetWMName(dock->display, nw->window, &window_title_property);
+  XSetWMIconName(dock->display, nw->window, &window_title_property);
+  XFree(window_title_property.value);
+
 
   win_size_hints= XAllocSizeHints(); assert(win_size_hints);
   /* au premier lancement, la pos n'est pas connue (sauf si specifee
