@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.18 2002/02/06 21:34:17 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.19 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.19  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.18  2002/02/06 21:34:17  pouaite
   coin coin
 
@@ -94,6 +97,7 @@
 #include <locale.h>
 #include "coincoin.h"
 #include "spell_coin.h"
+#include "scrollcoin.h"
 
 #ifdef __CYGWIN__
 #include <pthread.h>
@@ -542,6 +546,26 @@ timer_signal(int signum) {
   X_loop_request++; wmcc_tic_cnt++;
 }
 
+/*
+  potentiellement causé par ispell quand il y a un problème
+   (genre mauvais dictionnaire, malaise d'ispell ..)
+
+   update: chuis pas sûr de moi.. le sigpipe est seulement reçu quand
+   on debuggue avec gdb .. bof.. m'en fous
+*/
+void
+sigpipe_signal(int signum UNUSED) {
+  fprintf(stderr, "SIGPIPE reçu ! soit c'est ispell qui se vautre comme une grosse otarie bourrée à la bière, \nsoit vous venez de killer violement wmcc");
+}
+/* poreil ! */
+void
+sigchld_signal(int signum UNUSED) {
+  BLAHBLAH(1,fprintf(stderr, "SIGCHLD reçu ! (certainement ispell)\n"));
+  /* je comprends pas pourquoi un wait() ici n'élimine pas les zombies ... 
+     tant pis, ça marche bien comme ça avec le bon gros kill_ispell d'ours */
+}
+
+
 /* la boucle principale (appelée 25 fois par seconde, mais uniquement aux moments 
    propices (cad pas au milieu d'un malloc..)) */
 void X_loop()
@@ -582,6 +606,10 @@ void X_loop()
 
   if (timer_cnt % 10 == 0) {
     check_if_should_kill_ispell();
+  }
+  
+  if (timer_cnt % 5 == 0) {
+    pp_animate(dock);
   }
 
   if (timer_cnt % 1 == 0) {
@@ -751,6 +779,20 @@ void X_loop()
 				son affichage, c'est juste pour éviter un clignotement trop
 				chiant quand on tape
 			     */
+    }
+  }
+
+
+  /* verif de la 'visibilité' de l'applet, pour masquage du palmipede si necessaire. OUI, c'est gruik
+     et nul de faire comme ça, MAIS ce salaud de wmaker fout les applets en substructurenotify ce qui
+     veut dire que wmcc ne reçoit pas les unmapnotify lorsque l'applet est cachée (par un changement
+     de bureau par ex. ...)
+  */
+  if (editw_ismapped(dock->editw)) {
+    XWindowAttributes wattr;
+    XGetWindowAttributes(dock->display, DOCK_WIN(dock), &wattr);
+    if (wattr.map_state == IsUnmapped || wattr.map_state == IsUnviewable) {
+      editw_unmap(dock, dock->editw);
     }
   }
 
@@ -1031,28 +1073,39 @@ void initx(Dock *dock, int argc, char **argv) {
   XFlush(dock->display);
 }
 
-
-/* patch jjb */
-static int faut_il_rafraichir(int count,int delay, int offset)
+/*
+  appelée pour la tribune et les news (delai_base == secondes)
+   (pour la tribune, delai_base = Prefs.dlfp_tribune_check_delay,
+    pour les news,   delai_base = Prefs.dlfp_news_check_delay)
+*/
+int
+wmcc_eval_delai_rafraichissement(Dock *dock, int delay_base)
 {
-  if(count<25*delay) // On a déjà rafraîchi récemment
-    return 0;
-  if(Prefs.dlfp_max_refresh_delay == 0)
-    return 1;
-  if(temps_depuis_dernier_event > 1500*Prefs.dlfp_max_refresh_delay) // minutes
-    return 0;
-  if(temps_depuis_dernier_event > 150*Prefs.dlfp_max_refresh_delay)
-    {
-      if(temps_depuis_dernier_event % (125*delay) == offset)
-	return 1;
-      else
-	return 0;
-    }
-    // Exemple : au bout de 2 heures on arrête tout => au bout de 12 minutes on commence à ralentir (5 fois moins de refresh).
+  int delay;
 
-  if (temps_depuis_dernier_event % (25*delay) == offset)
-    return 1;
-  return 0;
+  delay = 25*delay_base;
+
+  /* verifie si on a demandé d'éteindre le coincoin au bout d'un certain nb de minutes */
+  if (Prefs.dlfp_switch_off_coincoin_delay != 0) {
+    if (temps_depuis_dernier_event/(25*60) > Prefs.dlfp_switch_off_coincoin_delay) {
+      if (dock->horloge_mode == 0) flag_discretion_request = 1; /* passage en horloge :) */
+      delay = 10000000; return delay;
+    }
+  }
+
+  if (Prefs.dlfp_max_refresh_delay == 0) return delay;
+
+  if (temps_depuis_dernier_event/25 < 300) {
+    delay = 25*delay_base;
+  } else if (temps_depuis_dernier_event/25 < 1200) {          /* cad entre 5 min et 20mind'inactivité */
+    delay = 25*2*delay_base;                                 /* on passe à (par defaut) un refresh/min */
+  } else if (temps_depuis_dernier_event/25 < 90*60) {         /* en 20 min et 1h30 */
+    delay = 25*10*delay_base;                                /* on passe à un refresh/5min */
+  } else {                                                    /* apres 1h30 */
+    delay = 25*60*delay_base;                                /* on passe aux delai_max (qui est exprime en minutes) */ 
+  }
+  delay = MIN(delay, Prefs.dlfp_max_refresh_delay*25*60);
+  return delay;
 }
 
 #ifdef __CYGWIN__
@@ -1069,14 +1122,22 @@ void *Timer_Thread(void *arg)
 /*        Main Network thread          */
 /* ----------------------------------- */
 void *Net_loop () {
-  int compteur_news = 1000000;
-  int compteur_tribune = 1000000;
-
   strcpy(dock->newstitles, "transfert en cours...");
 
   while (1) {
+    
+    /* ces deux lignes servent à redéclencher le rafraissement lors d'un brusque retour d'activité 
+       (si le coincoin rafraichissait 1fois/15min, il va faire très rapidement un refresh) 
+
+       par contre, le delai ne peut être accru que juste après un refresh (c'est mieux pour l'affichage du
+       temps avant le prochain refresh dans le pinni, ça évite des sauts)
+    */
+    dock->news_refresh_delay = MIN(dock->news_refresh_delay, wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_news_check_delay));
+    dock->tribune_refresh_delay = MIN(dock->tribune_refresh_delay, wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_tribune_check_delay));
+
     if (dock->coin_coin_request > 0) {
       //      printf("coincoin request\n");
+      dock->wmcc_state_info = WMCC_SENDING_COINCOIN;
       exec_coin_coin(dock); ALLOW_X_LOOP;
       dock->coin_coin_request = -50; /* on va le repasser progressivement à zero (pour permettre à la led
 					de s'éteindre progressivement) */
@@ -1089,20 +1150,26 @@ void *Net_loop () {
     if (dock->news_update_request > 1)
       dock->news_update_request--;
 
-    if (faut_il_rafraichir(compteur_news,Prefs.dlfp_news_check_delay,10) ||
+    if (dock->news_refresh_cnt > dock->news_refresh_delay || 
 	dock->news_update_request == 1) {
-      compteur_news=0;
+      dock->news_refresh_cnt = 0;
+      dock->news_refresh_delay = wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_news_check_delay);
+      dock->wmcc_state_info = WMCC_UPDATING_NEWS;
       dlfp_updatenews(dock->dlfp); ALLOW_X_LOOP;
+      dock->wmcc_state_info = WMCC_UPDATING_COMMENTS;
+      dlfp_yc_update_comments(dock->dlfp); ALLOW_X_LOOP;
+      dock->wmcc_state_info = WMCC_UPDATING_MESSAGES;
+      dlfp_msg_update_messages(dock->dlfp); ALLOW_X_LOOP;
       dock->news_update_request = 0;
     }
     
-    if (faut_il_rafraichir(compteur_tribune,Prefs.dlfp_tribune_check_delay,5) || 
+    if (dock->tribune_refresh_cnt > dock->tribune_refresh_delay ||
 	dock->tribune_update_request == 1) {
-      compteur_tribune=0;
+      dock->tribune_refresh_cnt = 0;
+      dock->tribune_refresh_delay = wmcc_eval_delai_rafraichissement(dock, Prefs.dlfp_tribune_check_delay);
       if (dock->tribune_updatable) {
-	//	printf("update\n");
+	dock->wmcc_state_info = WMCC_UPDATING_BOARD;
 	dlfp_tribune_update(dock->dlfp, dock->real_coin_coin_useragent); 
-	//if (flag_tribune_updated) pp_set_tribune_updated(dock); -> deplace dans checkout_tribune
 	ALLOW_X_LOOP;
 	dock->tribune_update_request = 0;
       } else {
@@ -1110,6 +1177,8 @@ void *Net_loop () {
       }
     }
     if (Prefs.ew_do_spell) ispell_run_background(Prefs.ew_spell_cmd, Prefs.ew_spell_dict);
+    
+    dock->wmcc_state_info = WMCC_IDLE;
     ALLOW_X_LOOP;
 #ifdef __CYGWIN__
     usleep(10000); 
@@ -1117,8 +1186,8 @@ void *Net_loop () {
     pause(); 
 #endif
     ALLOW_X_LOOP;
-    compteur_news++;
-    compteur_tribune++;
+    dock->news_refresh_cnt++;
+    dock->tribune_refresh_cnt++;
     temps_depuis_dernier_event++;
   }
 }
@@ -1227,6 +1296,8 @@ install_sighandlers()
 				       */
   assert(signal(SIGUSR1, timer_signal) != SIG_ERR);
   assert(signal(SIGUSR2, timer_signal) != SIG_ERR);
+  assert(signal(SIGPIPE, sigpipe_signal) != SIG_ERR);
+  assert(signal(SIGCHLD, sigchld_signal) != SIG_ERR);
 #else
   {
     struct sigaction action;
@@ -1248,7 +1319,18 @@ install_sighandlers()
          errno, strerror(errno));
      exit(1);
     }
-
+    action.sa_handler = sigpipe_signal;
+    if (sigaction(SIGPIPE, &action, NULL) != 0) {
+     fprintf(stderr,"sigaction: erreur %d (%s)\n essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n",
+         errno, strerror(errno));
+     exit(1);
+    }
+    action.sa_handler = sigchld_signal;
+    if (sigaction(SIGCHLD, &action, NULL) != 0) {
+     fprintf(stderr,"sigaction: erreur %d (%s)\n essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n",
+         errno, strerror(errno));
+     exit(1);
+    }
   }
 #endif
 }
@@ -1345,6 +1427,14 @@ main(int argc, char **argv)
   dock->discretion_saved_state.pinnipede_used = 0;
   dock->discretion_saved_state.last_sig_is_usr1 = 0;
   dock->horloge_mode = 0;
+
+  dock->news_refresh_delay    = Prefs.dlfp_news_check_delay*25;
+  dock->tribune_refresh_delay = Prefs.dlfp_tribune_check_delay*25;
+  dock->news_refresh_cnt      = dock->news_refresh_delay-100;
+  dock->tribune_refresh_cnt   = dock->tribune_refresh_delay-10;
+
+  dock->wmcc_state_info = WMCC_IDLE; /* moyennement vrai au début ! */
+
   dock->trib_trollo_rate = 0; dock->trib_trollo_score = 0;
   dock->dlfp = dlfp_create();
 
@@ -1402,6 +1492,8 @@ main(int argc, char **argv)
   dock->atom_WM_DELETE_WINDOW = XInternAtom(dock->display, "WM_DELETE_WINDOW", False);
   dock->atom_WM_PROTOCOLS = XInternAtom(dock->display, "WM_PROTOCOLS", False);
 
+  scrollcoin_build(dock->rgba_context);
+
   newswin_build(dock);
   balloon_build(dock);
   msgbox_build(dock);
@@ -1422,7 +1514,12 @@ main(int argc, char **argv)
   dock->newstitles[0] = 0;
   memset(dock->tribune_time, 0, 6);
 
-  dock_refresh_normal(dock);
+  if (Prefs.start_in_boss_mode == 0) {
+    dock_refresh_normal(dock);
+  } else {
+    dock_set_horloge_mode(dock);
+    dock_refresh_horloge_mode(dock);
+  }
 
   install_sighandlers();
 

@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.12 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: global.h,v 1.13 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.13  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.12  2002/02/02 23:49:17  pouaite
   plop
 
@@ -47,6 +50,11 @@
 #define USERAGENT_MAX_LEN 60
 #define USERNAME_MAX_LEN 60 // lg max du username affiché dans la tribune, pour les personnes loggées
 
+#ifdef __GNUC__
+# define UNUSED __attribute((unused))
+#else
+# define UNUSED
+#endif
 
 #ifdef GLOBALS_HERE
 # define DECL_GLOB(x) x;
@@ -70,9 +78,12 @@ typedef struct _structPrefs{
   /* delai (en sec) et assez approximatif entre deux verif de la tribune */
   int dlfp_tribune_check_delay;
   int dlfp_news_check_delay;
-  /* Au bout de combien de temps on arrête lesdites verifications (en min)
-     Note : la fréquence diminue progressivement.*/
+  /* en cas d'inactivité les delais vont être progressivement augmentés
+     max_refresh_delay est leur valeur maximale (en minutes) (0 => ralentissement désactivé) */
   int dlfp_max_refresh_delay;
+  /* de plus au bout d'un certain nombre de minutes, le coincoin cessera toute activité
+     et passera en mode horloge */
+  int dlfp_switch_off_coincoin_delay;
 
   char *font_encoding; /* 'iso8859-1' ou mieux, 'iso8859-15' */
 
@@ -118,6 +129,7 @@ typedef struct _structPrefs{
   char *balloon_fn_family;
   int balloon_fn_size;
   int dock_xpos, dock_ypos;
+  int start_in_boss_mode; /* demarrage en mode horloge */
   int bgcolor, fgcolor;
   char *bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
   char *app_name; /* pointeur vers le nom sous lequel a ete invoque
@@ -150,7 +162,8 @@ typedef struct _structPrefs{
   int pp_fn_size;
   unsigned pp_bgcolor, pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
     pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
-    pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, pp_keyword_color;
+    pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, 
+    pp_keyword_color, pp_plopify_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.5 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.6 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.6  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.5  2002/02/02 23:49:17  pouaite
   plop
 
@@ -314,8 +317,8 @@ void
 troll_detector(tribune_msg_info *mi) {
   int score;
 
-  unsigned char *trans_simple  = "éèëêÊËÉÈàÀùÙçÇîïÏÎô";
-  unsigned char *trans_simple2 = "eeeeeeeeaauucciiiio";
+  unsigned char *trans_simple  = "éèëêÊËÉÈàâáäÀÂÁÄûüùÙçÇîïíìÏÎÍÌôóòõÔÓÒÕñ";
+  unsigned char *trans_simple2 = "eeeeeeeeaaaaaaaauuuucciiiiiiiioooooooon";
 
   unsigned char txt_simple[MI_MAX_LEN];
 

@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.13 2002/02/02 23:49:17 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.14 2002/02/24 22:13:56 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.14  2002/02/24 22:13:56  pouaite
+#%  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+#%
 #%  Revision 1.13  2002/02/02 23:49:17  pouaite
 #%  plop
 #%
@@ -51,9 +54,18 @@
 ### delai enntre deux verifications de la tribune (en secondes)
 #tribune.delay: 30
 
-### Temps au bout duquel on ne la vérifie plus (en minutes)
-### mettre 0 pour désactiver cette fonctionnalité
-#tribune.stop_refresh: 120
+### en cas d'inactivité prolongée, le coincoin va augmenter le delai entre deux mises à jour
+### de la tribune et des news (au bout de 5min il le double, après 20min il est multiplié par 10, et
+### par 40 après 1h30 d'inactivité)
+### l'option 'tribunenews.max_refresh_delay' permet d'imposer un delai max entre deux mis à jour, en minutes
+### (par défaut 30 minutes au max), une valeur de 0 désactive completement le ralentissement des refresh
+### en fonction de l'activité
+#tribunenews.max_refresh_delay: 30
+
+### l'option 'tribunenews.switch_off_coincoin_delay' permet de fixer le delai d'inactivité au bout duquel 
+### le coincoin passe automatiquement en mode horloge et cesse toute activité (plus de refresh etc..)
+### (par defaut, 1440 minutes = 1 jour, une valeur de 0 désactive cette fonctionnalité)
+#tribunenews.switch_off_coincoin_delay: 1440
 
 ### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede
 ### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas été conçu pour ça !
@@ -70,8 +82,9 @@
 ###  $i -> #id du message
 ###  $t -> timestamp
 ###  $s -> troll_score
-###  $r -> type de message ( '1' message posté par l'utilisateur, '2' = reponse à un de vos messages, '3' = message selectionne par les mots clefs, '0' = autre)
-#tribune.post_cmd: (echo $l msg=$m ua=$u type=$r; play coin.wav &)
+###  $r -> type de message ( '1' message posté par l'utilisateur, '2' = reponse à un de vos messages, '3' = message selectionne par les mots clefs, '4' = message plopifié, '0' = autre)
+### par exemple, pour entendre 'coin' à chaque réponse à un de vos messages:
+#tribune.post_cmd: (if [ $r -eq 2 ]; then echo $l msg=$m; play ~/coin.wav & fi)
 
 ### nom du fichier dans lequel sont sauvés les scrinechotes de la tribune
 #tribune.archive: ~/wmcc_tribune_shot.html
@@ -100,6 +113,8 @@
 ### (equivalent de l'option '-x'
 #dock.pos: 0:400
 
+### pour démarrer le coincoin en mode horloge
+#dock.start_in_boss_mode: on
 
 ### delai entre deux verifications des news, du flamometre, etc... (en secondes)
 #news.delay: 300
@@ -195,6 +210,7 @@
 #pinnipede.hilight.my_msg_color: f07000
 #pinnipede.hilight.answer_my_msg_color: e0b080
 #pinnipede.hilight.keyword_color: 008080
+#pinnipede.plopify_color: a0a0a0
 #pinnipede.fortune_bgcolor: b0b0b0
 #pinnipede.fortune_fgcolor: 000000
 #pinnipede.fortune_font_family: helvetica

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.15 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.16 2002/02/24 22:13:56 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.16  2002/02/24 22:13:56  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.15  2002/02/02 23:49:17  pouaite
   plop
 
@@ -144,6 +147,7 @@ dlfp_create()
 
   dlfp->tribune.just_posted_anonymous = 0;
   dlfp->tribune.hilight_key_list = NULL;
+  dlfp->tribune.plopify_key_list = NULL;
 
   dlfp->com = NULL;
   dlfp->xp_old = -1000;
@@ -699,7 +703,6 @@ dlfp_updatenews(DLFP *dlfp)
   /* on se protege */
   flag_updating_news++;
 
-
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
     fd =  http_get(Prefs.site_root, Prefs.site_port, path, 
@@ -905,9 +908,6 @@ dlfp_updatenews(DLFP *dlfp)
   }
 
   flag_updating_news--;
-
-  dlfp_yc_update_comments(dlfp);
-  dlfp_msg_update_messages(dlfp);
 }
 
 

@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.9 2002/02/06 21:34:17 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.10 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.10  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.9  2002/02/06 21:34:17  pouaite
   coin coin
 
@@ -256,8 +259,11 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
   
   save_errno = errno;
   if (flag_spell_request == 0) return;
-  if (flag_spell_finished) return; /* car sinon on serait susceptible d'appeller la fonction du dessus dans un environnement multitache (et donc on accederait a errlist etc..)
-					  --> au cas ou un jour coincoin deviendrait threadé (et il l'est déjà +ou- sous cygwin)) autant faire des  choses pas trop trop nazes */
+  if (flag_spell_finished) return; /* car sinon on serait susceptible d'appeller la fonction du dessus dans un 
+				      environnement multitache (et donc on accederait a errlist etc..) 
+				      
+				      update: ça n'a plus aucun interet, coincoin n'est pas du tout threadé, même plus sous cygwin
+				   */
   
 
   /* reinitailise le passe de cette fonction 
@@ -299,14 +305,15 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
       char c;
 
       /* lecture de la ligne comme un gros boeuf */
-      i = 0;
+      i = 0; buff[0] = 0;
       while (i < 1023) {
 	do {
 	  got = read(ispell_stdout, &c, 1);
 	  ALLOW_X_LOOP;
 	} while (got <= 0 && errno == EINTR);
+	/* fprintf(stderr, "errno = %d '%s'\n", errno, strerror(errno));  */
+	if (c != '\n' && (errno == 0 || errno == EINTR)) {
 	  
-	if (c != '\n') {
 	  buff[i] = c;
 	} else {
 	  buff[i] = 0;
@@ -358,17 +365,17 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	break;
       default:
 	/* Qu'est ce que je fout ici moi ?
-	   NOTE peut etre que je devrqit en tenir compte au cas
+	   NOTE peut etre que je devrais en tenir compte au cas
 	   ou le pgm (ki n'est pas ispell) a des retours en +?
 	   (keskil renvoit aspell au fait? ... regarder son man
 	   sur une machine qui a ce truc)
 	*/
-	fprintf(stderr, "spellString: unknow option \'%c\'\n", buff[0]); fflush(stderr);
+	fprintf(stderr, "spellString: unknown option \'%02x\'\n", buff[0]); fflush(stderr);
 	kill_ispell(); /* je veux pas d'un ispell tout patraque */
 
 
 	/*
-	  ça ARRIVE PARFOIS .. !? (ça vient tout juste de m'arriver..)
+	  <pouaite> ça ARRIVE PARFOIS .. !? (ça vient tout juste de m'arriver..)
 	   il faudra trouver pourquoi et gèrer autrement que par le suicide..
 	*/
 

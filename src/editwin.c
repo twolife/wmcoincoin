@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.9 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.10 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.10  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.9  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -297,6 +300,7 @@ editw_wordwrap(EditW *ew)
 	}
       }
     }
+    //    printf("row_firstchar[%d] = %d\n", l, ew->row_firstchar[l]);
   }
 
   /* cas particulier: la derniere ligne fait exactement EW_NCOL char
@@ -919,9 +923,10 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     editw_strpos2xy(ew, sel_start, &sx0, &sy0);
     editw_strpos2xy(ew, sel_end-1, &sx1, &sy1);
 
-    //    printf("sel: (%d,%d) - (%d,%d)\n", sx0,sy0,sx1,sy1);
+    /* printf("sel: (%d,%d) - (%d,%d), ew->y_scroll=%d\n", sx0,sy0,sx1,sy1, ew->y_scroll); */
+
     if (sy0 < ew->y_scroll) { sy0 = ew->y_scroll; sx0 = 0; }
-    if (sy1 > ew->y_scroll + EW_NROW - 1) { sy1 = ew->y_scroll + EW_NROW - 1; sx1 = EW_NROW; }
+    if (sy1 > ew->y_scroll + EW_NROW - 1) { sy1 = ew->y_scroll + EW_NROW - 1; sx1 = EW_NCOL; }
     for (y = sy0; y <= sy1; y++) {
       if (y == sy0) x0 = sx0; else x0 = 0;
       if (y == sy1) {
@@ -929,6 +934,7 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
 	x1 = MIN(x1, ew->row_firstchar[y+1]-ew->row_firstchar[y] - 1);
       } else x1 = ew->row_firstchar[y+1]-ew->row_firstchar[y] - 1;
 
+      /* printf("y=%d, x0=%d, x1=%d, row first=%d row last=%d\n", y, x0, x1, ew->row_firstchar[y], ew->row_firstchar[y+1]); */
       XSetForeground(dock->display, dock->NormalGC, ew->sel_bgpixel);
       XFillRectangle(dock->display, d, dock->NormalGC, 
 		     EW_TXT_X0 + FN_W * x0, EW_TXT_Y0 + FN_H * (y-ew->y_scroll), FN_W*(x1+1-x0), FN_H);
@@ -1192,10 +1198,14 @@ editw_unmap(Dock *dock, EditW *ew)
 #ifndef sun
   XDestroyIC(ew->input_context);
 #endif
+  //  fprintf(stderr, "destroy! %lx\n", (unsigned long)ew->win);
   XDestroyWindow(dock->display, ew->win);
+  //  fprintf(stderr, "destroy2!\n");
+
   XFreePixmap(dock->display, ew->pix);
   ew->win = None;
   ew->mapped = 0;
+  ew->action = NOACTION; /* au cas ou on fait un unmap en pleine sortie */
   ew->buff = NULL; ew->buff_sz = 0;
   if (ew->undo.buff) { free(ew->undo.buff); ew->undo.buff = NULL; }
 }

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.5 2002/01/31 23:45:00 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.6 2002/02/24 22:13:57 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.6  2002/02/24 22:13:57  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.5  2002/01/31 23:45:00  pouaite
   plop
 
@@ -469,41 +472,61 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
   }
 }
 
-
-void
-tribune_hilight_key_list_add(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type)
+/* supprime les keylist faisant ref à des messages detruits */
+KeyList *
+tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first)
 {
-  HilightKey *hk, *last;
+  KeyList *hk;
+  hk = first;
+  while (hk) {
+    if (hk->type == HK_ID || hk->type == HK_THREAD) {
+      int id = atoi(hk->key);
+      if (tribune_find_id(trib, id) == NULL) {
+	first = tribune_key_list_remove(first, hk->key, hk->type);
+	hk = first;
+      }
+    }
+    if (hk) hk = hk->next;
+  }
+  return first;
+}
 
-  ALLOC_OBJ(hk, HilightKey);
+KeyList *
+tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type)
+{
+  KeyList *hk, *last;
+
+  ALLOC_OBJ(hk, KeyList);
   hk->key = strdup(key);
   hk->type = type;
   hk->next = NULL;
   
   BLAHBLAH(1, myprintf("ajout du motclef: '%<CYA %s>'\n", key));
-  last = trib->hilight_key_list;
+  last = first;
   if (last == NULL) {
-    trib->hilight_key_list = hk;
+    first = hk;
   } else {
     while (last->next != NULL) last = last->next;
     last->next = hk;
   }
+  return first;
 }
 
-void
-tribune_hilight_key_list_remove(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type)
+KeyList *
+tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type)
 {
-  HilightKey *hk, *prev;
+  KeyList *hk, *prev;
+
   prev = NULL;
-  hk = trib->hilight_key_list;
+  hk = first;
   while (hk) {
     if (strcasecmp(key, hk->key)==0 && (hk->type == type || type == HK_ALL)) {
-      BLAHBLAH(1, myprintf("suppression du motclef: '%<CYA %s>'\n", key));
+      BLAHBLAH(1, myprintf("suppression de la clef: '%<CYA %s>'\n", key));
       if (prev) {
 	/* supprime les refs des postvisuals vers cette clef.. */
 	prev->next = hk->next;
       } else {
-	trib->hilight_key_list = hk->next;
+	first = hk->next;
       }
       free(hk->key);
       free(hk);
@@ -512,14 +535,44 @@ tribune_hilight_key_list_remove(DLFP_tribune *trib, const unsigned char *key, Hi
     prev = hk;
     hk = hk->next;
   }
+  return first;
 }
 
-HilightKey *
-tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist)
+static int
+tribune_key_list_test_thread(DLFP_tribune *trib, tribune_msg_info *mi, int thread_id, int *antibug)
 {
-  HilightKey *hk;
+  int i;
+  (*antibug)++;
+  if (*antibug > 10000) { printf("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n"); return 0; }
+
+  if (mi == NULL) return 0;
+
+  mi->bidouille_qui_pue = 1;
+
+  //  printf("test: mi->id=%d, %d\n", mi->id, thread_id);
+
+  if (mi->id == thread_id) return 1;
+
+  for (i = 0; i < mi->nb_refs; i++) {
+    int j;
+    tribune_msg_info *tmi;
+
+    tmi = mi->refs[i].mi; j = 0;
+    while (j < mi->refs[i].nbmi && tmi) {
+      if (tmi->bidouille_qui_pue == 0 && tribune_key_list_test_thread(trib, tmi, thread_id, antibug)) return 1;
+      tmi = tmi->next; j++;
+    }
+  }
+  return 0;
+}
+
+KeyList *
+tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist)
+{
+  KeyList *hk;
   char sid[10];
 
+  if (mi == NULL) return NULL;
   snprintf(sid,10, "%d", mi->id);
   
   hk = klist;
@@ -533,7 +586,7 @@ tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist)
 	return hk;
       }
     } else if (hk->type == HK_WORD) {
-      if (strstr(mi->msg, hk->key)) {
+      if (str_noaccent_casestr(mi->msg, hk->key)) {
 //	printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id);
 	return hk;
       } 
@@ -541,14 +594,21 @@ tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist)
       if (strcmp(sid, hk->key) == 0) {
 	return hk;
       }
+    } else if (hk->type == HK_THREAD) {
+      tribune_msg_info *tmi;
+      int antibug = 0;
+      tmi = trib->msg; while (tmi) { tmi->bidouille_qui_pue = 0; tmi = tmi->next; }	
+      int id = atoi(hk->key);
+      
+      if (tribune_key_list_test_thread(trib, mi, id, &antibug)) { return hk; }
     }
     hk = hk->next;
   }
   return NULL;
 }
 
-HilightKey *
-tribune_hilight_key_list_find(HilightKey *hk, const char *s, HilightKeyType t)
+KeyList *
+tribune_key_list_find(KeyList *hk, const char *s, KeyListType t)
 {
   while (hk) {
     if ((hk->type != HK_WORD && strcmp(hk->key, s)==0) ||
@@ -562,25 +622,26 @@ tribune_hilight_key_list_find(HilightKey *hk, const char *s, HilightKeyType t)
   return NULL;
 }
 
-void
-tribune_hilight_key_list_swap(DLFP_tribune *trib, const char *s, HilightKeyType t)
+KeyList *
+tribune_key_list_swap(KeyList *first, const char *s, KeyListType t)
 {
   /* verifie si le mot est déjà dans la liste */
-  if (tribune_hilight_key_list_find(trib->hilight_key_list, s, t) == NULL) {
-    tribune_hilight_key_list_add(trib, s, t);
+  if (tribune_key_list_find(first, s, t) == NULL) {
+    return tribune_key_list_add(first, s, t);
   } else {
-    tribune_hilight_key_list_remove(trib, s, t);
+    return tribune_key_list_remove(first, s, t);
   }
 }
 
 const char*
-tribune_hilight_key_list_type_name(HilightKeyType t)
+tribune_key_list_type_name(KeyListType t)
 {
   switch (t) {
   case HK_UA: return "useragent"; 
   case HK_LOGIN: return "login";
   case HK_WORD: return "mot";
-  case HK_ID: return "message id";
+  case HK_ID: return "message_id";
+  case HK_THREAD: return "thread depuis l'id";
   case HK_ALL: break;
   }
   return NULL;

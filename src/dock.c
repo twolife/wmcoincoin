@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.3 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.4 2002/02/24 22:13:56 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.4  2002/02/24 22:13:56  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.3  2002/02/02 23:49:17  pouaite
   plop
 
@@ -41,6 +44,8 @@
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
+#include <time.h>
+#include <sys/time.h>
 #include "coincoin.h"
 #include "http.h"
 
@@ -251,10 +256,13 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
       tribune_msg_info *mi;
       mi = tribune_find_id(&dock->dlfp->tribune, dock->tl_item_survol->id);
       if (mi) {
-	struct tm t;
-	localtime_r(&mi->timestamp, &t);
+	struct tm *t;
+
+	/* remarque c'est plus rentrant (depuis la v2.3.5) mais on s'en bat les ouilles
+	   puisque coincoin n'est pas multithreadé */
+	t = localtime(&mi->timestamp);
 	//snprintf(minimsg, 10, "%02d:%02d", (int)((mi->timestamp/3600)%24), (int)((mi->timestamp/60)%60));
-	snprintf(minimsg, 10, "%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
+	snprintf(minimsg, 10, "%02d:%02d:%02d", t->tm_hour, t->tm_min, t->tm_sec);
       } else {
 	strcpy(minimsg, "??:?? BUG");
       }
@@ -588,7 +596,7 @@ dock_refresh_normal(Dock *dock)
 void
 dock_refresh_horloge_mode(Dock *dock)
 {
-  struct tm tm;
+  struct tm *tm;
   time_t tnow;
 
   XCopyArea(dock->display, dock->clockpix, dock->coinpix, dock->NormalGC,
@@ -600,27 +608,27 @@ dock_refresh_horloge_mode(Dock *dock)
 
     decal = difftime(tnow, dock->dlfp->tribune.local_time_last_check);
     ttribune = dock->dlfp->tribune.last_post_timestamp + decal + dock->dlfp->tribune.nbsec_since_last_msg;
-    localtime_r(&ttribune, &tm);
+    tm = localtime(&ttribune);
 //    snprintf(s, 20, "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
   } else {
 //    snprintf(s, 20, "...");
-    localtime_r(&tnow, &tm);
+    tm = localtime(&tnow);
   }
   
-  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm.tm_hour / 10), 0, 9, 11, 9, 6); 
-  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm.tm_hour % 10), 0, 9, 11, 18, 6); 
-  if (tm.tm_sec % 2) {
+  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_hour / 10), 0, 9, 11, 9, 6); 
+  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_hour % 10), 0, 9, 11, 18, 6); 
+  if (tm->tm_sec % 2) {
     XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 90, 0, 5, 11, 27, 6); 
   }
-  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm.tm_min / 10), 0, 9, 11, 32, 6); 
-  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm.tm_min % 10), 0, 9, 11, 41, 6); 
-  XCopyArea(dock->display, dock->month, dock->coinpix, dock->NormalGC, 0, 6 * tm.tm_mon, 22, 6, 18, 48);
-  XCopyArea(dock->display, dock->weekday, dock->coinpix, dock->NormalGC, 0, 6 * ((tm.tm_wday +6) % 7), 20, 6, 21, 24);
-  if (tm.tm_mday > 9) {
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday / 10), 0, 9, 13, 22, 33);
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm.tm_mday % 10), 0, 9, 13, 31, 33);
+  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_min / 10), 0, 9, 11, 32, 6); 
+  XCopyArea(dock->display, dock->led, dock->coinpix, dock->NormalGC, 9 * (tm->tm_min % 10), 0, 9, 11, 41, 6); 
+  XCopyArea(dock->display, dock->month, dock->coinpix, dock->NormalGC, 0, 6 * tm->tm_mon, 22, 6, 18, 48);
+  XCopyArea(dock->display, dock->weekday, dock->coinpix, dock->NormalGC, 0, 6 * ((tm->tm_wday +6) % 7), 20, 6, 21, 24);
+  if (tm->tm_mday > 9) {
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm->tm_mday / 10), 0, 9, 13, 22, 33);
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * (tm->tm_mday % 10), 0, 9, 13, 31, 33);
   } else {
-    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * tm.tm_mday, 0, 9, 13, 26, 33);
+    XCopyArea(dock->display, dock->date, dock->coinpix, dock->NormalGC, 9 * tm->tm_mday, 0, 9, 13, 26, 33);
   }
 }
 

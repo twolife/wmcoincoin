@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.16 2002/02/03 23:07:32 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.17 2002/02/24 22:13:56 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.17  2002/02/24 22:13:56  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.16  2002/02/03 23:07:32  pouaite
   *** empty log message ***
 
@@ -164,7 +167,7 @@ option_set_news_check_delay (const char *optarg,
     BLAHBLAH(1, myprintf("delai entre deux check des %<yel news> fixe a: %<YEL %d> secondes\n", The_Prefs->dlfp_news_check_delay));
   }
 }
-
+/*
 static void
 option_set_max_refresh_delay (const char *optarg, 
                              const char *optname,
@@ -175,7 +178,8 @@ option_set_max_refresh_delay (const char *optarg,
     exit(1);
     BLAHBLAH(1, myprintf("temps au bout duquel on ne rafraîchit plus les %<yel news> et la %<yel tribune> fixe a: %<YEL %d> minutes\n", The_Prefs->dlfp_max_refresh_delay));
   }
-}
+  }
+*/
 
 static void
 option_set_news_font_family (const char  *optarg,
@@ -862,7 +866,18 @@ read_coincoin_options (structPrefs *The_Prefs)
 	The_Prefs->enable_troll_detector = option_get_bool_val(optarg); ok++;
       }
       TEST_OPTION("tribune.stop_refresh:", 1) {
-	option_set_max_refresh_delay(optarg, optname, The_Prefs); ok++;
+	printf("tribune.stop_refresh: cette option a été remplacée par \n\t'tribunenews.max_refresh_delay (delai max entre deux mis à jour, en minutes)"
+	       "\n  et\t 'tribunenews.switch_off_coincoin_delay (delay d'inactivité en minutes à partir duquel le coincoin arrête toute activité et passe en horloge)\n"
+	       "ces deux options peuvent être désactivées en mettant leur valeurs à 0\n"
+	       "par defaut, tribunenews.max_refresh_delay=30 (minutes) et tribunenews.switch_off_coincoin_delay=1440 (un jour)\n");
+	exit(0);
+	//	option_set_max_refresh_delay(optarg, optname, The_Prefs); ok++;
+      }
+      TEST_OPTION("tribunenews.max_refresh_delay:", 1) {
+	sscanf(optarg, "%d", &The_Prefs->dlfp_max_refresh_delay); ok++;
+      }
+      TEST_OPTION("tribunenews.switch_off_coincoin_delay:", 1) {
+	sscanf(optarg, "%d", &The_Prefs->dlfp_switch_off_coincoin_delay); ok++;
       }
       TEST_OPTION("news.delay:", 1) {
 	option_set_news_check_delay(optarg,optname,The_Prefs); ok++;
@@ -939,6 +954,10 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("dock.pos:",1) {
 	option_dock_xpos(optarg, optname, The_Prefs); ok++;
       }
+      TEST_OPTION("dock.start_in_boss_mode:",1) {
+	The_Prefs->start_in_boss_mode = option_get_bool_val(optarg); ok++;
+      }
+
       TEST_OPTION("http.site_url:", 1) {
 	option_site_root(optarg,The_Prefs); ok++;
       }
@@ -1020,6 +1039,9 @@ read_coincoin_options (structPrefs *The_Prefs)
       }
       TEST_OPTION("pinnipede.hilight.keyword_color:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_keyword_color); ok++;
+      }
+      TEST_OPTION("pinnipede.plopify_color:", 1) {
+	sscanf(optarg, "%x", &The_Prefs->pp_plopify_color); ok++;
       }
       TEST_OPTION("pinnipede.fortune_bgcolor:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_fortune_bgcolor); ok++;
@@ -1147,9 +1169,11 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->options_file_name = strdup("options");
 
   The_Prefs->dlfp_tribune_check_delay = 30; /* 2 fois par minute */
-  The_Prefs->dlfp_max_refresh_delay = 120; /* 2 heures sans évènement */
-  The_Prefs->tribune_max_msg = 300;
   The_Prefs->dlfp_news_check_delay = 300; /* 1 fois toutes les 5 min */
+
+  The_Prefs->dlfp_max_refresh_delay = 30;   /* 30 minutes entre deux refresh au max */
+  The_Prefs->dlfp_switch_off_coincoin_delay = 24*60; /* au bout d'un jour d'inactivité, le coincoin passe en horloge et arrête les refresh */
+  The_Prefs->tribune_max_msg = 300;
   The_Prefs->debug = 0;
   The_Prefs->verbosity = 0;
 
@@ -1183,6 +1207,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->use_iconwin = 1; /* style windowmaker par defaut */
   The_Prefs->draw_border = 0; /* idem */
   The_Prefs->dock_xpos = The_Prefs->dock_ypos = 0;
+  The_Prefs->start_in_boss_mode = 0;
   The_Prefs->app_name = argv[0];
   The_Prefs->site_root = strdup("linuxfr.org");
   The_Prefs->site_port = 80;
@@ -1214,6 +1239,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_my_msg_color = 0xf07000;
   The_Prefs->pp_answer_my_msg_color = 0xe0b080;
   The_Prefs->pp_keyword_color = 0x008080;
+  The_Prefs->pp_plopify_color = 0xa0a0a0;
 
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;

@@ -25,8 +25,6 @@ void bzero(void *s, size_t n);
 void usleep(unsigned long usec);
 #endif
 
-#define IS_INSIDE(x, y, xmin, ymin, xmax, ymax) ((x) >= (xmin) && (x) <= (xmax) && (y) >= (ymin) && (y) <= (ymax))
-
 #define APPNAME "wmcoincoin"
 #define APP_USERAGENT "wmCoinCoin/" VERSION
 
@@ -132,22 +130,28 @@ struct _tribune_msg_info {
   */
   DLFP_trib_load_rule *tatouage;
 
-  int troll_score:14; /* le niveau de trollitude du post (cf troll_detector.c) */
+  int troll_score:13; /* le niveau de trollitude du post (cf troll_detector.c) */
   int is_my_message:1;
   int is_answer_to_me:1;
+
+  int bidouille_qui_pue:1; /* utilisé par tribune_key_list_test_thread pour éviter de récurser comme un ouf */
   short nb_refs;
   tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 };
 
 /* petite structure pour stockés la liste des mots-clefs qui déclenche la mise en
    valeur du post dans le pinnipede
-   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) */
-typedef struct _HilightKey HilightKey;
-typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_ALL} HilightKeyType;
-struct _HilightKey {
+   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) 
+
+   attention à ne pas abuser des appels à tribune_key_list_test_mi avec des HK_THREAD par milliers ! ça *pourrait*
+   commencer à faire mouliner coincoin (a voir..)
+*/
+typedef struct _KeyList KeyList;
+typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_THREAD, HK_ALL} KeyListType;
+struct _KeyList {
   unsigned char *key;
-  HilightKeyType type;
-  HilightKey *next;
+  KeyListType type;
+  KeyList *next;
 };
 
 
@@ -176,9 +180,10 @@ typedef struct _DLFP_tribune {
   int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
 				(pour aider la reconnaissance de nos messages) */
 
-  HilightKey *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
-					  attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
-					*/
+  KeyList *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
+				attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
+			     */
+  KeyList *plopify_key_list; /* version plopesque du kill-file, même remarque qu'au dessus */
 } DLFP_tribune;
 
 typedef struct _DLFP_comment {
@@ -517,6 +522,18 @@ typedef struct _Dock {
   int horloge_mode;
 
   float trib_trollo_rate, trib_trollo_score;
+
+  /* compteurs mis à jour dans Net_loop (25 fois/sec) */
+  int news_refresh_cnt, news_refresh_delay;
+  int tribune_refresh_cnt, tribune_refresh_delay;
+
+  /* ça ne fait pas doublon avec les 'flag_totooto' de global.h (qui sont la pour eviter les possible race conditions,
+     quoiqu'elles doivent être bien rare puisque wmcc n'est pas multithreadé mais bon)
+     
+     ce champ n'a qu'une valeur d'information
+  */
+  enum { WMCC_UPDATING_NEWS, WMCC_UPDATING_COMMENTS, WMCC_UPDATING_MESSAGES, WMCC_UPDATING_BOARD, WMCC_SENDING_COINCOIN, WMCC_IDLE } wmcc_state_info;
+
 } Dock;
 
 
@@ -574,12 +591,13 @@ tribune_msg_info *check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
 int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, 
 				int *ref_m, int *ref_s, int *ref_num);
 void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
-void tribune_hilight_key_list_add(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type);
-void tribune_hilight_key_list_remove(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type);
-HilightKey *tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist);
-HilightKey *tribune_hilight_key_list_find(HilightKey *hk, const char *s, HilightKeyType t);
-const char* tribune_hilight_key_list_type_name(HilightKeyType t);
-void tribune_hilight_key_list_swap(DLFP_tribune *trib, const char *s, HilightKeyType t);
+KeyList* tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type);
+KeyList* tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type);
+KeyList* tribune_key_list_cleanup(DLFP_tribune *trib, KeyList *first);
+KeyList* tribune_key_list_test_mi(DLFP_tribune *trib, tribune_msg_info *mi, KeyList *klist);
+KeyList* tribune_key_list_find(KeyList *hk, const char *s, KeyListType t);
+const char* tribune_key_list_type_name(KeyListType t);
+KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t);
 
 /* coincoin_tribune.c */
 void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
@@ -676,6 +694,7 @@ void pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
 void pp_minib_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
+void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
 
 /* troll_detector.c */

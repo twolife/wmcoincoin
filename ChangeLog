@@ -1,3 +1,39 @@
+2002-02-24  pouaite  <c0in@altern.org>
+
+	* src/scrollcoin.c, src/pinnipede: pas mal de modifs visibles sur
+	le pinnipede: le scrollcoin fait son apparition, parce finalement
+	y'a des fois où c'est bien, une scrollbar. Et comme son look
+	n'allait pas avec la barre de boutons, elle a été modifiée.. moins
+	grosse, peut être moins moche (mais pas génial non plus..)
+
+	au niveau des options, tribune.stop_refresh a été remplacé par
+	'tribunenews.max_refresh_delay' et
+	'tribunenews.switch_off_coincoin_delay'
+	(voir le fichier d'options pour + d'info)
+	et une option 'dock.start_in_boss_mode' a été rajoutée
+
+	la plopification et la 'mise en relief (avec les crochets)'
+	(par shift+right clic/shift+left clic) peuvent désormais se faire
+	sur les 'threads', il suffit de cliquer dans la bordure à gauche
+	de l'horloge du message.
+
+2002-02-21  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c (plopify_word): ajout d'une nouvelle
+	fonctionnalité: la plopification des malotrus -> shift + right
+	clic sur un login/useragent/mot (fonctionnement similaire au
+	shift+left clic, couleur fixée par 'pinnipede.plopify_color')
+
+2002-02-18  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c, src/editwin.c: mini bugfixes du weekend
+
+2002-02-10  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c: ajout(enfin!) de la sélection de texte. bugfix
+	pour les <u> dans le pinnipède. Masquage automatique du palmipède
+	quand l'applet n'est plus visible. MAJ de wmpanpan.
+
 2002-02-02  pouaite  <c0in@altern.org>
 
 	* src/dock.c (dock_update_pix_trolloscope): augmentation de la

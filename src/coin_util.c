@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.9 2002/01/16 21:27:35 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.10 2002/02/24 22:13:56 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.10  2002/02/24 22:13:56  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.9  2002/01/16 21:27:35  pouaite
   gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
 
@@ -602,4 +605,59 @@ str_hache(const unsigned char *s, int max_len)
     j++; if (j == 4) j = 0;
   }
   return CVINT(v[0],v[1],v[2],v[3]);
+}
+
+unsigned char char_trans[256];
+static int char_trans_init = 0;
+
+static void 
+init_char_trans()
+{
+  unsigned char *trans_accents  = "éèëêÊËÉÈàâáäÀÂÁÄûüùÙçÇîïíìÏÎÍÌôóòõÔÓÒÕñ";
+  unsigned char *trans_accents2 = "eeeeeeeeaaaaaaaauuuucciiiiiiiioooooooon";
+  int i;
+
+  for (i=0; i < 256; i++) {
+    unsigned char *p;
+    if ((p=strchr(trans_accents, i))) {
+      char_trans[i] = trans_accents2[(p - trans_accents)];
+      } else if (i < (unsigned char)'A' || i > (unsigned char)'Z') {
+	char_trans[i] = i;
+      } else {
+	char_trans[i] = i + 'a' - 'A';
+      }
+  }
+  char_trans_init = 1;
+}
+
+unsigned char
+chr_noaccent_tolower(unsigned char c)
+{
+  if (char_trans_init == 0) init_char_trans();
+  return char_trans[c];
+}
+
+void
+str_noaccent_tolower(unsigned char *s)
+{
+  int i;
+  if (s == NULL) return;
+  if (char_trans_init == 0) init_char_trans();
+  i = 0; while(s[i]) {
+    s[i] = char_trans[s[i]]; i++;
+  }
+}
+
+unsigned char *
+str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
+{
+  unsigned char *res;
+  unsigned char *m = strdup(meule);
+  unsigned char *a = strdup(aiguille);
+
+  str_noaccent_tolower(m);
+  str_noaccent_tolower(a);
+  res = strstr(m, a);
+  free(a); free(m);
+  return res;
 }

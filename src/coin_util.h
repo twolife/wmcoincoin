@@ -48,8 +48,18 @@
                          dock->rgba_context->gtable[(rgb>> 8) & 0xff] + \
                          dock->rgba_context->btable[(rgb    ) & 0xff])
 
+#define _RGB2PIXEL(c,r,g,b) (c->rtable[r] + \
+                             c->gtable[g] + \
+                             c->btable[b])
+#define _IRGB2PIXEL(c,rgb) (c->rtable[(rgb>>16) & 0xff] + \
+                            c->gtable[(rgb>> 8) & 0xff] + \
+                            c->btable[(rgb    ) & 0xff])
+
+
 /* macro pour troll_data.h et str_hache */
 #define CVINT(a,b,c,d) (a + (b<<8) + (c<<16) + (d<<24))
+
+#define IS_INSIDE(x, y, xmin, ymin, xmax, ymax) ((x) >= (xmin) && (x) <= (xmax) && (y) >= (ymin) && (y) <= (ymax))
 
 RGBAImage * rimage_create_from_raw(int w, int h, int bpp, const unsigned char *data);
 Pixmap pixmap_create_from_raw(RGBAContext *rc, int w, int h, int bpp, const unsigned char *data);
@@ -68,4 +78,8 @@ char *str_multi_substitute(const char *src, const char **keys, const char **subs
 char *str_substitute(const char *src, const char *key, const char *substitution);
 char *shell_quote(const char *src);
 int str_hache(const unsigned char *s, int max_len);
+unsigned char chr_noaccent_tolower(unsigned char c);
+void str_noaccent_tolower(unsigned char *s);
+unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille);
+
 #endif

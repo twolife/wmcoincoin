@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.6 2002/01/31 11:15:42 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.7 2002/02/24 22:13:56 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.7  2002/02/24 22:13:56  pouaite
+##   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+##
 ##   Revision 1.6  2002/01/31 11:15:42  pouaite
 ##   fix compilation
 ##
@@ -26,6 +29,7 @@ wmcoincoin_SOURCES = \
 	myprintf.c myprintf.h defaultuseragents.h defaultoptionsfile.h \
 	raster.c raster.h troll_detector.c troll_data.h \
 	dock.c useragents_file.c tribune_util.c \
+	scrollcoin.h scrollcoin.c \
 	pinnipede.c editwin.c newswin.c \
 	picohtml.c picohtml.h msgbox.c balloon.c \
 	wmcoincoin.c coincoin.h global.h http.c http.h \

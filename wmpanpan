@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#$VER: wmpanpan v0.02beta 
+#$VER: wmpanpan v0.03beta 
 #
 # wmpanpan, le script le plus con du monde, 
 # qui sauve le monde et votre bureau de ce petit canard.
@@ -19,14 +19,35 @@
 # garde-chasse vient a passer, ou n'importe quoi d'autre...
 #
 # Pour faire joli:
+### update (pouaite): j'ai rajouté un deuxième pan!
 #
-echo "pan!"
+echo "pan! pan!"
 #
 # Ici, le noeud du probleme, le coeur du processus...
 #
 ### killall wmcoincoin
+
+case $1 in
+    -h)
+	echo "wmpanpan [option], l'enemi du coincoin"
+	echo "sans option, il tue tous les wmcoincoins"
+	echo "si option='boss_in', tous les coincoins  passent en boss-mode"
+	echo "si option='boss_out', tous les coincoins reviennent dans l'état où ils étaient"
+	exit
+	;;
+    boss_in)
+	SIG="-USR1"
+	;;
+    boss_out)
+	SIG="-USR2"
+	;;
+esac
+
 ### patch de fpy pour toujours plus de portabilité (et il tue aussi les wmcoincoin-kde) !
-kill `ps -elf | grep wmcoincoin | grep -v grep | awk '{print $4}'`
+### update: enlevé car il tue aussi les commande lancées avec 'wmcoincoin' dans leurs arguments !!
+###kill $SIG `ps -elf | grep wmcoincoin | grep -v grep | awk '{print $4}'`
+killall $SIG wmcoincoin wmcoincoin-kde
+
 # Pour faire joli aussi, et justifier le "panpan":
 #
 echo "pan!"

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.10  2002/02/24 22:13:56  pouaite
+dnl   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+dnl
 dnl   Revision 1.9  2002/01/30 21:03:45  pouaite
 dnl   correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
 dnl
@@ -30,7 +33,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.4)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.5)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name
@@ -86,7 +89,10 @@ case "$host" in
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
 	  LIBS="${LIBS} /lib/libregex.a -lm"        
-			       ;;
+	  ;;
+    *-darwin*)
+          echo "darwin detected !"
+          ;;
     *)
          echo "vous compilez sur $host , c'est original"
          ;;

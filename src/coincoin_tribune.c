@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.19 2002/02/03 23:07:32 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.20 2002/02/24 22:13:56 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.20  2002/02/24 22:13:56  pouaite
+  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
+
   Revision 1.19  2002/02/03 23:07:32  pouaite
   *** empty log message ***
 
@@ -466,7 +469,7 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
   appelle le programme externe (dans l'ordre des id) pour chaque nouveau message reçu
 */
 static void
-dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
+dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
 {
   tribune_msg_info *it;
   
@@ -503,7 +506,8 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     snprintf(strollscore, 20, "%d", it->troll_score);
     if (it->is_my_message) stypemessage = "1";
     else if (it->is_answer_to_me) stypemessage = "2";
-    else if (tribune_hilight_key_list_test_mi(it, trib->hilight_key_list)) stypemessage = "3";
+    else if (tribune_key_list_test_mi(trib, it, trib->hilight_key_list)) stypemessage = "3";
+    else if (tribune_key_list_test_mi(trib, it, trib->plopify_key_list)) stypemessage = "4";
     else stypemessage = "0";
 
     subs[0] = qlogin;

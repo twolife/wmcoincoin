@@ -17,7 +17,7 @@
 #  include <sys/socket.h>
 #  include <sys/time.h>
 #  include <sys/stat.h>
-#  include <sys/poll.h>
+/*#  include <sys/poll.h>*/ /* TODO: se souvenir des raisons de la présence de ce #include (genant pour darwin, inutile sous linux..) */
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
@@ -356,12 +356,16 @@ http_connect(const char *host_name, int port)
 	  ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
 	  host = gethostbyname(host_name); /* rahhh comme c'est lent :-( */
 	  ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
-	  snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
-		   (unsigned char)host->h_addr_list[0][0],
-		   (unsigned char)host->h_addr_list[0][1],
-		   (unsigned char)host->h_addr_list[0][2],
-		   (unsigned char)host->h_addr_list[0][3]);
-	  BLAHBLAH(1, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host->h_name, http_used_ip));
+	  if (host) {
+	    snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
+		     (unsigned char)host->h_addr_list[0][0],
+		     (unsigned char)host->h_addr_list[0][1],
+		     (unsigned char)host->h_addr_list[0][2],
+		     (unsigned char)host->h_addr_list[0][3]);
+	    BLAHBLAH(1, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host->h_name, http_used_ip));
+	  } else {
+	    snprintf(http_used_ip, 20, "???.???.???.???");
+	  }
 	  /*	  t1 = times(NULL);
 		  printf(" %f millisecondes\n", (t1-t0)*10.0);*/
 	}
