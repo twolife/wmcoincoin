@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-03-01 23:16+0100\n"
+"POT-Creation-Date: 2003-03-02 18:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -64,7 +64,7 @@ msgstr ""
 msgid "Connected succesfully!\n"
 msgstr ""
 
-#: src/http_win.c:113 src/http_unix.c:138
+#: src/http_win.c:113 src/http_unix.c:141
 #, c-format
 msgid "Connection timed out (timeout=%d sec)!\n"
 msgstr ""
@@ -103,78 +103,78 @@ msgstr ""
 msgid "hide balloon\n"
 msgstr ""
 
-#: src/http_unix.c:65
+#: src/http_unix.c:68
 msgid "Basic connect (can BLOCK THE COINCOIN)...\n"
 msgstr ""
 
-#: src/http_unix.c:171
+#: src/http_unix.c:174
 msgid ""
 "Welcome to the forked gethostbyname, everything is experimental, beware the "
 "zombies\n"
 msgstr ""
 
-#: src/http_unix.c:174
+#: src/http_unix.c:177
 #, c-format
 msgid "Broken pipe: %s\n"
 msgstr ""
 
-#: src/http_unix.c:178
+#: src/http_unix.c:181
 #, c-format
 msgid ""
 "Ooooops, it looks like there is a throng of zombies out there\n"
 "the fork failed: %s"
 msgstr ""
 
-#: src/http_unix.c:184
+#: src/http_unix.c:187
 #, c-format
 msgid "son: pipe full (%s)\n"
 msgstr ""
 
-#: src/http_unix.c:186
+#: src/http_unix.c:189
 msgid "son: gethostbyname going on...\n"
 msgstr ""
 
-#: src/http_unix.c:188
+#: src/http_unix.c:191
 msgid "son: gethostbyname finished.\n"
 msgstr ""
 
-#: src/http_unix.c:194
+#: src/http_unix.c:197
 #, c-format
 msgid "son: gethostbyname on '%s' failed.\n"
 msgstr ""
 
-#: src/http_unix.c:206
+#: src/http_unix.c:209
 #, c-format
 msgid "daddy: pipe full (%s), what will do now ?\n"
 msgstr ""
 
-#: src/http_unix.c:230
+#: src/http_unix.c:233
 msgid "The son got the pipe full again!\n"
 msgstr ""
 
-#: src/http_unix.c:233
+#: src/http_unix.c:236
 #, c-format
 msgid "What a fucking pipe! %s\n"
 msgstr ""
 
-#: src/http_unix.c:242
+#: src/http_unix.c:245
 msgid "select .. awaiting\n"
 msgstr ""
 
-#: src/http_unix.c:244
+#: src/http_unix.c:247
 msgid "select .. interrupted\n"
 msgstr ""
 
-#: src/http_unix.c:246
+#: src/http_unix.c:249
 #, c-format
 msgid "select .. problem : %s\n"
 msgstr ""
 
-#: src/http_unix.c:257
+#: src/http_unix.c:260
 msgid "We're waiting for the son... Come here boy !\n"
 msgstr ""
 
-#: src/http_unix.c:261
+#: src/http_unix.c:264
 #, c-format
 msgid "Daddy: I couldn't read from my son :-/ (len=%d got '%s') (lasterr=%s)\n"
 msgstr ""
@@ -276,182 +276,182 @@ msgstr ""
 msgid "close msgbox\n"
 msgstr ""
 
-#: src/http.c:166
+#: src/http.c:184
 msgid "<i>There hasn't been any http error yet</i>"
 msgstr ""
 
-#: src/http.c:171
+#: src/http.c:189
 #, c-format
 msgid "Last error occured at: <b>%02d:%02d:%02d</b>"
 msgstr ""
 
-#: src/http.c:176
+#: src/http.c:194
 #, c-format
 msgid "Error: <b><font color=#800000>%s</font></b><br>"
 msgstr ""
 
-#: src/http.c:179
+#: src/http.c:197
 #, c-format
 msgid "<br>The last error was: %s<br>for the URL:<tt>%s</tt><br>"
 msgstr ""
 
-#: src/http.c:185
+#: src/http.c:203
 #, c-format
 msgid ""
 "%s<br>%s<br>%s: <tt>%s</tt><br>Host IP: <font color=#0000ff>%s</font><br>%s"
 msgstr ""
 
-#: src/http.c:186
+#: src/http.c:204
 msgid "<b>There has just been an error !!</b>"
 msgstr ""
 
-#: src/http.c:186
+#: src/http.c:204
 msgid "The last transfer went fine."
 msgstr ""
 
-#: src/http.c:187
+#: src/http.c:205
 msgid "faulty URL"
 msgstr ""
 
-#: src/http.c:187
+#: src/http.c:205
 msgid "We have just downloaded"
 msgstr ""
 
-#: src/http.c:190
+#: src/http.c:208
 #, c-format
 msgid ""
 "Download going on...<br>URL: <tt>%s</tt><br>IP: <font color=#0000ff>%s</"
 "font><br>"
 msgstr ""
 
-#: src/http.c:192
+#: src/http.c:210
 #, c-format
 msgid "Resolving name '%s'...<br>"
 msgstr ""
 
-#: src/http.c:307
+#: src/http.c:325
 #, c-format
 msgid "timeout (t=%d milliseconds)..\n"
 msgstr ""
 
-#: src/http.c:322
+#: src/http.c:340
 #, c-format
 msgid "http_iread: socket error, res=%d (%s)\n"
 msgstr ""
 
-#: src/http.c:326
+#: src/http.c:344
 msgid "http_iread: Timeout...\n"
 msgstr ""
 
-#: src/http.c:394
+#: src/http.c:412
 msgid "http_iwrite: Timeout...\n"
 msgstr ""
 
-#: src/http.c:472
+#: src/http.c:491
 #, c-format
 msgid ""
 "get_host_ip_str_bloq('%s') -> if the network lags, the coincoin can be "
 "blocked here\n"
 msgstr ""
 
-#: src/http.c:595
+#: src/http.c:609
 #, c-format
 msgid "Unable to create a socket ! (%s) [ip=%s]"
 msgstr ""
 
-#: src/http.c:603
+#: src/http.c:617
 msgid "connecting...\n"
 msgstr ""
 
-#: src/http.c:616
+#: src/http.c:630
 #, c-format
 msgid "connection failed: %s..\n"
 msgstr ""
 
-#: src/http.c:669
+#: src/http.c:683
 #, c-format
 msgid "Unable to resolve '%s'"
 msgstr ""
 
-#: src/http.c:759
+#: src/http.c:773
 msgid "[%<MAG %s>]: %<yel %s>"
 msgstr ""
 
-#: src/http.c:788
+#: src/http.c:803
 #, c-format
 msgid "http_skip_header has a socket issue ! (%s)"
 msgstr ""
 
-#: src/http.c:809
+#: src/http.c:824
 #, c-format
 msgid "http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"
 msgstr ""
 
-#: src/http.c:814
+#: src/http.c:829
 msgid ""
 "Damned, the chunk_encoding has gone down the tubes on the following "
 "request:\n"
 msgstr ""
 
-#: src/http.c:837
+#: src/http.c:852
 #, c-format
 msgid "error in chunk '%s'\n"
 msgstr ""
 
-#: src/http.c:862
+#: src/http.c:877
 #, c-format
 msgid "http_read has encountered a socket problem, pos=%d, len=%d !(%s)"
 msgstr ""
 
-#: src/http.c:870
+#: src/http.c:885
 #, c-format
 msgid "http_read: length finally requested: %d, received: %d, new pos=%ld\n"
 msgstr ""
 
-#: src/http.c:908
+#: src/http.c:923
 #, c-format
 msgid ""
 "http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"
 msgstr ""
 
-#: src/http.c:914
+#: src/http.c:929
 #, c-format
 msgid "http_get_line messed up (got=%d): %s!"
 msgstr ""
 
-#: src/http.c:918
+#: src/http.c:933
 msgid "http_get_line sent (cnt=%d): '%<yel %s>'\n"
 msgstr ""
 
-#: src/http.c:963
+#: src/http.c:978
 #, c-format
 msgid "http_send_request/debug, unable to open '%s':%s\n"
 msgstr ""
 
-#: src/http.c:1070
+#: src/http.c:1085
 #, c-format
 msgid "http_get couldn't send its request: %s"
 msgstr ""
 
-#: src/http.c:1074
+#: src/http.c:1089
 msgid "ok, request sent\n"
 msgstr ""
 
-#: src/http.c:1129
+#: src/http.c:1144
 msgid "Quack ! Missed"
 msgstr ""
 
-#: src/http.c:1142
+#: src/http.c:1157
 #, c-format
 msgid "%s: too big (bsize=%d!), let's cut\n"
 msgstr ""
 
-#: src/http.c:1150
+#: src/http.c:1165
 #, c-format
 msgid "problem while reading %s: %s\n"
 msgstr ""
 
-#: src/http.c:1156
+#: src/http.c:1171
 msgid "%s, read: %<mag %s>\n"
 msgstr ""
 
@@ -864,57 +864,57 @@ msgstr ""
 msgid "Uuuurg, no helvetica/12 - iso8859 , I prefer to die.\n"
 msgstr ""
 
-#: src/board_util.c:248
+#: src/board_util.c:251
 msgid ""
 "sniff? sniff ? soit vous vous amusez a faire de threads de folie, soit ca "
 "sent le BEUGGUE!\n"
 msgstr ""
 
-#: src/board_util.c:656
+#: src/board_util.c:660
 #, c-format
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
-#: src/board_util.c:671
+#: src/board_util.c:677
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
 msgstr ""
 
-#: src/board_util.c:832
+#: src/board_util.c:839
 msgid "IPOT(tm) detected"
 msgstr ""
 
-#: src/board_util.c:834
+#: src/board_util.c:841
 #, c-format
 msgid "but where is '%s' ?"
 msgstr ""
 
-#: src/board_util.c:838
+#: src/board_util.c:845
 msgid "[IPOT(tm)]"
 msgstr ""
 
-#: src/board_util.c:840
+#: src/board_util.c:847
 msgid "Awww, we turn around and around and around and around..."
 msgstr ""
 
-#: src/board_util.c:848
+#: src/board_util.c:855
 #, c-format
 msgid "Hello from %.30s in the boitakon ! (because %s=%.20s)"
 msgstr ""
 
-#: src/board_util.c:852
+#: src/board_util.c:859
 #, c-format
 msgid "Hello from %.30s who was eaten by the boitakon"
 msgstr ""
 
-#: src/board_util.c:854
+#: src/board_util.c:861
 #, c-format
 msgid ""
 "Hello from %.30s in the boitakon, BUT YOU HAVE JUST FOUND A BUG IN THE "
 "BOITAKON :-("
 msgstr ""
 
-#: src/board_util.c:886
+#: src/board_util.c:893
 #, c-format
 msgid "I don't fucking know %s"
 msgstr ""
@@ -1137,194 +1137,194 @@ msgid ""
 "translations (default: %<grn %s>)\n"
 msgstr ""
 
-#: src/prefs_gestion.c:111
+#: src/prefs_gestion.c:114
 msgid "Activation of the secret %<YEL debug> mode (dbg=%d)!\n"
 msgstr ""
 
-#: src/prefs_gestion.c:159
+#: src/prefs_gestion.c:162
 #, c-format
 msgid "the file '%s' is not a directory !!! trash it please\n"
 msgstr ""
 
-#: src/prefs_gestion.c:164
+#: src/prefs_gestion.c:167
 msgid "creating '%<YEL %s>'..\n"
 msgstr ""
 
-#: src/prefs_gestion.c:166
+#: src/prefs_gestion.c:169
 msgid ""
 "can't create the directory '%s'\n"
 "[error: '%<red %s>']\n"
 msgstr ""
 
-#: src/prefs_gestion.c:171
+#: src/prefs_gestion.c:174
 #, c-format
 msgid "There's something strange with the directory '%s' [err=%s]\n"
 msgstr ""
 
-#: src/prefs_gestion.c:188
+#: src/prefs_gestion.c:191
 #, c-format
 msgid "can't read '%s' : %s\n"
 msgstr ""
 
-#: src/prefs_gestion.c:192
+#: src/prefs_gestion.c:195
 #, c-format
 msgid "can't write '%s' : %s\n"
 msgstr ""
 
-#: src/prefs_gestion.c:217
+#: src/prefs_gestion.c:220
 #, c-format
 msgid "ah ben y'a pas le fichier '%s', on va le creer\n"
 msgstr ""
 
-#: src/prefs_gestion.c:222
+#: src/prefs_gestion.c:225
 #, c-format
 msgid ""
 "\n"
 "desole, demerdez-vous pour copier '%s' dans votre ~/.wmcoincoin ..\n"
 msgstr ""
 
-#: src/prefs_gestion.c:225
+#: src/prefs_gestion.c:228
 msgid ""
 "\n"
 "arretez de faire n'importe quoi dans votre ~/.wmcoincoin..\n"
 "\n"
 msgstr ""
 
-#: src/prefs_gestion.c:231
+#: src/prefs_gestion.c:234
 #, c-format
 msgid ""
 "wmcoincoin a du etre mal installe, je ne trouve pas le fichier '%s' par "
 "defaut dans le rep '%s'...\n"
 msgstr ""
 
-#: src/prefs_gestion.c:235
+#: src/prefs_gestion.c:238
 #, c-format
 msgid "utilisation du fichier se trouvant dans '%s'\n"
 msgstr ""
 
-#: src/prefs_gestion.c:257
+#: src/prefs_gestion.c:260
 msgid "using option file '%<yel %s>'\n"
 msgstr ""
 
-#: src/prefs_gestion.c:269
+#: src/prefs_gestion.c:272
 msgid ""
 "Error during while reading '%s':\n"
 "%<YEL %s>\n"
 msgstr ""
 
-#: src/prefs_gestion.c:379
+#: src/prefs_gestion.c:382
 #, c-format
 msgid "key_list changed: %d\n"
 msgstr ""
 
-#: src/prefs_gestion.c:478
+#: src/prefs_gestion.c:481
 #, c-format
 msgid "Error while rereading options [%s]<br>%s"
 msgstr ""
 
-#: src/prefs_gestion.c:490
+#: src/prefs_gestion.c:493
 msgid "rereading of options '%<YEL %s>' successful\n"
 msgstr ""
 
-#: src/prefs_gestion.c:627
+#: src/prefs_gestion.c:632
 msgid "You changed the site/proxy, gethostbyname soon in progress\n"
 msgstr ""
 
-#: src/prefs_gestion.c:706
+#: src/prefs_gestion.c:711
 #, c-format
 msgid "site removed: '%s'\n"
 msgstr ""
 
-#: src/prefs_gestion.c:737
+#: src/prefs_gestion.c:742
 #, c-format
 msgid "new site added: '%s'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:350
+#: src/wmcoincoin.c:353
 #, c-format
 msgid ""
 "this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>You will have "
 "to launch it by hand (copy to the clipboard with a right click, etc.)"
 msgstr ""
 
-#: src/wmcoincoin.c:361
+#: src/wmcoincoin.c:364
 #, c-format
 msgid ""
 "You didn't define the external browser in ~/.wmcoincoin/options (%s), no "
 "need to click on the <b>[url]</b>..."
 msgstr ""
 
-#: src/wmcoincoin.c:427
+#: src/wmcoincoin.c:430
 msgid "Spawning \"%<YEL %s>\"\n"
 msgstr ""
 
-#: src/wmcoincoin.c:443
+#: src/wmcoincoin.c:446
 msgid "Can't get window attributes.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:560
+#: src/wmcoincoin.c:563
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%"
 "s<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:562
+#: src/wmcoincoin.c:565
 msgid "Check your cookies !"
 msgstr ""
 
-#: src/wmcoincoin.c:564 src/wmcoincoin.c:576
+#: src/wmcoincoin.c:567 src/wmcoincoin.c:578
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:595
+#: src/wmcoincoin.c:596
 msgid "message posted: '%<YEL %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:596
+#: src/wmcoincoin.c:597
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:641
+#: src/wmcoincoin.c:642
 #, c-format
 msgid "[%s] Damned ! There has been an error<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:677
+#: src/wmcoincoin.c:678
 #, c-format
 msgid ""
 "Fork failed...(%s)..\n"
 " you sux\n"
 msgstr ""
 
-#: src/wmcoincoin.c:688
+#: src/wmcoincoin.c:689
 #, c-format
 msgid ""
 "Exec of wmccc failed...(%s)..\n"
 " you sux (wmccc not in path?)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:720
+#: src/wmcoincoin.c:721
 #, c-format
 msgid "Unable to open '%s' for %s the state of the beast [%s]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:720
+#: src/wmcoincoin.c:721
 msgid "reading"
 msgstr ""
 
-#: src/wmcoincoin.c:720
+#: src/wmcoincoin.c:721
 msgid "writing"
 msgstr ""
 
-#: src/wmcoincoin.c:739
+#: src/wmcoincoin.c:740
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr ""
 
-#: src/wmcoincoin.c:776
+#: src/wmcoincoin.c:778
 msgid ""
 "<p align=center><b>Titles of the news</b></p><font color=blue><tt>Left "
 "Click</tt></font><tab>: display the article currently scrolling<br><font "
@@ -1333,7 +1333,7 @@ msgid ""
 "news window<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:783
+#: src/wmcoincoin.c:785
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1349,7 +1349,7 @@ msgid ""
 "green blinking shows a change in the value of your XP"
 msgstr ""
 
-#: src/wmcoincoin.c:793
+#: src/wmcoincoin.c:795
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1357,7 +1357,7 @@ msgid ""
 "error message<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:797
+#: src/wmcoincoin.c:799
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1369,14 +1369,14 @@ msgid ""
 "resolution"
 msgstr ""
 
-#: src/wmcoincoin.c:804
+#: src/wmcoincoin.c:806
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
 "color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"
 msgstr ""
 
-#: src/wmcoincoin.c:808
+#: src/wmcoincoin.c:810
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1385,7 +1385,7 @@ msgid ""
 "tt></font>: cancel all new messages"
 msgstr ""
 
-#: src/wmcoincoin.c:813
+#: src/wmcoincoin.c:815
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1396,7 +1396,7 @@ msgid ""
 "read the <tt>~/.wmcoincoin/options</tt> file"
 msgstr ""
 
-#: src/wmcoincoin.c:818
+#: src/wmcoincoin.c:820
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1404,88 +1404,88 @@ msgid ""
 "tt></font>: show/hide the <b>pinnipede teletype</b>"
 msgstr ""
 
-#: src/wmcoincoin.c:824
+#: src/wmcoincoin.c:826
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr ""
 
-#: src/wmcoincoin.c:957
+#: src/wmcoincoin.c:959
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:970
+#: src/wmcoincoin.c:972
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1383
+#: src/wmcoincoin.c:1385
 msgid "Creating the windows icon. Just tell me if it makes your WM crash.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1515
+#: src/wmcoincoin.c:1517
 msgid "Couldn't create window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1527
+#: src/wmcoincoin.c:1529
 msgid "Couldn't create icon window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1540
+#: src/wmcoincoin.c:1542
 #, c-format
 msgid "Bad dimensions for the pixmap skin (expected 64x320, found %dx%d)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1543
+#: src/wmcoincoin.c:1545
 msgid "Unable to load the pixmap '%<grn %s>'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1620
+#: src/wmcoincoin.c:1622
 msgid "Couldn't create text property\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1634
+#: src/wmcoincoin.c:1636
 msgid "Couldn't create graphics context\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1724 src/wmcoincoin.c:1729 src/wmcoincoin.c:1734
-#: src/wmcoincoin.c:1740 src/wmcoincoin.c:1747 src/wmcoincoin.c:1754
+#: src/wmcoincoin.c:1726 src/wmcoincoin.c:1731 src/wmcoincoin.c:1736
+#: src/wmcoincoin.c:1742 src/wmcoincoin.c:1749 src/wmcoincoin.c:1756
 #, c-format
 msgid ""
 "sigaction: erreur %d (%s)\n"
 " essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1818
+#: src/wmcoincoin.c:1820
 msgid "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1829
+#: src/wmcoincoin.c:1831
 #, c-format
 msgid "locale used: %s\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1855
+#: src/wmcoincoin.c:1857
 msgid "%<YEL tags not encoded  >"
 msgstr ""
 
-#: src/wmcoincoin.c:1856
+#: src/wmcoincoin.c:1858
 msgid "%<YEL tags encoded      >"
 msgstr ""
 
-#: src/wmcoincoin.c:1857
+#: src/wmcoincoin.c:1859
 msgid "%<YEL without underpants>"
 msgstr ""
 
-#: src/wmcoincoin.c:1858
+#: src/wmcoincoin.c:1860
 msgid "%<YEL prrrrrrt          >"
 msgstr ""
 
-#: src/wmcoincoin.c:1955
+#: src/wmcoincoin.c:1957
 #, c-format
 msgid "Unable to load font %s , trying iso8859-1\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1959
+#: src/wmcoincoin.c:1961
 #, c-format
 msgid "Unable to load font %s, aborting\n"
 msgstr ""
@@ -1958,35 +1958,35 @@ msgstr ""
 msgid "Invalid argument for option 'pinnipede.url_replace' here: '%.20s'\n"
 msgstr ""
 
-#: src/prefs.c:840
+#: src/prefs.c:842
 msgid "coin ! coin !"
 msgstr ""
 
-#: src/prefs.c:1059
+#: src/prefs.c:1061
 #, c-format
 msgid "Invalid value for option '%s' (must be between %d and %d)"
 msgstr ""
 
-#: src/prefs.c:1061
+#: src/prefs.c:1063
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a value of type on/off, 1/0, true/"
 "false or yes/no"
 msgstr ""
 
-#: src/prefs.c:1064
+#: src/prefs.c:1066
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a hexadecimal RGB color, with the "
 "RRGGBB format"
 msgstr ""
 
-#: src/prefs.c:1064
+#: src/prefs.c:1066
 #, c-format
 msgid "Error, the '%s' option only accepts one colour value"
 msgstr ""
 
-#: src/prefs.c:1068
+#: src/prefs.c:1070
 #, c-format
 msgid ""
 "Invalid value for option '%s': must be a hexadecimal RGB colour, with the "
@@ -1994,62 +1994,62 @@ msgid ""
 "mode)"
 msgstr ""
 
-#: src/prefs.c:1514
+#: src/prefs.c:1522
 msgid "Watch out darling, it's gonnah cut\n"
 msgstr ""
 
-#: src/prefs.c:1515
+#: src/prefs.c:1523
 #, c-format
 msgid "the option '%s' is valid but not handled, WHAT A SHAME"
 msgstr ""
 
-#: src/prefs.c:1535
+#: src/prefs.c:1543
 msgid ""
 "I think you're totally dumb with the includes of option files (infinite "
 "recursion ?)\n"
 msgstr ""
 
-#: src/prefs.c:1541
+#: src/prefs.c:1549
 msgid "You didn't tell me of any filename\n"
 msgstr ""
 
-#: src/prefs.c:1552
+#: src/prefs.c:1560
 #, c-format
 msgid "Unable to open file '%s' for reading [%s]\n"
 msgstr ""
 
-#: src/prefs.c:1554
+#: src/prefs.c:1562
 #, c-format
 msgid "Unable to open file '%s' for reading\n"
 msgstr ""
 
-#: src/prefs.c:1575
+#: src/prefs.c:1583
 #, c-format
 msgid ""
 "line %d: attempt to use a site pref before any 'site:' option has been used\n"
 msgstr ""
 
-#: src/prefs.c:1592
+#: src/prefs.c:1600
 #, c-format
 msgid "line %d: option '%s' is a site option\n"
 msgstr ""
 
-#: src/prefs.c:1596
+#: src/prefs.c:1604
 #, c-format
 msgid "line %d: option '%s' can't be used as a site option\n"
 msgstr ""
 
-#: src/prefs.c:1607
+#: src/prefs.c:1615
 #, c-format
 msgid " [line %d] %s\n"
 msgstr ""
 
-#: src/prefs.c:1612
+#: src/prefs.c:1620
 #, c-format
 msgid "[line %d] unknown option '%s'"
 msgstr ""
 
-#: src/prefs.c:1642
+#: src/prefs.c:1650
 msgid ""
 "oooooooh !!! you didn't define at least *ONE* site, you bad boy.\n"
 "i do it for you, but this is the last time\n"

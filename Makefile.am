@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.21 2002/09/08 14:28:44 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.22 2003/03/02 17:56:25 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.22  2003/03/02 17:56:25  pouaite
+##   wmcoincoin-2.4.4a.tar.gz is ready for distribution
+##
 ##   Revision 1.21  2002/09/08 14:28:44  pouaite
 ##   bugfixes salutaires
 ##
@@ -95,3 +98,4 @@ nightly: dist
 
 pkgdata_DATA = options README wmcoincoin.spec
 
+CLEANFILES = stamp-h

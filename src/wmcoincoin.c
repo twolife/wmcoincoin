@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.77 2003/03/02 14:41:22 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.78 2003/03/02 17:56:26 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.78  2003/03/02 17:56:26  pouaite
+  wmcoincoin-2.4.4a.tar.gz is ready for distribution
+
   Revision 1.77  2003/03/02 14:41:22  pouaite
   ce commit est dédié à la mémoire de jacques martin
 
@@ -540,47 +543,45 @@ wmcc_log_http_request(Site *s, HttpRequest *r)
  */
 char *formate_erreur( char *tribune, char *message_ignoble )
 {
-	char *debut, *fin, *erreur;
-	int taille;
-	char *joli_message;
-	int content = 0;
-
-	debut = strstr( message_ignoble, "<div class=\"menubar\">" );
-
-	if ( NULL != debut ) 
-	{
-		// Chouette, c'est bien le template de linuxfr
-		debut = strstr( debut, "</div>" ) + 6;
-		if ( NULL != debut ) {	
-			fin = strstr( debut, "<div" );
-			if ( NULL != fin ) {
-				taille = fin - debut;
-				erreur = strdup( debut );
-				erreur[taille] = 0;	 // j'ai honte
-				
-				if ( NULL != strstr( erreur, "XP >=" )	)
-				{
-					joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
-								"the server answered:<p>%s<p>%s"), tribune, erreur,
-								_("Check your cookies !") );
-				} else {
-					joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
-								"the server answered:<p>%s"), tribune, erreur );
-				}
-
-				// Ca a marche \o/
-				content = 1;
-			}
-		}			
-	}
-	
-	if ( ! content ) 
-	{
-		joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
-				"the server answered:<p>%s"), tribune, message_ignoble );	
-	}
-	
-	return joli_message;
+  char *debut, *fin, *erreur;
+  int taille;
+  char *joli_message = NULL;
+  int content = 0;
+  
+  debut = strstr( message_ignoble, "<div class=\"menubar\">" );
+  
+  if ( NULL != debut ) 
+    {
+      // Chouette, c'est bien le template de linuxfr
+      debut = strstr( debut, "</div>" ) + 6;
+      if ( NULL != debut ) {	
+        fin = strstr( debut, "<div" );
+        if ( NULL != fin ) {
+          taille = fin - debut;
+          erreur = strdup( debut );
+          erreur[taille] = 0;	 // j'ai honte
+          
+          if ( NULL != strstr( erreur, "XP >=" )	)
+            {
+              joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+                                           "the server answered:<p>%s<p>%s"), tribune, erreur,
+                                         _("Check your cookies !") );
+            } else {
+              joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+                                           "the server answered:<p>%s"), tribune, erreur );
+            }
+          
+          // Ca a marche \o/
+          content = 1;
+        }
+      }
+    }
+  
+  if ( ! content ) {
+    joli_message = str_printf( _("[%s] Ooops, there must have been a little problem, "
+                                 "the server answered:<p>%s"), tribune, message_ignoble );	
+  }
+  return joli_message;
 }
 
 /* 
