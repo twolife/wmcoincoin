@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.4 2002/01/12 19:03:54 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.5 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.5  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.4  2002/01/12 19:03:54  pouaite
   bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
 
@@ -339,7 +342,7 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       }
 
       /* ca c'est recent (v2.2) et c'est Bien(tm) */
-      len = convert_to_ascii(tok, tok, MAX_TOK_LEN, 0);
+      len = convert_to_ascii(tok, tok, MAX_TOK_LEN, 0, 0);
       
       w = XTextWidth(cur_fn, tok, len);
       

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.21 2002/02/26 22:02:07 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.22 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.22  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.21  2002/02/26 22:02:07  pouaite
   bugfix gruikissime pour les pbs de lag sous cygwin
 
@@ -566,7 +569,7 @@ sigpipe_signal(int signum UNUSED) {
 /* poreil ! */
 void
 sigchld_signal(int signum UNUSED) {
-  BLAHBLAH(2,fprintf(stderr, "SIGCHLD reçu ! (certainement ispell)\n"));
+  BLAHBLAH(2,fprintf(stderr, "SIGCHLD reçu !\n"));
   /* je comprends pas pourquoi un wait() ici n'élimine pas les zombies ... 
      tant pis, ça marche bien comme ça avec le bon gros kill_ispell d'ours */
 }

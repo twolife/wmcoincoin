@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.16 2002/02/24 22:13:56 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.17 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.17  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.16  2002/02/24 22:13:56  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -756,7 +759,7 @@ dlfp_updatenews(DLFP *dlfp)
 	if (p == NULL) { news_err = 3; break; }
 	*p = 0;
 	p = strstr(s, news_title_sign) + strlen(news_title_sign);
-	convert_to_ascii(title, p, 512, 0);
+	convert_to_ascii(title, p, 512, 0, 0);
       } else if (strstr(s, news_url_sign)) {
 	char *p;
 	if (l_cnt != 2) { news_err = 4; break; }

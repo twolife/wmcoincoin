@@ -71,7 +71,7 @@ void colorize_black_pixmap(char **pixtxt, int tint);
 /* construit un 'nom' à partir des premiers mots du useragent */
 void make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_sz);
 void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int *screen_y);
-int convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp);
+int convert_to_ascii(char *dest, const char *src, int dest_sz, int with_bug_amp, int special_encode_ltgt);
 int str_is_empty(const char *s);
 char *str_multi_str(const char *src, const char **keys, int nb_keys, int *key_idx);
 char *str_multi_substitute(const char *src, const char **keys, const char **substitutions, int nkeys);

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.10 2002/02/24 22:13:56 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.11 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.11  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.10  2002/02/24 22:13:56  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -274,7 +277,7 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
    cette fonction est utilisee par picohtml.c et coincoin_tribune.c
 */
 int
-convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
+convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp, int special_encode_ltgt)
 {
   int id, is;
 
@@ -282,7 +285,9 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
   static const struct {
     char *sign;
     char *c;
-  } tab[] = {{"amp;", "&"},
+  } tab[] = {{"lt;", "\t<"}, /* les deux premier sont utilisés si 'special_encode_lt_gt' non nul */
+	     {"gt;", "\t>"},
+	     {"amp;", "&"},
 	     {"quot;", "\"",},
 	     {"gt;",">",},
 	     {"lt;","<",},
@@ -420,7 +425,7 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
 	}
       }
 
-      i = 0; found = -1;
+      i = (special_encode_ltgt && is_bug == 0) ? 0 : 2; found = -1;
       while (tab[i].sign) {
 	if (strncmp(tab[i].sign, src+is+1, strlen(tab[i].sign))==0) {
 	  is += strlen(tab[i].sign)+1;

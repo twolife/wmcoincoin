@@ -1,3 +1,9 @@
+2002-02-27  pouaite  <c0in@altern.org>
+
+	* soirée gruik, correction d'un petit pb sur cygwin et
+	reconnaissance plus précise des tags html (mais porchou-style).. a
+	tester un peu
+
 2002-02-24  pouaite  <c0in@altern.org>
 
 	* src/scrollcoin.c, src/pinnipede: pas mal de modifs visibles sur

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.6 2002/02/24 22:13:57 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.7 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.7  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.6  2002/02/24 22:13:57  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -125,14 +128,16 @@ decoupe_bloc(unsigned char *start, unsigned char *end, int in_tag)
   /* recherche un tag (ouverture + fermeture) complet dans le bloc
      si on n'en trouve qu'un partie, on considère que c'est un mot de na><0r */
   for (s = start; s < end; s++) {
-    if (*s == '<' && tagstart == NULL) { tagstart = s; }
-    if (*s == '>' && tagstart != NULL) { tagend = s; break; }
+    if (*s == '\t' && s < end-1) {
+      if (s[1] == '<' && tagstart == NULL) { tagstart = s; }
+      if (s[1] == '>' && tagstart != NULL) { tagend = s; break; }
+    }
   }
   
   if (tagstart && tagend) {
     wl = decoupe_bloc(start, tagstart, 0);
-    wl = wordlist_merge(wl, decoupe_bloc(tagstart+1, tagend, 1));
-    wl = wordlist_merge(wl, decoupe_bloc(tagend+1, end, 0));
+    wl = wordlist_merge(wl, decoupe_bloc(tagstart+2, tagend, 1));
+    wl = wordlist_merge(wl, decoupe_bloc(tagend+2, end, 0));
   } else {
     /* si le mot se termine par des chiffres, on sépare la partie chiffre de la partie mot */
     s = end-1;
@@ -359,22 +364,24 @@ troll_detector(tribune_msg_info *mi) {
     unsigned char *p;
 
     /* on ignore les tags des [urls] */
-    if (*s == '<') {
-      if (strncasecmp(s, "<a href=\"",9) == 0) {
-	s += 9;
-	continue;
-      }
-    } else if (*s == '>') {
-      if (strncasecmp(s, "><b>[url]</b></a>", 17) == 0) {
-	s += 17;
-	continue;
+    if (*s == '\t') {
+      if (s[1] == '<') {
+	if (strncasecmp(s, "\t<a href=\"",10) == 0) {
+	  s += 10;
+	  continue;
+	}
+      } else if (s[1] == '>') {
+	if (strncasecmp(s, "\t>\t<b\t>[url]\t</b\t>\t</a\t>", 24) == 0) {
+	  s += 24;
+	  continue;
+	}
       }
     }
 
     if ((p=strchr(trans_simple, *s))) {
       txt_simple[i] = trans_simple2[(p-trans_simple)]; i++; 
       s++;
-    } else if (*s < ' ') {
+    } else if (*s < ' ' && *s != '\t') {
       txt_simple[i] = ' '; i++;
       s++;
     } else if (*s >= 'A' && *s <= 'Z') {
@@ -414,11 +421,11 @@ troll_detector(tribune_msg_info *mi) {
     unsigned char *p;
     Word *sublst;
 
-    while (*s && *s <= ' ') s++; 
+    while (*s && *s <= ' ' && *s != '\t') s++; 
     if (*s == 0) break;
 
     p = s;
-    while (*p && *p > ' ') p++;
+    while (*p && (*p > ' ' || *p == '\t')) p++;
 
     sublst = decoupe_bloc(s, p, 0);
     wlst = wordlist_merge(wlst, sublst);
@@ -436,7 +443,7 @@ troll_detector(tribune_msg_info *mi) {
 
     in_bold = 0;
     while (w) {
-      if (w->len == 2 && w->w[0] == '/' && w->w[1] == 'b') {
+      if (w->in_tag && w->len == 2 && w->w[0] == '/' && w->w[1] == 'b') {
 	in_bold = 0;
       }
       if (in_bold) {

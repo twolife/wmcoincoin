@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.7 2002/02/25 01:36:58 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.8 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.8  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.7  2002/02/25 01:36:58  pouaite
   bugfixes pour la compilation
 
@@ -209,11 +212,13 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 
   start = *p; *np = NULL;
   // saute les espaces
-  while (*start <= ' ' && *start) { start++; *has_initial_space = 1; }
+  while (*start <= ' ' && *start != '\t' && *start) { start++; *has_initial_space = 1; }
   end = start;
 
-  /* les bon vieux tags html */
-  if (*start == '<') {
+  //  if (*start == '\t') printf("allez ! '%.20s'\n", start);
+
+  /* les bon vieux tags html (update les '<' et '>' des tags sont prefixés par une tabulation) */
+  if (*start == '\t' && *(start+1) == '<') {
     static const char *balise = "abusiABUSI";
     int i;
     /* c'est un peu chiant, on risque de mal reconnaitre les balise ou
@@ -221,19 +226,19 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
        on teste d'abord les balises courantes
     */
     for (i=0; i < 10; i++) { 
-      if (start[1] == balise[i] && start[2] == '>') {
-	end = start+3;
+      if (start[2] == balise[i] && start[3] == '\t' && start[4] == '>') {
+	end = start+5;
 	break;
-      } else if (start[1] == '/' && start[2] == balise[i] && start[3] == '>') {
-	end = start+4;
+      } else if (start[2] == '/' && start[3] == balise[i] && start[4] == '\t' && start[5] == '>') {
+	end = start+6;
 	break;
       }
     }
     if (end == start) {
       int is_href;
-      const unsigned char *s1 = "<a href=\"http://";
-      const unsigned char *s2 = "<a href=\"ftp://";
-      const unsigned char *s3 = "<a href=\"https://";
+      const unsigned char *s1 = "\t<a href=\"http://";
+      const unsigned char *s2 = "\t<a href=\"ftp://";
+      const unsigned char *s3 = "\t<a href=\"https://";
       /* puis les <a href> (c'est un peu particulier */
 
       /* c'est un peu facho, d'autant que c'est reverifié au niveau de open_url, mais
@@ -244,17 +249,27 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
       if (is_href) {
 	//	printf("get_tok: '");
-	while (*end && *end != '>') end++; //{ printf("%c", *end); end++; }
+	end = start+1;
+	while (*end && *end != '\t') end++; //{ printf("%c", *end); end++; }
+	if (*end == '\t' && *(end+1)=='>') end+=2;
 	//printf("\n");
-	if (*end) end++;
+	//if (*end) end++;
       } else {
 	/* sinon on ignore */
 	end++;
-	//	printf("get_tok pas reconnu: '");
-	while (*end && *end != '<' && *end > ' ') end++; //{ printf("%c", *end); end++;}
-	//printf("\n");
+	printf("get_tok pas reconnu: '");
+	while (*end && *end != '<' && *end > ' ') { printf("%c", *end); end++;}
+	printf("\n");
       }
     }
+    /*
+    {
+      char c;
+      c = *end; *end = 0;
+      myprintf("tok='%<YEL %s>'\n", start);
+      *end = c;
+    }
+    */
   } else {
     /* pour aider la reconnaissance des timestamp */
     if (*end >= '0' && *end <= '9') {
@@ -266,7 +281,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       if (end-start > 4 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
     } else {
       /* un mot normal */
-      while (*end && *end != '<' && *end > ' ' && (*end < '0' || *end > '9')) end++;
+      while (*end && *end != '\t' && *end > ' ' && (*end < '0' || *end > '9')) end++;
     }
   }
   if (end == start) return NULL;

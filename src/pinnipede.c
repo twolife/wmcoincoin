@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.24 2002/02/26 22:02:07 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.25 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.25  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.24  2002/02/26 22:02:07  pouaite
   bugfix gruikissime pour les pbs de lag sous cygwin
 
@@ -577,38 +580,47 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   p = mi->msg;
   attr = 0;
 
+
   has_initial_space = 1;
   while (p) {
     add_word = 1;
     if (tribune_get_tok(&p,&np,s,PVTP_SZ, &has_initial_space) == NULL) { break; }
-    if (s[0] == '<' && html_mode) {
+
+    /* nouveau (v2.3.5) tous les '<' et '>' provenant d'authentiques tags
+       html ont été préfixés d'une tabulation par 'convert_to_ascii', ce qui évite
+       de se retrouver à interpreter à moitié un message du style "<a href='prout'>" 
+       (par contre, y'a quelques feintes au trollo qui marcheront plus ;)
+    */
+
+    if (s[0] == '\t' && html_mode) {
       add_word = 0;
-      if (strcasecmp(s, "<i>")==0) {
+      if (strcasecmp(s, "\t<i\t>")==0) {
 	attr |= PWATTR_IT; 
-      } else if (strcasecmp(s,"</i>")==0) {
+      } else if (strcasecmp(s,"\t</i\t>")==0) {
 	attr &= (~PWATTR_IT);
-      } else if (strcasecmp(s,"<b>")==0) {
+      } else if (strcasecmp(s,"\t<b\t>")==0) {
 	attr |= PWATTR_BD; 
-      } else if (strcasecmp(s,"</b>")==0) {
+      } else if (strcasecmp(s,"\t</b\t>")==0) {
 	attr &= (~PWATTR_BD);
-      } else if (strcasecmp(s,"<u>")==0) {
+      } else if (strcasecmp(s,"\t<u\t>")==0) {
 	attr |= PWATTR_U;
-      } else if (strcasecmp(s,"</u>")==0) {
+      } else if (strcasecmp(s,"\t</u\t>")==0) {
 	attr &= (~PWATTR_U);
-      } else if (strcasecmp(s,"<s>")==0) {
+      } else if (strcasecmp(s,"\t<s\t>")==0) {
 	attr |= PWATTR_S; 
-      } else if (strcasecmp(s,"</s>")==0) {
+      } else if (strcasecmp(s,"\t</s\t>")==0) {
 	attr &= (~PWATTR_S);
-      } else if (strncasecmp(s,"<a href=\"", 9)==0) {
+      } else if (strncasecmp(s,"\t<a href=\"", 10)==0) {
 	int i;
 	attr |= PWATTR_LNK;
-	i = 9;
-	while (s[i] != '\"' && s[i]) i++;
+	i = strlen(s)-1; assert(i>0);
+	while (s[i] != '\"' && i > 0) i--;
 	s[i] = 0;
-	strncpy(attr_s, s+9, PVTP_SZ); 
-      } else if (strcasecmp(s,"</a>")==0) {
+	strncpy(attr_s, s+10, PVTP_SZ); 
+      } else if (strcasecmp(s,"\t</a\t>")==0) {
 	attr &= (~PWATTR_LNK);
       } else {
+	fprintf(stderr, "un tag qui pue ? '%s'\n", s);
 	add_word = 1;
       }
     }

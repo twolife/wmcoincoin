@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.20 2002/02/24 22:13:56 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.21 2002/02/27 00:32:19 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.21  2002/02/27 00:32:19  pouaite
+  modifs velues
+
   Revision 1.20  2002/02/24 22:13:56  pouaite
   modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
 
@@ -325,8 +328,8 @@ nettoie_message_tags(const char *inmsg)
   in_comment = 0;
   p = outmsg;
   for (s = inmsg; *s; s++) {
-    if (strncmp(s, "<!--",4)==0 && in_comment == 0) {
-      w = strstr(s, "-->");
+    if (strncmp(s, "\t<!--",4)==0 && in_comment == 0) {
+      w = strstr(s, "--\t>");
       if (w) {
 	in_comment = w+3-s;
       }
@@ -644,7 +647,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	s[strlen(s)-7] = 0; /* vire le /info */
 	p = s + strlen(tribune_sign_info);
 
-        convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN, 1);
+        convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN, 1, 0);
 
 	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(message)"; goto err; }
 	if (strncasecmp(s, tribune_sign_msg,strlen(tribune_sign_msg))) { errmsg="messagesign"; goto err; }
@@ -666,7 +669,18 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
 	s[strlen(s)-10] = 0; /* vire le </message> */
 	p = s + strlen(tribune_sign_msg);
-	convert_to_ascii(msg, p, TRIBUNE_MSG_MAX_LEN, 1);
+
+	/* nettoyage des codes < 32 dans le message */
+	{
+	  int i = 0;
+	  while (msg[i]) {
+	    if ((unsigned char)msg[i] < ' ') msg[i] = ' ';
+	    i++;
+	  }
+	}
+
+	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
+	convert_to_ascii(msg, p, TRIBUNE_MSG_MAX_LEN, 1, 1);
 
 	if (http_get_line(s, 8192, fd) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, tribune_sign_login,strlen(tribune_sign_login))) { errmsg="messagesign_login"; goto err; }
@@ -675,7 +689,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	s[strlen(s)-8] = 0; 
 	p = s + strlen(tribune_sign_login);
 	if (strcasecmp(p, "Anonyme") != 0) {
-	  convert_to_ascii(login, p, TRIBUNE_LOGIN_MAX_LEN, 1);
+	  convert_to_ascii(login, p, TRIBUNE_LOGIN_MAX_LEN, 1, 0);
 	} else {
 	  login[0] = 0;
 	}
