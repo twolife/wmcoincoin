@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.21 2002/02/25 01:36:58 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.22 2002/02/25 18:02:35 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.22  2002/02/25 18:02:35  pouaite
+  bugfixes de la journee
+
   Revision 1.21  2002/02/25 01:36:58  pouaite
   bugfixes pour la compilation
 
@@ -725,7 +728,7 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
     }
 
     pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, pp->nick_mode, pp->trollscore_mode); 
-    pv_justif(pp, pv, 8, pp->win_width - (pp->sc ? SC_W+2 : 0));
+    pv_justif(pp, pv, 8, pp->win_width - (pp->sc ? SC_W : 0));
     assert(pv);
     pv->next = pp->pv;
     pp->pv = pv;
@@ -833,7 +836,7 @@ pp_scrollcoin_move_resize(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
   int y;
   y = LINEY0(0);
-  scrollcoin_resize(pp->sc, pp->win_width - SC_W-2, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));
+  scrollcoin_resize(pp->sc, pp->win_width - SC_W, y, pp->win_height - y - (pp->use_minibar ? MINIB_H-1 : 0));
 }
 
 void
@@ -990,7 +993,7 @@ pp_minib_initialize(Pinnipede *pp)
 
   int x;
 
-  x = pp->win_width - (pp->sc ? SC_W + 2 : 0);
+  x = pp->win_width - (pp->sc ? SC_W : 0);
   i = 0;
   pp->mb[i].type = HELP;            pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
   pp->mb[i].type = SCROLLBAR;       pp->mb[i].w = 12; x -= pp->mb[i].w; pp->mb[i].x = x; i++;
@@ -1559,7 +1562,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     y = LINEY0(pp->nb_lignes);
     h = (pp->win_height - y) - (pp->use_minibar ? (MINIB_H) : 0);
     if (h>0)
-      XClearArea(dock->display, pp->win, 0, y, pp->win_width-(pp->sc ? SC_W+2:0), h, False);
+      XClearArea(dock->display, pp->win, 0, y, pp->win_width-(pp->sc ? SC_W:0), h, False);
   }
   if (LINEY0(0) > pp->fortune_h) {
     XClearArea(dock->display, pp->win, 0, pp->fortune_h, pp->win_width, LINEY0(0)-pp->fortune_h, False);
@@ -1650,7 +1653,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 
     pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL);
 
-    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W+2 : 0), pp->fn_h, 0, LINEY0(l));
+    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W : 0), pp->fn_h, 0, LINEY0(l));
   }
 
   if (pw_ref && ref_in_window == 0) {
@@ -1998,7 +2001,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
   assert(pp->sc == NULL);
 
-  pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W-2, 0, pp->win_height-20);
+  pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W, 0, pp->win_height-20);
 
   //  XMoveWindow(dock->display, pp->win, 100, 100);
   pp->mapped = 1;
@@ -2470,7 +2473,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
     case SCROLLBAR:
       {
 	if (pp->sc) { scrollcoin_destroy(pp->sc); pp->sc = NULL; }
-	else { pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W-2, 0, pp->win_height-20); }
+	else { pp->sc = scrollcoin_create(1,1,1,pp->win_width-SC_W, 0, pp->win_height-20); }
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, trib, pp->win, NULL);
@@ -3118,7 +3121,7 @@ pp_selection_refresh(Dock *dock)
     if (pp->lignes_sel[l].trashed) {
     
       pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l]);
-      XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W+2 : 0), pp->fn_h, 0, LINEY0(l));
+      XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W : 0), pp->fn_h, 0, LINEY0(l));
     }
   }
 }

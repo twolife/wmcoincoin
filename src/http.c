@@ -8,6 +8,7 @@
 #  include <stdlib.h>
 #  include <string.h>
 #  include <signal.h>
+#  include <time.h>
 #  include "myprintf.h"
 #else
 

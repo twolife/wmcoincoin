@@ -3,7 +3,7 @@
 
 #include "raster.h"
 
-#define SC_W 8
+#define SC_W 10
 
 typedef struct _ScrollCoin ScrollCoin;
 
