@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.2 2002/08/18 00:29:30 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.3 2002/08/21 20:22:16 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.3  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.2  2002/08/18 00:29:30  pouaite
   en travaux .. prière de porter le casque
 
@@ -248,10 +251,10 @@ site_msg_dl_and_update(Site *site)
       }
       
     } else if (msgcnt > 0) {
-      site->messages_dl_cnt++;
-      /* si ce n'est pas le premier lancement, on met à jour le fichier */
       char fname[2048];
       FILE *f;
+      site->messages_dl_cnt++;
+      /* si ce n'est pas le premier lancement, on met à jour le fichier */
       snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_root);
       if ((f = fopen(fname, "wt"))) {
 	Message *m;

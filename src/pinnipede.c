@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.70 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.71 2002/08/21 20:22:16 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.71  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.70  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -375,6 +378,27 @@ pp_unset_filter(struct _PinnipedeFilter *f)
   if (f->id) { free(f->id); f->id = NULL; f->nid = 0; }
 }
 
+
+void
+pp_visited_links_add(Pinnipede *pp, const char *s)
+{
+  int id = str_hache(s, strlen(s));
+  if (pp->nb_visited_links == MAX_VISITED_LINKS) {
+    memmove(pp->visited_links, pp->visited_links+1, (MAX_VISITED_LINKS-1)*sizeof(int));
+  } else pp->nb_visited_links++;
+  pp->visited_links[pp->nb_visited_links-1] = id;
+}
+
+int
+pp_visited_links_find(Pinnipede *pp, const char *s)
+{
+  int id = str_hache(s, strlen(s));
+  int i;
+  for (i=pp->nb_visited_links-1; i >= 0; --i) 
+    if (pp->visited_links[i] == id) return 1;
+  return 0;
+}
+
 static void
 pv_destroy(PostVisual *pv)
 {
@@ -630,8 +654,8 @@ plopify_word(unsigned char *s_src, unsigned sz, int bidon)
 
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
-pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode, int disable_plopify, KeyList *hk_plop, KeyList *hk_hili) {
-#define PVTP_SZ 512
+pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode, int disable_plopify, KeyList *hk_plop, KeyList *hk_hili) {
+#define PVTP_SZ 768
 
   PostVisual *pv;
   PostWord *pw, *tmp;
@@ -828,9 +852,13 @@ pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode
 	}
       }
 
+      if ((attr & PWATTR_LNK) && attr_s[0]) {
+	if (pp_visited_links_find(pp, attr_s)) attr |= PWATTR_VISITED;
+      }
+
       pw->next = pw_create(s, attr, (attr & PWATTR_LNK) ? attr_s : NULL, pv);
       has_initial_space = 0;
-      attr &= ~PWATTR_REF;
+      attr &= ~(PWATTR_REF | PWATTR_VISITED) ;
       //      printf("ADD(id=%d): '%s'\n", mi->id, s);
       pw = pw->next;
     }
@@ -936,10 +964,11 @@ pp_pv_add(Pinnipede *pp, Boards *boards, id_type id)
       with_seconds = mi->hmsf[3];
     }
 
-    pv = pv_tmsgi_parse(boards->btab[mi->id.sid], mi, with_seconds, 1, 
+    pv = pv_tmsgi_parse(pp, boards->btab[mi->id.sid], mi, with_seconds, 1, 
 			pp->nick_mode, pp->trollscore_mode, pp->disable_plopify,
 			board_key_list_test_mi(boards, mi, Prefs.plopify_key_list),
 			board_key_list_test_mi(boards, mi, Prefs.hilight_key_list)); 
+
     pv_justif(pp, pv, 11, pp->win_width - (pp->sc ? SC_W-1 : 0));
     assert(pv);
     pv->next = pp->pv;
@@ -1306,7 +1335,11 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	pixel = pp->timestamp_pixel[site_num];
 //	if (pw->parent->is_my_message) { pixel = IRGB2PIXEL(0x000080); }
       } else if (pw->attr & (PWATTR_LNK|PWATTR_REF)) {
-	pixel = pp->lnk_pixel[site_num];
+	if ((pw->attr & PWATTR_VISITED) == 0) {
+	  pixel = pp->lnk_pixel[site_num];
+	} else {
+	  pixel = pp->visited_lnk_pixel[site_num];
+	}
       } else if (pw->attr & PWATTR_NICK) {
 	pixel = pp->nick_pixel[site_num];
       } else if (pw->attr & PWATTR_LOGIN) {
@@ -1692,8 +1725,8 @@ pp_hilight_newest_messages(Dock *dock)
 void
 pp_hilight_newest_messages(Dock *dock)
 {
-  Pinnipede *pp = dock->pinnipede;
-  
+    Pinnipede *pp = dock->pinnipede;
+#warning virez moi  
   return;
   /*
   int l = 0;
@@ -1850,6 +1883,7 @@ pp_set_prefs_colors(Dock *dock)
     pp->win_bgpixel[i] = IRGB2PIXEL(Prefs.site[i]->pp_bgcolor);
     pp->timestamp_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_tstamp_color);
     pp->lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_url_color);
+    pp->visited_lnk_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_visited_url_color);
     pp->strike_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_strike_color);
     pp->txt_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_fgcolor);
     pp->nick_pixel[i] = GET_BICOLOR(Prefs.site[i]->pp_useragent_color);
@@ -2972,6 +3006,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
     if (pw->attr & PWATTR_LNK) {
       if (strlen(pw->attr_s)) {
 	open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
+	pp_visited_links_add(pp, pw->attr_s);
       }
     } else if (pw->attr & PWATTR_TSTAMP) {
       /* clic sur l'holorge -> ouverture du palmipede */
@@ -3634,11 +3669,15 @@ pp_set_board_updated(Dock *dock)
 void
 pp_save_state(Dock *dock, FILE *f) {
   Pinnipede *pp = dock->pinnipede;
-
+  int i;
   fprintf(f, "%d %d %d %d %d\n", 
 	  pp->mapped,
 	  pp->win_xpos, pp->win_ypos, 
 	  pp->win_width, pp->win_height);
+
+  fprintf(f, "LINKS %d\n", pp->nb_visited_links);
+  for (i=0; i < pp->nb_visited_links; i++)
+    fprintf(f, "%d\n", pp->visited_links[i]);
 }
 
 
@@ -3646,6 +3685,7 @@ void
 pp_restore_state(Dock *dock, FILE *f) {
   Pinnipede *pp = dock->pinnipede;
   int mapped, win_xpos, win_ypos, win_width, win_height;
+  int nlnk;
 
   if (fscanf(f, "%d %d %d %d %d\n", 
 	     &mapped,
@@ -3663,6 +3703,14 @@ pp_restore_state(Dock *dock, FILE *f) {
       pp_widgets_set_pos(dock);
       //      if (pp->use_minibar)
       //	pp_minib_initialize(pp);
+    }
+
+    if (fscanf(f, "LINKS %d\n", &nlnk)==1 && nlnk >= 0) {
+      int i;
+      pp->nb_visited_links = nlnk;
+      for (i=0; i < pp->nb_visited_links; i++) {
+	fscanf(f, "%d\n", &pp->visited_links[i]);
+      }
     }
   }  
 }

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.3 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.4 2002/08/21 20:22:16 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.4  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.3  2002/08/18 19:00:28  pouaite
   plop
 
@@ -468,10 +471,11 @@ check_for_horloge_ref_basic(Boards *boards, const unsigned char *ww, int *site_i
   *site_id = -1;
   ret = check_for_horloge_ref_basic_helper(ww, &site_name, ref_h, ref_m, ref_s, ref_num);
   if (ret && site_name) { /* bon .. ça mérite qu'on cherche le site */
-    int i;
+    int i, hash;
 
     for (i=0; isalpha(site_name[i]); i++) ;
-    int hash = str_hache_nocase(site_name, i);
+
+    hash = str_hache_nocase(site_name, i);
     for (i = 0; i < boards->nb_aliases; i++) {
       if (boards->aliases[i].hash == hash) {
 	*site_id = boards->aliases[i].sid;

@@ -616,6 +616,7 @@ wmcc_prefs_relecture(Dock *dock)
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_login_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_url_color) +
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_visited_url_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_strike_color)) {
 	redraw_pinni = 1;
       }
@@ -713,6 +714,13 @@ wmcc_prefs_relecture(Dock *dock)
       Prefs.miniuarules.first = newPrefs.miniuarules.first;
       newPrefs.miniuarules.first = tmp;
     }
+    /* et clac ! comme c'est gruik et j'aime ça, on fait pareil pour les URLReplacement */
+    {
+      URLReplacement *tmp = Prefs.url_repl.first;
+      Prefs.url_repl.first = newPrefs.url_repl.first;
+      newPrefs.url_repl.first = tmp;
+    }
+
 
     /* MISE A JOUR DU COINCOIN */
     if (rebuild_newswin) {

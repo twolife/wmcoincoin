@@ -153,7 +153,7 @@ pp_tabs_refresh(Dock *dock)
       if (board->board_refresh_delay > 0) {
 	int zw = ((w-7)*MIN(board->board_refresh_cnt,board->board_refresh_delay))/board->board_refresh_delay;
 	zw = (w-7 - zw);
-	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
+	//	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
 	if (zw > 0) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, h-4, zw, 3);
 	}
@@ -180,7 +180,7 @@ pp_tabs_refresh(Dock *dock)
   /* et hop */
   XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC,
 	    0,0,pp->tabs_width, PPT_H, pp->tabs[0].x,pp->tabs[0].y);
-  printf("tabs_w = %d, mb_w = %d\n", pp->tabs_width, pp->mb_buttonbar_width);
+  //  printf("tabs_w = %d, mb_w = %d\n", pp->tabs_width, pp->mb_buttonbar_width);
 }
 
 static PinnipedeTab *

@@ -54,6 +54,16 @@ typedef struct _MiniUARules {
   MiniUARule *first;
 } MiniUARules;
 
+typedef struct _URLReplacement {
+  char *key;
+  char *repl;
+  struct _URLReplacement *next;
+} URLReplacement;
+
+typedef struct _URLReplacements {
+  URLReplacement *first;
+} URLReplacements;
+
 
 #define NB_PP_KEYWORD_CATEG 5
 
@@ -106,7 +116,7 @@ typedef struct _SitePrefs {
 
   /* quelques couleurs qui dépendent du site visité */
   BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
-    pp_login_color, pp_url_color, pp_strike_color, pp_trollscore_color;
+    pp_login_color, pp_url_color, pp_visited_url_color, pp_strike_color, pp_trollscore_color;
   unsigned pp_bgcolor;
   int proxy_nocache; /* desactive le cache du proxy lors des requetes */
   int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
@@ -220,6 +230,8 @@ typedef struct _GeneralPrefs{
   int pinnipede_open_on_start; /* on décide que le pinnipede s'ouvre comme un grand tout seul quand on lance le coincoin */
 
   MiniUARules miniuarules;
+
+  URLReplacements url_repl;
 
   int nb_sites;
   SitePrefs *site[MAX_SITES];

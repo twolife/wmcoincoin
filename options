@@ -1,7 +1,11 @@
-###fichier d'options rcsid=$Id: options,v 1.34 2002/08/19 00:21:29 pouaite Exp $
+### -*- mode: wmccoptions -*-
+###fichier d'options rcsid=$Id: options,v 1.35 2002/08/21 20:22:16 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.35  2002/08/21 20:22:16  pouaite
+#%  fix compil
+#%
 #%  Revision 1.34  2002/08/19 00:21:29  pouaite
 #%  "troll du soir, espoir"
 #%
@@ -339,6 +343,7 @@
 #[.]pinnipede.useragent_color: 800000 a0ffa0
 #[.]pinnipede.login_color: ffff00 c0ffc0
 #[.]pinnipede.url_color: 0000ff 80f0ff
+#[.]pinnipede.visited_url_color: 804080 808080
 #[.]pinnipede.trollscore_color: ff0000 ffff00
 #[.]pinnipede.strike_color: 800000
 #pinnipede.emph_color: ffffff 505050
@@ -424,6 +429,12 @@
 
 ### liste des mots de substitution pour la plopification
 #pinnipede.plop_words: "plop","grouik","prout"
+
+### listes des remplacements de <b>[url]</b> pour les sites connus
+#pinnipede.url_replace: "yahoo" => "[YAHOO]"
+#pinnipede.url_replace: "forum.hardware" => "[HFR]"
+#pinnipede.url_replace: "linuxfr.org/" => "[DLFP]"
+#pinnipede.url_replace: "goatse" => "[goatsecx]"
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #[.]pinnipede.use_AM_PM: off

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.30 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.31 2002/08/21 20:22:16 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.31  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.30  2002/08/18 19:00:28  pouaite
   plop
 
@@ -555,7 +558,12 @@ str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
   return res;
 }
 
-
+void
+str_tolower(unsigned char *s)
+{
+  if (s == NULL) return;
+  for (; *s; s++) if (*s >= 'A' && *s <= 'Z') *s = *s - 'A' + 'a';
+}
 
 /* un printf pas très fin, mais avec allocation dynamique..
    c'est pratique ces ptites choses */
@@ -663,5 +671,54 @@ str_preencode_for_http(const char *in)
   
   if (in == NULL) return NULL;
   s = str_multi_substitute(in, keys, subs, 2);
+  return s;
+}
+
+char *
+str_ndup(const char *in, int n)
+{
+  int l;
+  char *s; 
+  assert(in); assert(n>=0);
+  l = MIN(strlen(in), (unsigned)n);
+  s = malloc(l+1); assert(s);
+  strncpy(s, in, l);
+  s[l] = 0;
+  return s;
+}
+
+char*
+str_cat(char *s1, const char *s2)
+{
+  int l1;
+  int l2;
+  char *s; 
+  if (s2 == NULL) return s1;
+  if (s1 == NULL) return strdup(s2);
+    
+  l1 = strlen(s1);
+  l2 = strlen(s2);
+  s = malloc(l1+l2+1); assert(s);
+  strcpy(s, s1);
+  strcpy(s+l1,s2);
+  free(s1);
+  return s;
+}
+
+char*
+str_ncat(char *s1, const char *s2, int n)
+{
+  int l1;
+  int l2;
+  char *s;
+  if (s2 == NULL) return s1;
+  if (s1 == NULL) return str_ndup(s2,n);
+  assert(n>=0);
+  l1 = strlen(s1);
+  l2 = MIN((int)strlen(s2),n);
+  s = malloc(l1+l2+1); assert(s);
+  strcpy(s, s1);
+  strncpy(s+l1,s2,l2); s[l1+l2]=0;
+  free(s1);
   return s;
 }

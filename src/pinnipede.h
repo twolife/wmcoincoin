@@ -26,6 +26,7 @@
 #define PWATTR_TROLLSCORE 2048
 #define PWATTR_LOGIN 4096
 #define PWATTR_TT  8192
+#define PWATTR_VISITED  16384
 
 typedef struct _PostVisual PostVisual;
 typedef struct _PostWord PostWord;
@@ -106,11 +107,12 @@ typedef struct _PinnipedeTab {
   int clicked;
 } PinnipedeTab;
 
+
 struct _Pinnipede {
   Window win;
   unsigned long win_bgpixel[MAX_SITES], timestamp_pixel[MAX_SITES], nick_pixel[MAX_SITES], 
-    login_pixel[MAX_SITES], lnk_pixel[MAX_SITES], txt_pixel[MAX_SITES], strike_pixel[MAX_SITES], 
-    trollscore_pixel[MAX_SITES],  emph_pixel, 
+    login_pixel[MAX_SITES], lnk_pixel[MAX_SITES], visited_lnk_pixel[MAX_SITES], 
+    txt_pixel[MAX_SITES], strike_pixel[MAX_SITES], trollscore_pixel[MAX_SITES],  emph_pixel, 
     popup_fgpixel, popup_bgpixel, sel_bgpixel,
     hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
     plopify_pixel, 
@@ -187,6 +189,10 @@ struct _Pinnipede {
   PinnipedeTab *tabs; /* tableau de tabs (une par site avec tribune) */
   PinnipedeTab *active_tab;  
   int tabs_width;
+
+#define MAX_VISITED_LINKS 200
+  int visited_links[MAX_VISITED_LINKS]; /* hash des urls deja visitées */
+  int nb_visited_links;
 };
 
 int filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter);

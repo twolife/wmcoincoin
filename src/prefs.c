@@ -571,7 +571,59 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
   return str_printf(_("Invalid argument for option '%s' here: '%.20s'\n"), optname, s_tok);
 }
 
+/* lecture des options de remplacement d'url
+   (au format: 
+       pinnipede.url_replace: "yahoo" => "[YAHOO]" )
+*/
+char *
+option_get_url_remplacement(const unsigned char *arg, URLReplacements *urlr) {
+  URLReplacement *ur;
+  const unsigned char *s, *p;
 
+  ALLOC_OBJ(ur, URLReplacement);
+  ur->key = NULL;
+  ur->repl = NULL;
+  ur->next = NULL;
+  s = arg;
+  while (*s && *s <= ' ') s++;
+  if (*s != '"') goto erreur;
+  s++;
+  p = s;
+  while (*p && *p != '"') p++;
+  if (*p != '"') goto erreur;
+
+  ur->key = malloc(p - s + 1);
+  strncpy(ur->key, s, p-s); ur->key[p-s] = 0;
+
+  s = p+1;
+  while (*s && *s <= ' ') s++;
+  if (*s++ != '=') goto erreur;
+  if (*s++ != '>') goto erreur;
+  while (*s && *s <= ' ') s++;
+
+  if (*s != '"') goto erreur;
+  s++;
+  p = s;
+  while (*p && *p != '"') p++;
+  if (*p != '"') goto erreur;
+
+  ur->repl = malloc(p - s + 1);
+  strncpy(ur->repl, s, p-s); ur->repl[p-s] = 0;
+  s = p+1;
+  while (*s && *s <= ' ') s++;
+  if (*s != 0) goto erreur;
+  
+  ur->next = urlr->first;
+  urlr->first = ur;
+
+  str_tolower(ur->key);
+  return NULL;
+ erreur:
+  FREE_STRING(ur->key);
+  FREE_STRING(ur->repl);
+  free(ur);
+  return str_printf(_("Invalid argument for option 'pinnipede.url_replace' here: '%.20s'\n"), arg);
+}
 
 /* remplit la structure des prefs de site avec les valeurs par défaut */
 void
@@ -613,6 +665,7 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   BICOLOR_SET(p->pp_useragent_color, 0x800000, 0xa0ffa0);
   BICOLOR_SET(p->pp_login_color, 0xff0000, 0xc0ffc0);
   BICOLOR_SET(p->pp_url_color, 0x0000ff, 0x80f0ff);
+  BICOLOR_SET(p->pp_visited_url_color, 0x800080, 0x800080);
   BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
   BICOLOR_SET(p->pp_strike_color,0x800000,0x800000);
   p->locale = locFR;
@@ -652,10 +705,12 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
   SPSTRDUP(path_messages);
   SPSTRDUP(user_cookie);
   SPSTRDUP(user_login);
-  
-  ALLOC_VEC(sp->all_names, src->nb_names, char *);
-  for (i=0; i < src->nb_names; i++) sp->all_names[i] = strdup(src->all_names[i]);
-  sp->site_name = sp->all_names[0];
+
+  if (src->nb_names>0) {
+    ALLOC_VEC(sp->all_names, src->nb_names, char *);
+    for (i=0; i < src->nb_names; i++) sp->all_names[i] = strdup(src->all_names[i]);
+    sp->site_name = sp->all_names[0];
+  }
 }
 
 void
@@ -794,7 +849,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pinnipede_open_on_start = 0;
   
   p->miniuarules.first = NULL;
-
+  p->url_repl.first = NULL;
   p->nb_sites = 0;
   { 
     int i;
@@ -847,6 +902,18 @@ wmcc_prefs_destroy(GeneralPrefs *p)
       r_next = r->next;
       free(r);
     }
+    p->miniuarules.first = NULL;
+  }
+
+  {
+    URLReplacement *ur, *ur_next;
+    for (ur = p->url_repl.first; ur; ur = ur_next) {
+      FREE_STRING(ur->key);
+      FREE_STRING(ur->repl);
+      ur_next = ur->next; 
+      free(ur);
+    }
+    p->url_repl.first = NULL;
   }
 }
 
@@ -1107,6 +1174,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTSG_pinnipede_url_color: {
     CHECK_BICOLOR_ARG(sp->pp_url_color);
   } break; 
+   case OPTSG_pinnipede_visited_url_color: {
+    CHECK_BICOLOR_ARG(sp->pp_visited_url_color);
+  } break; 
   case OPTSG_pinnipede_trollscore_color: {
     CHECK_BICOLOR_ARG(sp->pp_trollscore_color);
   } break; 
@@ -1208,6 +1278,10 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break; 
   case OPT_pinnipede_plop_words: {
     char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);
+    if (err) return err;
+  } break; 
+  case OPT_pinnipede_url_replace: {
+    char *err = option_get_url_remplacement(arg, &p->url_repl);
     if (err) return err;
   } break; 
   case OPTSG_locale: {

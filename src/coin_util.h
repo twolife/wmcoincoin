@@ -62,10 +62,14 @@ int str_hache(const unsigned char *s, int max_len);
 int str_hache_nocase(const unsigned char *s, int max_len);
 unsigned char chr_noaccent_tolower(unsigned char c);
 void str_noaccent_tolower(unsigned char *s);
+void str_tolower(unsigned char *s);
 unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille);
 char *str_printf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 #define STR_REPRINTF(_s, _xx); { char *__old = _s; _s = str_printf _xx; if (__old) free(__old); }
 char *str_cat_printf(char *s, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+char *str_ndup(const char *in, int n);
+char* str_cat(char *s1, const char *s2);
+char* str_ncat(char *s1, const char *s2, int n);
 
 char *str_fget_line(FILE *f);
 void str_trim(unsigned char *s);

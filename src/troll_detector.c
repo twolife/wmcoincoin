@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.14 2002/08/17 18:33:40 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.15 2002/08/21 20:22:16 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.15  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.14  2002/08/17 18:33:40  pouaite
   grosse commition
 
@@ -360,6 +363,7 @@ troll_detector(board_msg_info *mi) {
   int smiley_flag;
   int tag_cnt;
   int boldwords_cnt;
+  int in_url;
   int i;
 
   Word *wlst;
@@ -385,6 +389,8 @@ troll_detector(board_msg_info *mi) {
 
   /* premiere passe: filtrage de certains caractères, mise en minuscule et suppression des accents
      comptage des majuscules, exclamations et caractère graphiques */
+
+  in_url = 0;
   
   while (*s) {
     unsigned char *p;
@@ -394,14 +400,20 @@ troll_detector(board_msg_info *mi) {
       if (s[1] == '<') {
 	if (strncasecmp(s, "\t<a href=\"",10) == 0) {
 	  s += 10;
+	  in_url++;
 	  continue;
-	}
-      } else if (s[1] == '>') {
-	if (strncasecmp(s, "\t>\t<b\t>[url]\t</b\t>\t</a\t>", 24) == 0) {
-	  s += 24;
+	} else if (strncasecmp(s, "\t</a\t>", 6) == 0) {
+	  s += 6;
+	  in_url--;
 	  continue;
+	}	
+	if (in_url) {
+	  do s++; while (*s != '\t');
+	  s++;
 	}
       }
+      
+      
     }
 
     if ((p=strchr(trans_simple, *s))) {

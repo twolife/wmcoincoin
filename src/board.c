@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.4 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: board.c,v 1.5 2002/08/21 20:22:16 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.5  2002/08/21 20:22:16  pouaite
+  fix compil
+
   Revision 1.4  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -173,9 +176,10 @@
 Board *
 board_create(Site *site, Boards *boards)
 {
-  Board *board;
-  assert(boards);
   SitePrefs *sp = site->prefs;
+  Board *board;
+
+  assert(boards);
   ALLOC_OBJ(board, Board);
   strncpy(board->last_post_time, "xx:xx", 5);
   board->msg = NULL;
@@ -341,11 +345,12 @@ miniua_eval_from_ua(MiniUARules *rules, board_msg_info *mi)
 #define MUA_MAX_MATCH 9
 
   MiniUARule *r;
+  MiniUA *mua;
   int sid, matched;
   int color_done = 0, ua_done = 0, symb_done = 0;
 
   assert(mi);
-  MiniUA *mua = &mi->miniua;
+  mua = &mi->miniua;
   sid = id_type_sid(mi->id);
 
   /* valeur par defaut */
@@ -714,6 +719,70 @@ do_wiki_emulation(Board *board, const char *inmsg, char *dest)
   return j;
 }
 
+/* remplace (laborieusement) une [url] par [yahoo] ou [prout] */
+void
+do_url_replacements(char **pmessage)
+{
+  unsigned char *src1, *src2, *insert, *src3;
+  unsigned char *message;
+  int repl = 0;
+
+  message = NULL;
+  src1 = *pmessage;
+  assert(src1);
+  while (src1) {
+    src3 = insert = NULL;
+    src2 = src1;
+    while (*src2 && insert == NULL) {
+      insert = NULL;
+      
+      if (*src2 == '\t' && strncasecmp(src2, "\t<a href=\"", 10) == 0) {
+	unsigned char *deb_url, *fin_url;
+	deb_url = src2+10;
+	fin_url = strstr(deb_url, "\t>[url]\t</");
+	if (deb_url && fin_url) {
+	  
+	  URLReplacement *ur = Prefs.url_repl.first;
+	  unsigned char *url, *crochet;
+	  crochet = fin_url+2;
+	  while (fin_url > deb_url+1 && *fin_url != '"') fin_url--;
+	  url = str_ndup(deb_url, MIN(fin_url-deb_url,1024));
+	  str_tolower(url);
+	  while (ur) {
+	    if (strstr(url, ur->key)) {
+	      break;
+	    }
+	    ur = ur->next;
+	  }
+	  free(url);
+	  if (ur) {
+	    src2 = crochet;
+	    src3 = crochet+5;
+	    insert = ur->repl;
+	    repl++;
+	  }
+	}
+      }
+      
+      if (insert == NULL)
+	src2++;
+    }
+
+    assert(src2);
+      
+    message = str_ncat(message, src1, src2-src1);
+    if (insert) {
+      message = str_cat(message, insert);
+    }
+    src1 = src3;
+  }
+  free(*pmessage);
+  *pmessage = message;
+  if (repl) {
+    BLAHBLAH(4,myprintf("replaced (%d)! '%<yel %s>'\n", repl, message));
+  }
+}
+
 /*
   comme son nom l'indique ..
 */
@@ -743,6 +812,8 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
 
   message = nettoie_message_tags(_message);
 
+  do_url_replacements(&message);
+
   /* emulation du wiki (en insérant les bons tags dans le message) */
   if (board->site->prefs->board_wiki_emulation) {
     char *tmp = message;
@@ -752,6 +823,7 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
     do_wiki_emulation(board, tmp, message);
     free(tmp);
   }
+
 
   BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
   nit = board->msg;
@@ -1096,6 +1168,7 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 
     if (board->time_shift_min >  board->time_shift_max) {
       int marge;
+      time_t tmp;
       if (board->time_shift_min - board->time_shift_max > 1) {
 	myprintf("%<YEL ------------------------------\nRAAAAAAAAAAAAH SWAP!!\n----------------->\n");
 	marge = 10;
@@ -1103,7 +1176,7 @@ board_update_time_shift(Board *board, int old_last_post_id) {
 	myprintf("%<YEL petit ajustement>\n");
 	marge = 1;
       }
-      time_t tmp = board->time_shift_min;
+      tmp = board->time_shift_min;
       board->time_shift_min = board->time_shift_max-marge;
       board->time_shift_max = tmp+marge;
     }
