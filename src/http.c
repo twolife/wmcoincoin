@@ -29,15 +29,18 @@
 #  include <stdio.h>
 #  include <string.h>
 #  include <errno.h>
+
+/* pour le waitpid */
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #  include "myprintf.h"
 #  include "coincoin.h"
 #  include "http.h"
 
 #endif /* ifdef __CYGWIN */
 
-/* pour le waitpid */
-#include <sys/types.h>
-#include <sys/wait.h>
+
 
 
 #ifdef __CYGWIN__
@@ -66,7 +69,7 @@ static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123
 
 int http_close(SOCKET fd);
 
-#define VERBOSE_LVL 2
+#define VERBOSE_LVL 1
 
 
 /* 
@@ -382,12 +385,6 @@ http_error() {
   return http_last_err_msg;
 }
 
-#ifdef __CYGWIN__
-#include "http_win.c"
-#else
-#include "http_unix.c"
-#endif
-
 
 int
 gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
@@ -408,77 +405,13 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
   }
 }
 
-int
-gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
-  pid_t pid;
-  struct hostent *phost;
-  int tube[2];
 
-  fprintf(stderr, "bienvenu dans le gethostbyname forké, tout ceci est expérimental, gare aux zombies\n");
-  memset(addr, 0, 65);
+#ifdef __CYGWIN__
+#include "http_win.c"
+#else
+#include "http_unix.c"
+#endif
 
-  if (pipe(tube) == -1) {
-    fprintf(stderr, "tuyau percé !: %s\n", STR_LAST_ERROR); return -1;
-  }
-  switch ((pid = fork())) {
-  case -1:
-    fprintf(stderr, "ouuups, à mon avis y'a une armée de zombies dans le coin\nle fork() est parti en torche: %s", strerror(errno));
-    return -1;
-    break;
-
-  case 0: /* fiston */
-    if (close(tube[0]) == -1) {
-      fprintf(stderr, "fiston: tube bouché (%s)\n", STR_LAST_ERROR); close(tube[1]); exit(-1);
-    }
-    fprintf(stderr, "fiston: gethostbyname en cours..\n");
-    phost=gethostbyname(hostname);
-    fprintf(stderr, "fiston: gethostbyname terminé..\n");
-    if( phost != NULL ) {
-      unsigned char l;
-      assert(phost->h_length < 128); /* faut pas pousser grand mère */
-      l = (unsigned char)phost->h_length;
-      write( tube[1], &phost->h_length, 1);
-      write( tube[1], phost->h_addr_list[0] , phost->h_length);
-    } else {
-      fprintf(stderr, "échec de gethostbyname sur '%s'\n", hostname);
-    }
-    exit(phost == NULL );
-    break;
-
-  default: { /* pôpa */
-    int cnt, got, len, cstat;
-
-    if (close(tube[1]) == -1) {
-      fprintf(stderr, "pôpa: tube bouché (%s), que va devenir fiston ?\n", STR_LAST_ERROR); close(tube[0]);
-    }
-    fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
-    cnt = 0; len = -1;
-    do {
-      ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-
-      got = read(tube[0], addr+cnt, (len == -1 ? 65 : len-cnt)); 
-      if (got > 0) cnt += got;
-      if (cnt >= 1) len = addr[0];
-    } while ((got == -1 ||  (len != -1 && cnt < len)) &&
-	     (LASTERR_EAGAIN || LASTERR_EINTR));
-
-    close(tube[0]);
-
-    while (waitpid(pid,&cstat,WNOHANG) == 0) {
-      usleep(10000);
-      ALLOW_X_LOOP_MSG("retour du gethostbyname forké"); ALLOW_ISPELL;
-      printf("on attend fiston... gamin ? viens là gamin !\n");
-    }
-
-    if (len == -1 || cnt < len) {
-      fprintf(stderr, "pôpa: j'ai pas réussi à lire fiston :-/ (len=%d, cnt=%d) (lasterr=%s)\n", len, cnt, STR_LAST_ERROR);
-      return -1;
-    }
-    break;
-  }
-  }
-  return 0;  /*   \o/    */
-}
 
 
 
@@ -514,8 +447,11 @@ http_connect(const char *host_name, int port)
       if (num_try == 1 || addr[0] == 0 || flag_changed_http_params)
 	{
 	  flag_changed_http_params = 0;
-	  
+#ifndef DONOTFORK_GETHOSTBYNAME	  
 	  gethostbyname_nonbloq(host_name, addr);
+#else
+	  gethostbyname_bloq(host_name, addr);
+#endif
 	  if (addr[0]) {
 	    snprintf(http_used_ip, 20, "%u.%u.%u.%u", 
 		     (unsigned char)addr[1],
@@ -639,7 +575,7 @@ http_skip_header(HttpRequest *r)
   do {
     while((got = http_iread(r->fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
-      BLAHBLAH(0, myprintf("%<GRN %c>", buff[i]););
+      BLAHBLAH(VERBOSE_LVL, myprintf("%<GRN %c>", buff[i]););
       if(buff[i] == '\n' && (last == '\n')) {
 	ok = 1; /* on vient de lire le header tranquillement */
 	break;
@@ -680,7 +616,7 @@ http_skip_header(HttpRequest *r)
 	  }
 	  if (strncmp(buff, "Content-Length:", 15) == 0) {
 	    r->content_length = atoi(buff+15);
-	    printf("content length: %d\n", r->content_length);
+	    BLAHBLAH(VERBOSE_LVL,printf("content length: %d\n", r->content_length));
 	  }
 	}
 	lnum++;
@@ -827,7 +763,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
 
   flag_http_error = 0;
 
-  myprintf("%<yel .>"); fflush(stdout);
+  BLAHBLAH(VERBOSE_LVL,myprintf("%<yel .>"); fflush(stdout));
   return cnt;
 
 
@@ -857,6 +793,7 @@ http_request_send(HttpRequest *r)
     if (r->fd < 0) {
       fprintf(stderr, "http_send_request/debug, impossible d'ouvrir '%s':%s\n", 
 	      r->host_path, STR_LAST_ERROR);
+      r->error = 1;
     }
     return;
   }
@@ -864,7 +801,7 @@ http_request_send(HttpRequest *r)
 
   flag_http_transfert++;
 
-  myprintf("http_request_send: %<grn %s>\n", r->host_path);
+  BLAHBLAH(VERBOSE_LVL,myprintf("http_request_send: %<grn %s>\n", r->host_path));
 
 
   header = strdup("");
@@ -947,7 +884,7 @@ http_request_send(HttpRequest *r)
   } else {
     r->fd = http_connect(r->host, r->port);
   }
-  if (r->fd == INVALID_SOCKET) goto error;
+  if (r->fd == INVALID_SOCKET) goto error_close;
 
   BLAHBLAH(VERBOSE_LVL, myprintf("HTTP_REQUEST: \n%<YEL %s>\n", header));
 
@@ -972,7 +909,6 @@ http_request_send(HttpRequest *r)
  error_close:
   printf("erreur dans la réponse..\n");
   http_request_close(r); r->fd = SOCKET_ERROR;
- error:
   if (header) free(header);
   r->error = 1;
   flag_http_error = 1;
@@ -987,8 +923,6 @@ http_request_init(HttpRequest *r) {
 }
 
 void http_request_close (HttpRequest *r) {
-  assert(r->fd != INVALID_SOCKET);
-
   if (r->host) free(r->host); r->host = NULL;
   if (r->host_path) free(r->host_path); r->host_path = NULL;
   if (r->proxy_name) free(r->proxy_name); r->proxy_name = NULL;
@@ -999,6 +933,8 @@ void http_request_close (HttpRequest *r) {
   if (r->post) free(r->post); r->post = NULL;
 
   r->content_length = -1;
-  http_close(r->fd);
-  r->fd = -1;
+  if (r->fd != INVALID_SOCKET) {
+    http_close(r->fd);
+    r->fd = INVALID_SOCKET;
+  }
 }

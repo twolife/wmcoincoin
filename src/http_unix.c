@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.10 2002/05/13 08:01:11 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.11 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.11  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.10  2002/05/13 08:01:11  pouaite
   bugfix (à tester) compil sous cygwin
 
@@ -135,4 +138,83 @@ void http_init() {
 int http_close(SOCKET fd) {
   do { close (fd); } while (errno == EINTR);
   return 0;
+}
+
+/*
+  un bon gros fork pour ne plus se figer pendant le gethostbyname
+
+  ça a l'air de bien marcher
+*/
+int
+gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
+  pid_t pid;
+  struct hostent *phost;
+  int tube[2];
+
+  BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "bienvenu dans le gethostbyname forké, tout ceci est expérimental, gare aux zombies\n"));
+  memset(addr, 0, 65);
+
+  if (pipe(tube) == -1) {
+    fprintf(stderr, "tuyau percé !: %s\n", strerror(errno)); return -1;
+  }
+  switch ((pid = fork())) {
+  case -1:
+    fprintf(stderr, "ouuups, à mon avis y'a une armée de zombies dans le coin\nle fork() est parti en torche: %s", strerror(errno));
+    return -1;
+    break;
+
+  case 0: { /* fiston */
+    int n;
+    if (close(tube[0]) == -1) {
+      fprintf(stderr, "fiston: tube bouché (%s)\n", strerror(errno)); close(tube[1]); exit(-1);
+    }
+    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname en cours..\n"));
+    phost=gethostbyname(hostname);
+    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname terminé..\n"));
+    if( phost != NULL ) {
+      unsigned char l;
+      assert(phost->h_length < 128); /* faut pas pousser grand mère */
+      l = (unsigned char)phost->h_length;
+      errno = 0;
+      n = write( tube[1], &l, 1); BLAHBLAH(VERBOSE_LVL,printf("write len %d [%s]\n", n, strerror(errno)));
+      n = write( tube[1], phost->h_addr_list[0] , phost->h_length); BLAHBLAH(VERBOSE_LVL,printf("write adr %d [%s]\n", n, strerror(errno)));
+    } else {
+      fprintf(stderr, "échec de gethostbyname sur '%s'\n", hostname);
+    }
+    exit(phost == NULL );
+    break;
+  }
+  default: { /* pôpa */
+    int cnt, got, len, cstat;
+
+    if (close(tube[1]) == -1) {
+      fprintf(stderr, "pôpa: tube bouché (%s), que va devenir fiston ?\n", strerror(errno)); close(tube[0]);
+    }
+    fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
+    cnt = 0; len = -1;
+    do {
+      ALLOW_X_LOOP_MSG("pôpa écoute fiston"); ALLOW_ISPELL;
+
+      got = read(tube[0], addr+cnt, (len == -1 ? 65 : len+1-cnt)); 
+      if (got > 0) cnt += got;
+      if (cnt >= 1) len = addr[0];
+    } while ((got == -1 && (errno == EAGAIN || errno == EINTR)) ||
+	     len == -1 || cnt < len+1);
+
+    close(tube[0]);
+
+    while (waitpid(pid,&cstat,WNOHANG) == 0) {
+      usleep(10000);
+      ALLOW_X_LOOP_MSG("retour du gethostbyname forké"); ALLOW_ISPELL;
+      printf("on attend fiston... gamin ? viens là gamin !\n");
+    }
+
+    if (len == -1 || cnt < len+1) {
+      fprintf(stderr, "pôpa: j'ai pas réussi à lire fiston :-/ (len=%d, cnt=%d) (lasterr=%s)\n", len, cnt, strerror(errno));
+      return -1;
+    }
+    break;
+  }
+  }
+  return 0;  /*   \o/    */
 }

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.34 2002/05/28 20:11:55 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.35 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.35  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.34  2002/05/28 20:11:55  pouaite
   modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
 
@@ -448,6 +451,12 @@ wiki_url_encode(const unsigned char *w)
   return ret;
 }
 
+/* 
+   transforme les occurences de [mots entre crochets] par des <a href=> vers le wiki 
+   
+   si cette fonction est appelée avec 'dest == NULL' , alors elle se contente de renvoyer 
+   la longueur finale obtenue
+*/
 int
 do_wiki_emulation(const char *inmsg, char *dest) 
 {
@@ -458,13 +467,13 @@ do_wiki_emulation(const char *inmsg, char *dest)
   s = inmsg; j = 0;
   while (*s) {
     if (*s == '\t') {
+      /* pas touche à ce qui est déjà dans une <a> </a> */
       if (strncasecmp(s, "\t<a href", 8) == 0 && in_a_href==0) {
 	in_a_href = 1;
       } else if (strncasecmp(s, "\t</a", 4) == 0 && in_a_href) {
 	in_a_href = 0;
       }
- 
-   }
+    }
     if (*s == '[') {
       char *pfin;
       
@@ -474,19 +483,25 @@ do_wiki_emulation(const char *inmsg, char *dest)
 	char *ptag, *pautre;
 	ptag = strchr(s+1, '\t');
 	pautre = strchr(s+1, '[');
+
+	/* on a un truc entre crochets sans autre crochet ouvrant à l'intérieur? */
 	if ((pautre == NULL || pautre > pfin) &&
 	    (ptag == NULL || ptag > pfin)) {
 	  char *wiki_word, *wiki_url, *p;
 
+	  /* on copie le mot-wiki */
 	  wiki_word = malloc(pfin-s); assert(wiki_word);
 	  strncpy(wiki_word, s+1, pfin-s-1); wiki_word[pfin-s-1] = 0;
-	  wiki_url = wiki_url_encode(wiki_word); free(wiki_word);
+
+	  /* on le modifie un peu (' ' --> '+' par ex. ) */
+	  wiki_url = wiki_url_encode(wiki_word); free(wiki_word); wiki_word = NULL;
 	  p = wiki_url;
 	  while (*p) { 
 	    if (dest) dest[j] = *p; 
 	    j++; p++;
 	  }
 	  s = pfin+1;
+	  free(wiki_url); wiki_url = NULL;
 	  continue;
 	}
       }
@@ -998,6 +1013,8 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
   } else {
     myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
   }
+
+  assert(r.host == NULL); /* juste pour vérif qu'on a bien fait le close */
 
   /* cleanup .. */
   flag_updating_tribune++;

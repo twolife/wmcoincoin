@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.9 2002/05/29 22:38:12 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.10 2002/06/01 17:54:04 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.10  2002/06/01 17:54:04  pouaite
+##   nettoyage
+##
 ##   Revision 1.9  2002/05/29 22:38:12  pouaite
 ##   bidouilles dans configure.in et cie
 ##
@@ -26,6 +29,8 @@
 ##   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 ##
 ## Process this file with automake to produce Makefile.in
+
+AUTOMAKE_OPTIONS = 1.6 dist-bzip2
 
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@

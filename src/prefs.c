@@ -159,7 +159,7 @@ option_set_useragent(const char *optarg,
     const char *subs[] = {VERSION,"", ""  , ""  , ""};
 
 
-    ua = str_substitute(optarg, "$v", VERSION);
+    //    ua = str_substitute(optarg, "$v", VERSION);
     if (p->user_name) {
       subs[1] = p->user_name;
     } else {
@@ -339,7 +339,9 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
 { 
   int pass, cnt;
   char mot[1024];
+  int i;
 
+  if (*list) { for (i=0; i < *nb_elt; i++) free((*list)[i]); free(*list); *list = NULL; }
   for (pass = 0; pass < 2; pass++) {
     unsigned char *s;
 
@@ -385,6 +387,7 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
 
   return NULL;
  erreur:
+  if (*list) { for (i=0; i < *nb_elt; i++) free((*list)[i]); free(*list); *list = NULL; }
   return str_printf("erreur pour l'option '%s', on attend une liste de mots entre guillements, séparés par des virgules", optname);
 }
 
@@ -1047,8 +1050,8 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
       *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [%s]\n", filename, strerror(errno));
     } else {
       *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture\n", filename);
-      free(filename);
     }
+    free(filename);
     return 1;
   }
 
@@ -1081,6 +1084,7 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
     FREE_STRING(opt_name); FREE_STRING(opt_arg);
   } while (!feof(f));
   fclose(f);
+  free(filename);
   return 0;
 
  ouille:

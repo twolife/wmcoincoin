@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.43 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.44 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.44  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.43  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -416,6 +419,7 @@ exec_coin_coin(Dock *dock)
   if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
   r.referer = str_printf("http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
+  if (r.user_agent) { free(r.user_agent); r.user_agent = NULL; }
   r.user_agent = strdup(dock->real_coin_coin_useragent);
   r.post = str_printf("message=%s", urlencod_msg);  free(urlencod_msg);
 
@@ -1173,7 +1177,8 @@ void initx(Dock *dock, int argc, char **argv) {
     xwmh->initial_state = (Prefs.use_iconwin ? WithdrawnState : NormalState);
 
     XSetWMHints(dock->display, dock->win, xwmh);
-
+    
+    XFree(xwmh); xwmh = NULL;
   } else {
     XSetWindowAttributes wattr;
     wattr.override_redirect = True;
@@ -1208,7 +1213,8 @@ void initx(Dock *dock, int argc, char **argv) {
     exit(1);
   }
   XSetWMName(dock->display, dock->win, &xtp);
-  
+
+  XFree(xtp.value); /* fait le faire à la main .. */
 
   /* create a graphics context */
   xgcv.foreground = RGB2PIXEL(0,0,0);

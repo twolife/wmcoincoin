@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.9 2002/05/13 08:01:11 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.10 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.10  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.9  2002/05/13 08:01:11  pouaite
   bugfix (à tester) compil sous cygwin
 
@@ -121,4 +124,10 @@ void http_init (void) {
 
 int http_close (SOCKET fd) {     
   return closesocket (fd);   
+}
+
+int
+gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
+  printf("todo: s'arranger pour faire marcher le gethostbyname non bloquant sous win \n(il suffit de foutre tout ça dans un fichier séparé de http.c, pour ne pas\n batailler avec le #include \"windows.h\"\n");
+  return gethostbyname_bloq(hostname, addr);
 }

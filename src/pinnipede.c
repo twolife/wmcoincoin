@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.62 2002/05/28 20:11:55 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.63 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.63  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.62  2002/05/28 20:11:55  pouaite
   modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
 
@@ -3550,8 +3553,12 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	 pinnipede */
       tribune_msg_info *mi;
       int bidon;
-      
-      mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
+      int ref_num;
+
+      mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, &ref_num); assert(bidon);
+
+
+
       if (mi) {
 #ifdef BOULAI_MODE
 	PostWord *trouve;
@@ -3574,6 +3581,15 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	}
 	pp_refresh(dock, trib, pp->win, trouve);
 #else
+	/* si la reference désigne plusieurs post de la même heure ,
+	   on se déplace vers le dernier du bloc
+	*/
+	if (ref_num == -1) {
+	  while (mi->next && mi->next->timestamp == mi->timestamp) {
+	    mi = mi->next;
+	  }
+	}
+
 	pp_update_content(dock, trib, mi->id, 0, 0, 0);
 	pp_refresh(dock, trib, pp->win, NULL);
 #endif

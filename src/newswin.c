@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.11 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.12 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.12  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.11  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -473,6 +476,8 @@ newswin_unmap(Dock *dock)
   assert(nw->window != None);
   XDestroyWindow(dock->display, nw->window);
   nw->window = None;
+
+  XFreeGC(dock->display, nw->gc);
 
   if (!picohtml_isempty(nw->phv_titles.ph)) 
     picohtml_freetxt(nw->phv_titles.ph);

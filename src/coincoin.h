@@ -15,6 +15,9 @@
 #include "coin_util.h"
 #include "myprintf.h"
 
+#ifndef WMCCDATADIR
+#define WMCCDATADIR "."
+#endif
 
 /* tentative de compilation avec _XOPEN_SOURCE, y'a plein de warnings */
 #ifdef _XOPEN_SOURCE
@@ -23,7 +26,6 @@ int strcasecmp(const char *s1, const char *s2);
 int strncasecmp(const char *s1, const char *s2, size_t n);
 char *strdup(const char *s);
 int snprintf(char *str, size_t size, const char *format, ...);
-void bzero(void *s, size_t n);
 void usleep(unsigned long usec);
 #endif
 #endif

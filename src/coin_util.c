@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.23 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.24 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.24  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.23  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -556,7 +559,7 @@ str_cat_printf(char *in_s, const char *fmt, ...)
   
   out_s = malloc( (in_s ? strlen(in_s) : 0) + strlen(s) + 1); assert(out_s);
   strcpy(out_s, in_s); strcat(out_s, s);
-  free(in_s);
+  free(in_s); free(s);
   return out_s;
 }
 

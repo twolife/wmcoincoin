@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.14 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.15 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.15  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.14  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -1271,6 +1274,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	   relire le .wmcoincoin/useragents
 	*/
 	int err;
+
 	err = useragents_file_reread(dock, dock->dlfp);
 	BLAHBLAH(2, printf("relecture RCfile -> code d'erreur renvoye: %d\n", err));
       }

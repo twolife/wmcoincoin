@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.13 2002/05/13 10:51:46 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.14 2002/06/01 17:54:04 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.14  2002/06/01 17:54:04  pouaite
+  nettoyage
+
   Revision 1.13  2002/05/13 10:51:46  pouaite
   bugfix lecture xpm
 
@@ -42,6 +45,7 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
+#include "global.h"
 #include "raster.h"
 #include "coin_util.h"
 /* 
@@ -110,8 +114,8 @@ RGBACreateContext(Display *dpy, int screen_number)
 			       |GCGraphicsExposures, &gcv);
   if (context->vclass == TrueColor || context->vclass == DirectColor) {
     /* calc offsets to create a TrueColor pixel */
-    printf("le visual (depth=%d) est en %s, cool\n", context->depth, 
-	   context->vclass == TrueColor ? "TrueColor" : "DirectColor");
+    BLAHBLAH(1,printf("le visual (depth=%d) est en %s, cool\n", context->depth, 
+		      context->vclass == TrueColor ? "TrueColor" : "DirectColor"));
   } else if (context->vclass == PseudoColor || context->vclass == StaticColor) {
     printf("waou, on est en pseudocolor (depth=%d)...\n", context->depth);
     free(context); return NULL;
@@ -137,8 +141,8 @@ RGBACreateContext(Display *dpy, int screen_number)
     mask = context->visual->red_mask; nbits = 0; decal = 0;
     while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
-    printf("rmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->red_mask, decal, nbits);
+    BLAHBLAH(1,printf("rmask=%08lx, decal=%d, nbits=%d\n", 
+		      context->visual->red_mask, decal, nbits));
     context->r_shift_left = decal + (nbits-8);
     if (decal + nbits - 8 < 0) { 
       context->r_shift_right = -context->r_shift_left;
@@ -148,8 +152,8 @@ RGBACreateContext(Display *dpy, int screen_number)
     mask = context->visual->green_mask; nbits = 0; decal = 0;
     while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
-    printf("gmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->green_mask, decal, nbits);
+    BLAHBLAH(1,printf("gmask=%08lx, decal=%d, nbits=%d\n", 
+		      context->visual->green_mask, decal, nbits));
     context->g_shift_left = decal + (nbits-8);
     if (decal + nbits - 8 < 0) { 
       context->g_shift_right = -context->g_shift_left;
@@ -159,8 +163,8 @@ RGBACreateContext(Display *dpy, int screen_number)
     mask = context->visual->blue_mask; nbits = 0; decal = 0;
     while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
-    printf("bmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->blue_mask, decal, nbits);
+    BLAHBLAH(1,printf("bmask=%08lx, decal=%d, nbits=%d\n", 
+		      context->visual->blue_mask, decal, nbits));
     context->b_shift_left = decal + (nbits-8);
     if (decal + nbits - 8 < 0) { 
       context->b_shift_right = -context->b_shift_left;
