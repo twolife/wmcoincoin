@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.6 2001/12/17 00:18:04 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.7 2001/12/17 16:01:33 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.7  2001/12/17 16:01:33  pouaite
+  fix suite à un petit changement dans le /backend.rdf
+
   Revision 1.6  2001/12/17 00:18:04  pouaite
   changement du format du backend -> on utilise desormais le /backend.rdf
 
@@ -507,7 +510,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     myfprintf(stderr, "erreur pendant le d/l de '%<YEL %s>' : %<RED %s>\n", URL, http_error());
   }
   if (err) {
-    myfprintf(stderr,"%<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", n->url, err);
+    myfprintf(stderr,"%<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", URL, err);
   }
 
   if (texte) free(texte);
@@ -766,7 +769,7 @@ dlfp_updatenews(DLFP *dlfp)
 	  memmove(pp, p, strlen(p));
 	}
 	    
-	p = strstr(base_url, ",0");
+	p = strstr(base_url, ",");
 	if (p && p != base_url) {
 	  *p = 0;
 	} else {
