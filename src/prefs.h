@@ -235,7 +235,7 @@ typedef struct _GeneralPrefs{
   int pp_fortune_fn_size;
   int enable_troll_detector;
   int pp_use_classical_tabs;
-
+  int pp_use_colored_tabs;
   /* preferences pour le spelchecker */
   int ew_do_spell;
   char* ew_spell_cmd;

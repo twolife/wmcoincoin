@@ -905,6 +905,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pp_fortune_fn_size = 10;
 
   p->pp_use_classical_tabs = 0;
+  p->pp_use_colored_tabs = 0;
   
   p->ew_do_spell = 0;                  /*Ca fonctionne (?)
 					 donc je l'active par defaut
@@ -1416,6 +1417,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break; 
   case OPT_pinnipede_use_classical_tabs: {
     CHECK_BOOL_ARG(p->pp_use_classical_tabs);
+  } break; 
+  case OPT_pinnipede_use_colored_tabs: {
+    CHECK_BOOL_ARG(p->pp_use_colored_tabs);
   } break; 
   case OPT_pinnipede_plop_keywords: {
     CHECK_KEY_LIST(p->plopify_key_list,0,3);

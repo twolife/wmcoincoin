@@ -496,8 +496,10 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     /* parametres de refresh */
     G_INT_OPT_COPY(max_refresh_delay);
     G_INT_OPT_COPY(switch_off_coincoin_delay);
+
     G_INT_OPT_COPY(use_balloons);
     G_INT_OPT_COPY(pp_use_classical_tabs);
+    G_INT_OPT_COPY(pp_use_colored_tabs);
 
     /* l'ensemble des options http */
     G_INT_OPT_COPY(http_timeout);

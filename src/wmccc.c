@@ -538,6 +538,7 @@ pinnipede_global_panel_update(GeneralPrefs *p) {
 
   link_toggle_button(glob.main_win, "checkbutton_pp_auto_open", &p->pinnipede_open_on_start);
   link_toggle_button(glob.main_win, "checkbutton_pp_use_classical_tabs", &p->pp_use_classical_tabs);
+  link_toggle_button(glob.main_win, "checkbutton_pp_use_colored_tabs", &p->pp_use_colored_tabs);
   link_toggle_button(glob.main_win, "checkbutton_pp_hungry_boitakon", &p->hungry_boitakon);  
   
   link_toggle_button(glob.main_win, "checkbutton_start_in_transparency", &p->pp_start_in_transparency_mode);
@@ -794,6 +795,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEBOOL(OPT_pinnipede_start_in_transparency_mode,pp_start_in_transparency_mode);
   G_SAVEBOOL(OPT_pinnipede_use_fake_real_transparency,use_fake_real_transparency);
   G_SAVEBOOL(OPT_pinnipede_use_classical_tabs,pp_use_classical_tabs);
+  G_SAVEBOOL(OPT_pinnipede_use_colored_tabs,pp_use_colored_tabs);
   G_SAVEBOOL(OPT_pinnipede_hungry_boitakon,hungry_boitakon);
 
   {

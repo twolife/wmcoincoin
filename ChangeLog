@@ -1,3 +1,20 @@
+--------------------------v2.4.3-b-----------------------------------------
+2003-01-12  pouaite  <c0in@altern.org>
+
+	* les stats de la 2.4.3a sont toutes nazes elles prennent pas en
+	compte le ping pour évaluer la qualitai, du coup ça a été changé
+	et maintenant c'est beaucoup mieux. La qualitai est comprise entre
+	0 et 10, en hommage à l'école des fans, <jacques>booon
+	dimaaaaanche, sous vos applaudissements</jacques>. Pour atteindre
+	le mythique 10 il suffit d'avoir une tribune qui marche et un ping
+	à 60ms (ou un truc du genre j'ai oublié). Pour info, la tribune
+	libre de linuxfr obtient la pathétique note de 0.
+
+	Suite aux requêtes d'une foule en délire d'au moins trois
+	personnes, les tabs peuvent être colorées en fonctions de la
+	couleur de fond des messages, l'option correspondante est dans
+	l'onglet 'pinnipede' en haut.
+
 --------------------------v2.4.3-a-----------------------------------------
 
 2003-01-11  pouaite  <c0in@altern.org>

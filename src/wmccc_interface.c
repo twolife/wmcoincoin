@@ -226,6 +226,7 @@ create_main_win (void)
   GtkWidget *hbox161;
   GtkWidget *checkbutton_pp_auto_open;
   GtkWidget *checkbutton_pp_use_classical_tabs;
+  GtkWidget *checkbutton_pp_use_colored_tabs;
   GtkWidget *checkbutton_pp_hungry_boitakon;
   GtkWidget *frame9;
   GtkWidget *vbox13;
@@ -2264,7 +2265,7 @@ create_main_win (void)
   gtk_widget_show (hbox161);
   gtk_box_pack_start (GTK_BOX (vbox29), hbox161, FALSE, FALSE, 0);
 
-  checkbutton_pp_auto_open = gtk_check_button_new_with_label ("Auto-open the pinnipede on startup");
+  checkbutton_pp_auto_open = gtk_check_button_new_with_label ("Auto-open on startup");
   gtk_widget_ref (checkbutton_pp_auto_open);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_pp_auto_open", checkbutton_pp_auto_open,
                             (GtkDestroyNotify) gtk_widget_unref);
@@ -2277,6 +2278,15 @@ create_main_win (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (checkbutton_pp_use_classical_tabs);
   gtk_box_pack_start (GTK_BOX (hbox161), checkbutton_pp_use_classical_tabs, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, checkbutton_pp_use_classical_tabs, "if you think that the default behaviour of the tabs sucks..", NULL);
+
+  checkbutton_pp_use_colored_tabs = gtk_check_button_new_with_label ("Colored tabs");
+  gtk_widget_ref (checkbutton_pp_use_colored_tabs);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_pp_use_colored_tabs", checkbutton_pp_use_colored_tabs,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (checkbutton_pp_use_colored_tabs);
+  gtk_box_pack_start (GTK_BOX (hbox161), checkbutton_pp_use_colored_tabs, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, checkbutton_pp_use_colored_tabs, "if used, the \"tabs\" will be colored accordingly to the background color of the messages in the pinnipede", NULL);
 
   checkbutton_pp_hungry_boitakon = gtk_check_button_new_with_label ("Very Hungry boitakon");
   gtk_widget_ref (checkbutton_pp_hungry_boitakon);
@@ -4878,6 +4888,9 @@ create_main_win (void)
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_pp_use_classical_tabs), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (checkbutton_pp_use_colored_tabs), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_pp_hungry_boitakon), "toggled",

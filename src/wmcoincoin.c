@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.73 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.74 2003/01/12 18:42:19 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.74  2003/01/12 18:42:19  pouaite
+  et une baguette bien cuite pour le monsieur avec l'ornythorinque
+
   Revision 1.73  2003/01/11 17:44:10  pouaite
   ajout de stats/coinping sur les sites
 
@@ -512,7 +515,8 @@ wmcc_log_http_request(Site *s, HttpRequest *r)
     for (i = 0; i < NB_HTTP_PING_STAT; ++i) {
       int ii = (s->http_ping_stat_i+i)%NB_HTTP_PING_STAT;
       if (s->http_ping_stat_buf[ii] >= 0.) {
-	sum += s->http_ping_stat_buf[ii]; cnt++;
+	sum += (NB_HTTP_PING_STAT-i)*s->http_ping_stat_buf[ii]; 
+	cnt += (NB_HTTP_PING_STAT-i);
       }
     }
     if (cnt) {

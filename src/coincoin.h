@@ -300,10 +300,13 @@ struct _Site {
   int http_recent_error_cnt; /* incrementé à chaque erreur, et remis à zero à chaque
 				succes */
 
-#define NB_HTTP_PING_STAT 10
+  /* bien sûr c'est pas des vrai pings, c'est le temps pour faire un connect
+     envoyer une requete http et recevoir l'entente de la reponse */
+#define NB_HTTP_PING_STAT (42/2)
+  /* c'est un buffer tournant je sais pas comment on dit */
   float http_ping_stat_buf[NB_HTTP_PING_STAT];
   int http_ping_stat_i;
-  float http_ping_stat;
+  float http_ping_stat; /* moyenne judicieusement pondérée */
 };
 
 struct _SiteList {

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.31 2003/01/11 23:28:13 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.32 2003/01/12 18:42:17 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.32  2003/01/12 18:42:17  pouaite
+  et une baguette bien cuite pour le monsieur avec l'ornythorinque
+
   Revision 1.31  2003/01/11 23:28:13  pouaite
   meilleur calcul de la qualitai
 
@@ -1039,11 +1042,11 @@ show_http_stats(Dock *dock) {
     int total = site->http_success_cnt + site->http_error_cnt+ site->http_recent_error_cnt*4;;
     if (site->http_success_cnt) {
       q = 1.-(site->http_error_cnt + site->http_recent_error_cnt*4)/(float)total;
-      q = q * q * (site->http_ping_stat<=0. ? 0. :
-		   myexp(-MAX(site->http_ping_stat/3,0.02))/myexp(-0.02));
+      q = q * (site->http_ping_stat<=0. ? 0. :
+	       myexp(-MAX(site->http_ping_stat/3,0.02))/myexp(-0.02));
     }
     if (total) {
-      err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s :<tab7><b>%.1f</b><tab3> %d<tab3> %d<tab3> %d<tab3> %4.0fms.",
+      err_msg = str_cat_printf(err_msg, "<br><tab>%s<font color=%s>%.10s</font>%s <tab6><b>%.2f</b><tab3> %d<tab3> %d<tab3> %d<tab3> %4.0fms.",
 			       q < .2 ? "<b>" : "",
 			       q > .5 ? "#000080" : "#e00000",
 			       site->prefs->site_name, 

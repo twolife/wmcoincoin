@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.50 2002/12/20 17:40:49 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.51 2003/01/12 18:42:17 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.51  2003/01/12 18:42:17  pouaite
+#%  et une baguette bien cuite pour le monsieur avec l'ornythorinque
+#%
 #%  Revision 1.50  2002/12/20 17:40:49  pouaite
 #%  ornythorinque en gelée
 #%
@@ -470,6 +473,9 @@
 
 ### pour retrouver un comportement 'classique' des tabs
 #pinnipede.use_classical_tabs: on
+
+### pour que les tabs aient la couleur de fond de leur tribune
+#pinnipede.use_colored_tabs: on
 
 ### liste des elements déclenchant la plopification (en plus de ceux
 ### que vous pouvez ajouter en faisant shift+right clic dans le pinni)
