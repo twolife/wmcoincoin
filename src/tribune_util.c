@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.23 2002/05/28 23:22:58 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.24 2002/06/09 17:16:48 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.24  2002/06/09 17:16:48  pouaite
+  microfix pour les ref-horloges sans secondes sur plusieurs jours
+
   Revision 1.23  2002/05/28 23:22:58  pouaite
   ptit fix
 
@@ -453,7 +456,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
       if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
-	   && mi->hmsf[1] == m && best_mi == NULL && !previous_mi_was_a_match) {
+	   && mi->hmsf[1] == m && !previous_mi_was_a_match) {
 	match = 1;
       }
     } else {
