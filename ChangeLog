@@ -71,7 +71,7 @@
 	* src/wmcoincoin.c: j'avais mal pompé le code d'asclock et la date
 	s'affichait mal, c'est réglé
 
-2001-11-23  Julien Pommier  <jul@dr.com>
+2001-11-23  Pouaite  <jul@dr.com>
 
 	* src/wmcoincoin.c: miniretouche du patch de glandium pour que
 	l'horloge (qui roulaize) s'affiche correctement à la reception de SIGUSR1
@@ -272,18 +272,18 @@
 	-r pour fonctionner avec l'ensemble des sites sous dacode , et de
 	l'option -s pour modifier la vitesse initiale du trolloscope
 
-2001-07-17  julien pommier  <jul@dr.com>
+2001-07-17  pouaite  <jul@dr.com>
 
 	* src/coincoin_tribune.c: décidément... c'est le format des news
 	(pour le style 7) qui a changé..-> rerebugfix
 
-2001-07-12  julien pommier  <jul@dr.com>
+2001-07-12  pouaite  <jul@dr.com>
 
 	* src/coincoin_tribune.c (dlfp_updatetribune): remodif de
 	trib_sign suite au rechangement de linuxfr.org/board... maintenant
 	ca devrait toujours marcher
 
-2001-07-04  julien pommier  <jul@dr.com>
+2001-07-04  pouaite  <jul@dr.com>
 
 	* src/coincoin_tribune.c (dlfp_updatetribune): changement
 	trib_sign apres la modif de dacode
@@ -330,7 +330,7 @@
 
 	* wmcoincoin.c: fix de l'affichage de l'option -h (merci Amaury!)
 
-2001-02-21  julien pommier  <jul@dr.com>
+2001-02-21  ned flanders  <jul@dr.com>
 
 	* README: qqes modifs: la version min. de wmaker EST la 0.62
 

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.5 2001/12/16 21:51:22 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.5  2001/12/16 21:51:22  pouaite
+  *** empty log message ***
+
   Revision 1.4  2001/12/16 20:28:45  pouaite
   bugfixes divers
 
@@ -474,7 +477,7 @@ dlfp_updatetribune(DLFP *dlfp)
     }
     http_close(fd);
   } else {
-    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>", s, http_error());
+    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", s, http_error());
   }
 
   /* cleanup .. */
