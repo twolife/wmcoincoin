@@ -153,7 +153,7 @@ struct _Pinnipede {
 		    2: affiche les logins, 
 		    3: affiche les deux, 
 		    4: affiche useragent ou login */
-  int nosec_mode; /* supprime les secondes sur les posts ou c'est possible */
+  int show_sec_mode; /* supprime les secondes sur les posts ou c'est possible */
   int trollscore_mode;
   int survol_hash; /* pour determiner (a peu pres) si on affcihe une nouvelle info de survol... (apprixmatif...) */
   int fortune_mode;
@@ -228,7 +228,6 @@ int  pp_widgets_handle_motion(Dock *dock, XMotionEvent *event);
 void pp_update_fortune(Dock *dock);
 void pp_refresh_fortune(Dock *dock, Drawable d);
 void pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
-
 
 
 /* macros pour le calcul des differentes positions d'affichage des lignes */

@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include "http.h"
 #include "global.h"
+#include "raster.h"
 #include "coin_util.h"
 #include "myprintf.h"
 
@@ -165,7 +166,7 @@ struct _board_msg_info {
   /* utilisé par board_key_list_test_thread pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
   int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
-  short nb_refs:15;
+  short nb_refs BITFIELD(15);
   board_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 
   /* pointeurs inter-sites: le point de depart est dans la structure boards,
@@ -623,6 +624,7 @@ void pp_set_ua_filter(Dock *dock, char *ua);
 void pp_set_word_filter(Dock *dock, char *word);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
+Site *pp_tabs_get_main_site(Dock *dock);
 
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);

@@ -66,6 +66,15 @@ pp_tabs_set_visible_sites(Pinnipede *pp) {
   }
 }
 
+Site *
+pp_tabs_get_main_site(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  if (pp->active_tab) {
+    return pp->active_tab->site;
+  } else return NULL;
+}
+
 /* a appeler apres update fortune */
 void
 pp_tabs_build(Dock *dock) {
@@ -145,8 +154,8 @@ pp_tabs_refresh(Dock *dock)
       
       if (pt->site->board->enabled) {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-6, x+w-2, h-1);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-1, x+w-2, h-6);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-5, x+w-2, h-1);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, x+w-6, h-1, x+w-2, h-5);
       }
 
       XSetForeground(dock->display, dock->NormalGC, bar_pixel);
@@ -155,7 +164,7 @@ pp_tabs_refresh(Dock *dock)
 	zw = (w-7 - zw);
 	//	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
 	if (zw > 0) {
-	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, h-4, zw, 3);
+	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x, h-4, zw, 4);
 	}
       }
 
@@ -424,25 +433,25 @@ pp_minib_refresh(Dock *dock)
 
 
 /*     if (pp->mb[i].clicked && pp->mb[i].type != REFRESH_TRIBUNE && pp->mb[i].type != REFRESH_NEWS) { */
-      XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-      XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x, 1, pp->mb[i].w, pp->mb[i].h);
+      XSetForeground(dock->display, dock->NormalGC, pp->minib_pixel);
+      XFillRectangle(dock->display, pp->lpix, dock->NormalGC, x+1, 1, pp->mb[i].w-2, pp->mb[i].h-2);
 /*     }     */
     switch (pp->mb[i].type) {
     case SCROLLBAR:
       {
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, 8);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, 7);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, 6);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, 7);
-	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, 6);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, pp->mb[i].h-2);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, pp->mb[i].h-3);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, pp->mb[i].h-4);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, pp->mb[i].h-3);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, pp->mb[i].h-4);
       } break;
     case TRANSPARENT:
       {
 	int j;
 	for (j=0; j < 7; j++) {
 	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, 7);
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, pp->mb[i].h-3);
 	}
       } break;
       /*    case REFRESH_TRIBUNE:
@@ -516,7 +525,7 @@ pp_minib_refresh(Dock *dock)
 	rx = x + 3; ry  = y+2; rw = pp->mb[i].w-6; rh = pp->mb[i].h-6;
 	XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel[main_site->site_id]);
 	
-	if (pp->nosec_mode) {
+	if (pp->show_sec_mode == 0) {
 	  XFillRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw+1, rh+1);
 	} else {
 	  XDrawRectangle(dock->display, pp->lpix, dock->NormalGC, rx, ry, rw, rh);
@@ -704,7 +713,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
       } break;
     case SECOND:
       {
-	pp->nosec_mode = (1-pp->nosec_mode);
+	pp->show_sec_mode = (1-pp->show_sec_mode);
 	pp_pv_destroy(pp);
 	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
 	pp_refresh(dock, pp->win, NULL);	    

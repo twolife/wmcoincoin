@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "raster.h"
+//#include "raster.h"
 
 #ifndef MAX
 # define MAX(x,y) ((x)>(y)?(x):(y))

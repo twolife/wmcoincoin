@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.5 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: board.c,v 1.6 2002/08/26 00:52:22 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.6  2002/08/26 00:52:22  pouaite
+  coin coin coin
+
   Revision 1.5  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -737,10 +740,11 @@ do_url_replacements(char **pmessage)
       insert = NULL;
       
       if (*src2 == '\t' && strncasecmp(src2, "\t<a href=\"", 10) == 0) {
-	unsigned char *deb_url, *fin_url;
+	unsigned char *deb_url, *fin_url, *tag_fermant;
 	deb_url = src2+10;
 	fin_url = strstr(deb_url, "\t>[url]\t</");
-	if (deb_url && fin_url) {
+	tag_fermant = strstr(deb_url, "\t</a");
+	if (deb_url && fin_url && tag_fermant && (tag_fermant > fin_url)) {
 	  
 	  URLReplacement *ur = Prefs.url_repl.first;
 	  unsigned char *url, *crochet;
@@ -920,7 +924,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   if (board->site->prefs->user_login && board->site->prefs->user_login[0] && board->just_posted_anonymous == 0) {
     it->is_my_message = !strcmp(board->site->prefs->user_login, it->login);
   } else {
-    it->is_my_message = !strcmp(it->useragent, my_useragent);
+    /* special pour les sites qui rajoutent des trucs à la fin,
+       on limite la longueur de la comparaison */
+    it->is_my_message = !strncmp(it->useragent, my_useragent, board->site->prefs-> palmi_ua_max_len);
 /*    if (it->is_my_message) {
       myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
     }*/

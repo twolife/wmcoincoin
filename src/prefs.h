@@ -40,6 +40,7 @@ typedef struct {
 typedef struct _MiniUARule {
   char     *site_name;   /* si non-nul, doit matcher le site du message */
   char     *user_login;  /* si non-nul, doit matcher le login du posteur */
+  char     *s_rgx;       /* la description originale de la regex */
   regex_t  *rgx;         /* si non-nul, l'ua doit matcher la regexp */
   char     *rua;         /* si non-nul, indique l'ua raccourcie de remplacement (peut
 			    avoir des \1, \2 etc pour faire des truc avec rgx) */
@@ -89,7 +90,8 @@ typedef struct _SitePrefs {
   int news_max_nb_days;
   /* user_agent (defaut: wmCoinCoin) */
   char *user_agent;
-  char *proxy_auth; /* default: NULL */
+  char *proxy_auth_user; /* default: NULL */
+  char *proxy_auth_pass; /* default: NULL */
   char *proxy_name; /* default: NULL */
   int   proxy_port; /* default: 1080 */
 
@@ -207,7 +209,7 @@ typedef struct _GeneralPrefs{
     pp_buttonbar_msgcnt_color, pp_buttonbar_updlcnt_color,
     pp_buttonbar_progressbar_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
-  int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
+  int pp_show_sec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;
   char *pp_fortune_fn_family;
   int pp_fortune_fn_size;
@@ -343,6 +345,9 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 #define FREE_STRING(x) { if (x) { free(x); x = NULL; }}
 #define ASSIGN_STRING_VAL(x,v) { FREE_STRING(x); x = strdup(v); assert(x); }
 
+char *string_to_miniuarule(unsigned char *str, MiniUARule *r);
+void miniuarule_clear(MiniUARule *r);
+void miniuarules_destroy(MiniUARules *urs, MiniUARule *ur);
 
 /* remplit la structure avec les valeurs par défaut des preferences */
 void wmcc_prefs_set_default(GeneralPrefs *p);

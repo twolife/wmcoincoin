@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.54 2002/08/22 00:10:14 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.55 2002/08/26 00:52:22 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.55  2002/08/26 00:52:22  pouaite
+  coin coin coin
+
   Revision 1.54  2002/08/22 00:10:14  pouaite
   prout
 
@@ -422,7 +425,8 @@ wmcc_init_http_request(HttpRequest *r, SitePrefs *sp, char *url_path)
   r->port = sp->site_port;
   r->host_path = strdup(url_path);
   if (sp->proxy_name) r->proxy_name = strdup(sp->proxy_name);
-  if (sp->proxy_auth) r->proxy_user_pass = strdup(sp->proxy_auth);
+  if (sp->proxy_auth_user && sp->proxy_auth_pass) 
+    r->proxy_user_pass = str_printf("%s:%s", sp->proxy_auth_user, sp->proxy_auth_pass);
   if (sp->proxy_port) r->proxy_port = sp->proxy_port;
   r->pragma_nocache = sp->proxy_nocache;
   r->use_if_modified_since = sp->use_if_modified_since;
@@ -1673,8 +1677,14 @@ main(int argc, char **argv)
     while (app_useragent[i] < '0' || app_useragent[i] > '9') app_useragent[i--] = 0;
   }
     
-  printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, NULL));
-  
+  printf(_("locale used: %s\n"), "hello");
+  {
+    int i,j=0;
+    char *s = setlocale (LC_MESSAGES, NULL);
+    for (i=0; s[i]; i++) 
+      j+=s[i];
+    printf("j=%d\n", j);
+  }
   memset(&Prefs, 0, sizeof(Prefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);
   
@@ -1686,11 +1696,12 @@ main(int argc, char **argv)
     _Xdebug = 1; /* oblige la synchronisation */
   }
 
+
   {
     Site *s;
     myprintf("Site         Locale     Board           News       Comments     Messages\n");
     for (s = dock->sites->list; s; s = s->next) {
-      myprintf("%<YEL %10.10s>   \t", s->prefs->site_name);
+      myprintf("%<YEL %10s>   \t", s->prefs->site_name);
       switch (s->prefs->locale) {
       case locEN: myprintf("EN\t"); break;
       case locFR: myprintf("FR\t"); break;

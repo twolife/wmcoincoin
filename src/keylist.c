@@ -1,10 +1,16 @@
 #include <stdlib.h>
-#include "global.h"
+#include <string.h>
+//#include "global.h"
 #include "coin_util.h"
 #include "myprintf.h"
 #include "keylist.h"
+
+#ifndef WMCCC
 #include <libintl.h>
 #define _(String) gettext (String)
+#else
+#define _(String) (String)
+#endif
 
 void
 key_list_destroy(KeyList *first)
@@ -29,7 +35,7 @@ key_list_add(KeyList *first, const unsigned char *key, KeyListType type, int num
   hk->from_prefs = from_prefs;
   hk->next = NULL;
   
-  BLAHBLAH(1, myprintf(_("Adding keyword: '%<CYA %s>'\n"), key));
+  //BLAHBLAH(1, myprintf(_("Adding keyword: '%<CYA %s>'\n"), key));
   last = first;
   if (last == NULL) {
     first = hk;
@@ -50,7 +56,7 @@ key_list_remove(KeyList *first, const unsigned char *key, KeyListType type)
   hk = first;
   while (hk) {
     if (strcasecmp(key, hk->key)==0 && (hk->type == type || type == HK_ALL)) {
-      BLAHBLAH(1, myprintf(_("Deleting key: '%<CYA %s>'\n"), key));
+      //BLAHBLAH(1, myprintf(_("Deleting key: '%<CYA %s>'\n"), key));
       if (prev) {
 	/* supprime les refs des postvisuals vers cette clef.. */
 	prev->next = hk->next;

@@ -34,6 +34,7 @@ OPT_news_emph_color,
 OPT_news_location,
 OPT_news_dimensions,
 OPT_palmipede_default_message,
+OPT_http_timeout,
 OPT_http_browser,
 OPT_http_browser2,
 OPT_http_gogole_search_url,
@@ -118,7 +119,7 @@ OPTSG_http_force_fortune_retrieval,
 OPTSG_http_proxy,
 OPTSG_http_proxy_auth,
 OPTSG_http_proxy_use_nocache,
-OPTSG_http_disable_if_modified_since,
+OPTSG_http_use_if_modified_since,
 OPTSG_pinnipede_bg_color,
 OPTSG_pinnipede_fg_color,
 OPTSG_pinnipede_clock_color,
@@ -133,7 +134,7 @@ NB_WMCC_OPTIONS
 } wmcc_options_id;
 
 
-#ifdef __PREFS_C
+#if defined(__PREFS_C) || defined(__WMCCC_C)
 
 static char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "site",
@@ -164,6 +165,7 @@ static char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "news.location",
 "news.dimensions",
 "palmipede.default_message",
+"http.timeout",
 "http.browser",
 "http.browser2",
 "http.gogole_search_url",
@@ -248,7 +250,7 @@ static char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {
 "!http.proxy",
 "!http.proxy_auth",
 "!http.proxy_use_nocache",
-"!http.disable_if_modified_since",
+"!http.use_if_modified_since",
 "!pinnipede.bg_color",
 "!pinnipede.fg_color",
 "!pinnipede.clock_color",

@@ -16,7 +16,7 @@ grep '#\[\.\][a-z]' options | sed -e 's/#%.*//' | grep ':' | sed -e 's/:.*//' | 
 
 echo 'NB_WMCC_OPTIONS' >> src/options_list.h
 echo -e '} wmcc_options_id;\n' >> src/options_list.h
-echo -e '\n#ifdef __PREFS_C\n' >> src/options_list.h
+echo -e '\n#if defined(__PREFS_C) || defined(__WMCCC_C)\n' >> src/options_list.h
 
 #generation des chaines de caracteres de noms d'options
 echo 'static char *wmcc_options_strings[NB_WMCC_OPTIONS+1] = {' >> src/options_list.h

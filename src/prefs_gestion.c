@@ -12,7 +12,7 @@
 #define _(String) gettext (String)
 
 #define TEST_CMDLINE_OPT(optid) { \
-  char *errmsg = wmcc_prefs_validate_option(&Prefs,optid,optarg); \
+  char *errmsg = wmcc_prefs_validate_option(&Prefs,NULL, NULL, optid,optarg); \
   if (errmsg) { myprintf(_("Erreur pour l'option de la ligne de commande '%<GRN -%c>'\n: %s\n"),optc,errmsg); \
   exit(1); } }
 
@@ -113,8 +113,10 @@ wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
       /*
     case 'P': TEST_CMDLINE_OPT(OPT_http_proxy); break;
     case 'A': TEST_CMDLINE_OPT(OPT_http_proxy_auth); break;
+      */
     case 'w': TEST_CMDLINE_OPT(OPT_dock_iconwin); break;
     case 'B': TEST_CMDLINE_OPT(OPT_dock_draw_border); break;
+      /*
     case 'H': TEST_CMDLINE_OPT(OPT_dock_use_balloons); break;
     case 'x': TEST_CMDLINE_OPT(OPT_dock_pos); break;
     case 'r': TEST_CMDLINE_OPT(OPT_http_site_url); break;
@@ -583,7 +585,8 @@ wmcc_prefs_relecture(Dock *dock)
       SP_INT_OPT_COPY(proxy_nocache);
       SP_INT_OPT_COPY(use_if_modified_since);
       SP_STR_OPT_COPY(user_agent);
-      SP_STR_OPT_COPY(proxy_auth);
+      SP_STR_OPT_COPY(proxy_auth_user);
+      SP_STR_OPT_COPY(proxy_auth_pass);
       
       if (SP_STR_OPT_COPY_IF_CHANGED(proxy_name) +
 	  SP_STR_OPT_COPY_IF_CHANGED(site_root)) {

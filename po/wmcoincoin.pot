@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-08-23 02:18+0200\n"
+"POT-Creation-Date: 2002-08-24 15:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -179,12 +179,12 @@ msgstr ""
 msgid "Daddy: I couldn't read from my son :-/ (len=%d, cnt=%d) (lasterr=%s)\n"
 msgstr ""
 
-#: src/regexp.c:238
+#: src/regexp.c:241
 #, c-format
 msgid "regexp error: %d\n"
 msgstr ""
 
-#: src/regexp.c:251
+#: src/regexp.c:254
 #, c-format
 msgid "The regexp [%s] doesn't match the string [%s]\n"
 msgstr ""
@@ -338,113 +338,113 @@ msgid ""
 "here\n"
 msgstr ""
 
-#: src/http.c:534
+#: src/http.c:544
 #, c-format
 msgid "Unable to resolve '%s'"
 msgstr ""
 
-#: src/http.c:545
+#: src/http.c:555
 #, c-format
 msgid "Unable to create a socket ! (%s)"
 msgstr ""
 
-#: src/http.c:568
+#: src/http.c:578
 msgid "connecting...\n"
 msgstr ""
 
-#: src/http.c:581
+#: src/http.c:591
 #, c-format
 msgid "connection failed: %s..\n"
 msgstr ""
 
-#: src/http.c:589
+#: src/http.c:599
 msgid "connected..\n"
 msgstr ""
 
-#: src/http.c:672
+#: src/http.c:682
 #, c-format
 msgid "http_skip_header[%s]: error detected: '%s'"
 msgstr ""
 
-#: src/http.c:701
+#: src/http.c:711
 #, c-format
 msgid "http_skip_header has a socket issue ! (%s)"
 msgstr ""
 
-#: src/http.c:722
+#: src/http.c:732
 #, c-format
 msgid "http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"
 msgstr ""
 
-#: src/http.c:727
+#: src/http.c:737
 msgid ""
 "Damned, the chunk_encoding has gone down the tubes on the following "
 "request:\n"
 msgstr ""
 
-#: src/http.c:750
+#: src/http.c:760
 #, c-format
 msgid "error in chunk '%s'\n"
 msgstr ""
 
-#: src/http.c:775
+#: src/http.c:785
 #, c-format
 msgid "http_read has encountered a socket problem, pos=%d, len=%d !(%s)"
 msgstr ""
 
-#: src/http.c:783
+#: src/http.c:793
 #, c-format
 msgid "http_read: length finally requested: %d, received: %d, new pos=%ld\n"
 msgstr ""
 
-#: src/http.c:821
+#: src/http.c:831
 #, c-format
 msgid ""
 "http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"
 msgstr ""
 
-#: src/http.c:827
+#: src/http.c:837
 #, c-format
 msgid "http_get_line messed up (got=%d): %s!"
 msgstr ""
 
-#: src/http.c:831
+#: src/http.c:841
 msgid "http_get_line sent (cnt=%d): '%<yel %s>'\n"
 msgstr ""
 
-#: src/http.c:864
+#: src/http.c:874
 #, c-format
 msgid "http_send_request/debug, unable to open '%s':%s\n"
 msgstr ""
 
-#: src/http.c:971
+#: src/http.c:981
 #, c-format
 msgid "http_get couldn't send its request: %s"
 msgstr ""
 
-#: src/http.c:975
+#: src/http.c:985
 msgid "ok, sent\n"
 msgstr ""
 
-#: src/http.c:988
+#: src/http.c:998
 msgid "error in the answer...\n"
 msgstr ""
 
-#: src/http.c:1030
+#: src/http.c:1040
 msgid "Quack ! Missed"
 msgstr ""
 
-#: src/http.c:1043
+#: src/http.c:1053
 #, c-format
 msgid "%s: too big (bsize=%d!), let's cut\n"
 msgstr ""
 
-#: src/http.c:1051
+#: src/http.c:1061
 #, c-format
 msgid "problem while reading %s: %s\n"
 msgstr ""
 
-#: src/http.c:1057
+#: src/http.c:1067
 msgid "%s, read: %<mag %s>\n"
 msgstr ""
 
@@ -574,7 +574,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr ""
 
-#: src/comments.c:348 src/news.c:908 src/board.c:1429
+#: src/comments.c:348 src/news.c:908 src/board.c:1432
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
@@ -644,7 +644,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:378 src/news.c:724 src/board.c:1286
+#: src/news.c:378 src/news.c:724 src/board.c:1289
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -864,52 +864,52 @@ msgstr ""
 msgid "Uuuurg, no helvetica/12 , I prefer to die.\n"
 msgstr ""
 
-#: src/board_util.c:224
+#: src/board_util.c:227
 msgid ""
 "sniff? sniff ? soit vous vous amusez a faire de threads de folie, soit ca "
 "sent le BEUGGUE!\n"
 msgstr ""
 
-#: src/board_util.c:565
+#: src/board_util.c:568
 #, c-format
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
-#: src/board_util.c:580
+#: src/board_util.c:583
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
 msgstr ""
 
-#: src/board_util.c:739
+#: src/board_util.c:742
 msgid "IPOT(tm) detected"
 msgstr ""
 
-#: src/board_util.c:741
+#: src/board_util.c:744
 #, c-format
 msgid "but where is '%s' ?"
 msgstr ""
 
-#: src/board_util.c:745
+#: src/board_util.c:748
 msgid "[IPOT(tm)]"
 msgstr ""
 
-#: src/board_util.c:747
+#: src/board_util.c:750
 msgid "Awww, we turn around and around and around and around..."
 msgstr ""
 
-#: src/board_util.c:755
+#: src/board_util.c:758
 #, c-format
 msgid "Hello from %.30s in the boitakon ! (because %s=%.20s)"
 msgstr ""
 
-#: src/board_util.c:759
+#: src/board_util.c:762
 #, c-format
 msgid ""
 "Hello from %.30s in the boitakon, BUT YOU HAVE JUST FOUND A BUG IN THE "
 "BOITAKON :-("
 msgstr ""
 
-#: src/board_util.c:791
+#: src/board_util.c:794
 #, c-format
 msgid "I don't fucking know %s"
 msgstr ""
@@ -1430,23 +1430,23 @@ msgstr ""
 msgid "locale used: %s\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1701
+#: src/wmcoincoin.c:1708
 msgid "%<YEL modern style      >"
 msgstr ""
 
-#: src/wmcoincoin.c:1702
+#: src/wmcoincoin.c:1709
 msgid "%<YEL old style         >"
 msgstr ""
 
-#: src/wmcoincoin.c:1703
+#: src/wmcoincoin.c:1710
 msgid "%<YEL without underpants>"
 msgstr ""
 
-#: src/wmcoincoin.c:1704
+#: src/wmcoincoin.c:1711
 msgid "%<YEL prrrrrrt          >"
 msgstr ""
 
-#: src/wmcoincoin.c:1807
+#: src/wmcoincoin.c:1814
 #, c-format
 msgid "Unable to load font %s\n"
 msgstr ""
@@ -1677,25 +1677,25 @@ msgstr ""
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:828
+#: src/board.c:829
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr ""
 
-#: src/board.c:943
+#: src/board.c:946
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1236
+#: src/board.c:1239
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1237
+#: src/board.c:1240
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1405
+#: src/board.c:1408
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -1703,7 +1703,7 @@ msgid ""
 "this bugfix for coconuts.\n"
 msgstr ""
 
-#: src/board.c:1422
+#: src/board.c:1425
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"

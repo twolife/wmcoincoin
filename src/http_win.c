@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.11 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.12 2002/08/26 00:52:22 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.12  2002/08/26 00:52:22  pouaite
+  coin coin coin
+
   Revision 1.11  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -40,7 +43,7 @@
 /* vole dans une mailing liste (je sais plus laquelle) */
 
 static int
-net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_secs)
+net_tcp_connect_with_timeout (SOCKET fd, SOCKADDR_IN *sock, int timeout_secs)
 {
   struct timeval timeout;
   fd_set write_fds;
@@ -71,7 +74,7 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_s
      * Try to connect.
      */
     if (connect (fd, (struct sockaddr *) sock,
-		 sizeof (struct sockaddr_in)) < 0) {
+		 sizeof (SOCKADDR_IN)) < 0) {
       error = WSAGetLastError();
       if (error != WSAEWOULDBLOCK &&
 	  error != WSAEISCONN

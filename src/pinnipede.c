@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.72 2002/08/21 21:34:16 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.73 2002/08/26 00:52:22 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.73  2002/08/26 00:52:22  pouaite
+  coin coin coin
+
   Revision 1.72  2002/08/21 21:34:16  pouaite
   coin
 
@@ -963,7 +966,7 @@ pp_pv_add(Pinnipede *pp, Boards *boards, id_type id)
       return NULL;
     }
 
-    if (pp->nosec_mode) {
+    if (pp->show_sec_mode == 0) {
       with_seconds = mi->hmsf[3];
     }
 
@@ -1957,7 +1960,7 @@ pp_build(Dock *dock)
 
   //  pp->html_mode = Prefs.pp_html_mode;
   pp->nick_mode = Prefs.pp_nick_mode;
-  pp->nosec_mode = Prefs.pp_nosec_mode;
+  pp->show_sec_mode = Prefs.pp_show_sec_mode;
   pp->trollscore_mode = Prefs.pp_trollscore_mode;
   pp->disable_plopify = 0;
   pp->hilight_my_message_mode = 1;

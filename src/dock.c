@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.20 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.21 2002/08/26 00:52:22 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.21  2002/08/26 00:52:22  pouaite
+  coin coin coin
+
   Revision 1.20  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -1228,7 +1231,9 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
     } else if (IS_INSIDE(x,y,3,49,3+57,49+12) && 
 	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
       if (!editw_ismapped(dock->editw)) {
-	editw_show(dock, NULL, 0);
+	Site *s = pp_tabs_get_main_site(dock);
+	//printf("prout %p\n",s);
+	editw_show(dock, s ? s->prefs : NULL, 0);
       } else {
 	editw_hide(dock, dock->editw);
       }

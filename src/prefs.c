@@ -6,8 +6,12 @@
 #include "myprintf.h"
 #include <sys/utsname.h> /* pour la fonction uname */
 
+#ifndef WMCCC
 #include <libintl.h>
 #define _(String) gettext (String)
+#else
+#define _(String) (String)
+#endif
 
 #define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
 
@@ -430,30 +434,15 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
   return str_printf(_("Invalid argument for option '%s', word %d: you have to specify a list of [UA|LOGIN|ID|etc]:[NUM:]\"a word\" separated with commas\n"), optname, cnt);
 }
 
-
-/*
-  encore plus compliquée ;) on reprends la precedente et on la bidouille 
-*/
-char*
-option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
-{
+char *
+string_to_miniuarule(unsigned char *str, MiniUARule *r) {
   int cnt;
   char mot[1024];
   unsigned char *s, *s_tok;
-  MiniUARule *r, *pr;
   int rule_section = 1;
 
-  /* on insere à la fin de la liste pour respecter l'ordre des regles
-     (pt1 j'ai mis longtemps à comprendre pour ces *** de regex marchaient bizarrement)
-  */
-  ALLOC_OBJ(r, MiniUARule); r->next = NULL;
-  pr = rules->first;
-  if (pr) {
-    while (pr->next) pr = pr->next;
-    pr->next = r;
-  } else rules->first = r;
-
   r->rgx = NULL;
+  r->s_rgx = NULL;
   r->site_name = NULL;
   r->user_login = NULL;
   r->rua = NULL;
@@ -462,7 +451,8 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
   r->ua_terminal = 0;
   r->color_terminal = 0;
   r->symb_terminal = 0;
-  s = optarg; s_tok = s;
+  r->next = NULL;
+  s = str; s_tok = s;
   cnt = 0;
   do {
     enum { MATCH_UA, MATCH_LOGIN, MATCH_SITE, REPL_UA, REPL_COL, REPL_SYMB, TOKERR } tok_type;
@@ -470,7 +460,7 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
     int i;
     s_tok = s; /* juste pour pouvoir signaler sur que element s'est produit l'erreur */
     if (strncmp(s, "=>", 2) == 0 && rule_section == 1) { separ_ok = 1; rule_section = 0; s += 2; }
-    else if (s == optarg) separ_ok = 1;
+    else if (s == str) separ_ok = 1;
     else if (*s == ',') { separ_ok = 1; s++; }
     else goto erreur;
 
@@ -512,7 +502,7 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
       {
 	int err;
 	if (r->rgx) goto erreur;
-
+	r->s_rgx = strdup(mot);
 	ALLOC_OBJ(r->rgx,regex_t);
 	err = regcomp(r->rgx, mot, REG_EXTENDED);
 	if (err != 0) {
@@ -525,7 +515,7 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
 	  regex_errbuf = calloc(regex_errbuffsz+1, sizeof(char));
 	  regerror(err, r->rgx, regex_errbuf, regex_errbuffsz);
 	  
-	  errmsg = str_printf(_("%s : '%s' is a wrong regexp: %s"), optname, mot, regex_errbuf);
+	  errmsg = str_printf(_("miniuarule: '%s' is a wrong regexp: %s"), mot, regex_errbuf);
 	  free(regex_errbuf);
 	  return errmsg;
 	}
@@ -568,7 +558,27 @@ option_miniua_rule(unsigned char *optarg, char *optname, MiniUARules *rules)
   return NULL;
 
  erreur:
-  return str_printf(_("Invalid argument for option '%s' here: '%.20s'\n"), optname, s_tok);
+  return str_printf(_("Invalid argument for miniuarule here: '%.20s'\n"), s_tok);
+}
+
+/*
+  encore plus compliquée ;) on reprends la precedente et on la bidouille 
+*/
+char*
+option_miniua_rule(unsigned char *optarg, MiniUARules *rules)
+{
+  MiniUARule *r, *pr;
+
+  /* on insere à la fin de la liste pour respecter l'ordre des regles
+     (pt1 j'ai mis longtemps à comprendre pour ces *** de regex marchaient bizarrement)
+  */
+  ALLOC_OBJ(r, MiniUARule); r->next = NULL;
+  pr = rules->first;
+  if (pr) {
+    while (pr->next) pr = pr->next;
+    pr->next = r;
+  } else rules->first = r;
+  return string_to_miniuarule(optarg, r);
 }
 
 /* lecture des options de remplacement d'url
@@ -643,7 +653,8 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   p->palmi_msg_max_len = 255;
   p->palmi_ua_max_len = 60;
   p->use_if_modified_since = 1;
-  p->proxy_auth = NULL;
+  p->proxy_auth_user = NULL;
+  p->proxy_auth_pass = NULL;
   p->proxy_name = NULL;
   p->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   p->proxy_nocache = 0;
@@ -699,7 +710,8 @@ wmcc_site_prefs_copy(SitePrefs *sp, const SitePrefs *src) {
 
   strcpy(sp->user_agent, src->user_agent);
   SPSTRDUP(user_name);
-  SPSTRDUP(proxy_auth);
+  SPSTRDUP(proxy_auth_user);
+  SPSTRDUP(proxy_auth_pass);
   SPSTRDUP(proxy_name);
 
   SPSTRDUP(site_root);
@@ -727,7 +739,8 @@ wmcc_site_prefs_destroy(SitePrefs *p)
   FREE_STRING(p->board_wiki_emulation);
   FREE_STRING(p->site_root);
   FREE_STRING(p->site_path);
-  FREE_STRING(p->proxy_auth); 
+  FREE_STRING(p->proxy_auth_user); 
+  FREE_STRING(p->proxy_auth_pass); 
   FREE_STRING(p->proxy_name); 
   FREE_STRING(p->path_board_backend);
   FREE_STRING(p->path_news_backend);
@@ -832,7 +845,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pp_width = 300;
   p->pp_height = 455;
   p->pp_minibar_on = 1;
-  p->pp_nosec_mode = 1;
+  p->pp_show_sec_mode = 0;
   p->pp_html_mode = 1;
   p->pp_nick_mode = 4;
   p->pp_trollscore_mode = 1;           
@@ -869,6 +882,33 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   }
 }
 
+void miniuarule_clear(MiniUARule *r) {
+  FREE_STRING(r->site_name);
+  FREE_STRING(r->user_login);
+  FREE_STRING(r->rua);
+  FREE_STRING(r->s_rgx);
+  if (r->rgx) regfree(r->rgx); 
+  r->rgx = NULL;
+}
+
+void
+miniuarules_destroy(MiniUARules *urs, MiniUARule *ur)
+{
+  MiniUARule *r, *r_prev = NULL;
+  for (r = urs->first; r; r = r->next) {
+    if (r == ur) break;
+    r_prev = r;
+  }
+  assert(r);
+  if (r_prev) {
+    r_prev->next = r->next;
+  } else {
+    urs->first = r->next;
+  }
+  miniuarule_clear(r);
+  free(r);
+}
+
 /* libere la mémoire allouée par les champs de la structure, *mais* pas la structure elle-même */
 void
 wmcc_prefs_destroy(GeneralPrefs *p)
@@ -898,18 +938,8 @@ wmcc_prefs_destroy(GeneralPrefs *p)
     wmcc_site_prefs_destroy(p->site[i]); free(p->site[i]); p->site[i] = NULL; 
   }
   p->nb_sites = 0;
-  {
-    MiniUARule *r, *r_next;
-    for (r = p->miniuarules.first; r; r = r_next) {
-      FREE_STRING(r->site_name);
-      FREE_STRING(r->user_login);
-      FREE_STRING(r->rua);
-      if (r->rgx) regfree(r->rgx); 
-      r->rgx = NULL;
-      r_next = r->next;
-      free(r);
-    }
-    p->miniuarules.first = NULL;
+  while (p->miniuarules.first) {
+    miniuarules_destroy(&p->miniuarules, p->miniuarules.first);
   }
 
   {
@@ -1029,7 +1059,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_BOOL_ARG(p->draw_border);
   } break; 
   case OPT_dock_iconwin: {
-    CHECK_BOOLNOT_ARG(p->use_iconwin);
+    CHECK_BOOL_ARG(p->use_iconwin);
   } break; 
   case OPT_dock_use_balloons: {
     CHECK_BOOL_ARG(p->use_balloons);
@@ -1131,13 +1161,21 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     option_set_proxy(arg, sp);
   } break; 
   case OPTSG_http_proxy_auth: {
-    ASSIGN_STRING_VAL(sp->proxy_auth, arg); 
+    char *s = strchr(arg, ':');
+    if (s) {
+      *s = 0;
+      ASSIGN_STRING_VAL(sp->proxy_auth_user, arg); 
+      ASSIGN_STRING_VAL(sp->proxy_auth_pass, s+1);
+    } else {
+      return 
+	"invalid proxy user:pass setting (user name and password should be separated by ':')";
+    } 
   } break; 
   case OPTSG_http_proxy_use_nocache: {
     CHECK_BOOL_ARG(sp->proxy_nocache);
   } break; 
-  case OPTSG_http_disable_if_modified_since: {
-    CHECK_BOOLNOT_ARG(sp->use_if_modified_since);
+  case OPTSG_http_use_if_modified_since: {
+    CHECK_BOOL_ARG(sp->use_if_modified_since);
   } break; 
   case OPT_http_browser: {
     option_browser(arg, opt_name, p, 1);
@@ -1147,6 +1185,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break; 
   case OPT_http_gogole_search_url: {
     ASSIGN_STRING_VAL(p->gogole_search_url, arg);
+  } break;
+  case OPT_http_timeout: {
+    CHECK_INTEGER_ARG(20,600, p->http_timeout);
   } break;
   case OPT_pinnipede_font_family: {
     ASSIGN_STRING_VAL(p->pp_fn_family, arg); 
@@ -1266,7 +1307,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_BOOL_ARG(p->pp_html_mode);
   } break; 
   case OPT_pinnipede_show_seconds: {
-    CHECK_BOOLNOT_ARG(p->pp_nosec_mode);
+    CHECK_BOOL_ARG(p->pp_show_sec_mode);
   } break; 
   case OPT_pinnipede_nick_mode: {
     CHECK_INTEGER_ARG(0,4, p->pp_nick_mode);
@@ -1351,7 +1392,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break;   
   case OPT_board_miniua_rule: {
     char *err;
-    if ((err = option_miniua_rule(arg, opt_name, &p->miniuarules))) return err;
+    if ((err = option_miniua_rule(arg, &p->miniuarules))) return err;
   } break;
   default: printf(_("Watch out darling, it's gonnah cut\n")); assert(0);
   }

@@ -464,14 +464,24 @@ http_resolv_name(const char *host_name, int force_dns_query)
     do_dns_query = 1;
   }
 
-  flag_gethostbyname = 1;
+  if (do_dns_query) {
+    flag_gethostbyname = 1;
+
+    printf("gethostbyname..\n");
 #ifndef DONOTFORK_GETHOSTBYNAME	  
-  gethostbyname_nonbloq(host_name, h->host_addr);
+    gethostbyname_nonbloq(host_name, h->host_addr);
 #else
-  gethostbyname_bloq(host_name, h->host_addr);
+    gethostbyname_bloq(host_name, h->host_addr);
 #endif
-  flag_gethostbyname = 0;
-  if (h->host_addr[0]) {
+    flag_gethostbyname = 0;
+    if (h->host_addr[0]) {
+      dns_cache = h;
+    } else {
+      free(h->host_name); free(h);
+      h = NULL;
+    }
+  }
+  if (h && h->host_addr[0]) {
 #ifndef USE_IPV6
     snprintf(http_used_ip, 100, "%u.%u.%u.%u", 
 	     (unsigned char)h->host_addr[1],
@@ -498,7 +508,7 @@ http_resolv_name(const char *host_name, int force_dns_query)
     snprintf(http_used_ip, 20, "?:?:?:?:?:?:?:?");
 #endif
     return NULL;
-  } 
+  }
 }
 
 /* -1 => erreur */
