@@ -1,3 +1,15 @@
+2002-05-12  pouaite  <c0in@altern.org>
+
+	* src/http.c: grosses modifs dans le code http, pour enfin gèrer
+	convenablement les contenus chunk-encodés. Ça rend le coincoin
+	nettement plus rapide pour les d/l, en lui évitant d'attendre
+	(longtemps) que le serveur http prenne de lui-même la décision de
+	fermer la connexion. Par contre, y'a surement pleins de trucs dans
+	le code http qui sont cassés --> trouver lesquels.
+
+	option dock.skin_pixmap, pour pouvoir utiliser les magnifiques
+	skins en cuir crouté de Brice2Nice :)
+
 --------------------------v2.3.7-b-----------------------------------------
 2002-04-26  pouaite  <c0in@altern.org>
 

@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.25 2002/04/24 19:44:00 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.26 2002/05/12 22:06:27 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.26  2002/05/12 22:06:27  pouaite
+#%  grosses modifs dans http.c
+#%
 #%  Revision 1.25  2002/04/24 19:44:00  pouaite
 #%  option pinnipede.use_AM_PM pour les horloges à l'anglaise comme sur http://woof.lu
 #%
@@ -135,6 +138,7 @@
 
 #dock.bg_color: ffb12b
 #dock.bg_pixmap: /chemin/vers/un/fichier.xpm (de dimensions 64x64)
+#dock.skin_pixmap: /chemin/vers/un/fichier.xpm, du même format que 'coin.xpm'
 ### couleur du texte défilant
 #dock.fg_color: 000000
 

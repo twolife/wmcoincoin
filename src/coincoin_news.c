@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.22 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.23 2002/05/12 22:06:27 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.23  2002/05/12 22:06:27  pouaite
+  grosses modifs dans http.c
+
   Revision 1.22  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -96,13 +99,9 @@
 #include "http.h"
 #include "regexp.h"
 
-/* C'est sale, mais j'ai pas envie de la triballer dans toutes les fonctions
-   - n'est accédé que dans ce fichier */
-char news_last_modified[512] = "";
-
 /* fonction a-la-con: lecture de toutes les données en mémoire.. */
 unsigned char *
-gros_read(SOCKET fd, char *what)
+gros_read(HttpRequest *r, char *what)
 {
   unsigned char *s;
   int bchunk = 1024;
@@ -118,7 +117,7 @@ gros_read(SOCKET fd, char *what)
     
     /* attention : les ames sensible pourraient etre choques
        par la brutalite de ce qui va suivre ... */
-    while ((got=http_iread(fd, s+bi, bchunk)) > 0) {
+    while ((got=http_read(r, s+bi, bchunk)) > 0 && r->error == 0) {
       bi += got;
       s[bi] = 0;
       bsize += bchunk;
@@ -135,7 +134,7 @@ gros_read(SOCKET fd, char *what)
       if (s) free(s);
       s = NULL;
     }
-    BLAHBLAH(4, myprintf("%s, lu: %<mag %s>\n", what, s));
+    BLAHBLAH(0, myprintf("%s, lu: %<mag %s>\n", what, s));
   }
   return s;
 }
@@ -396,7 +395,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   DLFP_news *n;
   char URL[512];
   int err;
-  SOCKET fd;
+  HttpRequest r;
 
   char *date = NULL, *auteur = NULL, *section = NULL;
   char *texte = NULL, *liens = NULL;
@@ -426,23 +425,21 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   if ((Prefs.debug & 2) == 0) {
     snprintf(URL, 512, "%s%s",n->url, Prefs.path_end_news_url);
     BLAHBLAH(1,printf("get %s\n",URL));
-    fd = http_get(Prefs.site_root, Prefs.site_port, URL, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, NULL,0);
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", getenv("HOME"), n->id);
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", URL);
-    fd = open(URL, O_RDONLY);
-    myprintf("%s\n", (fd != INVALID_SOCKET ? "succesfull :)" : "fuck !"));
   }
+  wmcc_init_http_request(&r, URL);
+  http_request_send(&r);
 
-  if (fd != INVALID_SOCKET) { 
+  if (r.error == 0) {
     char *s;
     char *p, *p2;
 
     err = 2;
 
-    s = gros_read(fd, n->url);
-    http_close(fd);
+    s = gros_read(&r, n->url);
+    http_request_close(&r);
 
     n->heure = 0;
 
@@ -708,10 +705,13 @@ dlfp_update_newslues(DLFP *dlfp)
 void
 dlfp_updatenews(DLFP *dlfp)
 {
-  SOCKET fd;
+  HttpRequest r;
   static int first_run = 1;
   char path[2048];
   static int transfert_cnt = 0; /* incrémenté a chaque transfert réussi */
+
+  static char *news_last_modified = NULL;
+
 
   BLAHBLAH(3,printf("dlfp update_news...\n"));
 
@@ -720,16 +720,16 @@ dlfp_updatenews(DLFP *dlfp)
 
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
-    fd =  http_get(Prefs.site_root, Prefs.site_port, path, 
-		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent,news_last_modified, 512);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
-    fd = open(path, O_RDONLY);
   }
-  if (fd != INVALID_SOCKET) {
 
+  wmcc_init_http_request(&r, path);
+  if (Prefs.use_if_modified_since) r.p_last_modified = &news_last_modified;
+  http_request_send(&r);
 
+  if (r.error == 0) {
     const char *news_item_sign = "<item>";
     const char *news_item_endsign = "</item>";
     const char *news_title_sign = "<title>";
@@ -751,7 +751,7 @@ dlfp_updatenews(DLFP *dlfp)
     BLAHBLAH(2,printf("le transfert semble ok\n"));
     l_cnt = -1;
     s[0] = 0;
-    while (http_get_line(s, 512, fd)>0) {
+    while (http_get_line(&r, s, 512)>0) {
       ALLOW_X_LOOP;
 
       /* faut sauter l'entete */
@@ -896,7 +896,7 @@ dlfp_updatenews(DLFP *dlfp)
     if (news_err != 0) {
       myfprintf(stderr,"%<RED OUUUPS!> %<grn dlfp_updatenews> il y a eu une erreur (err=%d) dans le parsage du backend des news\n", news_err);
     }
-    http_close(fd);
+    http_request_close(&r);
     transfert_cnt++;
   } else {
     myfprintf(stderr, "erreur lors du transfert de '%<YEL %s>' : %<RED %s>\n", Prefs.path_news_backend, http_error());
@@ -1011,9 +1011,10 @@ dlfp_yc_clear_modified(DLFP *dlfp)
 void
 dlfp_yc_update_comments(DLFP *dlfp)
 {
-  SOCKET fd;
-  char path[2048], cookie[200];
+  HttpRequest r;
+  char path[2048];
   static int first_run = 1;
+  static char *comments_last_modified = NULL;
 
   if (Prefs.user_cookie == NULL && Prefs.force_fortune_retrieval == 0) return;
 
@@ -1021,17 +1022,16 @@ dlfp_yc_update_comments(DLFP *dlfp)
 
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_myposts);
-    if (Prefs.user_cookie) {
-      snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
-    } else cookie[0] = 0;
-    fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/posts.php3", getenv("HOME"));
-    myprintf("DEBUG: ouverture de %<RED %s>\n", path);
-    fd = open(path, O_RDONLY);
   }
-  if (fd != INVALID_SOCKET) {
+
+
+  wmcc_init_http_request_with_cookie(&r, path);
+  if (Prefs.use_if_modified_since) { r.p_last_modified = &comments_last_modified; }
+  http_request_send(&r);
+
+  if (r.error == 0) {
     char *s, *p, *p2, *p3;
     int err;
 
@@ -1039,8 +1039,8 @@ dlfp_yc_update_comments(DLFP *dlfp)
     err = 0;
 
     /* on lit tout en un coup */
-    s = gros_read(fd, Prefs.path_myposts);
-    http_close(fd);
+    s = gros_read(&r, Prefs.path_myposts);
+    http_request_close(&r);
     
     if (s == NULL) { err = 1; goto ouups;}
     
@@ -1318,9 +1318,10 @@ dlfp_msg_find_unreaded(DLFP *dlfp)
 void
 dlfp_msg_update_messages(DLFP *dlfp)
 {
-  SOCKET fd;
-  char path[2048], cookie[200];
+  HttpRequest r;
+  char path[2048];
   static int first_run = 1;
+  static char *messages_last_modified = NULL;
 
   if (Prefs.user_cookie == NULL) return;
   
@@ -1328,19 +1329,16 @@ dlfp_msg_update_messages(DLFP *dlfp)
 
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_messages);
-    //printf("path: '%s' (%s)\n", path, Prefs.path_messages);
-    if (Prefs.user_cookie) { 
-      snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
-    } else cookie[0] = 0;
-    fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, cookie, NULL, 0);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
-    fd = open(path, O_RDONLY);
   }
 
-  if (fd != INVALID_SOCKET) {
+  wmcc_init_http_request_with_cookie(&r, path);
+  if (Prefs.use_if_modified_since) { r.p_last_modified = &messages_last_modified; }
+  http_request_send(&r);
+
+  if (r.error == 0) {
     char *s, *p, *end=NULL;
     int msgcnt;
     int err;
@@ -1348,8 +1346,8 @@ dlfp_msg_update_messages(DLFP *dlfp)
     BLAHBLAH(2,printf("le transfert de '%s' semble ok\n", Prefs.path_messages));
     err = 0;
 
-    s = gros_read(fd, Prefs.path_messages);
-    http_close(fd);
+    s = gros_read(&r, Prefs.path_messages);
+    http_request_close(&r);
     
     if (s == NULL) { err = 1; goto ouups;}
 

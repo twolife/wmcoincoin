@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.6 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: http.h,v 1.7 2002/05/12 22:06:27 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.7  2002/05/12 22:06:27  pouaite
+  grosses modifs dans http.c
+
   Revision 1.6  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -39,26 +42,58 @@
 # endif
 #endif
 
+typedef struct {
+  /* input members */
+  enum { HTTP_GET, HTTP_POST} type;
+  char *host;
+  int port;
+  char *host_path;
+
+  char *proxy_name;
+  char *proxy_user_pass;
+  int         proxy_port;
+
+  int         pragma_nocache;
+
+  char *user_agent;
+  char *referer;
+  char *cookie;
+
+  char **p_last_modified; /* is modified by http_skip_header */
+
+  /* output members */
+
+  int        is_chunk_encoded;
+  int        chunk_num;
+  long       chunk_pos, chunk_size;
+  SOCKET     fd;
+
+  int        content_length;
+  int        error;
+
+  char * post;
+} HttpRequest;
+
 void http_init();
 char *http_error();
 char *http_complete_error_info(); /* renvoie une chaine alloué, ATTENTION */
 
-int http_iread(SOCKET fd, char *buf, int len);
-int http_iwrite(SOCKET fd, char *buf, int len);
-int http_get_line(char *s, int sz, SOCKET fd);
+
+void http_request_init(HttpRequest *r);
+void http_request_send(HttpRequest *r);
+void http_request_close(HttpRequest *r);
+int  http_read(HttpRequest *r, char *buff, int max_len);
+int http_get_line(HttpRequest *r, char *s, int sz);
 char *http_url_encode(char *string);
-SOCKET http_get(const char *host_name, int host_port, const char *host_path, 
-		const char *proxy, const char *userpass, int proxy_port, 
-		const char *user_agent, char *last_modified, int last_modified_sz);
-SOCKET http_get_with_cookie(const char *host_name, int host_port, const char *host_path, 
-			    const char *proxy, const char *userpass, int proxy_port, 
-			    const char *user_agent, const char *cookie, 
-			    char *last_modified, int last_modified_sz);
-SOCKET http_post_with_cookie(const char *host_name, int host_port, const char *host_path, 
-			     const char *proxy, const char *userpass, int proxy_port, 
-			     const char *user_agent, const unsigned char *referer, 
-			     const char *cookie, const unsigned char *post);
-int http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding);
-int http_close (SOCKET fd);
+
+//int http_iread(SOCKET fd, char *buf, int len);
+//int http_iwrite(SOCKET fd, char *buf, int len);
+
+//void http_get(HttpRequest *r);
+//SOCKET http_post_with_cookie(const char *host_name, int host_port, const char *host_path, 
+//			     const char *proxy, const char *userpass, int proxy_port, 
+//			     const char *user_agent, const unsigned char *referer, 
+//			     const char *cookie, const unsigned char *post);
+//int http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding);
 
 #endif

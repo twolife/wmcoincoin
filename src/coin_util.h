@@ -63,6 +63,9 @@ unsigned char chr_noaccent_tolower(unsigned char c);
 void str_noaccent_tolower(unsigned char *s);
 unsigned char *str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille);
 char *str_printf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+#define STR_REPRINTF(_s, _xx); { char *__old = _s; _s = str_printf _xx; if (__old) free(__old); }
+char *str_cat_printf(char *s, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+
 char *str_fget_line(FILE *f);
 void str_trim(unsigned char *s);
 char *str_preencode_for_http(const char *in);

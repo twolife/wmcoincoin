@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.40 2002/04/14 23:24:22 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.41 2002/05/12 22:06:27 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.41  2002/05/12 22:06:27  pouaite
+  grosses modifs dans http.c
+
   Revision 1.40  2002/04/14 23:24:22  pouaite
   re-fix pour kde ..
 
@@ -315,6 +318,7 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
   system(s);
 }
 
+
 void
 dock_get_icon_pos(Dock *dock, int *iconx, int *icony)
 {
@@ -355,6 +359,34 @@ checkout_tribune(Dock *dock, DLFP *dlfp)
   }
 }
 
+void
+wmcc_init_http_request(HttpRequest *r, char *url_path)
+{
+  http_request_init(r);
+  r->type = HTTP_GET;
+  r->host = strdup(Prefs.site_root);
+  r->port = Prefs.site_port;
+  r->host_path = strdup(url_path);
+  if (Prefs.proxy_name) r->proxy_name = strdup(Prefs.proxy_name);
+  if (Prefs.proxy_auth) r->proxy_user_pass = strdup(Prefs.proxy_auth);
+  if (Prefs.proxy_port) r->proxy_port = Prefs.proxy_port;
+  r->pragma_nocache = Prefs.proxy_nocache;
+  r->user_agent = strdup(app_useragent);
+  r->cookie = NULL;
+  r->p_last_modified = NULL;
+}
+
+void
+wmcc_init_http_request_with_cookie(HttpRequest *r, char *url_path)
+{
+  char *cookie;
+  wmcc_init_http_request(r, url_path);
+  if (Prefs.user_cookie) {
+    cookie = str_printf("session_id=%s", Prefs.user_cookie); 
+    r->cookie = cookie;
+  }
+}
+
 /* 
    poste le message sur la tribune -- en tant que fonction 'lente' 
    cette fonction est executée par la boucle principale
@@ -362,84 +394,53 @@ checkout_tribune(Dock *dock, DLFP *dlfp)
 void
 exec_coin_coin(Dock *dock)
 {
-  SOCKET fd;
-  char s[2048], referer[2048], path[2048];
+  HttpRequest r;
   char *urlencod_msg;
-  char cookie[200];
+  char path[2048];
 
   BLAHBLAH(1, myprintf("message posté: '%<YEL %s>\n", dock->real_coin_coin_message));
   BLAHBLAH(1, myprintf("   (useragent: '%<CYA %s>\n", dock->real_coin_coin_useragent));
   flag_sending_coin_coin = 1;
+
   urlencod_msg = http_url_encode(dock->real_coin_coin_message); assert(urlencod_msg);
-  snprintf(s, 2048, "message=%s", urlencod_msg);
-  free(urlencod_msg);
-  snprintf(referer, 2048,"http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
+
   snprintf(path, 2048, "%s%s/%s", strlen(Prefs.site_path) ? "/" : "", Prefs.site_path, Prefs.path_tribune_add);
-  if (Prefs.user_cookie && dock->post_anonyme == 0) { /* merci glandium !! */
-     snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie);
-  } else cookie[0] = 0;
-  fd = http_post_with_cookie(Prefs.site_root, Prefs.site_port, path,
-			     Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, dock->real_coin_coin_useragent,
-			     referer, cookie, s);
 
+  wmcc_init_http_request_with_cookie(&r, path);
+  if (dock->post_anonyme && r.cookie) free(r.cookie);
+  r.type = HTTP_POST;
+  r.referer = str_printf("http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
+  r.user_agent = strdup(dock->real_coin_coin_useragent);
+  r.post = str_printf("message=%s", urlencod_msg);  free(urlencod_msg);
 
-  if (fd != INVALID_SOCKET) {
+  
+  http_request_send(&r);
+
+  if (r.error == 0) {
     int got;
-    int chunk_encoding;
+    char reponse[2048];
 
-    if (http_skip_header(fd, NULL, 0, &chunk_encoding) < 0) {
-      /* si la reponse n'est pas un 302 Found */
-      snprintf(s, 2048, "Damned ! y'a une pouille dans le cotage<p>%s", http_error());
+
+    if ((got=http_read(&r, reponse, 2047))>0) {
+      char *s;
+      reponse[got] = 0;
+      s = str_printf("Ouups, il y a sans doute eu un petit probleme, "
+	       "<b>LinuxFr</b> a répondu:<p>%s", reponse);
       msgbox_show(dock, s);
-    } else {
-      char reponse[2048];
-      int l;
-      BLAHBLAH(1, myprintf(" --> OK, message envoye avec succes\n"));
-
-      strcpy(s, "Ouups, il y a sans doute eu un petit probleme, <b>LinuxFr</b> a répondu:<p>");
-      l = strlen(s);
-      /* test si la reponse est du style 'pas 2 msg a la suite',
-	 'vous etes blackliste', ou 'mot interdit', ou autre .. */
-      if ((got=http_iread(fd, reponse, 2047))>0) {
-	char *s_reponse = NULL;
-	reponse[got] = 0;
-	if (chunk_encoding) { /* pffff c'est passe-pouille */
-	  int sz = -1;
-	  sscanf(reponse, "%x", &sz);
-	  if (sz > 0) {
-	    int i = 0;
-	    myprintf("la réponse (chunkencodée) complete (taille %d) au POST est : %<YEL %s>\n", sz, reponse);
-	    while (reponse[i] && reponse[i] != '\n') i++;
-	    if (strlen(reponse+i)>(unsigned)sz) {
-	      reponse[i+sz+1] = 0;
-	      s_reponse = reponse+i+1;
-	    } else {
-	      snprintf(reponse, 2048, "<b>un truc chunkencodé que coincoin lapin compris, vous avez le droit d'insulter l'auteur</b>");
-	      s_reponse = reponse;
-	    }
-	  } else {
-	    BLAHBLAH(2,myprintf("%<yel le serveur a repondu %s en chunkencodé (ça roule)\n", reponse));
-	  }
-	} else {
-	  s_reponse = reponse;
-	  myprintf("la réponse (non chunkencodée) est: '%<YEL %s>' [got=%d]\n", reponse, got);
-	}
-	if (s_reponse) {
-	  snprintf(s, 2048, "Ouups, il y a sans doute eu un petit probleme, "
-		   "<b>LinuxFr</b> a répondu:<p>%s", s_reponse);
-	  msgbox_show(dock, s);
-	}
-      }
+      free(s);
     }
-    http_close(fd);
-
-    /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
-    if (dock->post_anonyme) { dock->dlfp->tribune.just_posted_anonymous = 1; }
-
+    http_request_close(&r);
   } else {
-    snprintf(s, 2048, "Erreur pendant l'envoi du message: <p><b>%s</b>\n", http_error());
+    char *s;
+    /* si la reponse n'est pas un 302 Found */
+    s = str_printf("Damned ! y'a une pouille dans le cotage<p>%s", http_error());
     msgbox_show(dock, s);
+    free(s);
   }
+
+  /* pour la reconnaissance des messages de ceux qui sont généralement authentifiés et se lachent en anonyme de temps à autre */
+  if (dock->post_anonyme) { dock->dlfp->tribune.just_posted_anonymous = 1; }
+
   flag_sending_coin_coin = 0;
 }
 
@@ -1081,7 +1082,19 @@ void initx(Dock *dock, int argc, char **argv) {
 
   /* load interface pixmap */
 
-  dock->coinpix = RGBACreatePixmapFromXpmData(dock->rgba_context, coin_xpm);
+  if (Prefs.dock_skin_pixmap) {
+    int w, h;
+    dock->coinpix = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.dock_skin_pixmap, &w, &h);
+    if (dock->coinpix != None && (h != 64 || w < 320)) {
+      printf("mauvaises dimensions pour le skin pixmap (64x320 svp, trouvé %dx%d)\n",w,h);
+      exit(1);
+    } else if (dock->coinpix == None) {
+      myprintf("impossible de charger le pixmap '%<grn %s>'\n", Prefs.dock_skin_pixmap);
+      exit(1);
+    }
+  } else {
+    dock->coinpix = RGBACreatePixmapFromXpmData(dock->rgba_context, coin_xpm);
+  }
   assert(dock->coinpix != None);
   
   createXBMfromXPM(coin_mask, coin_xpm, 64, 64);

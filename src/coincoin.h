@@ -10,6 +10,7 @@
 #include <time.h>
 #include <regex.h>
 #include <ctype.h>
+#include "http.h"
 #include "global.h"
 #include "coin_util.h"
 #include "myprintf.h"
@@ -520,8 +521,8 @@ typedef struct _Dock {
 
 /* wmcoincoin.c */
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
-char* http_transfert(char *URL);
-
+void wmcc_init_http_request(HttpRequest *r, char *url_path);
+void wmcc_init_http_request_with_cookie(HttpRequest *r, char *url_path);
 void block_sigalrm(int bloque);
 
 /* picohtml.c */

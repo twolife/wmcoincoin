@@ -59,6 +59,50 @@ static char http_used_ip[20] = "xxx.xxx.xxx.xxx";
 
 static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+#define VERBOSE_LVL 2
+
+
+/* 
+   renvoie une chaine mallocee contenant l'urlencodage de string 
+   encore un fonction piquee dans curl
+ */
+char *
+http_url_encode(char *string)
+{
+   int alloc=strlen(string)+1;
+   char *ns = malloc(alloc);
+   unsigned char in;
+   int newlen = alloc;
+   int index=0;
+
+   while(*string) {
+      in = *string;
+      if(' ' == in)
+	 ns[index++] = '+';
+      else if(!(in >= 'a' && in <= 'z') &&
+	      !(in >= 'A' && in <= 'Z') &&
+	      !(in >= '0' && in <= '9')) {
+	 /* encode it */
+	 newlen += 2; /* the size grows with two, since this'll become a %XX */
+	 if(newlen > alloc) {
+	    alloc *= 2;
+	    ns = realloc(ns, alloc);
+	    if(!ns)
+	       return NULL;
+	 }
+	 sprintf(&ns[index], "%%%02X", in);
+	 index+=3;
+      }
+      else {
+	 /* just copy this */
+	 ns[index++]=in;
+      }
+      string++;
+   }
+   ns[index]=0; /* terminate it */
+   return ns;
+}
+
 
 static SOCKET http_connect(const char *host_name, int port);
 
@@ -144,6 +188,15 @@ int base64_encode(const void *data, int size, char **str)
   return strlen(s);
 }
 
+static int http_close(SOCKET fd) {
+#ifdef __CYGWIN__
+  do { close (fd); } while (errno == EINTR);
+#else
+  do { close (fd); } while (errno == EINTR);
+#endif
+  return 0;
+}
+
 /* 
    et hop ! les 3 fonctions suivantes ont ete piquees dans wget 1.6 
    (dont le code source est fort joli, soit dit en passant :)
@@ -194,6 +247,7 @@ http_iread (SOCKET fd, char *buf, int len)
   int res;
 
   flag_http_transfert++;
+
 
   do
     {
@@ -328,7 +382,6 @@ http_error() {
   return http_last_err_msg;
 }
 
-
 #ifdef __CYGWIN__
 #include "http_win.c"
 #else
@@ -371,7 +424,7 @@ http_connect(const char *host_name, int port)
 		     (unsigned char)host->h_addr_list[0][1],
 		     (unsigned char)host->h_addr_list[0][2],
 		     (unsigned char)host->h_addr_list[0][3]);
-	    BLAHBLAH(1, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host->h_name, http_used_ip));
+	    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host->h_name, http_used_ip));
 	  } else {
 	    snprintf(http_used_ip, 20, "???.???.???.???");
 	  }
@@ -408,7 +461,7 @@ http_connect(const char *host_name, int port)
 	 sigalrm balance par l'itimer de wmcoincoin n'interferent
 	 pas avec le connect...
       */
-      BLAHBLAH(4, printf("connecting..\n"));
+      BLAHBLAH(VERBOSE_LVL, printf("connecting..\n"));
       //      if (connect(sockfd, (struct sockaddr *)&dest_addr, sizeof(dest_addr))) {
 
 #ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
@@ -421,13 +474,13 @@ http_connect(const char *host_name, int port)
 	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "connect(): %s", STR_LAST_ERROR);
 	  http_close(sockfd);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
-	  BLAHBLAH(4, printf("connection failed: %s..\n", http_last_err_msg));
+	  BLAHBLAH(VERBOSE_LVL, printf("connection failed: %s..\n", http_last_err_msg));
 	  host = NULL;
 	  if (num_try == 1) {
 	    return INVALID_SOCKET;
 	}
       } else {
-	BLAHBLAH(4, printf("connected..\n"));
+	BLAHBLAH(VERBOSE_LVL, printf("connected..\n"));
 	break;
       }
     }
@@ -435,15 +488,41 @@ http_connect(const char *host_name, int port)
 }
 
 
+void
+http_print_request(HttpRequest *r)
+{
+  assert(r);
+  printf("------------HttpRequest-----------\n");
+  myprintf("type = %s\n", r->type == HTTP_GET ? "GET" : "POST");
+  myprintf("host  = '%<YEL %s>'\n", r->host);
+  myprintf("port  = '%<YEL %d>'\n", r->port);
+  myprintf("path  = '%<YEL %s>'\n", r->host_path);
+  myprintf("proxy = '%<YEL %s>'\n", r->proxy_name);
+  myprintf("proxy_user_pass = '%<YEL censored>'\n");
+  myprintf("proxy_port = '%<YEL %d>'\n", r->proxy_port);
+  myprintf("pragma_nocache = '%<YEL %d>'\n", r->pragma_nocache);
+
+  myprintf("useragent = '%<YEL %s>'\n", r->user_agent);
+  myprintf("cookie = '%<YEL %s>'\n", r->cookie);
+  myprintf("last_modified = '%<YEL %s>'\n", r->p_last_modified ? *r->p_last_modified : "unused");
+  myprintf("is_chunk_encoded = '%<YEL %d>'\n", r->is_chunk_encoded);
+  myprintf("chunk_num = '%<YEL %d>'\n", r->chunk_num);
+  myprintf("chunk_size = '%<YEL %d>'\n", r->chunk_size);
+  myprintf("chunk_pos = '%<YEL %d>'\n", r->chunk_pos);
+  myprintf("fd = '%<YEL %d>'\n", (int)r->fd);
+  myprintf("error = '%<YEL %d>'\n", r->error);
+}
+
+
 /*
   analyse tres rapidement la reponse du serveur
 
-  si il renvoie un vrai header, avec un 200 OK ou 302 Found, on renvoie 0
-  si il renvoie autre chose (404 etc..) on renvoie -1
-  si il y a une connexion timeout, on renvoie -2
+  si il renvoie un vrai header, avec un 200 OK ou 302 Found, ça roule
+  si il renvoie autre chose (404 etc..) on renvoie r->error=1
+  si il y a une connexion timeout, on renvoie r->error=2
 */
-int
-http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chunk_encoding)
+void
+http_skip_header(HttpRequest *r)
 {
   char buff[512];
   int i, got, lnum;
@@ -455,11 +534,11 @@ http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chun
   buff[511] = 0;
   last = 0;
 
-  *chunk_encoding = 0;
+  r->is_chunk_encoded = 0;
   do {
-    while((got = http_iread(fd, buff+i, 1)) > 0) {
+    while((got = http_iread(r->fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
-      BLAHBLAH(2, myprintf("%<GRN %c>", buff[i]););
+      BLAHBLAH(VERBOSE_LVL, myprintf("%<GRN %c>", buff[i]););
       if(buff[i] == '\n' && (last == '\n'))
 	break;
       if(buff[i] == '\r')
@@ -478,18 +557,23 @@ http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chun
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
 	      printf("http_skip_header[%s]: erreur detectee: '%s'", http_last_url, buff+j+1);
-	      return -1;
+	      r->error = 1;
 	    }
 	  }
 	} else {
-	  if (last_modified) {
+	  if (r->p_last_modified) {
 	    if (strncmp(buff,"Last-Modified: ",15) == 0) {
-	      strncpy(last_modified, buff + 15, last_modified_sz); /* oula pas tres joli le strncpy on connait pas la taille de last_modified.. */
-	      last_modified[last_modified_sz-1] = 0;
+	      if (*r->p_last_modified) { free(*r->p_last_modified); *r->p_last_modified = NULL; }
+	      *r->p_last_modified = strdup(buff+15);
 	    }
 	  }
 	  if (strncmp(buff, "Transfer-Encoding: chunked", 26) == 0) {
-	    *chunk_encoding = 1;
+	    r->is_chunk_encoded = 1;
+	    r->chunk_num = -1;
+	  }
+	  if (strncmp(buff, "Content-Length:", 15) == 0) {
+	    r->content_length = atoi(buff+15);
+	    printf("content length: %d\n", r->content_length);
 	  }
 	}
 	lnum++;
@@ -502,14 +586,84 @@ http_skip_header(SOCKET fd, char *last_modified, int last_modified_sz, int *chun
   if (got == SOCKET_ERROR) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_skip_header a un problème de chaussette !(%s)", STR_LAST_ERROR);
-    return -2;
+    r->error = 2;
+    return;
   }
-  return 0;
-  //  return (got <= 0 ? -1 : 0);
+  r->error = 0;
+  return;
+}
+
+
+/* lecture de la REPONSE du serveur 
+   (après analyse de l'entête)
+*/
+int
+http_read(HttpRequest *r, char *buff, int len)
+{
+  int got;
+  assert(r->error == 0);
+
+  if (len>1) {
+    printf("http_read: requete de longueur %d, pos = %ld, chunk=%d (size %ld)\n", len, r->chunk_pos, r->chunk_num, r->chunk_size);
+  }
+
+  if (r->is_chunk_encoded == 1) {
+    if (r->chunk_pos > r->chunk_size) {
+      printf("damned, ça part en torche pour le chunk_encoding sur la requete suivante:\n");
+      http_print_request(r);
+    }
+    if (r->chunk_num == -1 || r->chunk_pos == r->chunk_size) {
+      char s_chunk_size[512];
+      int i;
+      int lcnt;
+
+      r->chunk_num++; r->chunk_pos = 0;
+      i = 0; lcnt = 0;
+      while(i < 511 && (got = http_iread(r->fd, s_chunk_size+i, 1)) > 0) {
+	if (s_chunk_size[i] == '\n') {
+	  lcnt++;
+	  if (lcnt == 2 || (lcnt == 1 && r->chunk_num == 0)) 
+	    break;
+	  else { i = 0; continue; }
+	}
+	if (s_chunk_size[i] == '\r') s_chunk_size[i] = ' ';
+	i++;
+      }
+      s_chunk_size[i] = 0;
+      if (sscanf(s_chunk_size, "%lx", &r->chunk_size) != 1) {
+	r->error = 1; 
+	printf("error in chunk '%s'\n", s_chunk_size);
+	return 0;
+      }
+      BLAHBLAH(VERBOSE_LVL, printf("http_read: CHUNK %d, size = %ld ['0x%s']\n", r->chunk_num, r->chunk_size, s_chunk_size));
+    }
+
+    len = MIN(len, r->chunk_size - r->chunk_pos);
+  } else if (r->content_length != -1) {
+    /*
+    if (r->content_length - r->chunk_pos < 200) {
+      printf("http_read/cl len=%d, pos=%ld, clen=%d\n",
+	     len, r->chunk_pos, r->content_length);
+    }
+    */
+    len = MIN(len, r->content_length - r->chunk_pos);
+  }
+  
+  if (len <= 0) return 0;
+
+  got = http_iread(r->fd, buff, len);
+  if (got > 0) { r->chunk_pos += got; }
+
+  if (len>1) { // || (r->content_length != -1 && (r->content_length - r->chunk_pos < 200))) {
+    printf("http_read: longueur finalement demandee: %d, reçue: %d, nouvelle pos=%ld\n",
+	   len, got, r->chunk_pos);
+  }
+
+  return got;
 }
 
 int
-http_get_line(char *s, int sz, SOCKET fd)
+http_get_line(HttpRequest *r, char *s, int sz)
 {
   int i, got,cnt;
 
@@ -521,7 +675,7 @@ http_get_line(char *s, int sz, SOCKET fd)
   s[0] = 0;
 
   do {
-    while ((got = http_iread(fd, s+i, 1)) > 0) {
+    while ((got = http_read(r, s+i, 1)) > 0) {
       cnt++;
       if (s[i] == '\n' || s[i] == 0) {
 	s[i] = 0; break;
@@ -540,7 +694,7 @@ http_get_line(char *s, int sz, SOCKET fd)
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
     goto error;
   }
-  BLAHBLAH(4,myprintf("http_get_line renvoie (cnt=%d): '%<yel %s>'\n", cnt, s));
+  BLAHBLAH(VERBOSE_LVL,myprintf("http_get_line renvoie (cnt=%d): '%<yel %s>'\n", cnt, s));
   flag_http_transfert--;
 
   flag_http_error = 0;
@@ -554,241 +708,160 @@ http_get_line(char *s, int sz, SOCKET fd)
 
 #define CRLF "\015\012"
 
+
+
 /*
   renvoie le descripteur de fichier vers les donnees renvoyees ,
   descripteur a fermer par un close(d)
 */
-SOCKET
-http_get_with_cookie(const char *host_name, int host_port, const char *host_path, 
-		     const char *proxy, const char *userpass, int proxy_port, 
-		     const char *user_agent, const char *cookie, 
-		     char *last_modified, int last_modified_sz)
+void
+http_request_send(HttpRequest *r)
 {
-  SOCKET sockfd;
-#define BSIZE 1024
-  char buff[BSIZE];
-  char cookie_s[512];
-  const char *pnocache;
-  char last_modified_s[512];
-  int chunk_encoding;
+  char *header = NULL;
+
+
+  if (Prefs.debug & 2) {
+    r->fd = open(r->host_path, O_RDONLY);
+    if (r->fd < 0) {
+      fprintf(stderr, "http_send_request/debug, impossible d'ouvrir '%s':%s\n", 
+	      r->host_path, strerror(errno));
+    }
+    return;
+  }
 
   flag_http_transfert++;
 
-  snprintf(http_last_url, HTTP_LAST_ERR_URL_SZ, "%s:%d%s", host_name, host_port, host_path);
-  //  sprintf(http_last_err_msg, "aucune erreur http");
 
-  cookie_s[0] = 0;
-  if (cookie) {
-    snprintf(cookie_s,512,"Cookie: %s" CRLF, cookie);
-  }
 
-  last_modified_s[0] = 0;
-  if (last_modified && last_modified[0] && Prefs.use_if_modified_since) {
-    int l;
-    l = strlen(last_modified); l--;
-    while (l>=0 && (unsigned char)last_modified[l] < ' ') last_modified[l--]=0;
-    snprintf(last_modified_s,512,"If-Modified-Since: %s" CRLF, last_modified);
-  }
+  header = strdup("");
 
-  pnocache = Prefs.proxy_nocache ? "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF : "";
-  
-  if (proxy) {
-    sockfd = http_connect(proxy, proxy_port);
-  } else {
-    sockfd = http_connect(host_name, host_port);
-  }
-  if (sockfd == INVALID_SOCKET) goto error;
 
-  if (userpass == NULL) {
-    if (proxy == NULL) {
-      snprintf(buff, BSIZE, "GET %s HTTP/1.1" CRLF
-	       "Host: %s" CRLF
-	       "%s"
-	       "User-Agent: %s" CRLF
-	       "%s%s"
-	       "Accept: */*" CRLF CRLF,
-	       host_path, host_name, cookie_s, user_agent, last_modified_s, pnocache);
+  /* GET ou POST */
+  if (r->type == HTTP_GET) {
+    if (r->proxy_user_pass == NULL) {
+      if (r->proxy_name == NULL) {
+	header = str_cat_printf(header, "GET %s HTTP/1.1" CRLF, r->host_path);
+      } else {
+	header = str_cat_printf(header, "GET http://%s%s HTTP/1.1" CRLF,
+			      r->host, r->host_path);
+      }
     } else {
-      snprintf(buff, BSIZE, "GET http://%s%s HTTP/1.1" CRLF
-	       "Host: %s" CRLF
-	       "%s"
-	       "User-Agent: %s" CRLF
-	       "%s%s"
-	       "Accept: */*" CRLF CRLF,
-	       host_name, host_path, host_name, cookie_s, user_agent, last_modified_s, pnocache);
+      header = str_cat_printf(header, "GET http://%s:%d%s HTTP/1.1" CRLF,
+			      r->host, r->port, r->host_path);
     }
-  } else {
+  } else if (r->type == HTTP_POST) {
+    if (r->proxy_name == NULL) {
+      header = str_cat_printf(header, "POST %s HTTP/1.1" CRLF, 
+			    r->host_path);
+    } else {
+      header = str_cat_printf(header, "POST http://%s:%d%s HTTP/1.1" CRLF, 
+			    r->host, r->port, r->host_path);
+    }
+  }
+
+  header = str_cat_printf(header, "Host: %s:%d" CRLF, r->host, r->port);
+
+  if (r->cookie) {
+    header = str_cat_printf(header, "Cookie: %s" CRLF, r->cookie);
+  }
+
+  if (r->pragma_nocache) {
+    header = str_cat_printf(header, "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF);
+  }
+
+  /* on ne gère que le schema d'authentification basique [base64(USER:PASS)]
+     wget 1.6 fait mieux, mais pas curl 7.6 donc ca ira...
+  */
+  if (r->proxy_user_pass) {
     char *auth;
-    base64_encode(userpass, strlen(userpass), &auth);
-    
-    /* on ne gère que le schema d'authentification basique [base64(USER:PASS)]
-       wget 1.6 fait mieux, mais pas curl 7.6 donc ca ira...
-     */
-    snprintf(buff, BSIZE, "GET http://%s:%d%s HTTP/1.1" CRLF
-	     "Host: %s:%d" CRLF
-	     "%s"
-	     "User-Agent: %s" CRLF
-	     "%s"
-	     "Proxy-Authorization: Basic %s" CRLF
-	     "%s"
-	     "Accept: */*" CRLF CRLF,
-	     host_name, host_port, host_path, host_name, host_port, cookie_s,user_agent, last_modified_s, auth, pnocache);
+    base64_encode(r->proxy_user_pass, strlen(r->proxy_user_pass), &auth); assert(auth);
+    header = str_cat_printf(header, "Proxy-Authorization: Basic %s" CRLF, auth);
     free(auth);
   }
-  BLAHBLAH(2,printf("sending:\n%s", buff));
-  if (http_iwrite(sockfd, buff, strlen(buff)) == SOCKET_ERROR) {
+
+  if (r->p_last_modified && *(r->p_last_modified)) {
+    unsigned char *s = *r->p_last_modified;
+    int l;
+    l = strlen(s); l--;
+    while (l>=0 && s[l] < ' ') s[l--]=0;
+    header = str_cat_printf(header, "If-Modified-Since: %s" CRLF, s);
+  }
+
+  snprintf(http_last_url, HTTP_LAST_ERR_URL_SZ, "%s:%d%s", r->host, r->port, r->host_path);
+
+  if (r->user_agent) {
+    header = str_cat_printf(header, "User-Agent: %s" CRLF,
+			  r->user_agent);
+  }
+
+  if (r->referer) {
+    header = str_cat_printf(header, "Referer: %s" CRLF,
+			  r->referer);
+  }
+
+  if (r->type == HTTP_GET) {
+    header = str_cat_printf(header, CRLF);
+  } else {
+    header = str_cat_printf(header, "Content-Type: application/x-www-form-urlencoded" CRLF
+			  "Content-Length: %d" CRLF CRLF "%s", (int)strlen(r->post),r->post);
+  }
+  
+
+
+  if (r->proxy_name) {
+    r->fd = http_connect(r->proxy_name, r->proxy_port);
+  } else {
+    r->fd = http_connect(r->host, r->port);
+  }
+  if (r->fd == INVALID_SOCKET) goto error;
+
+  BLAHBLAH(VERBOSE_LVL, myprintf("HTTP_REQUEST: \n%<YEL %s>\n", header));
+
+  if (http_iwrite(r->fd, header, strlen(header)) == SOCKET_ERROR) {
     set_http_err();
     snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_get n'a pas pu envoyer sa requête: %s", STR_LAST_ERROR);
-    goto error;
+    goto error_close;
   }
 
-  //  write(sockfd, buff, strlen(buff));
-  BLAHBLAH(2,printf("ok, sent\n"));
+  BLAHBLAH(VERBOSE_LVL,printf("ok, sent\n"));
   
-  if (http_skip_header(sockfd, last_modified, last_modified_sz,&chunk_encoding) != 0) {
-    http_close(sockfd);
-    goto error;
+  http_skip_header(r);
+  if (r->error) {
+    goto error_close;
   }
 
-  if (chunk_encoding) {
-    /* 
-       normalement ça ne devrait pas être trop perturber le coincoin, mais faut voir... 
-       en même temps ça me fait méga chier de gèrer ça proprement, d'autant que sur ma machine perso
-       c'est jamais chunk encodé
-    */
-    BLAHBLAH(1, myprintf("%<mag http_get: la réponse est chunk encodée :-/\n"));
-    //    myprintf("%<YEL wmcoincoin ne parle pas le chunk encoding, car ça suce. Envoyez un mail d'insultes à l'auteur\n");
-  }
-
+  if (header) free(header);
   flag_http_error = 0;
   flag_http_transfert--;
-  return sockfd;
+  return;
 
+ error_close:
+  http_request_close(r); r->fd = SOCKET_ERROR;
  error:
+  if (header) free(header);
+  r->error = 1;
   flag_http_error = 1;
   flag_http_transfert--;
-  return INVALID_SOCKET;
 }
 
-SOCKET
-http_get(const char *host_name, int host_port, const char *host_path, 
-	 const char *proxy, const char *userpass, int proxy_port, 
-	 const char *user_agent, char *last_modified, int last_modified_sz)
-{
-  return http_get_with_cookie(host_name, host_port, host_path, proxy, userpass, proxy_port, user_agent, NULL, last_modified, last_modified_sz);
+void
+http_request_init(HttpRequest *r) {
+  memset(r, 0, sizeof(HttpRequest));
 }
 
-/* 
-   renvoie une chaine mallocee contenant l'urlencodage de string 
-   encore un fonction piquee dans curl
- */
-char *
-http_url_encode(char *string)
-{
-   int alloc=strlen(string)+1;
-   char *ns = malloc(alloc);
-   unsigned char in;
-   int newlen = alloc;
-   int index=0;
+void http_request_close (HttpRequest *r) {
+  assert(r->fd >= 0);
 
-   while(*string) {
-      in = *string;
-      if(' ' == in)
-	 ns[index++] = '+';
-      else if(!(in >= 'a' && in <= 'z') &&
-	      !(in >= 'A' && in <= 'Z') &&
-	      !(in >= '0' && in <= '9')) {
-	 /* encode it */
-	 newlen += 2; /* the size grows with two, since this'll become a %XX */
-	 if(newlen > alloc) {
-	    alloc *= 2;
-	    ns = realloc(ns, alloc);
-	    if(!ns)
-	       return NULL;
-	 }
-	 sprintf(&ns[index], "%%%02X", in);
-	 index+=3;
-      }
-      else {
-	 /* just copy this */
-	 ns[index++]=in;
-      }
-      string++;
-   }
-   ns[index]=0; /* terminate it */
-   return ns;
-}
+  if (r->host) free(r->host); r->host = NULL;
+  if (r->host_path) free(r->host_path); r->host_path = NULL;
+  if (r->proxy_name) free(r->proxy_name); r->proxy_name = NULL;
+  if (r->proxy_user_pass) free(r->proxy_user_pass); r->proxy_user_pass = NULL;
+  if (r->user_agent) free(r->user_agent); r->user_agent = NULL;
+  if (r->referer) free(r->referer); r->referer = NULL;
+  if (r->cookie) free(r->cookie); r->cookie = NULL;
+  if (r->post) free(r->post); r->post = NULL;
 
-SOCKET 
-http_post_with_cookie(const char *host_name, int host_port, const char *host_path, 
-		      const char *proxy, const char *userpass, int proxy_port, 
-		      const char *user_agent, const unsigned char *referer, const char *cookie, 
-		      const unsigned char *post)
-{
-  char buff[BSIZE];
-  SOCKET sockfd;
-  char *auth;
-  char cookie_s[512];
-
-  flag_http_transfert++;
-
-  snprintf(http_last_url, HTTP_LAST_ERR_URL_SZ, "%s:%d%s", host_name, host_port, host_path);
-
-  //  sprintf(http_last_err_msg, "aucune erreur http");
-
-  cookie_s[0] = 0;
-  if (cookie) {
-    snprintf(cookie_s,512,"Cookie: %s" CRLF, cookie);
-  }
-  if (proxy) {
-    sockfd = http_connect(proxy, proxy_port);
-  } else {
-    sockfd = http_connect(host_name, host_port);
-  }
-  if (sockfd == INVALID_SOCKET) goto error;
-
-
-  if (userpass) {
-    base64_encode(userpass, strlen(userpass), &auth);
-  }
-
-  if (proxy == NULL) {
-    snprintf(buff, BSIZE, 
-	     "POST %s HTTP/1.1" CRLF, host_path);
-  } else {
-    snprintf(buff, BSIZE, 
-	     "POST http://%s:%d%s HTTP/1.1" CRLF, host_name, host_port, host_path);
-  }
-  snprintf(buff+strlen(buff), BSIZE-strlen(buff),
-	   "Host: %s:%d" CRLF, host_name, host_port);
-  snprintf(buff+strlen(buff), BSIZE-strlen(buff),
-	   "User-Agent: %s" CRLF
-	   "Referer: %s" CRLF "%s", user_agent, referer, cookie_s);
-  if (userpass) {
-    snprintf(buff+strlen(buff), BSIZE-strlen(buff),
-	     "Proxy-Authorization: Basic %s" CRLF, auth);
-  }
-
-  snprintf(buff+strlen(buff), BSIZE-strlen(buff),
-	   "Content-Type: application/x-www-form-urlencoded" CRLF
-	   "Content-Length: %d" CRLF CRLF "%s", (int)strlen(post),post);
-  
-  if (userpass) {
-    free(auth);
-  }
-  BLAHBLAH(2,printf("POSTING:\n%s", buff));
-  if (http_iwrite(sockfd, buff, strlen(buff)) == -1) {
-    set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_post n'a pas pu envoyer sa requête: '%s'", STR_LAST_ERROR);
-    goto error;
-  }
-
-  flag_http_error = 0;
-  flag_http_transfert--;
-  return sockfd;
-
- error:
-  flag_http_error = 1;
-  flag_http_transfert--;
-  return INVALID_SOCKET;
+  r->content_length = -1;
+  http_close(r->fd);
+  r->fd = -1;
 }

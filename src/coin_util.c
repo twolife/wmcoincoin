@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.22 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.23 2002/05/12 22:06:27 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.23  2002/05/12 22:06:27  pouaite
+  grosses modifs dans http.c
+
   Revision 1.22  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -511,7 +514,7 @@ str_printf(const char *fmt, ...)
   char *s;
   int s_sz;
 
-  s_sz = 10; /* a reaugmenter des que la fonction est validee : */
+  s_sz = 100;
   s = malloc(s_sz); assert(s);
   while (1) {
     int ret;
@@ -528,6 +531,35 @@ str_printf(const char *fmt, ...)
   s = realloc(s, strlen(s)+1); assert(s);
   return s;
 }
+
+char *
+str_cat_printf(char *in_s, const char *fmt, ...)
+{
+  va_list ap;
+  char *s, *out_s;
+  int s_sz;
+
+  s_sz = 100;
+  s = malloc(s_sz); assert(s);
+  while (1) {
+    int ret;
+    va_start(ap, fmt);
+    ret = vsnprintf(s, s_sz, fmt, ap);
+    va_end(ap);
+    if (ret == -1 || ret >= s_sz-1) {
+      s_sz *= 2;
+      assert(s_sz < 100000);
+      s = realloc(s, s_sz); assert(s);
+    } else 
+      break;
+  }
+  
+  out_s = malloc( (in_s ? strlen(in_s) : 0) + strlen(s) + 1); assert(out_s);
+  strcpy(out_s, in_s); strcat(out_s, s);
+  free(in_s);
+  return out_s;
+}
+
 
 /* lecture d'une ligne d'un fichier, avec allocation dynamique */
 char *

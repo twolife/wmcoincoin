@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.32 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.33 2002/05/12 22:06:27 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.33  2002/05/12 22:06:27  pouaite
+  grosses modifs dans http.c
+
   Revision 1.32  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -123,13 +126,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-/* C'est sale, mais j'ai pas envie de la triballer dans toutes les fonctions
-   - n'est accédé que dans ce fichier 
-
-<pouaite> ce n'est pas sale, ton source change c'est normal ;)
-*/
-char tribune_last_modified[512] = "";
 
 /* utilise tres localement, c'est la longueur DANS remote.rdf, la longueur réelle sera moindre
    (remplacement de &eacute par 'é' etc... ) */
@@ -747,11 +743,14 @@ tribune_decode_message(char *dest, const char *src) {
 void
 dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 {
+  HttpRequest r;
   time_t now;
   char s[16384];
-  SOCKET fd;
+  char path[2048];
+
   char *errmsg;
   int old_last_post_id;
+  static char *tribune_last_modified = NULL;
 
   const char *tribune_sign_posttime = "<post time=";
   const char *tribune_sign_info = "<info>";
@@ -775,19 +774,20 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
   flag_updating_tribune--;
 
-  snprintf(s, 16384, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   if ((Prefs.debug & 2) == 0) {
-    fd = http_get(Prefs.site_root, Prefs.site_port, s, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, app_useragent, tribune_last_modified, 512);
+    snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   } else {
-    snprintf(s, 16384, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
+    snprintf(path, 2048, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);
-    fd = open(s, O_RDONLY);
   }
 
-  if (fd != INVALID_SOCKET) {
+  wmcc_init_http_request(&r, path);
+  if (Prefs.use_if_modified_since) { r.p_last_modified = &tribune_last_modified; }
+  http_request_send(&r);
+
+  if (r.error == 0) {
     int roll_back_cnt = 0;
-    while (http_get_line(s, 16384, fd) > 0) {
+    while (http_get_line(&r, s, 16384) > 0 && r.error == 0) {
       if (strncasecmp(s,tribune_sign_posttime, strlen(tribune_sign_info)) == 0) {
 	char stimestamp[15];
 	char ua[TRIBUNE_UA_MAX_LEN];
@@ -839,7 +839,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	  }
 	}
 
-	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(info)"; goto err; }
+	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(info)"; goto err; }
 
 	if (strncasecmp(s, tribune_sign_info,strlen(tribune_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
@@ -848,7 +848,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
         convert_to_ascii(ua, p, TRIBUNE_UA_MAX_LEN);
 
-	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(message)"; goto err; }
+	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(message)"; goto err; }
 	if (strncasecmp(s, tribune_sign_msg,strlen(tribune_sign_msg))) { errmsg="messagesign"; goto err; }
 	
 	//	myprintf("message: '%<YEL %s>'\n\n", s); 
@@ -858,7 +858,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	  int l;
 	  l = strlen(s);
 	  while (strncasecmp("</message>", s+l-10,10)) {
-	    if (http_get_line(s+l, 16384 - l, fd) <= 0) {
+	    if (http_get_line(&r, s+l, 16384 - l) <= 0) {
 	      errmsg="</message>"; goto err; 
 	    }
 	    l = strlen(s);
@@ -883,7 +883,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
 	tribune_decode_message(msg, p);
 
-	if (http_get_line(s, 16384, fd) <= 0) { errmsg="httpgetline(login)"; goto err; }
+	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, tribune_sign_login,strlen(tribune_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 
@@ -916,9 +916,9 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     if (errmsg) {
       myfprintf(stderr, "il y a un problème dans le '%s',  j'arrive plus a le parser... erreur:%<YEL %s>\n", Prefs.path_tribune_backend, errmsg);
     }
-    http_close(fd);
+    http_request_close(&r);
   } else {
-    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", s, http_error());
+    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
   }
 
   /* cleanup .. */

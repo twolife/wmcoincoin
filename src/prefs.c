@@ -487,6 +487,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->dock_bgcolor = (255L<<16) + (193L<<8) + 44; /* un joli jaune (je trouve) (NDKad : y'a que toi)*/
   p->dock_fgcolor = 0x000000;
   p->dock_bgpixmap = NULL;
+  p->dock_skin_pixmap = NULL;
   p->http_timeout = 40;
   p->proxy_auth = NULL;
   p->proxy_name = NULL;
@@ -593,6 +594,7 @@ wmcc_prefs_destroy(structPrefs *p)
   FREE_STRING(p->coin_coin_message);
   FREE_STRING(p->balloon_fn_family);
   FREE_STRING(p->dock_bgpixmap);
+  FREE_STRING(p->dock_skin_pixmap);
   FREE_STRING(p->site_root);
   FREE_STRING(p->site_path);
   FREE_STRING(p->proxy_auth); 
@@ -689,6 +691,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   } break; 
   case OPT_dock_bg_pixmap: {
     CHECK_FILENAME_ARG(p->dock_bgpixmap);
+  } break; 
+  case OPT_dock_skin_pixmap: {
+    CHECK_FILENAME_ARG(p->dock_skin_pixmap);
   } break; 
   case OPT_dock_fg_color: {
     CHECK_COLOR_ARG(p->dock_fgcolor);

@@ -122,6 +122,7 @@ typedef struct _structPrefs{
   int start_in_boss_mode; /* demarrage en mode horloge */
   int dock_bgcolor, dock_fgcolor;
   char *dock_bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
+  char *dock_skin_pixmap;
 
   char *site_root; /* par defaut: 'linuxfr.org' */
   char *site_path; /* par defaut: "" */
