@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.16 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: http.h,v 1.17 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.17  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.16  2003/01/11 17:44:10  pouaite
   ajout de stats/coinping sur les sites
 
@@ -121,6 +124,6 @@ void http_request_close(HttpRequest *r);
 int  http_read(HttpRequest *r, char *buff, int max_len);
 int http_get_line(HttpRequest *r, char *s, int sz);
 int http_get_line_trim(HttpRequest *r, char *s, int sz);
-char *http_url_encode(const char *string);
+char *http_url_encode(const char *string, int use_plus);
 unsigned char *http_read_all(HttpRequest *r, char *what);
 #endif

@@ -435,7 +435,11 @@ typedef struct _Dock {
   XIM input_method;
 
   Atom atom_WM_DELETE_WINDOW; /* oh les bon gros atomes  */
+  Atom atom_WM_SAVE_YOURSELF;
+  Atom atom_WM_TAKE_FOCUS;
   Atom atom_WM_PROTOCOLS;
+  /* plein d'autres atome dans coin_xutil.c */
+
 
   /* si non nul, on voit l'id du msg designe par tl_item_clicked, 
      --> active par un click sur un symbole dans trolloscope 
@@ -672,7 +676,7 @@ void pp_show(Dock *dock);
 void pp_unmap(Dock *dock);
 int pp_ismapped(Dock *dock);
 int pp_handle_keypress(Dock *dock, XEvent *event);
-void pp_dispatch_event(Dock *dock, XEvent *event);
+int pp_dispatch_event(Dock *dock, XEvent *event);
 void pp_minib_dispatch_event(Dock *dock, Board *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
 void pp_check_board_updated(Dock *dock);

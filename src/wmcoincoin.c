@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.83 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.84 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.84  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.83  2003/06/25 20:18:21  pouaite
   support xinerama qui marche
 
@@ -636,7 +639,7 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   }
   pp_set_download_info(site->prefs->site_name, "posting ...");
 
-  urlencod_msg = http_url_encode(msg); assert(urlencod_msg);
+  urlencod_msg = http_url_encode(msg,1); assert(urlencod_msg);
 
   snprintf(path, 2048, "%s%s/%s", strlen(site->prefs->site_path) ? "/" : "", site->prefs->site_path, site->prefs->path_board_add);
 
@@ -894,8 +897,8 @@ wmcoincoin_dispatch_events(Dock *dock)
 	dock->mouse_y = event.xcrossing.y;
 	dock->mouse_cnt = 0;
 	dock->mouse_win = event.xany.window;
-	if (editw_ismapped(dock->editw))
-	  editw_set_kbfocus(dock, dock->editw, 1);
+        /*	if (editw_ismapped(dock->editw))
+                editw_set_kbfocus(dock, dock->editw, 1);*/
       } break;
     case MotionNotify:
       {
@@ -932,8 +935,8 @@ wmcoincoin_dispatch_events(Dock *dock)
 	editw_dispatch_event(dock, dock->editw, &event);
       } else if (msgbox_ismapped(dock) && event.xany.window == msgbox_get_win(dock)) {
 	msgbox_dispatch_event(dock, &event);
-      } else if (event.xany.window == pp_get_win(dock) && event.xany.window) {
-	pp_dispatch_event(dock, &event);
+      } else if (pp_dispatch_event(dock, &event)) {
+	/* plop */
       } else if (newswin_is_used(dock)) {
 	if (event.xany.window == newswin_get_window(dock)) {
 	  newswin_dispatch_event(dock, &event);
@@ -1156,6 +1159,14 @@ void X_loop()
   }
 
   if (timer_cnt % 1 == 0) {
+    /*
+    Window focwin;
+    int revert_to;
+    XGetInputFocus(dock->display, &focwin, &revert_to);
+    printf("focus win=%08lx [%s]\n", focwin, 
+           focwin == editw_get_win(dock->editw) ? "palmipede" : 
+           (focwin == pp_get_win(dock) ? "pinnipede" : "???"));
+    */
     if (dock->horloge_mode == 0) {
       dock_refresh_normal(dock);
     } else {
@@ -2034,8 +2045,10 @@ main(int argc, char **argv)
   dock->trib_load_cursor = XCreateFontCursor(dock->display, XC_tcross);
 
   dock->atom_WM_DELETE_WINDOW = XInternAtom(dock->display, "WM_DELETE_WINDOW", False);
+  dock->atom_WM_SAVE_YOURSELF = XInternAtom(dock->display, "WM_SAVE_YOURSELF", False);
+  dock->atom_WM_TAKE_FOCUS = XInternAtom(dock->display, "WM_TAKE_FOCUS", False);
   dock->atom_WM_PROTOCOLS = XInternAtom(dock->display, "WM_PROTOCOLS", False);
-
+  
   scrollcoin_build(dock->rgba_context);
 
   newswin_build(dock);

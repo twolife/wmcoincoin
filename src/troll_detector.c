@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.17 2003/05/07 18:44:57 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.18 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.18  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.17  2003/05/07 18:44:57  pouaite
   bugfix divers+solaris7
 
@@ -67,7 +70,7 @@
 */
 
 
-#define MI_MAX_LEN 512  /* lg max du message prise en compte */
+#define MI_MAX_LEN 1024 /* lg max du message prise en compte */
 #define MI_MAX_WORD 200 /* nb max de mots pris en compte */
 #define MAX_WLEN 32     /* lg max d'un mot trollesque */
 #define MAX_TD_MATCH 20 /* nb max d'occurences d'un meme mot dans troll_data */
@@ -435,13 +438,15 @@ troll_detector(board_msg_info *mi) {
 	  continue;
 	}	
 	if (in_url) {
-	  do s++; while (*s != '\t');
-	  s++;
+	  do s++; while (*s != '\t' && *s);
+	  if (*s) s++;
 	}
       }
       
       
     }
+
+    if (i == MI_MAX_LEN-1) break;
 
     if ((p=strchr(trans_simple, *s))) {
       txt_simple[i] = trans_simple2[(p-trans_simple)]; i++; 

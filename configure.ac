@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.31  2003/06/29 23:58:35  pouaite
+dnl   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+dnl
 dnl   Revision 1.30  2003/06/25 20:18:21  pouaite
 dnl   support xinerama qui marche
 dnl
@@ -178,7 +181,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.5b, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.5totoz, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)

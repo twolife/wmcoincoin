@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.94 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.95 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -689,9 +689,14 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
 	if (pp_visited_links_find(pp, attr_s)) attr |= PWATTR_VISITED;
       }
 
+      if (s[0] == '[' && s[1] == ':' && strlen(s) > 5 && s[strlen(s)-1] == ']') { /* totoz ? */
+        attr |= PWATTR_TOTOZ;
+        printf("TOTOZ: %s\n",s);
+      }
+
       pw->next = pw_create(s, attr, (attr & PWATTR_LNK) ? attr_s : NULL, pv);
       has_initial_space = 0;
-      attr &= ~(PWATTR_REF | PWATTR_VISITED) ;
+      attr &= ~(PWATTR_REF | PWATTR_VISITED | PWATTR_TOTOZ) ;
       //      printf("ADD(id=%d): '%s'\n", mi->id, s);
       pw = pw->next;
     }
@@ -1212,6 +1217,10 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	pixel = pp->trollscore_pixel[site_num];
       } else {
 	pixel = pp->txt_pixel[site_num];
+      }
+
+      if (pw->attr & (PWATTR_TOTOZ)) {
+        pixel = pp->trollscore_pixel[site_num];
       }
 
       if (pw->parent->is_plopified) {
@@ -1892,6 +1901,8 @@ pp_build(Dock *dock)
   //    pp_minib_initialize(pp);
 
   pp->fn_minib = dock->fixed_font;
+
+  pp_totoz_build(dock);
   pp_rebuild(dock);
 
   pp->flag_board_updated = 0;
@@ -1907,6 +1918,7 @@ pp_destroy(Dock *dock)
   picohtml_destroy(dock->display, pp->ph_fortune);
   pp_free_fonts(pp, dock->display);
   pp_tabs_destroy(pp);
+  pp_totoz_destroy(dock);
   free(pp); dock->pinnipede = NULL;
 }
 
@@ -1939,6 +1951,7 @@ pp_rebuild(Dock *dock)
     pp_refresh(dock, pp->win, NULL);
     printf("refresh!\n");
   }
+  pp_totoz_rebuild(dock);
 }
 
 
@@ -1955,7 +1968,7 @@ pp_show(Dock *dock)
   XSetWindowAttributes wa;
   Pinnipede *pp = dock->pinnipede;
   int xpos, ypos;
-
+  int wrong_pos = 1, xiscr;
   /*
   {
     board_msg_info *mi = boards->first;
@@ -1974,11 +1987,26 @@ pp_show(Dock *dock)
   }
 
   if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
-    xpos = 700; ypos = 500; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
+    xpos = dock->xiscreen[0].x_org; ypos = dock->xiscreen[0].y_org; /* ça n'a d'effet que sur certain windowmanagers rustiques (genre pwm) */
   } else {
     xpos = pp->win_decor_xpos;
     ypos = pp->win_decor_ypos;
   }
+  /* verifie la visibilité du pinni */
+  for (xiscr=0; xiscr < dock->nb_xiscreen; ++xiscr) {
+    int x0=dock->xiscreen[xiscr].x_org, y0=dock->xiscreen[xiscr].y_org;
+    int x1=x0+dock->xiscreen[xiscr].width,y1=y0+dock->xiscreen[xiscr].height;
+    //printf("[%d-%dx%d-%x] %d %d\n", x0,x1,y0,y1
+    if (MIN(xpos + pp->win_width,x1) - MAX(xpos,x0)  > 20 &&
+        MIN(ypos + pp->win_height,y1) - MAX(ypos,y0)  > 20)
+      wrong_pos = 0;
+  }
+  if (wrong_pos) {
+    pp->win_decor_xpos = pp->win_decor_ypos = -10000;
+    xpos = dock->xiscreen[0].x_org; ypos = dock->xiscreen[0].y_org;
+  }
+  
+
   
   pp->win = XCreateSimpleWindow (dock->display, dock->rootwin, 
 				 xpos, ypos, pp->win_width,pp->win_height, 0,
@@ -2011,58 +2039,19 @@ pp_show(Dock *dock)
 			   CWEventMask | CWOverrideRedirect, &wa);
 
   {
-    XTextProperty window_title_property;
-    char* window_title = NULL; // = "pinnipede teletype";
-    char* icon_title = "pinnipede";
-    XSizeHints* win_size_hints;
-    int rc;
-    //    XWMHints* win_hints;
-    XClassHint *class_hint;
     XWMHints *wm_hint;
-    char s[512];
       
-    /* nom de la fenetre */
-    window_title = str_printf("pinnipede teletype");
-    rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
-    XSetWMName(dock->display, pp->win, &window_title_property);
-    XFree(window_title_property.value);
-
-    /* nom de la fenetre iconifiée */
-    rc = XStringListToTextProperty(&icon_title,1, &window_title_property); assert(rc);
-    XSetWMIconName(dock->display, pp->win, &window_title_property);
-    win_size_hints= XAllocSizeHints(); assert(win_size_hints);
-    XFree(window_title_property.value);
-      
-    free(window_title); window_title = NULL;
-      
+    set_window_title(dock->display, pp->win, "pinnipede teletype", "pinnipede");
+    set_window_size_hints(dock->display, pp->win, 
+                          200, 300, -1,
+                          80 , 455, -1);
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
        dans les options ) */
     if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
-      win_size_hints->flags = PSize | PMinSize;
     } else {
-      win_size_hints->flags = USPosition | PSize | PMinSize;
+      set_window_pos_hints(dock->display, pp->win, xpos, ypos);
     }
-    win_size_hints->x = xpos; 
-    win_size_hints->y = ypos;
-    win_size_hints->min_width = 200; //MINIB_W+20;
-    win_size_hints->min_height = 80;
-    win_size_hints->base_width = 300;
-    win_size_hints->base_height = 455;
-    XSetWMNormalHints(dock->display, pp->win, win_size_hints);
-    XFree(win_size_hints);
-      
-    /*   win_hints = XAllocWMHints(); assert(win_hints);
-	 win_hints->icon_window = dock->iconwin;
-	 win_hints->flags = IconWindowHint;
-	 XSetWMHints(dock->display, pp->win, win_hints);
-	 XFree(win_hints);*/
-      
-    class_hint = XAllocClassHint();
-    class_hint->res_name = "pinnipede_teletype";
-    sprintf(s, "wmcoincoin");
-    class_hint->res_class = s;
-    XSetClassHint(dock->display, pp->win, class_hint);
-    XFree(class_hint);
+    set_window_class_hint(dock->display, pp->win, "wmcoincoin", "pinnipede_teletype");
       
     wm_hint = XAllocWMHints(); assert(wm_hint);
     wm_hint->icon_pixmap = dock->wm_icon_pix;
@@ -2073,8 +2062,11 @@ pp_show(Dock *dock)
   }
     
   /* pour etre informé de la fermeture de la fenetre demandee par le windowmanager */
-  XSetWMProtocols(dock->display, pp->win, &dock->atom_WM_DELETE_WINDOW, 1);
- 
+  {
+    Atom p[2]; p[0] = dock->atom_WM_DELETE_WINDOW; p[1] = dock->atom_WM_TAKE_FOCUS;
+    /*XSetWMProtocols(dock->display, pp->win, &dock->atom_WM_DELETE_WINDOW, 1);*/
+    XSetWMProtocols(dock->display, pp->win, p, 2);
+  }
   /*
     {
     XWMHints *mwh = XAllocWMHints();
@@ -2146,7 +2138,7 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
 }
 
 /* affiche le texte en haut du pinnipede (dans le style très dépouillé des useragents) */
-static void
+void
 pp_popup_show_txt(Dock *dock, unsigned char *txt)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -2337,6 +2329,7 @@ pp_unmap(Dock *dock)
   Pinnipede *pp = dock->pinnipede;
 
   pp_selection_unselect(pp);
+  pp_totoz_unmap(dock);
 
   /* le pp_refresh a juste pour but de 'delocker' le PostVisual sauvé dans le cache
      oui c'est de la bidouille qui sent les remugles nauséabonds */
@@ -2640,7 +2633,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   enum { WORD, UA_WITH_LOGIN, UA_NO_LOGIN, LOGIN, TSTAMP, THREAD, NOTHING } what_clicked;
   int hk_what_clicked = -1, plop_lvl, emph_lvl;
   enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
-	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
+	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, PUP_DO_TOTOZ, 
 	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
 	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
 	 };
@@ -2745,6 +2738,9 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   if (pw && (pw->attr & (PWATTR_TSTAMP | PWATTR_NICK | PWATTR_LOGIN)) && mi) {
     plopup_pushentry(dock, _("copy useragent in X clipboard"), PUP_COPY_UA);
   }
+  if (pw && (pw->attr & PWATTR_TOTOZ)) {
+    plopup_pushentry(dock, _("Try to download the correspounding picture"), PUP_DO_TOTOZ);
+  }
 
   plopup_pushsepar(dock);
 
@@ -2837,6 +2833,10 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     if (mi->useragent && strlen(mi->useragent)) {
       editw_cb_copy(dock, pp->win, mi->useragent, strlen(mi->useragent));	  
     }
+  } break;
+  case PUP_DO_TOTOZ: {
+    assert(pw);
+    pp_totoz_download(dock, pw->w);
   } break;
   case PUP_TOGGLE_MINIB: {
     if (pp->use_minibar == 0) {
@@ -3732,7 +3732,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
   return ret;
 }
 
-void
+int
 pp_dispatch_event(Dock *dock, XEvent *event)
 {
   Pinnipede *pp = dock->pinnipede;
@@ -3743,8 +3743,11 @@ pp_dispatch_event(Dock *dock, XEvent *event)
   static int dragging = 0;
   static Time time_drag = 0;
 
+  if (pp_totoz_dispatch_event(dock,event)) return 1;
+  if (event->xany.window == None || event->xany.window != pp->win) return 0;
+
   /* le pinnipede ne fait RIEN quand la tribune est en cours de mise à jour ... */
-  if (flag_updating_board) return;
+  if (flag_updating_board) return 0;
 
   switch (event->type) {
   case DestroyNotify: 
@@ -3823,7 +3826,9 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	  time_drag = event->xmotion.time;
 	}
       } else {
-	pp_check_survol(dock, pp_get_pw_at_xy(dock->pinnipede, event->xmotion.x, event->xmotion.y),0);
+        PostWord *pw = pp_get_pw_at_xy(dock->pinnipede, event->xmotion.x, event->xmotion.y);
+	pp_check_survol(dock, pw, 0);
+        pp_check_totoz(dock, pw, event->xmotion.x, event->xmotion.y);/*event->xmotion.x_root, event->xmotion.y_root);*/
 	old_mouse_x = event->xmotion.x;
 	old_mouse_y = event->xmotion.y;
       }
@@ -3912,6 +3917,7 @@ pp_dispatch_event(Dock *dock, XEvent *event)
       }
     } break;
   }
+  return 1;
 }
 
 void pp_unset_kbnav(Dock *dock) {

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.15 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.16 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.16  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.15  2003/06/25 20:18:21  pouaite
   support xinerama qui marche
 
@@ -926,7 +929,6 @@ editw_draw_frame(Dock *dock, EditW *ew, Drawable d, GC *gc, int mono)
     else { EWDF_COLOR(dock->bg_pixel); }
     XDrawLine(dock->display, d, *gc, x0, y0, x1, y1);
   }
-  
 }
 
 
@@ -1046,6 +1048,8 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
     
     x_title = (ew->dock_side == RIGHT ? EW_TXT_X0 + 8 : 200);
     x_name = x_title + strlen(title)*FN_W + 8;
+
+    
 
     XSetForeground(dock->display, dock->NormalGC, ew->light_pixel);
     XDrawString(dock->display, d, dock->NormalGC, 
@@ -1275,11 +1279,19 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
     LeaveWindowMask | 
     FocusChangeMask;
   //  if (! ClickOnly) wa.event_mask |= EnterWindowMask | LeaveWindowMask ;
-  wa.override_redirect = True ;
+  wa.override_redirect = False ;
   XChangeWindowAttributes (dock->display, ew->win,
 			   //CWBackPixmap | 
 			   CWEventMask | CWOverrideRedirect, &wa);
-
+  XSetTransientForHint(dock->display, ew->win, DOCK_WIN(dock));
+  XSetWindowBorderWidth(dock->display, ew->win, 0);
+  /* passage en borderless à grands coups de massue sur la tête du wmanager */
+  XSetWMProtocols(dock->display, ew->win, &dock->atom_WM_TAKE_FOCUS, 1);
+  set_borderless_window_hints(dock->display, ew->win);
+  set_window_size_hints(dock->display, ew->win, 
+                        EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,
+                        EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
+  set_window_class_hint(dock->display, ew->win, "wmcoincoin", "palmipede");
   /* cette ligne marchait pile poil sur mon qwerty, je la garde en reserve...
      en la reregardant je crois qu'elle etait debile, elle defibnit
      deux fois XNInputSyle avec deux valeurs diffrenetes...
@@ -1310,7 +1322,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
   /* cree le pixmap et le rempli de noir */
   ew->pix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
 			  DefaultDepth(dock->display,dock->screennum));
-  XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display,dock->screennum)); 
+  XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display,dock->screennum));
   XFillRectangle(dock->display, ew->pix, dock->NormalGC, 0, 0, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT);
 
   /* cree le mask, avec le GC-qui-va-bien et le met a 0 */
@@ -1380,12 +1392,13 @@ editw_action(Dock *dock, EditW *ew)
     float f;
     int l;
     static int save_prev_l = 0;
-
+    Pixmap tpix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
+                                DefaultDepth(dock->display,dock->screennum));
     f = (ew->action_step+1) / ((float)ACTION_NB_STEPS);
     l = (int)(EW_SHAPED_WIDTH * f * f + .5);
     //    l = (EW_SHAPED_WIDTH * (ew->action_step+1)) / (ACTION_NB_STEPS);
     
-    //    printf("l=%d\n",l);
+    //printf("SORTIR l=%d\n",l);
     if (l == 0) {
       l = 2;
     }
@@ -1405,20 +1418,21 @@ editw_action(Dock *dock, EditW *ew)
       XShapeOffsetShape(dock->display, ew->win, ShapeBounding, l-save_prev_l, 0);
       save_prev_l = l;
       XMoveResizeWindow(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-
-
-      XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      ////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
     } else {
       ew->win_xpos = ew->dock_x-l +2;
       ew->win_ypos = ew->dock_y;
       XMoveResizeWindow(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-      XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      ////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+      XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
     }
+    XSetWindowBackgroundPixmap(dock->display, ew->win, tpix); 
+    XFreePixmap(dock->display, tpix);
+
     if (ew->action_step == 0) {
       XMapRaised(dock->display, ew->win);
-
     }
-
     ew->action_step ++;
     if (ew->action_step >= ACTION_NB_STEPS) {
       //      ew->action_step = 0;
@@ -1430,27 +1444,34 @@ editw_action(Dock *dock, EditW *ew)
     float f;
     int l;
     static int save_prev_l = 0;
-
+ 
     f = (ew->action_step) / ((float)ACTION_NB_STEPS);
     l = (int)(EW_SHAPED_WIDTH * (1. - (1-f) * (1-f)) + .5);
 
     if (ew->action_step == ACTION_NB_STEPS) save_prev_l = l;
 
     if (l > 0) {
+      Pixmap tpix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
+                                  DefaultDepth(dock->display,dock->screennum));
       if (ew->dock_side == LEFT) {
 	ew->win_xpos = ew->dock_x+64-2;
 	ew->win_ypos = ew->dock_y;
 	XShapeOffsetShape(dock->display, ew->win, ShapeBounding, l-save_prev_l, 0);
 	save_prev_l = l;
 	XMoveResizeWindow(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-	XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+	////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+        XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, EW_SHAPED_WIDTH-l, 0, l, EW_SHAPED_HEIGHT, 0, 0);
       } else {
 	ew->win_xpos = ew->dock_x-l +2;
 	ew->win_ypos = ew->dock_y;
 	XMoveResizeWindow(dock->display, ew->win,  ew->win_xpos, ew->win_ypos, l, EW_SHAPED_HEIGHT);
-	XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+	////XCopyArea(dock->display, ew->pix, ew->win, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
+        XCopyArea(dock->display, ew->pix, tpix, dock->NormalGC, 0, 0, l, EW_SHAPED_HEIGHT, 0, 0);
       }
+      XSetWindowBackgroundPixmap(dock->display, ew->win, tpix); 
+      XFreePixmap(dock->display, tpix);
     }
+
     ew->action_step --;
 
     if (ew->action_step == 0) {
@@ -1595,10 +1616,20 @@ editw_move_cursor_rel(EditW *ew, int dec)
 void 
 editw_set_kbfocus(Dock *dock, EditW *ew, int get_it)
 {
-  if (get_it && ew->mapped)
+#if 0
+  Window focwin;
+  int revert_to, pp_focus;
+  XGetInputFocus(dock->display, &focwin, &revert_to);
+  pp_focus = (pp_ismapped(dock) && focwin == pp_get_win(dock));
+  if (get_it && ew->mapped/* && !pp_focus*/)
     XSetInputFocus(dock->display, ew->win, RevertToPointerRoot, CurrentTime);
-  else
-    XSetInputFocus(dock->display, PointerRoot, RevertToNone, CurrentTime);
+  else /*if (!get_it) {
+    if (focwin == editw_get_win(ew)) {
+      if (pp_ismapped(dock)) 
+        XSetInputFocus(dock->display, pp_get_win(dock), RevertToPointerRoot, CurrentTime);
+        else*/
+        XSetInputFocus(dock->display, PointerRoot, RevertToNone, CurrentTime);
+#endif
 }
 
 /* gestion de la selection pour les mouvements de curseur

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.19 2003/06/21 14:48:45 pouaite Exp $
+  rcsid=$Id: board.c,v 1.20 2003/06/29 23:58:35 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.20  2003/06/29 23:58:35  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.19  2003/06/21 14:48:45  pouaite
   g cho
 
@@ -1054,6 +1057,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   miniua_eval_from_ua(&Prefs.miniuarules, it);
 
   /* evalue le potentiel trollesque */
+  if (id_type_lid(it->id) == 9348) {
+    printf("attention chérie ça va couper\n");
+  }
   troll_detector(it);
 
   mi_check_boitakon(board->boards, it);

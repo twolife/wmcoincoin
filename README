@@ -30,12 +30,7 @@ Ses fonctionnalités::
 ainsi que le useragent.
  * (NEW!) Estimation du nombre de personnes présentes sur la tribune.
  * (NEW!) Compatibilité KDE .
-(faire: Menu KDE/Configurer/Ajouter/Extension/Applets Windowmaker,
- puis lancer 'wmcoincoin -w' ou mieux [apres le make install]: 'wmcoincoin-kde',
- ce qui permet de relancer automatiquement wmcoincoin d'un session a l'autre 
- [ il peut etre necessaire, par ex avec la mdk8.0, d'installer wmcoincoin dans
-  /usr/bin et non dans /usr/local/bin pour que kde retrouve l'executable au demarrage])
-
+(faire: Menu KDE/Configurer/Ajouter/Extension/Applets Windowmaker),
  * le pinnipede etc...
  * non, le coredump ne fait pas partie des fonctionnalites, alors si
 wmcoincoin a tendance a en pondre, faites le moi savoir :)
@@ -70,7 +65,6 @@ les options utiles de ./configure :
 Pour voir les options de wmCoinCoin, executer 'wmcoincoin -h'
 
 [Nouveau (v2.x)]
-* wmcoincoin n'utilise plus $HOME/.wmCoinCoinrc , celui-ci est maintenant ~/.wmcoincoin/useragents
 * un fichier permettant de stocker les options (utile pour KDE qui ne sauve pas les options de
 ligne de commande d'une session à l'autre) est utilisé: $HOME/wmcoincoin/options
 (un fichier par défaut est crée au premier lancement, vous pouvez ensuite l'éditer)

@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.14 2003/06/09 16:42:29 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.15 2003/06/29 23:58:37 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.15  2003/06/29 23:58:37  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.14  2003/06/09 16:42:29  pouaite
   pan pan
 
@@ -698,8 +701,20 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
       if (end-start > 4 && is_multi == 0 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
     } else {
-      /* un mot normal */
-      while (*end && *end != '\t' && *end > ' ' && (*end < '0' || *end > '9')) end++;
+      int ok_totoz = 0;
+      if (end[0] == '[' && end[1] == ':') { /* totoz ? */
+        const unsigned char *s = end+2;
+        int i;
+        for (i=0; i < 100 && s[i]; ++i) {
+          if (s[i] == ']' && i > 2) { end = s+i+1; ok_totoz = 1; break; }
+          if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-') break;
+        }
+        if (!ok_totoz) end++; /* pour relancer la machine */
+      }
+      if (!ok_totoz) {
+        /* un mot normal */
+        while (*end && *end != '\t' && *end > ' ' && (*end < '0' || *end > '9') && (!(end[0] == '[' && end[1] == ':'))) end++;
+      }
     }
   }
   if (end == start) return NULL;

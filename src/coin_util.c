@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.35 2003/06/09 16:42:29 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.36 2003/06/29 23:58:38 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.36  2003/06/29 23:58:38  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.35  2003/06/09 16:42:29  pouaite
   pan pan
 
@@ -565,12 +568,12 @@ str_noaccent_casestr(const unsigned char *meule, const unsigned char *aiguille)
   unsigned char *res;
   unsigned char *m = strdup(meule);
   unsigned char *a = strdup(aiguille);
-
+  int pos = -1;
   str_noaccent_tolower(m);
   str_noaccent_tolower(a);
-  res = strstr(m, a);
+  res = strstr(m, a); if (res) pos = res-m;
   free(a); free(m);
-  return res;
+  return ((pos >= 0) ? meule+pos : NULL);
 }
 
 void

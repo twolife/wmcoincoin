@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.8 2002/10/05 18:08:14 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.9 2003/06/29 23:58:39 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.9  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.8  2002/10/05 18:08:14  pouaite
   ajout menu contextuel + fix de la coloration des boutons du wmccc
 
@@ -469,4 +472,158 @@ lighten_color(int icol, float v)
   g = MIN(g,255);
   b = MIN(b,255);
   return (r<<16) + (g<<8) + b;
+}
+
+/* motif window manager styles 
+ */ 
+#define MwmHintsDecorations (1L << 1)
+#define MwmDecorAll         (1L << 0)
+#define MwmDecorBorder      (1L << 1)
+#define MwmDecorHandle      (1L << 2)
+#define MwmDecorTitle       (1L << 3)
+#define MwmDecorMenu        (1L << 4)
+#define MwmDecorMinimize    (1L << 5)
+#define MwmDecorMaximize    (1L << 6)
+ 
+#define PropMotifWmHintsElements 3
+ 
+typedef struct {
+  int flags;
+  int functions;
+  int decorations;
+  int inputMode;
+  int unknown;
+} MwmHints;
+ 
+/* gnome hints */
+#define WIN_HINTS_SKIP_WINLIST		(1<<1) /* not in win list */
+#define WIN_HINTS_SKIP_TASKBAR		(1<<2) /* not on taskbar */
+
+/* aaaah */
+int
+set_borderless_window_hints(Display *display, Window win) {
+  enum { MOTIF_WM_HINTS=0, KWM_WIN_DECORATION, WIN_HINTS, 
+         NET_WM_STATE, NET_WM_STATE_SKIP_TASKBAR, NET_WM_STATE_STAYS_ON_TOP, NB_ATOMS };
+
+  Atom atom[NB_ATOMS];
+  char *atom_names[NB_ATOMS] = { "_MOTIF_WM_HINTS", 
+                                 "KWM_WIN_DECORATION", 
+                                 "_WIN_HINTS", 
+                                 "_NET_WM_STATE",
+                                 "_NET_WM_STATE_SKIP_TASKBAR", 
+                                 "_NET_WM_STATE_STAYS_ON_TOP" };
+  int ok = 0;
+  XInternAtoms(display, atom_names, NB_ATOMS, True, atom);
+  /*  dock->atom_NET_WM_WINDOW_TYPE = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE", True);
+  dock->atom_NET_WM_WINDOW_TYPE_DESKTOP = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_DESKTOP", True);
+  dock->atom_NET_WM_WINDOW_TYPE_DOCK = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_DOCK", True);
+  dock->atom_NET_WM_WINDOW_TYPE_TOOLBAR = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_TOOLBAR", True);
+  dock->atom_NET_WM_WINDOW_TYPE_MENU = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_MENU", True);
+  dock->atom_NET_WM_WINDOW_TYPE_DIALOG = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_DIALOG", True);
+  dock->atom_NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+  dock->atom_NET_WM_WINDOW_TYPE_SPLASH = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_SPLASH", True);
+  dock->atom_NET_WM_WINDOW_TYPE_UTILITY = XInternAtom(dock->display, "_NET_WM_WINDOW_TYPE_UTILITY", True);
+  dock->atom_NET_WM_STATE = XInternAtom(dock->display, "_NET_WM_STATE", True);
+  dock->atom_NET_WM_STATE_MODAL = XInternAtom(dock->display, "_NET_WM_STATE_MODAL", True);
+  dock->atom_NET_WM_STATE_STICKY = XInternAtom(dock->display, "_NET_WM_STATE_STICKY", True);
+  dock->atom_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(dock->display, "_NET_WM_STATE_MAXIMIZED_VERT", True);
+  dock->atom_NET_WM_STATE_SHADED = XInternAtom(dock->display, "_NET_WM_STATE_SHADED", True);
+  dock->atom_NET_WM_STATE_SKIP_PAGER = XInternAtom(dock->display, "_NET_WM_STATE_SKIP_PAGER", True);
+  dock->atom_NET_WM_STATE_HIDDEN = XInternAtom(dock->display, "_NET_WM_STATE_HIDDEN", True);
+  dock->atom_NET_WM_STATE_FULLSCREEN = XInternAtom(dock->display, "_NET_WM_STATE_FULLSCREEN", True);
+  dock->atom_NET_WM_DESKTOP = XInternAtom(dock->display, "_NET_WM_DESKTOP", True);
+  */
+  if (atom[MOTIF_WM_HINTS] != None) {
+    MwmHints hints;
+    hints.flags = MwmHintsDecorations;
+    hints.decorations = 0;
+    XChangeProperty(display, win,
+                    atom[MOTIF_WM_HINTS], atom[MOTIF_WM_HINTS], 32,
+                    PropModeReplace, (unsigned char *) &hints, sizeof(MwmHints)/4);
+    ok = 1;
+  }
+  if (atom[KWM_WIN_DECORATION] != None) {
+    long KWMHints = 0;
+    XChangeProperty(display, win, atom[KWM_WIN_DECORATION], XA_CARDINAL, 32,
+                    PropModeReplace, (unsigned char *)&KWMHints,
+                    sizeof(KWMHints)/4);
+    ok = 1;
+  }
+  if (atom[WIN_HINTS] != None) {
+    long GNOMEHints = WIN_HINTS_SKIP_WINLIST | WIN_HINTS_SKIP_TASKBAR;
+    XChangeProperty(display, win, atom[WIN_HINTS], XA_CARDINAL, 32,
+                    PropModeReplace, (unsigned char *)&GNOMEHints,
+                    sizeof(GNOMEHints)/4);
+    ok = 1;
+  }
+  if (atom[NET_WM_STATE] != None) {
+    Atom p[2]; p[0] = atom[NET_WM_STATE_SKIP_TASKBAR]; p[1] = atom[NET_WM_STATE_STAYS_ON_TOP];
+    XChangeProperty(display, win, atom[NET_WM_STATE], XA_ATOM, 32,
+                    PropModeReplace, (unsigned char *)p, 2);
+  }
+  return ok; /* pour savoir si il faut la passer en overrideredirect */
+}
+
+void
+set_window_title(Display *display, Window win, char *window_title, char *icon_title) {
+  int rc;
+  XTextProperty window_title_property;
+  /* nom de la fenetre */
+  rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
+  XSetWMName(display, win, &window_title_property);
+  XFree(window_title_property.value);
+  
+  /* nom de la fenetre iconifiée */
+  rc = XStringListToTextProperty(&icon_title,1, &window_title_property); assert(rc);
+  XSetWMIconName(display, win, &window_title_property);
+  XFree(window_title_property.value);
+}
+
+
+void
+set_window_pos_hints(Display *display, Window win, int x, int y) {
+  long user_hints;
+  XSizeHints* win_size_hints;
+  win_size_hints= XAllocSizeHints(); assert(win_size_hints);
+  if (!XGetWMNormalHints(display, win, win_size_hints, &user_hints))
+    win_size_hints->flags = 0;
+  win_size_hints->x = x; 
+  win_size_hints->y = y;
+  win_size_hints->flags |= USPosition;
+  XSetWMNormalHints(display, win, win_size_hints);
+  XFree(win_size_hints);
+}
+
+/* -1 pour les quantité non utilisées */
+void
+set_window_size_hints(Display *display, Window win,
+                     int minw, int basew, int maxw,
+                     int minh, int baseh, int maxh) {
+  long user_hints;
+  XSizeHints* win_size_hints;
+  win_size_hints= XAllocSizeHints(); assert(win_size_hints);
+  if (!XGetWMNormalHints(display, win, win_size_hints, &user_hints))
+    win_size_hints->flags = 0;
+  win_size_hints->min_width = minw;
+  win_size_hints->min_height = minh;
+  win_size_hints->base_width = basew;
+  win_size_hints->base_height = baseh;
+  win_size_hints->max_width = maxw;
+  win_size_hints->max_height = maxh;
+  win_size_hints->flags = 0;
+  if (minw >= 0 && minh >= 0) win_size_hints->flags |= PMinSize;
+  if (basew >= 0 && baseh >= 0) win_size_hints->flags |= PSize;
+  if (maxw >= 0 && maxh >= 0) win_size_hints->flags |= PMaxSize;
+  XSetWMNormalHints(display, win, win_size_hints);
+  XFree(win_size_hints);
+}
+
+void
+set_window_class_hint(Display *display, Window win, char *res_class, char *res_name) {
+  XClassHint *class_hint;
+  class_hint = XAllocClassHint();
+  class_hint->res_name = res_name;
+  class_hint->res_class = res_class;
+  XSetClassHint(display, win, class_hint);
+  XFree(class_hint);
 }

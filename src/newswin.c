@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.17 2002/10/16 20:41:45 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.18 2003/06/29 23:58:39 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.18  2003/06/29 23:58:39  pouaite
+  suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+
   Revision 1.17  2002/10/16 20:41:45  pouaite
   killall toto
 
@@ -420,14 +423,8 @@ newswin_createXWindow(Dock *dock)
 {
   Newswin *nw = dock->newswin;
 
-  XTextProperty window_title_property;
-  char *window_title;
-  XSizeHints* win_size_hints;
-  XClassHint *class_hint;
   XWMHints *wm_hint;
-  int rc;
-  char s[512];
-  int xpos, ypos;
+  int xpos, ypos, xiscr, wrong_pos=1;
 
   assert(nw->win_width>0 && nw->win_height>0);
   BLAHBLAH(2, printf(_("newswin_createXWindow: creating a window of dimensions %dx%d\n"),
@@ -439,6 +436,20 @@ newswin_createXWindow(Dock *dock)
     xpos = nw->win_xpos;
     ypos = nw->win_ypos;
   }
+  /* verifie la visibilité du pinni */
+  for (xiscr=0; xiscr < dock->nb_xiscreen; ++xiscr) {
+    int x0=dock->xiscreen[xiscr].x_org, y0=dock->xiscreen[xiscr].y_org;
+    int x1=x0+dock->xiscreen[xiscr].width,y1=y0+dock->xiscreen[xiscr].height;
+    //printf("[%d-%dx%d-%x] %d %d\n", x0,x1,y0,y1
+    if (MIN(xpos + nw->win_width,x1) - MAX(xpos,x0)  > 20 &&
+        MIN(ypos + nw->win_height,y1) - MAX(ypos,y0)  > 20)
+      wrong_pos = 0;
+  }
+  if (wrong_pos) {
+    nw->win_xpos = nw->win_ypos = -10000;
+    xpos = dock->xiscreen[0].x_org; ypos = dock->xiscreen[0].y_org;
+  }
+  
   
 
   nw->window = XCreateSimpleWindow(dock->display, dock->rootwin, xpos, ypos, nw->win_width, nw->win_height, 0, 
@@ -448,41 +459,20 @@ newswin_createXWindow(Dock *dock)
 	       ButtonPressMask | ExposureMask | ButtonReleaseMask | PointerMotionMask | 
 	       EnterWindowMask | LeaveWindowMask | StructureNotifyMask);
 
-  snprintf(s, 512, _("news from %s"), nw->site_name);
-  window_title = s;
-
-  /* nom de la fenetre (et de la fenetre iconifiée) */
-  rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
-  XSetWMName(dock->display, nw->window, &window_title_property);
-  XSetWMIconName(dock->display, nw->window, &window_title_property);
-  XFree(window_title_property.value);
-
-
-  win_size_hints= XAllocSizeHints(); assert(win_size_hints);
+  //snprintf(s, 512, _("news from %s"), nw->site_name);
+  
+  set_window_title(dock->display, nw->window, _("wmcc news"), _("wmcc news"));
+  set_window_size_hints(dock->display, nw->window, 
+                        300, nw->win_width, 1280,
+                        100, nw->win_height, 1024);
   /* au premier lancement, la pos n'est pas connue (sauf si specifee
      dans les options ) */
   if (nw->win_xpos == -10000 && nw->win_ypos == -10000) {
-    win_size_hints->flags = PSize | PMinSize | PMaxSize;
   } else {
-    win_size_hints->flags = USPosition | PSize | PMinSize | PMaxSize;
+    set_window_pos_hints(dock->display, nw->window, xpos, ypos);
   }
-  win_size_hints->x = xpos; 
-  win_size_hints->y = ypos;
-  win_size_hints->min_width = 300;
-  win_size_hints->min_height = 100;
-  win_size_hints->max_width = 1280;
-  win_size_hints->max_height = 1024;
-  win_size_hints->base_width = nw->win_width;
-  win_size_hints->base_height = nw->win_height;
-  XSetWMNormalHints(dock->display, nw->window, win_size_hints);
-  XFree(win_size_hints);
 
-  class_hint = XAllocClassHint();
-  class_hint->res_name = "news";
-  sprintf(s, "wmcoincoin_news");
-  class_hint->res_class = s;
-  XSetClassHint(dock->display, nw->window, class_hint);
-  XFree(class_hint);
+  set_window_class_hint(dock->display, nw->window, "wmcoincoin", "news");
 
   wm_hint = XAllocWMHints(); assert(wm_hint);
   wm_hint->icon_pixmap = dock->wm_icon_pix;

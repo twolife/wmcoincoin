@@ -145,7 +145,7 @@ dns_cache_remove_host_by_name(const char *host_name, int port) {
    encore un fonction piquee dans curl
  */
 char *
-http_url_encode(const char *string)
+http_url_encode(const char *string, int use_plus)
 {
    int alloc=strlen(string)+1;
    char *ns = malloc(alloc);
@@ -155,7 +155,7 @@ http_url_encode(const char *string)
 
    while(*string) {
       in = *string;
-      if(' ' == in)
+      if(' ' == in && use_plus)
 	 ns[index++] = '+';
       else if(!(in >= 'a' && in <= 'z') &&
 	      !(in >= 'A' && in <= 'Z') &&

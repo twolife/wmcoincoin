@@ -5,6 +5,7 @@
 #include "coin_util.h"
 #include "prefs.h"
 
+
 /* deux macros fort pratiques !! */
 #define RGB2PIXEL(r,g,b) _RGB2PIXEL(dock->rgba_context,r,g,b)
 #define IRGB2PIXEL(rgb) _IRGB2PIXEL(dock->rgba_context,rgb)
@@ -26,4 +27,11 @@ Pixmap get_rootwin_pixmap(const RGBAContext *rc);
 void shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *tr);
 Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr, int use_fake_real_transparency);
 int lighten_color(int icol, float light);
+int set_borderless_window_hints(Display *display, Window win);
+void set_window_title(Display *display, Window win, char *window_title, char *icon_title);
+void set_window_pos_hints(Display *display, Window win, int x, int y);
+void set_window_size_hints(Display *display, Window win, 
+                           int minw, int basew, int maxw,
+                           int minh, int baseh, int maxh);
+void set_window_class_hint(Display *display, Window win, char *res_class, char *res_name);
 #endif

@@ -55,7 +55,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
 	myprintf(_(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n"), The_Prefs->dock_fgcolor);
 	myprintf(_(" %<GRN -X> %<CYA file.xpm>\t: Fichier pixmap a mettre en fond du dock (fichier.xpm de 64x64)\n"));
 	myprintf(_(" %<GRN -w> \t\t: utilise le mode windowed plutot que le mode icone\n"));
-	myprintf(_("\t\tcette option est necessaire pour utiliser wmcoincoin avec le kicker de KDE\n"));
+	myprintf(_("\t\tcette option est necessaire pour utiliser wmcoincoin avec le kicker de KDE (<3.0)\n"));
 	myprintf(_("\t\tmais comme le kicker de KDE 2.1 a un bug qui l'empeche de sauver les options\n"));
 	myprintf(_("\t\tde la ligne de commande d'une session a l'autre, le mieux est d'invoquer\n"));
 	myprintf(_("\t\twmcoincoin sous le nom %<YEL wmcoincoin-kde> (c'est un bete lien symbolique)\n"));

@@ -27,6 +27,7 @@
 #define PWATTR_LOGIN 4096
 #define PWATTR_TT  8192
 #define PWATTR_VISITED  16384
+#define PWATTR_TOTOZ 32768 /* maaairde le short est plein à ras bord */
 
 typedef struct _PostVisual PostVisual;
 typedef struct _PostWord PostWord;
@@ -109,6 +110,7 @@ typedef struct _PinnipedeTab {
   int clign_decnt;
 } PinnipedeTab;
 
+struct pp_totoz;
 
 struct _Pinnipede {
   Window win;
@@ -198,6 +200,8 @@ struct _Pinnipede {
 #define MAX_VISITED_LINKS 200
   int visited_links[MAX_VISITED_LINKS]; /* hash des urls deja visitées */
   int nb_visited_links;
+  
+  struct pp_totoz *totoz;  
 };
 
 int filter_msg_info(const board_msg_info *mi, const struct _PinnipedeFilter *filter);
@@ -211,6 +215,7 @@ void pp_balloon_help(Dock *dock, int x, int y);
 void pp_pv_destroy(Pinnipede *pp);
 PostVisual *pp_pv_add(Pinnipede *pp, Boards *boards, id_type id);
 void pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref);
+void pp_popup_show_txt(Dock *dock, unsigned char *txt);
 void pp_change_transparency_mode(Dock *dock, int on_off);
 void pp_update_bg_pixmap(Dock *dock);
 unsigned long pp_get_win_bgcolor(Dock *dock);
@@ -239,6 +244,14 @@ void pp_refresh_fortune(Dock *dock, Drawable d);
 void pp_update_content(Dock *dock, id_type id_base, int decal, int adjust, int update_scrollbar_bounds);
 
 int pp_boardshot_kikoooo(Dock *dock, int save_all, int overwrite, int use_js);
+
+void pp_totoz_build(Dock *dock);
+void pp_totoz_rebuild(Dock *dock);
+void pp_totoz_destroy(Dock *dock);
+void pp_totoz_unmap(Dock *dock);
+void pp_check_totoz(Dock *dock, PostWord *pw, int x_root, int y_root);
+int  pp_totoz_dispatch_event(Dock *dock, XEvent *event);
+void pp_totoz_download(Dock *dock, unsigned char *imgname);
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->zmsg_y2 - (pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2)
 #define LINEY1(l) (LINEY0(l)+pp->fn_h-1)

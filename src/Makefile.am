@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.20 2003/03/12 21:09:44 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.21 2003/06/29 23:58:35 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.21  2003/06/29 23:58:35  pouaite
+##   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
+##
 ##   Revision 1.20  2003/03/12 21:09:44  pouaite
 ##   mega patch de gle + micro fix du referer
 ##
@@ -78,7 +81,7 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
 	myprintf.c myprintf.h \
 	raster.c raster.h \
         troll_detector.c troll_data.h \
-	pinnipede.c pinnipede_widgets.c pinnipede_pdfm.c pinnipede.h \
+	pinnipede.c pinnipede_widgets.c pinnipede_pdfm.c pinnipede_totoz.c pinnipede.h \
         palmipede.c \
 	dock.c dock.h \
         board.c \
@@ -135,4 +138,4 @@ options_list.h: ../options
 install: install-am
 # petite update merci anvil !
 #	ln -sf $(DESTDIR)$(bindir)/wmcoincoin $(DESTDIR)$(bindir)/wmcoincoin-kde
-	(cd $(DESTDIR)$(bindir) ; ln -sf wmcoincoin wmcoincoin-kde)
+#	(cd $(DESTDIR)$(bindir) ; ln -sf wmcoincoin wmcoincoin-kde)
