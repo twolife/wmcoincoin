@@ -30,8 +30,9 @@ int lighten_color(int icol, float light);
 int set_borderless_window_hints(Display *display, Window win);
 void set_window_title(Display *display, Window win, char *window_title, char *icon_title);
 void set_window_pos_hints(Display *display, Window win, int x, int y);
-void set_window_size_hints(Display *display, Window win, 
-                           int minw, int basew, int maxw,
-                           int minh, int baseh, int maxh);
+void set_window_sizepos_hints(Display *display, Window win, 
+                              int x, int y,
+                              int minw, int basew, int maxw,
+                              int minh, int baseh, int maxh);
 void set_window_class_hint(Display *display, Window win, char *res_class, char *res_name);
 #endif

@@ -199,6 +199,9 @@ typedef struct _GeneralPrefs{
   /* indique si la bordure est a la charge du windowmanager (ie si le WM a un dock:
      WMaker, KDE..) ou si wmcoincoin doit dessiner lui meme sa bordure */
   int draw_border;
+  
+  int palmipede_override_redirect;
+
   int use_balloons;
   char *balloon_fn_family;
   int balloon_fn_size;
@@ -220,6 +223,8 @@ typedef struct _GeneralPrefs{
   TransparencyInfo pp_transparency;
 
   int use_fake_real_transparency;
+
+  int board_auto_dl_pictures;
 
   BiColor sc_bg_color, sc_bg_light_color, sc_bg_dark_color, 
     sc_arrow_normal_color, sc_arrow_emphasized_color,

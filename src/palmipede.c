@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.16 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.17 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.17  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.16  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -1288,9 +1291,10 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
   /* passage en borderless à grands coups de massue sur la tête du wmanager */
   XSetWMProtocols(dock->display, ew->win, &dock->atom_WM_TAKE_FOCUS, 1);
   set_borderless_window_hints(dock->display, ew->win);
-  set_window_size_hints(dock->display, ew->win, 
-                        EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,
-                        EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
+  /*  set_window_sizepos_hints(dock->display, ew->win, -10000, -10000, 
+                           EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,EW_SHAPED_WIDTH,
+                           EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
+  */
   set_window_class_hint(dock->display, ew->win, "wmcoincoin", "palmipede");
   /* cette ligne marchait pile poil sur mon qwerty, je la garde en reserve...
      en la reregardant je crois qu'elle etait debile, elle defibnit
@@ -1359,6 +1363,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
 void
 editw_unmap(Dock *dock, EditW *ew)
 {
+  ew->mapped = 0;
 #ifndef sun
   if (ew->input_context)
     XDestroyIC(ew->input_context);
@@ -1370,7 +1375,6 @@ editw_unmap(Dock *dock, EditW *ew)
 
   XFreePixmap(dock->display, ew->pix);
   ew->win = None;
-  ew->mapped = 0;
   ew->action = NOACTION; /* au cas ou on fait un unmap en pleine sortie */
   ew->buff = NULL; ew->buff_sz = 0;
   if (ew->undo.buff) { free(ew->undo.buff); ew->undo.buff = NULL; }
@@ -1431,6 +1435,13 @@ editw_action(Dock *dock, EditW *ew)
     XFreePixmap(dock->display, tpix);
 
     if (ew->action_step == 0) {
+      Window root_return;
+      int x_return, y_return, width_return, height_return, border_width_return, depth_return;
+      set_window_sizepos_hints(dock->display, ew->win, ew->win_xpos, ew->win_ypos, l, l, l, 
+                               EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
+      XGetGeometry(dock->display, ew->win, &root_return, &x_return, &y_return, &width_return,
+                   &height_return, &border_width_return, &depth_return);
+      printf("kikoo XMapRaised palmi %d,%d <-> %dx%d+%d+%d\n", ew->win_xpos, ew->win_ypos, width_return, height_return, x_return, y_return);
       XMapRaised(dock->display, ew->win);
     }
     ew->action_step ++;
@@ -1616,20 +1627,20 @@ editw_move_cursor_rel(EditW *ew, int dec)
 void 
 editw_set_kbfocus(Dock *dock, EditW *ew, int get_it)
 {
-#if 0
   Window focwin;
   int revert_to, pp_focus;
-  XGetInputFocus(dock->display, &focwin, &revert_to);
-  pp_focus = (pp_ismapped(dock) && focwin == pp_get_win(dock));
-  if (get_it && ew->mapped/* && !pp_focus*/)
-    XSetInputFocus(dock->display, ew->win, RevertToPointerRoot, CurrentTime);
-  else /*if (!get_it) {
-    if (focwin == editw_get_win(ew)) {
-      if (pp_ismapped(dock)) 
-        XSetInputFocus(dock->display, pp_get_win(dock), RevertToPointerRoot, CurrentTime);
-        else*/
-        XSetInputFocus(dock->display, PointerRoot, RevertToNone, CurrentTime);
-#endif
+  if (Prefs.palmipede_override_redirect) {
+    XGetInputFocus(dock->display, &focwin, &revert_to);
+    pp_focus = (pp_ismapped(dock) && focwin == pp_get_win(dock));
+    if (get_it && ew->mapped/* && !pp_focus*/)
+      XSetInputFocus(dock->display, ew->win, RevertToPointerRoot, CurrentTime);
+    else /*if (!get_it) {
+           if (focwin == editw_get_win(ew)) {
+           if (pp_ismapped(dock)) 
+           XSetInputFocus(dock->display, pp_get_win(dock), RevertToPointerRoot, CurrentTime);
+           else*/
+      XSetInputFocus(dock->display, PointerRoot, RevertToNone, CurrentTime);
+  }
 }
 
 /* gestion de la selection pour les mouvements de curseur
@@ -2244,7 +2255,7 @@ editw_handle_button_release(Dock *dock, EditW *ew, XButtonEvent *event)
 	    char *buffer = NULL;
  	    buffer = malloc(strlen(ew->prefs->user_name) + 3);
  	    strcpy(buffer,ew->prefs->user_name);
- 	    strcat(buffer, "> ");
+ 	    strcat(buffer, " ");
 	    editw_insert_string(ew, buffer);
 	    free(buffer);
 	  }
@@ -2371,6 +2382,11 @@ editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event)
     {
       //      printf("selection request\n");
       editw_cb_handle_selectionrequest(dock, &(event->xselectionrequest));
+    } break;
+  case UnmapNotify:
+    {
+      if (editw_ismapped(ew)) editw_unmap(dock,ew);
+      printf("au revoir palmi\n");
     } break;
   }
 }

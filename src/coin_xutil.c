@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.9 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.10 2003/07/20 22:22:28 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.10  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.9  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -579,7 +582,7 @@ set_window_title(Display *display, Window win, char *window_title, char *icon_ti
   XFree(window_title_property.value);
 }
 
-
+/*
 void
 set_window_pos_hints(Display *display, Window win, int x, int y) {
   long user_hints;
@@ -593,17 +596,21 @@ set_window_pos_hints(Display *display, Window win, int x, int y) {
   XSetWMNormalHints(display, win, win_size_hints);
   XFree(win_size_hints);
 }
+*/
 
 /* -1 pour les quantité non utilisées */
 void
-set_window_size_hints(Display *display, Window win,
-                     int minw, int basew, int maxw,
-                     int minh, int baseh, int maxh) {
-  long user_hints;
+set_window_sizepos_hints(Display *display, Window win,
+                         int x, int y,
+                         int minw, int basew, int maxw,
+                         int minh, int baseh, int maxh) {
+  //  long user_hints;
   XSizeHints* win_size_hints;
   win_size_hints= XAllocSizeHints(); assert(win_size_hints);
-  if (!XGetWMNormalHints(display, win, win_size_hints, &user_hints))
-    win_size_hints->flags = 0;
+  /*  if (!XGetWMNormalHints(display, win, win_size_hints, &user_hints))
+      win_size_hints->flags = 0;*/
+  win_size_hints->x = x; 
+  win_size_hints->y = y;
   win_size_hints->min_width = minw;
   win_size_hints->min_height = minh;
   win_size_hints->base_width = basew;
@@ -611,6 +618,7 @@ set_window_size_hints(Display *display, Window win,
   win_size_hints->max_width = maxw;
   win_size_hints->max_height = maxh;
   win_size_hints->flags = 0;
+  if (x != -10000 && y != -10000) win_size_hints->flags |= USPosition;
   if (minw >= 0 && minh >= 0) win_size_hints->flags |= PMinSize;
   if (basew >= 0 && baseh >= 0) win_size_hints->flags |= PSize;
   if (maxw >= 0 && maxh >= 0) win_size_hints->flags |= PMaxSize;

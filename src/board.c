@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.20 2003/06/29 23:58:35 pouaite Exp $
+  rcsid=$Id: board.c,v 1.21 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.21  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.20  2003/06/29 23:58:35  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -1043,7 +1046,7 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   } else {
     /* special pour les sites qui rajoutent des trucs à la fin,
        on limite la longueur de la comparaison */
-    it->is_my_message = !strncmp(it->useragent, my_useragent, board->site->prefs-> palmi_ua_max_len);
+    it->is_my_message = !strncmp(my_useragent, it->useragent, board->site->prefs->palmi_ua_max_len-1);
 /*    if (it->is_my_message) {
       myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
     }*/

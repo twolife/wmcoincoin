@@ -16,6 +16,7 @@ void dock_leds_update(Leds *l); /* decremente les compteurs de clignotement */
 void dock_leds_create(Dock *dock, Leds *leds);
 void dock_checkout_newstitles(Dock *dock); /* mise à jour du titre défilant de l'applet selon l'arrivage de news */
 void dock_set_horloge_mode(Dock *dock);
+void dock_unset_horloge_mode(Dock *dock);
 char *dock_build_pixmap_porte(Dock *dock);
 
 #endif

@@ -48,6 +48,7 @@ void update_transparency_fields_state();
 void update_miniua_clist(MiniUARules *urs);
 void quick_message(char *msg);
 void site_panels_update(SitePrefs *sp);
+void global_panels_update(GeneralPrefs *p);
 void site_notebook_update_labels(GeneralPrefs *p);
 void site_notebook_update(GeneralPrefs *p);
 int save_prefs(gchar *filename, int do_backup);

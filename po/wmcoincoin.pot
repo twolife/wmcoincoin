@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2003-06-28 23:57+0200\n"
+"POT-Creation-Date: 2003-06-30 02:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,29 +74,29 @@ msgstr ""
 msgid "could not set socket to blocking\n"
 msgstr ""
 
-#: src/coin_xutil.c:364
+#: src/coin_xutil.c:367
 #, c-format
 msgid "shade_ximage unsupported (bitsperpix=%d) !! Strange...\n"
 msgstr ""
 
-#: src/coin_xutil.c:374
+#: src/coin_xutil.c:377
 #, c-format
 msgid ""
 "X11 error detected in a hazardous area:\n"
 "  %s\n"
 msgstr ""
 
-#: src/coin_xutil.c:375
+#: src/coin_xutil.c:378
 #, c-format
 msgid "  Protocol request: %d\n"
 msgstr ""
 
-#: src/coin_xutil.c:376
+#: src/coin_xutil.c:379
 #, c-format
 msgid "  Resource ID:      0x%lx\n"
 msgstr ""
 
-#: src/coin_xutil.c:377
+#: src/coin_xutil.c:380
 msgid " --> THE SHOW MUST GO ON!\n"
 msgstr ""
 
@@ -241,7 +241,7 @@ msgstr ""
 msgid "There are too many lines in '%s' (max=%d) !! \n"
 msgstr ""
 
-#: src/coin_util.c:124
+#: src/coin_util.c:127
 msgid "[empty]"
 msgstr ""
 
@@ -456,50 +456,50 @@ msgstr ""
 msgid "%s, read: %<mag %s>\n"
 msgstr ""
 
-#: src/troll_detector.c:476
+#: src/troll_detector.c:481
 msgid "troll_detector, initial message : %<YEL %s>\n"
 msgstr ""
 
-#: src/troll_detector.c:674
+#: src/troll_detector.c:679
 msgid ""
 "%<RED this one was too hard> ! (nb_words = %d)\n"
 " txt='%s'\n"
 msgstr ""
 
-#: src/troll_detector.c:678
+#: src/troll_detector.c:683
 msgid " -> unable to use the words left in a troll, this is the end\n"
 msgstr ""
 
-#: src/troll_detector.c:685
+#: src/troll_detector.c:690
 msgid ""
 "score = %<YEL %d> (sub_score=%<YEL %d>), the following words were used: "
 msgstr ""
 
-#: src/troll_detector.c:720
+#: src/troll_detector.c:725
 msgid "bonus for using capitals: %<YEL %d>\n"
 msgstr ""
 
-#: src/troll_detector.c:727
+#: src/troll_detector.c:732
 msgid "bonus for exclamation marks: %<YEL %d>\n"
 msgstr ""
 
-#: src/troll_detector.c:735
+#: src/troll_detector.c:740
 msgid "bonus for abusive use of weird characters: %<YEL %d>\n"
 msgstr ""
 
-#: src/troll_detector.c:740
+#: src/troll_detector.c:745
 msgid "bonus for abusive use of html tags: %<YEL %d>\n"
 msgstr ""
 
-#: src/troll_detector.c:745
+#: src/troll_detector.c:750
 msgid "bonus for abusive usage of BOLD: %<YEL %d>\n"
 msgstr ""
 
-#: src/troll_detector.c:750
+#: src/troll_detector.c:755
 msgid "%<bld attenuation for using a smiley>\n"
 msgstr ""
 
-#: src/troll_detector.c:753
+#: src/troll_detector.c:758
 msgid ""
 "%<WHT final score: >%<YEL %d>\n"
 "\n"
@@ -581,7 +581,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr ""
 
-#: src/comments.c:415 src/news.c:719 src/board.c:1590
+#: src/comments.c:415 src/news.c:719 src/board.c:1596
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
@@ -651,7 +651,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:278 src/news.c:534 src/board.c:1417
+#: src/news.c:278 src/news.c:534 src/board.c:1423
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -733,11 +733,11 @@ msgid ""
 "when parsing the news backend.\n"
 msgstr ""
 
-#: src/newswin.c:131
+#: src/newswin.c:134
 msgid "The <b>text of the news</b> hasn't been updated yet..."
 msgstr ""
 
-#: src/newswin.c:139
+#: src/newswin.c:142
 #, c-format
 msgid ""
 "<B><a href=\"http://%s:%d%s%s\"><font color=#000080>%s</font></a></"
@@ -745,54 +745,53 @@ msgid ""
 "s</b><p>"
 msgstr ""
 
-#: src/newswin.c:304
+#: src/newswin.c:307
 msgid "Updating the news...\n"
 msgstr ""
 
-#: src/newswin.c:374
+#: src/newswin.c:377
 msgid "No news...\n"
 msgstr ""
 
-#: src/newswin.c:378
+#: src/newswin.c:381
 #, c-format
 msgid "This news was destroyed (site=%d,id=%d)!?...\n"
 msgstr ""
 
-#: src/newswin.c:433
+#: src/newswin.c:430
 #, c-format
 msgid "newswin_createXWindow: creating a window of dimensions %dx%d\n"
 msgstr ""
 
-#: src/newswin.c:465
-#, c-format
-msgid "news from %s"
+#: src/newswin.c:464
+msgid "wmcc news"
 msgstr ""
 
-#: src/newswin.c:629
+#: src/newswin.c:605
 msgid "Updating the news..."
 msgstr ""
 
-#: src/newswin.c:648
+#: src/newswin.c:624
 #, c-format
 msgid "id=<b>%d</b>, date: %s, approved on %02d:%02d, %s"
 msgstr ""
 
-#: src/newswin.c:651
+#: src/newswin.c:627
 msgid "(already read)"
 msgstr ""
 
-#: src/newswin.c:652
+#: src/newswin.c:628
 msgid "<b><font color=#8f0000>(new!)</font></b>"
 msgstr ""
 
-#: src/newswin.c:654
+#: src/newswin.c:630
 #, c-format
 msgid ""
 "[%s] id=<b>%d</b>, contents of the news unavailable (too old ? download in "
 "progress ?)"
 msgstr ""
 
-#: src/newswin.c:825
+#: src/newswin.c:801
 msgid "newswin destroy !\n"
 msgstr ""
 
@@ -818,30 +817,30 @@ msgstr ""
 msgid "we forget '%<YEL %s>'\n"
 msgstr ""
 
-#: src/picohtml.c:572 src/pinnipede.c:1701
+#: src/picohtml.c:572 src/pinnipede.c:1710
 #, c-format
 msgid "XLoadQueryFont: failed loading font '%s'\n"
 msgstr ""
 
-#: src/picohtml.c:573 src/pinnipede.c:1702
+#: src/picohtml.c:573 src/pinnipede.c:1711
 msgid "Please choose another font.\n"
 msgstr ""
 
-#: src/picohtml.c:582 src/pinnipede.c:1711
+#: src/picohtml.c:582 src/pinnipede.c:1720
 #, c-format
 msgid "Slanted font '%s' not found -> we're looking for the italic font\n"
 msgstr ""
 
-#: src/picohtml.c:586 src/pinnipede.c:1715 src/pinnipede.c:1741
+#: src/picohtml.c:586 src/pinnipede.c:1724 src/pinnipede.c:1750
 msgid "%<RED WARNING>: error while looking for the italic font: '%s'\n"
 msgstr ""
 
 #: src/picohtml.c:587 src/picohtml.c:599 src/picohtml.c:608
-#: src/pinnipede.c:1716 src/pinnipede.c:1728 src/pinnipede.c:1742
+#: src/pinnipede.c:1725 src/pinnipede.c:1737 src/pinnipede.c:1751
 msgid "We'll use the base font.\n"
 msgstr ""
 
-#: src/picohtml.c:598 src/pinnipede.c:1727
+#: src/picohtml.c:598 src/pinnipede.c:1736
 msgid "%<RED WARNING>: error while looking for the bold font: '%s'\n"
 msgstr ""
 
@@ -865,57 +864,57 @@ msgstr ""
 msgid "Uuuurg, no helvetica/12 - iso8859 , I prefer to die.\n"
 msgstr ""
 
-#: src/board_util.c:254
+#: src/board_util.c:257
 msgid ""
 "sniff? sniff ? soit vous vous amusez a faire de threads de folie, soit ca "
 "sent le BEUGGUE!\n"
 msgstr ""
 
-#: src/board_util.c:658
+#: src/board_util.c:661
 #, c-format
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
-#: src/board_util.c:675
+#: src/board_util.c:678
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
 msgstr ""
 
-#: src/board_util.c:837
+#: src/board_util.c:852
 msgid "IPOT(tm) detected"
 msgstr ""
 
-#: src/board_util.c:839
+#: src/board_util.c:854
 #, c-format
 msgid "but where is '%s' ?"
 msgstr ""
 
-#: src/board_util.c:843
+#: src/board_util.c:858
 msgid "[IPOT(tm)]"
 msgstr ""
 
-#: src/board_util.c:845
+#: src/board_util.c:860
 msgid "Awww, we turn around and around and around and around..."
 msgstr ""
 
-#: src/board_util.c:853
+#: src/board_util.c:868
 #, c-format
 msgid "Hello from %.30s in the boitakon ! (because %s=%.20s)"
 msgstr ""
 
-#: src/board_util.c:857
+#: src/board_util.c:872
 #, c-format
 msgid "Hello from %.30s who was eaten by the boitakon"
 msgstr ""
 
-#: src/board_util.c:859
+#: src/board_util.c:874
 #, c-format
 msgid ""
 "Hello from %.30s in the boitakon, BUT YOU HAVE JUST FOUND A BUG IN THE "
 "BOITAKON :-("
 msgstr ""
 
-#: src/board_util.c:891
+#: src/board_util.c:906
 #, c-format
 msgid "I don't fucking know %s"
 msgstr ""
@@ -924,7 +923,7 @@ msgstr ""
 msgid "FILTER UNDEFINED"
 msgstr ""
 
-#: src/pinnipede_widgets.c:899 src/pinnipede.c:2781
+#: src/pinnipede_widgets.c:899 src/pinnipede.c:2759
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font>' from %s"
 msgstr ""
@@ -1065,7 +1064,7 @@ msgstr ""
 #: src/prefs_gestion.c:58
 msgid ""
 "\t\tcette option est necessaire pour utiliser wmcoincoin avec le kicker de "
-"KDE\n"
+"KDE (<3.0)\n"
 msgstr ""
 
 #: src/prefs_gestion.c:59
@@ -1241,91 +1240,91 @@ msgstr ""
 msgid "new site added: '%s'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:368
+#: src/wmcoincoin.c:371
 #, c-format
 msgid ""
 "this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>You will have "
 "to launch it by hand (copy to the clipboard with a right click, etc.)"
 msgstr ""
 
-#: src/wmcoincoin.c:379
+#: src/wmcoincoin.c:382
 #, c-format
 msgid ""
 "You didn't define the external browser in ~/.wmcoincoin/options (%s), no "
 "need to click on the <b>[url]</b>..."
 msgstr ""
 
-#: src/wmcoincoin.c:445
+#: src/wmcoincoin.c:448
 msgid "Spawning \"%<YEL %s>\"\n"
 msgstr ""
 
-#: src/wmcoincoin.c:471
+#: src/wmcoincoin.c:474
 msgid "Can't get window attributes.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:591
+#: src/wmcoincoin.c:594
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%"
 "s<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:593
+#: src/wmcoincoin.c:596
 msgid "Check your cookies !"
 msgstr ""
 
-#: src/wmcoincoin.c:596 src/wmcoincoin.c:607
+#: src/wmcoincoin.c:599 src/wmcoincoin.c:610
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:625
+#: src/wmcoincoin.c:628
 msgid "message posted: '%<YEL %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:626
+#: src/wmcoincoin.c:629
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:674
+#: src/wmcoincoin.c:677
 #, c-format
 msgid "[%s] Damned ! There has been an error<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:711
+#: src/wmcoincoin.c:714
 #, c-format
 msgid ""
 "Fork failed...(%s)..\n"
 " you sux\n"
 msgstr ""
 
-#: src/wmcoincoin.c:722
+#: src/wmcoincoin.c:725
 #, c-format
 msgid ""
 "Exec of wmccc failed...(%s)..\n"
 " you sux (wmccc not in path?)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:754
+#: src/wmcoincoin.c:757
 #, c-format
 msgid "Unable to open '%s' for %s the state of the beast [%s]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:754
+#: src/wmcoincoin.c:757
 msgid "reading"
 msgstr ""
 
-#: src/wmcoincoin.c:754
+#: src/wmcoincoin.c:757
 msgid "writing"
 msgstr ""
 
-#: src/wmcoincoin.c:773
+#: src/wmcoincoin.c:776
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr ""
 
-#: src/wmcoincoin.c:811
+#: src/wmcoincoin.c:814
 msgid ""
 "<p align=center><b>Titles of the news</b></p><font color=blue><tt>Left "
 "Click</tt></font><tab>: display the article currently scrolling<br><font "
@@ -1334,7 +1333,7 @@ msgid ""
 "news window<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:818
+#: src/wmcoincoin.c:821
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1350,7 +1349,7 @@ msgid ""
 "green blinking shows a change in the value of your XP"
 msgstr ""
 
-#: src/wmcoincoin.c:828
+#: src/wmcoincoin.c:831
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1358,7 +1357,7 @@ msgid ""
 "error message<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:832
+#: src/wmcoincoin.c:835
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1370,14 +1369,14 @@ msgid ""
 "resolution"
 msgstr ""
 
-#: src/wmcoincoin.c:839
+#: src/wmcoincoin.c:842
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
 "color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"
 msgstr ""
 
-#: src/wmcoincoin.c:843
+#: src/wmcoincoin.c:846
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1386,7 +1385,7 @@ msgid ""
 "tt></font>: cancel all new messages"
 msgstr ""
 
-#: src/wmcoincoin.c:848
+#: src/wmcoincoin.c:851
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1397,7 +1396,7 @@ msgid ""
 "read the <tt>~/.wmcoincoin/options</tt> file"
 msgstr ""
 
-#: src/wmcoincoin.c:853
+#: src/wmcoincoin.c:856
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1405,159 +1404,159 @@ msgid ""
 "tt></font>: show/hide the <b>pinnipede teletype</b>"
 msgstr ""
 
-#: src/wmcoincoin.c:859
+#: src/wmcoincoin.c:862
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr ""
 
-#: src/wmcoincoin.c:993
+#: src/wmcoincoin.c:996
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1006
+#: src/wmcoincoin.c:1009
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1426
+#: src/wmcoincoin.c:1430
 msgid "Creating the windows icon. Just tell me if it makes your WM crash.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1574
+#: src/wmcoincoin.c:1578
 msgid "Couldn't create window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1586
+#: src/wmcoincoin.c:1590
 msgid "Couldn't create icon window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1599
+#: src/wmcoincoin.c:1603
 #, c-format
 msgid "Bad dimensions for the pixmap skin (expected 64x320, found %dx%d)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1602
+#: src/wmcoincoin.c:1606
 msgid "Unable to load the pixmap '%<grn %s>'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1679
+#: src/wmcoincoin.c:1683
 msgid "Couldn't create text property\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1693
+#: src/wmcoincoin.c:1697
 msgid "Couldn't create graphics context\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1783 src/wmcoincoin.c:1788 src/wmcoincoin.c:1793
-#: src/wmcoincoin.c:1799 src/wmcoincoin.c:1806 src/wmcoincoin.c:1813
+#: src/wmcoincoin.c:1787 src/wmcoincoin.c:1792 src/wmcoincoin.c:1797
+#: src/wmcoincoin.c:1803 src/wmcoincoin.c:1810 src/wmcoincoin.c:1817
 #, c-format
 msgid ""
 "sigaction: erreur %d (%s)\n"
 " essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1877
+#: src/wmcoincoin.c:1881
 msgid "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1888
+#: src/wmcoincoin.c:1892
 #, c-format
 msgid "locale used: %s\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1914
+#: src/wmcoincoin.c:1918
 msgid "%<YEL tags not encoded  >"
 msgstr ""
 
-#: src/wmcoincoin.c:1915
+#: src/wmcoincoin.c:1919
 msgid "%<YEL tags encoded      >"
 msgstr ""
 
-#: src/wmcoincoin.c:1916
+#: src/wmcoincoin.c:1920
 msgid "%<YEL without underpants>"
 msgstr ""
 
-#: src/wmcoincoin.c:1917
+#: src/wmcoincoin.c:1921
 msgid "%<YEL prrrrrrt          >"
-msgstr ""
-
-#: src/wmcoincoin.c:2014
-#, c-format
-msgid "Unable to load font %s , trying iso8859-1\n"
 msgstr ""
 
 #: src/wmcoincoin.c:2018
 #, c-format
+msgid "Unable to load font %s , trying iso8859-1\n"
+msgstr ""
+
+#: src/wmcoincoin.c:2022
+#, c-format
 msgid "Unable to load font %s, aborting\n"
 msgstr ""
 
-#: src/pinnipede.c:1683
+#: src/pinnipede.c:1692
 msgid ""
 "%<yel impossible to use the pseudo-transparency> (probable solution: "
 "relaunch wmsetbg or its equivalent)\n"
 msgstr ""
 
-#: src/pinnipede.c:1737
+#: src/pinnipede.c:1746
 #, c-format
 msgid "Bold slanted font '%s' not found -> we're looking for the italic font\n"
 msgstr ""
 
-#: src/pinnipede.c:1921
+#: src/pinnipede.c:1933
 #, c-format
 msgid ""
 "Failed to load the '%s' fonts with size '%d'\n"
 "Let's try with helvetica/12.\n"
 msgstr ""
 
-#: src/pinnipede.c:1923
+#: src/pinnipede.c:1935
 msgid "Uuuurg !! No helvetica, I shoot my nose.\n"
 msgstr ""
 
-#: src/pinnipede.c:2288
+#: src/pinnipede.c:2262
 msgid ""
 "\n"
 "[you posted this message]"
 msgstr ""
 
-#: src/pinnipede.c:2291
+#: src/pinnipede.c:2265
 msgid ""
 "\n"
 "[this message answers to one of yours]"
 msgstr ""
 
-#: src/pinnipede.c:2295
+#: src/pinnipede.c:2269
 msgid ""
 "\n"
 "message 'boxed' because: "
 msgstr ""
 
-#: src/pinnipede.c:2304
+#: src/pinnipede.c:2278
 #, c-format
 msgid ""
 "\n"
 "message plopified (level %d) because: "
 msgstr ""
 
-#: src/pinnipede.c:2311
+#: src/pinnipede.c:2285
 msgid ""
 "\n"
 "message plopified (level 3) because the boitakon is hungry"
 msgstr ""
 
-#: src/pinnipede.c:2317 src/pinnipede.c:2319
+#: src/pinnipede.c:2291 src/pinnipede.c:2293
 msgid "answers"
 msgstr ""
 
-#: src/pinnipede.c:2317 src/pinnipede.c:2319
+#: src/pinnipede.c:2291 src/pinnipede.c:2293
 msgid "answer"
 msgstr ""
 
-#: src/pinnipede.c:2319
+#: src/pinnipede.c:2293
 #, c-format
 msgid "%d %s (and %d plop%s from the boitakon)"
 msgstr ""
 
-#: src/pinnipede.c:2397
+#: src/pinnipede.c:2372
 msgid ""
 "<p align=center> Welcome to the <b><font color=#008000>Pinnipede Teletype</"
 "font></b></p>This window was specially designed by the greatest experts to "
@@ -1596,219 +1595,223 @@ msgid ""
 "mouling."
 msgstr ""
 
-#: src/pinnipede.c:2539 src/pinnipede.c:2558 src/pinnipede.c:2575
-#: src/pinnipede.c:2592 src/pinnipede.c:2608
+#: src/pinnipede.c:2514 src/pinnipede.c:2533 src/pinnipede.c:2550
+#: src/pinnipede.c:2567 src/pinnipede.c:2583
 #, c-format
 msgid "Activating the filter [%s]\n"
 msgstr ""
 
-#: src/pinnipede.c:2692
+#: src/pinnipede.c:2667
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>thread</font> '<font "
 "color=#800000>id=%d</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2705
+#: src/pinnipede.c:2680
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>useragent</font> '<font "
 "color=#800000>%s</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2715
+#: src/pinnipede.c:2690
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>login</font> '<font "
 "color=#800000>%s</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2721
+#: src/pinnipede.c:2696
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>message</font> #id=<font "
 "color=#800000>%d</font>"
 msgstr ""
 
-#: src/pinnipede.c:2729
+#: src/pinnipede.c:2704
 #, c-format
 msgid ""
 "The selected element is the <font color=blue>word</font> '<font "
 "color=#800000>%s</font>'"
 msgstr ""
 
-#: src/pinnipede.c:2739
+#: src/pinnipede.c:2714
 msgid "<b>plop</b>ify it"
 msgstr ""
 
-#: src/pinnipede.c:2740
+#: src/pinnipede.c:2715
 msgid "<b>superplop</b>ify it"
 msgstr ""
 
-#: src/pinnipede.c:2741
+#: src/pinnipede.c:2716
 msgid "put in <b>boitakon</b>"
 msgstr ""
 
-#: src/pinnipede.c:2742
+#: src/pinnipede.c:2717
 msgid "put in <i>hungry</i> <b>boitakon</b>"
 msgstr ""
 
-#: src/pinnipede.c:2746
+#: src/pinnipede.c:2721
 msgid "mark it (categ 0)"
 msgstr ""
 
-#: src/pinnipede.c:2747
+#: src/pinnipede.c:2722
 msgid "mark it (categ 1)"
 msgstr ""
 
-#: src/pinnipede.c:2748
+#: src/pinnipede.c:2723
 msgid "mark it (categ 2)"
 msgstr ""
 
-#: src/pinnipede.c:2749
+#: src/pinnipede.c:2724
 msgid "mark it (categ 3)"
 msgstr ""
 
-#: src/pinnipede.c:2750
+#: src/pinnipede.c:2725
 msgid "mark it (categ 4)"
 msgstr ""
 
-#: src/pinnipede.c:2751
+#: src/pinnipede.c:2726
 msgid "filter it"
 msgstr ""
 
-#: src/pinnipede.c:2755
+#: src/pinnipede.c:2730
 msgid "gogole search"
 msgstr ""
 
-#: src/pinnipede.c:2760
+#: src/pinnipede.c:2735
 msgid "copy link in X clipboard"
 msgstr ""
 
-#: src/pinnipede.c:2764
+#: src/pinnipede.c:2739
 msgid "copy useragent in X clipboard"
 msgstr ""
 
-#: src/pinnipede.c:2787
+#: src/pinnipede.c:2742
+msgid "Try to download the correspounding picture"
+msgstr ""
+
+#: src/pinnipede.c:2765
 #, c-format
 msgid "remove %s:'<font color=blue>%.15s</font> from hilight categ %d"
 msgstr ""
 
-#: src/pinnipede.c:2793
+#: src/pinnipede.c:2771
 msgid "hide the button bar / tabs bar"
 msgstr ""
 
-#: src/pinnipede.c:2794
+#: src/pinnipede.c:2772
 msgid "show the button bar / tabs bar"
 msgstr ""
 
-#: src/pinnipede.c:2798
+#: src/pinnipede.c:2776
 msgid "<b>enable</b> the bigornophone"
 msgstr ""
 
-#: src/pinnipede.c:2800
+#: src/pinnipede.c:2778
 msgid "<b>disable</b> the bigornophone"
 msgstr ""
 
-#: src/pinnipede.c:2805
+#: src/pinnipede.c:2783
 msgid "<b>enable</b> the secondary bigornophone"
 msgstr ""
 
-#: src/pinnipede.c:2807
+#: src/pinnipede.c:2785
 msgid "<b>disable</b> the secondary bigornophone"
 msgstr ""
 
-#: src/palmipede.c:298
+#: src/palmipede.c:301
 msgid ""
 "%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%"
 "d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:515
+#: src/palmipede.c:518
 msgid ""
 "%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,"
 "sel_anchor=%d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:614
+#: src/palmipede.c:617
 msgid "wmcoincoin: Failed to set XA_PRIMARY ownership."
 msgstr ""
 
-#: src/palmipede.c:1245
+#: src/palmipede.c:1248
 msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
 msgstr ""
 
-#: src/palmipede.c:1335
+#: src/palmipede.c:1317
 msgid "Warning : errot in XCreateIC() !\n"
 msgstr ""
 
-#: src/palmipede.c:1567
+#: src/palmipede.c:1549
 #, c-format
 msgid "Unable to load font %s, trying iso8859-1 encoding \n"
 msgstr ""
 
-#: src/palmipede.c:1571
+#: src/palmipede.c:1553
 msgid "Failed\n"
 msgstr ""
 
-#: src/palmipede.c:1969
+#: src/palmipede.c:1951
 msgid "====> <b>Moment "
 msgstr ""
 
-#: src/palmipede.c:2481
+#: src/palmipede.c:2463
 #, c-format
 msgid ""
 "<p align=center><b>wmCoinCoin Agent</b></p>Hmmm, it seems that you don't "
 "know what to say, so, if you don't mind,I suggest <font color=blue>%s</font>"
 msgstr ""
 
-#: src/palmipede.c:2491
+#: src/palmipede.c:2473
 msgid "Put here the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2494
+#: src/palmipede.c:2476
 msgid "Fold back the palmipede<p>shortcut: <b>escape</b>"
 msgstr ""
 
-#: src/palmipede.c:2495
+#: src/palmipede.c:2477
 msgid "Edit the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2495
+#: src/palmipede.c:2477
 msgid "Edit the message<p>shortcut: <b>Tab</b>"
 msgstr ""
 
-#: src/palmipede.c:2496
+#: src/palmipede.c:2478
 msgid "Insert italic<p>shortcut: <b>Alt-I</b>"
 msgstr ""
 
-#: src/palmipede.c:2497
+#: src/palmipede.c:2479
 msgid "Insert bold<p>shortcut: <b>Alt-B</b>"
 msgstr ""
 
-#: src/palmipede.c:2498
+#: src/palmipede.c:2480
 msgid "Insert teletype tag<p>shortcut: <b>Alt-T</b>"
 msgstr ""
 
-#: src/palmipede.c:2499
+#: src/palmipede.c:2481
 msgid "Overstrike text<p>shortcut: <b>Alt-S</b>"
 msgstr ""
 
-#: src/palmipede.c:2500
+#: src/palmipede.c:2482
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr ""
 
-#: src/palmipede.c:2502
+#: src/palmipede.c:2484
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr ""
 
-#: src/palmipede.c:2503
+#: src/palmipede.c:2485
 msgid "Clear"
 msgstr ""
 
-#: src/palmipede.c:2504
+#: src/palmipede.c:2486
 msgid "Restore the default user-agent"
 msgstr ""
 
@@ -1843,30 +1846,30 @@ msgstr ""
 msgid "No new messages."
 msgstr ""
 
-#: src/board.c:560
+#: src/board.c:563
 #, c-format
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:941
+#: src/board.c:944
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr ""
 
-#: src/board.c:1061
+#: src/board.c:1067
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1362
+#: src/board.c:1368
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1363
+#: src/board.c:1369
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1535
+#: src/board.c:1541
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -1874,7 +1877,7 @@ msgid ""
 "this bugfix for coconuts.\n"
 msgstr ""
 
-#: src/board.c:1582
+#: src/board.c:1588
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"

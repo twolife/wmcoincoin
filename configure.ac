@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.32  2003/07/20 22:22:27  pouaite
+dnl   ce commit est dedie a Pierre Tramo
+dnl
 dnl   Revision 1.31  2003/06/29 23:58:35  pouaite
 dnl   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 dnl
@@ -301,10 +304,18 @@ dnl ============================
 AC_FUNC_VPRINTF
 AC_CHECK_HEADERS(string.h stdarg.h unistd.h sys/time.h utime.h sys/utime.h)
 AC_CHECK_HEADERS(sys/select.h sys/utsname.h pwd.h signal.h windows.h)
+AC_CHECK_HEADERS(inttypes.h unistd.h)
 AC_HEADER_TIME
 AC_CHECK_FUNCS(strdup strstr strcasecmp strncasecmp)
 AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
 AC_CHECK_FUNCS(uname)
+
+
+AC_DEFINE_UNQUOTED(uint8_t, unsigned char,[unsigned 8 bits integers])
+AC_DEFINE_UNQUOTED(uint16_t, unsigned short,[unsigned 16 bits integers])
+AC_DEFINE_UNQUOTED(uint32_t, unsigned int, [unsigned 32 bits integers])
+AC_DEFINE_UNQUOTED(int32_t, int, [signed 32 bits integers])
+
 dnl les fonctions bidon pour cygouin
 dnl AC_CHECK_LIB(ws2_32, getaddrinfo, LIBS="-lws2_32 $LIBS")
 AC_CHECK_FUNCS(getaddrinfo freeaddrinfo gai_strerror getnameinfo inet_aton)
@@ -397,7 +408,7 @@ case "$host" in
          ;;
 esac
 
-AC_CONFIG_FILES([Makefile doc/Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile scripts/Makefile platypus/Makefile])
 AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
 AC_OUTPUT
 

@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.9 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.10 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.10  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.9  2003/06/25 20:18:21  pouaite
   support xinerama qui marche
 
@@ -351,7 +354,7 @@ balloon_check_event(Dock *dock, XEvent *event)
 }
 
 void
-balloon_disable_key(Dock *dock, unsigned keycode) {
+balloon_disable_key(Dock *dock UNUSED, unsigned keycode) {
   check_key=keycode;
 }
 

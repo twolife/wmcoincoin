@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.23 2003/03/11 23:40:30 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.24 2003/07/20 22:22:27 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.24  2003/07/20 22:22:27  pouaite
+##   ce commit est dedie a Pierre Tramo
+##
 ##   Revision 1.23  2003/03/11 23:40:30  pouaite
 ##   rajout fake-getaddrinfo .. si ça compile alors cygwin remarche (pas testé)
 ##
@@ -74,7 +77,7 @@ MAINT_CHARSET = latin1
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
 
-SUBDIRS = intl  m4  po src doc
+SUBDIRS = intl  m4  po src doc scripts platypus
 EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \

@@ -26,8 +26,18 @@
 #define PWATTR_TROLLSCORE 2048
 #define PWATTR_LOGIN 4096
 #define PWATTR_TT  8192
-#define PWATTR_VISITED  16384
-#define PWATTR_TOTOZ 32768 /* maaairde le short est plein à ras bord */
+#define PWATTR_VISITED  (1<<14)
+#define PWATTR_TOTOZ_UNKNOWN (1<<15) /* maaairde le short est plein à ras bord */
+#define PWATTR_TOTOZ_DOWNLOADING (1<<16)
+#define PWATTR_TOTOZ_NOTFOUND (1<<17)
+#define PWATTR_TOTOZ_FOUND (1<<18)
+#define PWATTR_TOTOZ (PWATTR_TOTOZ_UNKNOWN|PWATTR_TOTOZ_DOWNLOADING|PWATTR_TOTOZ_NOTFOUND|PWATTR_TOTOZ_FOUND)
+
+
+#define PP_TOTOZ_STATUS_UNKNOWN 0
+#define PP_TOTOZ_STATUS_DOWNLOADING 1
+#define PP_TOTOZ_STATUS_NOTFOUND 2
+#define PP_TOTOZ_STATUS_FOUND 3
 
 typedef struct _PostVisual PostVisual;
 typedef struct _PostWord PostWord;
@@ -36,7 +46,7 @@ typedef struct _PostWord PostWord;
 struct _PostWord {
   unsigned char *w; /* non mallocé, stocke dans la même zone que cette structure */
   unsigned char *attr_s;
-  unsigned short attr;
+  unsigned int attr;
   short xpos, xwidth, ligne;
   struct _PostWord *next;
   struct _PostVisual *parent;
@@ -249,6 +259,8 @@ void pp_totoz_build(Dock *dock);
 void pp_totoz_rebuild(Dock *dock);
 void pp_totoz_destroy(Dock *dock);
 void pp_totoz_unmap(Dock *dock);
+int pp_totoz_img_status(Pinnipede *pp, char *imgname);
+int pp_totoz_update_status_all(Dock *dock);
 void pp_check_totoz(Dock *dock, PostWord *pw, int x_root, int y_root);
 int  pp_totoz_dispatch_event(Dock *dock, XEvent *event);
 void pp_totoz_download(Dock *dock, unsigned char *imgname);

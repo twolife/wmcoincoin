@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.55 2003/06/21 14:48:44 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.56 2003/07/20 22:22:27 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.56  2003/07/20 22:22:27  pouaite
+#%  ce commit est dedie a Pierre Tramo
+#%
 #%  Revision 1.55  2003/06/21 14:48:44  pouaite
 #%  g cho
 #%
@@ -219,6 +222,8 @@
 ### sur le proxy de la boite quand on a 15 tribunes dans le coincoin)
 #.board.auto_refresh: on
 
+#board.auto_dl_pictures: on
+
 ### nombre maximum de messages qui sont conservés en mémoire (et affichables dans le pinnipede
 ### teletype). Ne lui donnez pas une valeur extravagante (genre 10000), wmcoincoin n'a pas été conçu pour ça !
 #[.]tribune.max_messages: 400
@@ -269,6 +274,10 @@
 ### (en ligne de commande, ce sont les options '-B' et -w')
 #dock.draw_border: False
 #dock.iconwin: True
+
+### les versions < 2.4.6 avaient cette option à true -- dans ce cas, le palmipede
+### gere le focus lui-meme (pas toujours bien)
+#palmipede.override_wmanager: False
 
 ### ces petits ballons d'aide peuvent être casse-couilles
 #dock.use_balloons: True

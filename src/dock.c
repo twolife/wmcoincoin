@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.35 2003/06/25 20:18:21 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.36 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.36  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.35  2003/06/25 20:18:21  pouaite
   support xinerama qui marche
 
@@ -1183,7 +1186,7 @@ dock_set_horloge_mode(Dock *dock) {
   dock->horloge_mode = 1;
 }
 
-static void
+void
 dock_unset_horloge_mode(Dock *dock) {
   if (Prefs.draw_border == 0) {
     XShapeCombineMask(dock->display, DOCK_WIN(dock), ShapeBounding, 

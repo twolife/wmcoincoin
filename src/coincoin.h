@@ -693,6 +693,7 @@ int pp_tabs_is_site_visible(Dock *dock, Site *s);
 void pp_tabs_set_flag_answer_to_me(Dock *dock, Site *s);
 void pp_set_download_info(char *site, char *what);
 void pp_unset_kbnav(Dock *dock);
+void pp_totoz_check_updates(Dock *dock);
 
 /* prefs_gestion.c */
 char *check_install_data_file(char *data_file_name, char *dot_wmcc_file_name);

@@ -1,5 +1,15 @@
+2003-07-19  pouaite  <c0in@altern.org>
+
+	* src/wmcoincoin.c,src/palmipede.c,src/coin_xutil.c: bidouilles
+	sur le palmi (et l'applet quand wmcc utilise les options -w -B):
+	auparavant ces fenetres étaient en "override redirect" cad non
+	gerées par le windowmanager, maintenant ce sont des fenetres
+	"normales" mais sans décorations, ce qui permet de laisser le
+	wmanager prendre soin de la gestion du focus dans le palmi.
+
 --------------------------v2.4.5-b-----------------------------------------
 2003-06-25  pouaite  <c0in@altern.org>
+
 	* support correct du xinerama
 	* src/palmipede.c: un petit timer pour les gens qui s'endorment
 	sur la touche "return"

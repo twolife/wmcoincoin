@@ -510,7 +510,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     G_INT_OPT_COPY(http_timeout);
     G_STR_OPT_COPY(browser_cmd);
     G_STR_OPT_COPY(browser2_cmd);
+
     G_INT_OPT_COPY(enable_troll_detector);
+    G_INT_OPT_COPY(board_auto_dl_pictures);
 
     /* spell */
     if (G_INT_OPT_COPY_IF_CHANGED(ew_do_spell) +
@@ -526,6 +528,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     /* à faire: plop_words */
 
     /* maintenant les options generales qui demande un peu de boulot */
+
+    if (G_INT_OPT_COPY_IF_CHANGED(palmipede_override_redirect))
+      close_palmi = 1;
 
     if (G_BIC_OPT_COPY_IF_CHANGED(sc_bg_color) +
         G_BIC_OPT_COPY_IF_CHANGED(sc_bg_light_color) +

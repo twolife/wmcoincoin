@@ -39,7 +39,7 @@ case $1 in
 	SIG="-USR1"
 	;;
     boss_out)
-	SIG="-USR2"
+	SIG="-USR1"
 	;;
 esac
 

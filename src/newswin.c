@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.18 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.19 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.19  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.18  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -462,16 +465,16 @@ newswin_createXWindow(Dock *dock)
   //snprintf(s, 512, _("news from %s"), nw->site_name);
   
   set_window_title(dock->display, nw->window, _("wmcc news"), _("wmcc news"));
-  set_window_size_hints(dock->display, nw->window, 
+  set_window_sizepos_hints(dock->display, nw->window,  xpos, ypos, 
                         300, nw->win_width, 1280,
                         100, nw->win_height, 1024);
   /* au premier lancement, la pos n'est pas connue (sauf si specifee
      dans les options ) */
-  if (nw->win_xpos == -10000 && nw->win_ypos == -10000) {
+  /*  if (nw->win_xpos == -10000 && nw->win_ypos == -10000) {
   } else {
     set_window_pos_hints(dock->display, nw->window, xpos, ypos);
   }
-
+  */
   set_window_class_hint(dock->display, nw->window, "wmcoincoin", "news");
 
   wm_hint = XAllocWMHints(); assert(wm_hint);

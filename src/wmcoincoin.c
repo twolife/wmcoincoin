@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.84 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.85 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.85  2003/07/20 22:22:28  pouaite
+  ce commit est dedie a Pierre Tramo
+
   Revision 1.84  2003/06/29 23:58:39  pouaite
   suppression de l'overrideredirect du palmi et ajout de pinnipede_totoz.c et wmcoincoin-totoz-get etc
 
@@ -951,7 +954,7 @@ void
 timer_signal(int signum) {
 
   if (signum == SIGUSR1) {
-    flag_discretion_request = 1;
+    flag_discretion_request = (_dock->horloge_mode ? -1 : 1);
     //printf("sigusr1\n"); 
 #   ifdef SIGNAUX_A_LANCIENNE // mais maintenant on utilise sigaction
 #   ifdef _XOPEN_SOURCE
@@ -1157,6 +1160,10 @@ void X_loop()
   if (timer_cnt % 5 == 0) {
     pp_animate(dock);   /* omg ! il bouge ! */
   }
+  if (timer_cnt % 25 == 0) {
+    pp_totoz_check_updates(dock); /* met a jour l'affichage et lance les 
+                                     telechargements si Prefs.board_auto_dl_pictures */
+  }
 
   if (timer_cnt % 1 == 0) {
     /*
@@ -1330,6 +1337,7 @@ void X_loop()
       if (editw_ismapped(dock->editw)) XRaiseWindow(dock->display, editw_get_win(dock->editw));
       if (pp_ismapped(dock)) XRaiseWindow(dock->display, pp_get_win(dock));
     }
+    dock_unset_horloge_mode(dock);
     flag_discretion_request = 0;
     dock->discretion_saved_state.last_sig_is_usr1 = 0;
   }
@@ -1348,12 +1356,16 @@ void X_loop()
   }
 
 
-  /* verif de la 'visibilité' de l'applet, pour masquage du palmipede si necessaire. OUI, c'est gruik
-     et nul de faire comme ça, MAIS ce salaud de wmaker fout les applets en substructurenotify ce qui
-     veut dire que wmcc ne reçoit pas les unmapnotify lorsque l'applet est cachée (par un changement
-     de bureau par ex. ...)
+  /* verif de la 'visibilité' de l'applet, pour masquage du palmipede si
+     necessaire. OUI, c'est gruik et nul de faire comme ça, MAIS ce salaud de
+     wmaker fout les applets en substructurenotify ce qui veut dire que wmcc ne
+     reçoit pas les unmapnotify lorsque l'applet est cachée (par un changement
+     de bureau par ex. ...)  
+
+     Si le palmi n'est pas en mode override_redirect, on laisse le wm choisir
+     et on intercepte le unmapnotify dans palmipede.c
   */
-  if (editw_ismapped(dock->editw)) {
+  if (Prefs.palmipede_override_redirect && editw_ismapped(dock->editw)) {
     XWindowAttributes wattr;
     XGetWindowAttributes(dock->display, DOCK_WIN(dock), &wattr);
     if (wattr.map_state == IsUnmapped || wattr.map_state == IsUnviewable) {
@@ -1506,7 +1518,12 @@ void initx(Dock *dock, int argc, char **argv) {
   XSetLocaleModifiers("@im=none"); /* si quelqu'un sait ce que ça veut dire, je suis interessé */
   dock->input_method = XOpenIM(dock->display, NULL, NULL, NULL);
   if (!dock->input_method) {
-    printf("Erreur ! echec de XOpenIM(), ca pue !\n");
+    printf("echec de XOpenIM() [locale=%s], ca pue ! -- switching to C locale\n",setlocale (LC_ALL, ""));
+    setlocale (LC_ALL, "C");
+    dock->input_method = XOpenIM(dock->display, NULL, NULL, NULL);
+    if (!dock->input_method) {
+      printf("Erreur ! echec de XOpenIM() [locale=%s], ca pue encore plus !! -- \n",setlocale (LC_ALL, ""));
+    }
   }
 
 
@@ -1651,10 +1668,12 @@ void initx(Dock *dock, int argc, char **argv) {
     
     XFree(xwmh); xwmh = NULL;
   } else {
-    XSetWindowAttributes wattr;
+    /*    XSetWindowAttributes wattr;
     wattr.override_redirect = True;
   
     XChangeWindowAttributes(dock->display, dock->win, CWOverrideRedirect, &wattr);
+    */
+    set_borderless_window_hints(dock->display, dock->win);
   }
 
 

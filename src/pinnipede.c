@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.95 2003/06/29 23:58:39 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.96 2003/07/20 22:22:28 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -219,7 +219,7 @@ pv_destroy(PostVisual *pv)
 }
 
 static PostWord*
-pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr_s, PostVisual *parent)
+pw_create(const unsigned char *w, unsigned attr, const unsigned char *attr_s, PostVisual *parent)
 {
   int alen; 
   int wlen;
@@ -479,7 +479,7 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
   unsigned char attr_s[PVTP_SZ];
 
   const unsigned char *p, *np;
-  unsigned short attr;
+  unsigned attr;
   int add_word;
   int has_initial_space; // indique si le prochain mot est collé au precedent
 
@@ -690,8 +690,15 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
       }
 
       if (s[0] == '[' && s[1] == ':' && strlen(s) > 5 && s[strlen(s)-1] == ']') { /* totoz ? */
-        attr |= PWATTR_TOTOZ;
-        printf("TOTOZ: %s\n",s);
+        const char *st = "bug...";
+        int z = pp_totoz_img_status(pp,s);
+        switch (z) {
+        case PP_TOTOZ_STATUS_UNKNOWN: attr |= PWATTR_TOTOZ_UNKNOWN; st = "unknown"; break;
+        case PP_TOTOZ_STATUS_DOWNLOADING: attr |= PWATTR_TOTOZ_DOWNLOADING; st = "download in progress"; break;
+        case PP_TOTOZ_STATUS_NOTFOUND: attr |= PWATTR_TOTOZ_NOTFOUND; st = "not found"; break;
+        case PP_TOTOZ_STATUS_FOUND: attr |= PWATTR_TOTOZ_FOUND; st = "found"; break;
+        }
+        BLAHBLAH(2,myprintf("TOTOZ: %<GRN %s> [status = %<GRN %s>]\n",s,st));
       }
 
       pw->next = pw_create(s, attr, (attr & PWATTR_LNK) ? attr_s : NULL, pv);
@@ -1219,8 +1226,15 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	pixel = pp->txt_pixel[site_num];
       }
 
-      if (pw->attr & (PWATTR_TOTOZ)) {
-        pixel = pp->trollscore_pixel[site_num];
+      if (pw->attr & (PWATTR_TOTOZ_UNKNOWN)) {
+        pixel = IRGB2PIXEL(0xa00000);
+      } else if (pw->attr & (PWATTR_TOTOZ_DOWNLOADING)) {
+        pixel = IRGB2PIXEL(0x00a000);
+      } else if (pw->attr & (PWATTR_TOTOZ_NOTFOUND)) {
+        pixel = pp->plopify_pixel;
+      } else if (pw->attr & (PWATTR_TOTOZ_FOUND)) {
+        pixel = IRGB2PIXEL(0x0000a0);
+        //pixel = pp->trollscore_pixel[site_num];
       }
 
       if (pw->parent->is_plopified) {
@@ -1949,7 +1963,6 @@ pp_rebuild(Dock *dock)
 		      get_last_id_filtered(dock->sites->boards, &pp->filter) : 
 		      id_type_invalid_id(), 0, 0, 1);
     pp_refresh(dock, pp->win, NULL);
-    printf("refresh!\n");
   }
   pp_totoz_rebuild(dock);
 }
@@ -2042,15 +2055,15 @@ pp_show(Dock *dock)
     XWMHints *wm_hint;
       
     set_window_title(dock->display, pp->win, "pinnipede teletype", "pinnipede");
-    set_window_size_hints(dock->display, pp->win, 
+    set_window_sizepos_hints(dock->display, pp->win, xpos, ypos, 
                           200, 300, -1,
                           80 , 455, -1);
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
        dans les options ) */
-    if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
+    /*    if (pp->win_decor_xpos == -10000 && pp->win_decor_ypos == -10000) {
     } else {
       set_window_pos_hints(dock->display, pp->win, xpos, ypos);
-    }
+      }*/
     set_window_class_hint(dock->display, pp->win, "wmcoincoin", "pinnipede_teletype");
       
     wm_hint = XAllocWMHints(); assert(wm_hint);
@@ -3471,6 +3484,23 @@ kbnav_move(Dock *dock, int dir) {
   }
 }
 
+
+static void switch_search_mode(Dock *dock) {
+  Pinnipede *pp = dock->pinnipede;
+  static char *old_s = 0;
+  if (pp->filter.filter_mode) { 
+    if (pp->filter.anything && strlen(pp->filter.anything))
+      pp->filter.filter_mode = 0; 
+    else pp_set_anything_filter(dock, old_s);
+  }
+  else { 
+    if (pp->filter.anything) { if (old_s) free(old_s); old_s = strdup(pp->filter.anything); }
+    pp_set_anything_filter(dock, ""); 
+  }
+  pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
+  pp_refresh(dock, pp->win, NULL);
+}
+
 /* /!\ spaghettis */
 int
 pp_handle_keypress(Dock *dock, XEvent *event)
@@ -3509,23 +3539,12 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     /* ctrl-s : mode recherche -- emule le isearch-mode de emacs */
     case 'S':
     case 's': if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) { 
-      static char *old_s = 0;
-      if (pp->filter.filter_mode) { 
-        if (pp->filter.anything && strlen(pp->filter.anything))
-          pp->filter.filter_mode = 0; 
-        else pp_set_anything_filter(dock, old_s);
-      }
-      else { 
-        if (pp->filter.anything) { if (old_s) free(old_s); old_s = strdup(pp->filter.anything); }
-        pp_set_anything_filter(dock, ""); 
-      }
-      pp_update_content(dock, id_type_invalid_id(), 0, 0, 1);
-      pp_refresh(dock, pp->win, NULL);
+      switch_search_mode(dock);
       ret++;
     } break;
     case 'Z':
     case 'z': {
-      flag_discretion_request = +1; ret++;
+      //flag_discretion_request = +1; ret++;
     } break;
     /* CTRL-ENTER : ouvre le palmi pour répondre au message affiché en bas du pinni */
     case XK_Return:
@@ -3652,6 +3671,11 @@ pp_handle_keypress(Dock *dock, XEvent *event)
           ret++;
         }
       }
+    } break;
+    case '/':  if (event->xkey.window == pp->win && !editw_ismapped(dock->editw) && !(pp->filter.filter_mode && pp->filter.anything)) { 
+      switch_search_mode(dock);
+      pp_popup_show_txt(dock, "vi sux!!!");
+      ret++;
     } break;
     case ' ': {
       if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) {
