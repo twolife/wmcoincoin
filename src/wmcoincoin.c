@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.75 2003/02/28 19:08:44 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.76 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.76  2003/03/01 17:31:22  pouaite
+  compat ipv6 a tester
+
   Revision 1.75  2003/02/28 19:08:44  pouaite
   trucs divers
 
@@ -526,6 +529,7 @@ wmcc_log_http_request(Site *s, HttpRequest *r)
   }
 }
 
+/* cette gruikerie vous est offerte par lordoric(c)(tm) */
 /*
  * Tente de formater potablement un message d'erreur retourné par le serveur
  * C'est de la bricole pour linuxfr, hein !

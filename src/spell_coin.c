@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.14 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.15 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.15  2003/03/01 17:31:22  pouaite
+  compat ipv6 a tester
+
   Revision 1.14  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -397,6 +400,9 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	tmp->proposals = NULL;
 	*end_of_ret = tmp;
 	end_of_ret = &(tmp->next);
+	break;
+      case '(': /* '(#) International Ispell Version 3.1.20 10/10/95, patch 1'  etc.. bug ? pas bug ? */
+	printf("mouaaaaif vas-y dis-moi des mots bleus\n");
 	break;
       default:
 	/* Qu'est ce que je fout ici moi ?

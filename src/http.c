@@ -58,16 +58,6 @@
 #  define LASTERR_ESUCCESS (errno==0)
 #endif
 
-
-#ifdef USE_IPV6
-#define SOCKADDR_IN struct sockaddr_in6
-#define GETHOSTBYNAME(x) gethostbyname2(x,AF_INET6)
-#else
-#define SOCKADDR_IN struct sockaddr_in
-#define GETHOSTBYNAME(x) gethostbyname(x)
-#endif
-
-
 #include <libintl.h>
 #define _(String) gettext (String)
 
@@ -85,19 +75,38 @@ static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123
 
 typedef struct _HostEntry {
   char *host_name;
-  unsigned char host_addr[65]; /* premier char = nombre d'octets utilisés pour 
-				  reprensenter l'adresse 
-				 (ça sera 4 en ipv4, et 16 en ipv6 ..) */
+  char *numeric_host; /* resolved host name, if more than one answer, the entries are separated by a '|' */
+  int port;
   struct _HostEntry *next;
 } HostEntry;
 
 
-HostEntry *dns_cache;
+HostEntry *dns_cache = NULL;
 
 int http_close(SOCKET fd);
 
 #define VERBOSE_LVL 1
 
+
+void dns_cache_destroy(HostEntry *h) {
+  assert(h);
+  free(h->host_name); 
+  free(h->numeric_host);
+  h->next = NULL;
+  free(h);
+}
+
+void dns_cache_remove_host(HostEntry *h) {
+  if (h == NULL) return;
+  if (h == dns_cache) {
+    dns_cache = h->next;
+  } else {
+    HostEntry *hh = dns_cache;
+    while (hh->next != h) hh = hh->next;
+    hh->next = h->next;
+  }
+  dns_cache_destroy(h);
+}
 
 /* 
    renvoie une chaine mallocee contenant l'urlencodage de string 
@@ -421,26 +430,51 @@ http_error() {
 }
 
 
-int
-gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
-  struct hostent *phost;
+char * /* stolen from woof patch and from wget debian sources (vanilla wget does not have ipv6) */
+get_host_ip_str(const char *hostname, int port) {
+  int error;
+  struct addrinfo hints, *res;
+  char service_name[256];
+  char *s = NULL;
 
-  memset(addr, 0, 65);
-  BLAHBLAH(1, printf(_("gethostbyname('%s') -> if the network lags, the coincoin can be blocked here\n"), hostname));
+  snprintf(service_name, 256, "%d", port);
 
-  ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
-				  jour la led indiquant 'gethostbyname' */
-  if (flag_cancel_task) return -1;
-  ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-  phost = GETHOSTBYNAME(hostname); /* rahhh comme c'est lent :-( */
-  ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
-  if (phost) {
-    addr[0] = (unsigned char)phost->h_length;
-    memcpy(addr+1, phost->h_addr_list[0], addr[0]);
-    return 0;
+  if (flag_cancel_task) return NULL;
+  memset(&hints, 0, sizeof(hints));
+  if (Prefs.http_inet_ip_version == 4) {
+    hints.ai_family = AF_INET;
+  } else if (Prefs.http_inet_ip_version == 6) {
+    hints.ai_family = AF_INET6;
   } else {
-    return -1;
+    hints.ai_family = AF_UNSPEC;
   }
+  hints.ai_socktype = SOCK_STREAM;
+  error = getaddrinfo(hostname, service_name, &hints, &res);
+  if (!error) {
+    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+    struct addrinfo *r;
+    for (r = res; r; r = r->ai_next) {
+      if (getnameinfo(r->ai_addr, r->ai_addrlen, hbuf, sizeof(hbuf), sbuf,
+                      sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
+        s = str_cat_printf(s, "%s%s", (s == NULL ? "" : "|"), hbuf);
+      }
+    }
+    freeaddrinfo(res);
+  } else {
+    myfprintf(stderr, "error from getaddrinfo: %s", gai_strerror(error));
+  }
+  return s;
+}
+
+char *
+get_host_ip_str_bloq(const char *hostname, int port) {
+  char *s = NULL;
+  BLAHBLAH(1, printf(_("get_host_ip_str_bloq('%s') -> if the network lags, the coincoin can be blocked here\n"), hostname));
+  ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à jour la led indiquant 'gethostbyname' */
+  ALLOW_X_LOOP_MSG("get_host_ip_str_bloq(1)"); ALLOW_ISPELL;
+  s = get_host_ip_str(hostname, port);
+  ALLOW_X_LOOP_MSG("get_host_ip_str_bloq(2)"); ALLOW_ISPELL;  
+  return s;
 }
 
 /* inclusion du code specifique */
@@ -451,19 +485,18 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
 #endif
 
 
-
+/* resolution d'un nom (en ipv4 ou ipv6) avec gestion d'un cache trisomique */
 static HostEntry *
-http_resolv_name(const char *host_name, int force_dns_query)
+http_resolv_name(const char *host_name, int port, int force_dns_query)
 {
   HostEntry *h = NULL;
   int h_found = 0;
-  
   int do_dns_query = force_dns_query;
 
   /* recherche de l'host_name dans la liste des noms déjà connus */
   h = dns_cache;
   while (h) {
-    if (strcasecmp(host_name, h->host_name) == 0) {
+    if (strcasecmp(host_name, h->host_name) == 0 && port == h->port) {
       h_found = 1;
       break;
     }
@@ -473,56 +506,41 @@ http_resolv_name(const char *host_name, int force_dns_query)
   if (h == NULL) {
     h = (HostEntry*) calloc(1, sizeof(HostEntry)); assert(h);
     h->host_name = strdup(host_name);
+    h->numeric_host = NULL;
+    h->port = port;
     h->next = dns_cache;
     do_dns_query = 1;
   }
 
   if (do_dns_query) {
     flag_gethostbyname = 1;
-
+    if (h->numeric_host) { free(h->numeric_host); h->numeric_host = NULL; }
 #ifndef DONOTFORK_GETHOSTBYNAME	  
-    gethostbyname_nonbloq(host_name, h->host_addr);
+    h->numeric_host = get_host_ip_str_nonbloq(host_name, port);
 #else
-    gethostbyname_bloq(host_name, h->host_addr);
+    h->numeric_host = get_host_ip_str_bloq(host_name, port);
 #endif
     flag_gethostbyname = 0;
     if (h_found == 0) {
-      if (h->host_addr[0]) {
+      if (h->numeric_host) {
 	dns_cache = h;
       } else {
-	free(h->host_name); free(h);
+        dns_cache_destroy(h);
 	h = NULL;
       }
     }
   }
-  if (h && h->host_addr[0]) {
-#ifndef USE_IPV6
-    snprintf(http_used_ip, 100, "%u.%u.%u.%u", 
-	     (unsigned char)h->host_addr[1],
-	     (unsigned char)h->host_addr[2],
-	     (unsigned char)h->host_addr[3],
-	     (unsigned char)h->host_addr[4]);
-#else
-    snprintf(http_used_ip, 100, "%x:%x:%x:%x:%x:%x:%x:%x", 
-	     *((unsigned short *)(h->host_addr+1)),
-	     *((unsigned short *)(h->host_addr+3)),
-	     *((unsigned short *)(h->host_addr+5)),
-	     *((unsigned short *)(h->host_addr+7)),
-	     *((unsigned short *)(h->host_addr+9)),
-	     *((unsigned short *)(h->host_addr+11)),
-	     *((unsigned short *)(h->host_addr+13)),
-	     *((unsigned short *)(h->host_addr+15)));
-#endif
-    BLAHBLAH(VERBOSE_LVL, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
-    return h;
-  } else {
-#ifndef USE_IPV6
+
+  if (Prefs.http_inet_ip_version != 6)
     snprintf(http_used_ip, 20, "???.???.???.???");
-#else
+  else 
     snprintf(http_used_ip, 20, "?:?:?:?:?:?:?:?");
-#endif
-    return NULL;
-  }
+
+  if (h && h->numeric_host) {
+    snprintf(http_used_ip, 100, "%s", h->numeric_host);
+    BLAHBLAH(0/* --- PLOP --- VERBOSE_LVL*/, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
+    return h;
+  } else return NULL;
 }
 
 /* -1 => erreur */
@@ -531,10 +549,12 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
 {
   SOCKET sockfd = INVALID_SOCKET;
 
-  SOCKADDR_IN dest_addr;   /* Contiendra l'adresse de destination */
+  struct sockaddr_storage sock_name;
+  int salen;
   int num_try;
 
   HostEntry *h;
+  char *hostnumstr;
 
    /* 
      un peu tordu : 
@@ -549,7 +569,7 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
     {
 
       /* fait un gethostbyname */
-      h = http_resolv_name(host_name, (num_try == 1));
+      h = http_resolv_name(host_name, port, (num_try == 1));
 
       if (h == NULL) {
 	if (num_try == 0) continue; /* on a droit a un deuxième essai */
@@ -562,29 +582,49 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
       if (connect_tic_cnt && *connect_tic_cnt == -1)
 	*connect_tic_cnt = wmcc_tic_cnt;
 
-      assert(h->host_addr[0]); /* ben oui */
+      hostnumstr = h->numeric_host; assert(hostnumstr);
+      do {
+        /* convert the the string containing numeric ip into the adequate structure */
+        struct addrinfo hints, *res;
+        char portstr[NI_MAXSERV];
+        int err;
+        char *end;
+        char *currenthost;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = PF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_NUMERICHOST;
+        snprintf(portstr, sizeof(portstr), "%d", port);
+        end = strchr(hostnumstr, '|'); 
+        if (end) { currenthost = str_ndup(hostnumstr, end-hostnumstr); ++end; }
+        else currenthost = strdup(hostnumstr);
+        err = getaddrinfo(currenthost, portstr, &hints, &res);
+        if (err) {
+          printf("erreur dans getaddrinfo(%s) : %s\n", currenthost, gai_strerror (err));
+          printf("comme a priori ça ne devrait pas arriver, ==> moment suicide <==\n");
+          assert(0);
+        }
+        memset (&sock_name, 0, sizeof (sock_name));
+        memcpy (&sock_name, res->ai_addr, res->ai_addrlen);
+        salen = res->ai_addrlen;
+        freeaddrinfo (res);
+        sockfd = socket (((struct sockaddr *)&sock_name)->sa_family, SOCK_STREAM, 0);
+        if (sockfd == INVALID_SOCKET && end) {
+          myfprintf(stderr, "avertissement sans frais: la chaussette sur '%<YEL %s>' "
+                    "a renvoyé '%<MAG %s>'\n",
+                    currenthost, STR_LAST_ERROR);
+        }
+        free(currenthost);
+        hostnumstr = end;
+      } while (hostnumstr && sockfd == INVALID_SOCKET)
+;
 
-      sockfd = socket(AF_INET, SOCK_STREAM, 0); /* Vérification d'erreurs! */
       ALLOW_X_LOOP; ALLOW_ISPELL;
       if (sockfd == INVALID_SOCKET) {
 	set_http_err();
-	snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to create a socket ! (%s)"), STR_LAST_ERROR);
+	snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to create a socket ! (%s) [ip=%s]"), STR_LAST_ERROR, h->numeric_host);
 	return INVALID_SOCKET;
       }
-  
-#ifndef USE_IPV6
-      dest_addr.sin_family = AF_INET;
-      dest_addr.sin_port = htons(port);
-      /* pris dans wget, donc ca doit etre du robuste */
-      memcpy(&dest_addr.sin_addr, h->host_addr+1, h->host_addr[0]);
-      memset(&(dest_addr.sin_zero), 0, 8);
-#else
-      //      dest_addr.sin6_len = sizeof(dest_addr);
-      dest_addr.sin6_family = AF_INET6;
-      dest_addr.sin6_port = htons(port);
-      memcpy(&dest_addr.sin6_addr, h->addr+1, h->addr[0]);
-#endif
-
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les
@@ -595,9 +635,10 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
       //      if (connect(sockfd, (struct sockaddr *)&dest_addr, sizeof(dest_addr))) {
 
 #ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
-      if (net_tcp_connect(sockfd, &dest_addr))
+      if (net_tcp_connect(sockfd, (struct sockaddr *)&sock_name, salen))
 #else
-      if (net_tcp_connect_with_timeout(sockfd, &dest_addr, Prefs.http_timeout))
+      if (net_tcp_connect_with_timeout(sockfd, (struct sockaddr *)&sock_name, 
+                                       salen, Prefs.http_timeout))
 #endif
 	{
 	  set_http_err();
@@ -605,7 +646,7 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
 	  http_close(sockfd);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
 	  BLAHBLAH(VERBOSE_LVL, printf(_("connection failed: %s..\n"), http_last_err_msg));
-	  h->host_addr[0] = 0; /* pour relancer un gethostbyname au prochain coup */
+	  dns_cache_remove_host(h); /* pour relancer un gethostbyname au prochain coup */
 	  //	  if (num_try == 1) {
 	    return INVALID_SOCKET;
 	    //	  }

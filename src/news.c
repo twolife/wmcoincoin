@@ -20,7 +20,7 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.12 2003/01/11 17:44:10 pouaite Exp $
+  rcsid=$Id: news.c,v 1.13 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   Revision 1.11  2002/11/20 23:30  pouaite
   virage du log qui bave
@@ -661,7 +661,7 @@ site_news_dl_and_update(Site *site)
 	if (i > 10) {
 	  strncpy(date, base_url+i-10, 10); date[10] = 0;
 	} else {
-	  p = NULL; news_err = 10; break;
+	  p = NULL; news_err = 10;break;
 	}
 
 	id_type_set_lid(&id, atoi(s_id));
@@ -710,7 +710,7 @@ site_news_dl_and_update(Site *site)
       } /* nouvelle news ajoutée */
     } /* while http_get_line */
     if (news_err != 0) {
-      myfprintf(stderr,_("%<RED OOOOPS!> %<grn site_updatenews> there has been an error (err=%d) when parsing the news backend.\n"), news_err);
+      myfprintf(stderr,_("%<RED OOOOPS!: %s> %<grn site_updatenews> there has been an error (err=%d) when parsing the news backend.\n"), site->prefs->site_name, news_err);
     }
     http_request_close(&r);
     site->news_backend_dl_cnt++;

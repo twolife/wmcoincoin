@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.8 2003/01/19 18:52:23 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.9 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.9  2003/03/01 17:31:22  pouaite
+  compat ipv6 a tester
+
   Revision 1.8  2003/01/19 18:52:23  pouaite
   patch gle (couleur de fond du palmi)
 
@@ -941,7 +944,9 @@ editw_draw(Dock *dock, EditW *ew, Drawable d)
   for (i = ew->y_scroll; i < EW_NROW+ew->y_scroll; i++) {
     int j, cnt;
     for (j=ew->row_firstchar[i], cnt=0; j < ew->row_firstchar[i+1]; j++, cnt++) {
-      XSetForeground(dock->display, dock->NormalGC, ew->txt_fgpixel[ctab[j]]);
+      if (ctab[j] != 0 || Prefs.pp_use_colored_tabs==0)
+	XSetForeground(dock->display, dock->NormalGC, ew->txt_fgpixel[ctab[j]]);
+      else XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(ew->prefs->pp_fgcolor.opaque));
       XDrawString(dock->display, d, dock->NormalGC, 
 		  EW_TXT_X0+cnt*FN_W, EW_TXT_Y0 + (i-ew->y_scroll)*FN_H + FN_BASE_H, ew->buff+j, 1);
     }

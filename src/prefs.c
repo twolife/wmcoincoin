@@ -239,33 +239,33 @@ option_site_root (const char  *optarg,
   p = s;
   if (strstr(p,"http://")) p+=7;
   
+
+  /* voila ton patch, woof< ! */
+
+  /* welcome to the magical world of parsers!
+   * please fasten your seatbelts!
+   */
+
   /* cherche numero de port et le nom du site */
-  if ((p2 = strchr(p, ':'))) {
-    *p2 = 0;
-    prefs->site_root = strdup(p);
-    p2++; p = p2;
-    
+  if (p[0] == '[' && (p2 = strchr(p, ']')) && p2 > p+1) { /* ipv6 */
+    prefs->site_root = str_ndup(p+1, p2-p-1);
+    p2++;
+  } else {
+    p2 = strchr(p, ':');
+    if (p2 == NULL) p2 = strchr(p, '/');
+    if (p2) prefs->site_root = str_ndup(p, p2-p);
+    else prefs->site_root = strdup(p);
+  }
+  if (p2 && *p2 == ':') {
+    p2++; p = p2;    
     while (*p2 >= '0' && *p2 <= '9' && *p2) p2++;
     prefs->site_port = atoi(p);
-    p = p2;
-    while (*p == '/') p++;
-  } else {
-    p2 = strchr(p,'/');
-    if (p2) {
-      *p2 = 0;
-      p2++;
-    } else {
-      p2 = p + strlen(p);
-    }
-    prefs->site_root = strdup(p);
-    p = p2;
-  }
+  } else prefs->site_port = 80;  
+  p = p2;
   /* recupere le path */
-  if (strlen(p)) {
-    p2 = p + strlen(p) - 1;
-    while (p2 > p && *p2 == '/') { *p2 = 0; p2--;}
-  }
-  prefs->site_path = strdup(p);
+  if (p && strlen(p) && p[0] == '/') {
+    prefs->site_path = strdup(p+1);
+  } else prefs->site_path = strdup("");
   nice_url = str_printf("http://%s:%d/%s",prefs->site_root, prefs->site_port, prefs->site_path);
   url_au_coiffeur(nice_url,0);
 
@@ -843,7 +843,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->dock_bgpixmap = NULL;
   p->dock_skin_pixmap = NULL;
   p->http_timeout = 40;
-
+  p->http_inet_ip_version = 0;
   p->use_balloons = 1;
   ASSIGN_STRING_VAL(p->balloon_fn_family, "helvetica");
   p->balloon_fn_size = 10;
@@ -1287,6 +1287,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   } break;
   case OPT_http_timeout: {
     CHECK_INTEGER_ARG(20,600, p->http_timeout);
+  } break;
+  case OPT_http_inet_ip_version: {
+    CHECK_INTEGER_ARG(20,600, p->http_inet_ip_version);
   } break;
   case OPT_pinnipede_font_family: {
     ASSIGN_STRING_VAL(p->pp_fn_family, arg); 

@@ -1,3 +1,13 @@
+2003-03-01  pouaite  <c0in@altern.org>
+
+	* src/http.c: passage de tout le truc en ipv6 d'après le patch de
+	woof. Tant pis pour les loosers qui n'ont pas getaddrinfo et consorts.
+
+2003-02-28  pouaite  <c0in@altern.org>
+
+	* fix du crash wmccc/wmcc de lordoric. fix des urls relatives pour
+	la caverne. ajout d'un certain nb de tribunes predefinies.
+
 --------------------------v2.4.3-c-----------------------------------------
 2003-01-19  pouaite  <c0in@altern.org>
 

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.33 2003/02/26 00:03:19 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.34 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.34  2003/03/01 17:31:22  pouaite
+  compat ipv6 a tester
+
   Revision 1.33  2003/02/26 00:03:19  pouaite
   fix bug des urls relatives (pour la caverne)
 
@@ -623,9 +626,11 @@ str_cat_printf(char *in_s, const char *fmt, ...)
       break;
   }
   
-  out_s = malloc( (in_s ? strlen(in_s) : 0) + strlen(s) + 1); assert(out_s);
-  strcpy(out_s, in_s); strcat(out_s, s);
-  free(in_s); free(s);
+  out_s = malloc( (in_s ? strlen(in_s) : 0) + strlen(s) + 1); 
+  assert(out_s); out_s[0] = 0;
+  if (in_s) { strcpy(out_s, in_s); free(in_s); }
+  strcat(out_s, s);
+  free(s);
   return out_s;
 }
 

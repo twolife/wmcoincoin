@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.13 2002/09/05 23:11:57 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.14 2003/03/01 17:31:22 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.14  2003/03/01 17:31:22  pouaite
+  compat ipv6 a tester
+
   Revision 1.13  2002/09/05 23:11:57  pouaite
   <blog>ce soir g mangé une omelette</blog>
 
@@ -46,7 +49,7 @@
 /* vole dans une mailing liste (je sais plus laquelle) */
 
 static int
-net_tcp_connect_with_timeout (SOCKET fd, SOCKADDR_IN *sock, int timeout_secs)
+net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr *sock, int salen, int timeout_secs)
 {
   struct timeval timeout;
   fd_set write_fds;
@@ -76,8 +79,7 @@ net_tcp_connect_with_timeout (SOCKET fd, SOCKADDR_IN *sock, int timeout_secs)
     /*
      * Try to connect.
      */
-    if (connect (fd, (struct sockaddr *) sock,
-		 sizeof (SOCKADDR_IN)) < 0) {
+    if (connect (fd, sock, salen) < 0) {
       error = WSAGetLastError();
       if (error != WSAEWOULDBLOCK &&
 	  error != WSAEISCONN
@@ -136,8 +138,8 @@ int http_close (SOCKET fd) {
   return closesocket (fd);   
 }
 
-int
-gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
+char *
+get_host_ip_str_nonbloq(const char *hostname, int port) {
   printf("todo: s'arranger pour faire marcher le gethostbyname non bloquant sous win \n(il suffit de foutre tout ça dans un fichier séparé de http.c, pour ne pas\n batailler avec le #include \"windows.h\"\n");
-  return gethostbyname_bloq(hostname, addr);
+  return gethostbyname_bloq(hostname, port);
 }

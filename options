@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.52 2003/01/19 18:52:20 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.53 2003/03/01 17:31:20 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.53  2003/03/01 17:31:20  pouaite
+#%  compat ipv6 a tester
+#%
 #%  Revision 1.52  2003/01/19 18:52:20  pouaite
 #%  patch gle (couleur de fond du palmi)
 #%
@@ -344,6 +347,10 @@
 #[.]http.use_if_modified_since: off
 #http.timeout: 40
 
+### mettre ça à 4 pour ne resoudre qu'en addresses ipv4
+### ou à 6 pour n'avoir que de l'ipv6
+### ( 0 => elles sont toutes essayées )
+#http.inet_ip_version: 0
 
 # ## L'option 'http.browser' permet d'utiliser un navigateur externe, pour
 # ## lire les commentaires détecté par le flamophone, et pour afficher les [url] du
