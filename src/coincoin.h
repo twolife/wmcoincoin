@@ -683,6 +683,9 @@ void pp_animate(Dock *dock);
 void pp_set_tribune_updated(Dock *dock);
 void pp_set_prefs_colors(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);
+void pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua);
+void pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word);
+
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

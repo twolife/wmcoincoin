@@ -1,3 +1,10 @@
+2002-05-20  pouaite  <c0in@altern.org>
+
+	* nouveau raccourci du palmipède: Alt-F (F comme filtre) active le
+	filtre du pinnipede sur le mot du palmipède qui se trouve sous le
+	curseur. Pratique pour savoir si la dernière news de yahoo sur
+	britney spears a déjà été postée. 
+
 2002-05-13  pouaite  <c0in@altern.org>
 
 	* src/prefs.c: nouvelle option 'include: ' pour inclure un autre

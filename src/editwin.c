@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.19 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.20 2002/05/20 16:01:25 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.20  2002/05/20 16:01:25  pouaite
+  nouveau raccourci alt-F du palmipede
+
   Revision 1.19  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -1620,6 +1623,40 @@ editw_balise(EditW *ew, const char *bstart, const char *bend) {
   free(s);
 }
 
+static void 
+editw_set_pinnipede_filter(Dock *dock) {
+  DLFP_tribune *trib = &dock->dlfp->tribune;
+  EditW *ew = dock->editw;
+  int curs_pos, i0, i1, blen;
+
+  if (!pp_ismapped(dock)) {
+    pp_show(dock, trib);
+  }
+
+  blen = strlen(ew->buff);
+  curs_pos = editw_xy2strpos(ew, ew->curs_x, ew->curs_y);
+  curs_pos = MIN(curs_pos, blen);
+
+  i0 = i1 = curs_pos; 
+  while (i0 > 0 && ew->buff[i0-1] > ' ') i0--;
+  while (i1 < blen && ew->buff[i1] > ' ') i1++;
+  if (i0 < i1) {
+    char *w;
+
+    w = malloc(i1-i0+1); assert(w);
+    strncpy(w, ew->buff+i0, i1-i0);
+    w[i1-i0] = 0;
+
+    if (ew->buff_num == 0) {
+      pp_set_word_filter(dock, trib, w);
+    } else {
+      pp_set_ua_filter(dock, trib, w);
+    }
+
+    free(w);
+  }
+}
+
 /*
 static void
 editw_balise_tt(EditW *ew) {
@@ -1664,7 +1701,8 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case 's': editw_balise(ew, "<s>", "</s>"); break;
     case 'M':
     case 'm': editw_balise(ew, "====> <b>Moment ", "</b> <===="); break;
-
+    case 'F':
+    case 'f': editw_set_pinnipede_filter(dock); break;
       /*
     case 'T':
     case 't': editw_balise_tt(ew); break;
