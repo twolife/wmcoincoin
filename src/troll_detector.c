@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.3 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.4 2002/01/30 21:03:51 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.4  2002/01/30 21:03:51  pouaite
+  correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
+
   Revision 1.3  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -339,7 +342,7 @@ troll_detector(tribune_msg_info *mi) {
 
   /* passe zero: recherche de la présence de smileys -> ça diminue le coefficient trollesque */
   if (strstr(s, ";-)") || strstr(s, ":-)") || strstr(s, ":o)") || strstr(s, "(-:") || 
-      strstr(s, ":P") || strstr(s, ":)") || strstr(s, ";)")) {
+      strstr(s, ":P") || strstr(s, ":)") || strstr(s, ";)") || strstr(s, ":°)") || strstr(s, ";o)")) {
     smiley_flag = 1;
   }
 

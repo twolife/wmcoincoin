@@ -113,11 +113,11 @@ typedef struct _tribune_msg_ref {
 struct _tribune_msg_info {
   int id;
   time_t timestamp;
-  char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
+  signed char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
 			 (-1 -> pas (encore) d'autre post avec le meme tstamp)
 		       */
   /* (year-2000)|month|day|h|m|s */
-  char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
+  signed char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
   char *useragent; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(useragent) !!! */
   char *msg; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(msg) !!! */
   char *login; /* nouveau !! */

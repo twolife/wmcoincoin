@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.16 2002/01/20 20:53:22 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.17 2002/01/30 21:03:48 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.17  2002/01/30 21:03:48  pouaite
+  correction du bug du au signe des char, et d'un petit bug dans les reference d'horloges
+
   Revision 1.16  2002/01/20 20:53:22  pouaite
   bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
 
@@ -99,7 +102,7 @@ struct _PostVisual {
   int id; // message id 
   PostWord *first; /* la liste des mots */
   time_t tstamp;
-  char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
+  signed char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
   int nblig:12; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt:10; // compteur de references
   int is_my_message:1;
@@ -1107,6 +1110,36 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
   return pw;
 }
 
+void pp_refresh_hilight_refs(Pinnipede *pp, DLFP_tribune *trib, time_t timestamp, int sub_timestamp) {
+  int l;
+
+  for (l=0; l < pp->nb_lignes; l++) {
+    if (pp->lignes[l]) {
+      tribune_msg_info *ref2_mi;
+      int pl;
+      PostWord *pw;
+
+      pw = pp->lignes[l];
+      pl = pw->ligne;
+      while (pw && pl == pw->ligne) {
+	if (pw->attr & PWATTR_REF) {
+	  int bidon, ref2_num;
+
+	  ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, &ref2_num); assert(bidon);
+	  if (ref2_mi && ref2_mi->timestamp == timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
+	    if (ref2_num == -1                                 /* ref à plusieurs posts */
+		|| (ref2_num==0 && sub_timestamp <= 0) /* au cas on a mis un ¹ inutile par inadvertance */
+		|| (ref2_num == sub_timestamp)) {
+	      pw->attr |= PWATTR_TMP_EMPH;
+	    }
+	  }
+	}
+	pw = pw->next;
+      }
+    }	
+  }
+}
+
 /* 
    pw_ref: si non null, c'est que le pointeur survole une référence (c'est a d qu'il
    est utilise quand on survole une reference à un post precedent, 
@@ -1191,51 +1224,10 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	
       /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
 	 temporairement en gras (ça c vraiment pour faire le cakos)*/
-      for (l=0; l < pp->nb_lignes; l++) {
-	if (pp->lignes[l]) {
-	  tribune_msg_info *ref2_mi;
-	  int pl;
-	  PostWord *pw;
-	  pw = pp->lignes[l];
-	  pl = pw->ligne;
-	  while (pw && pl == pw->ligne) {
-	    if (pw->attr & PWATTR_REF) {
-	      int bidon;
-	      ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
-	      if (ref2_mi && ref2_mi->timestamp == ref_mi->timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
-		pw->attr |= PWATTR_TMP_EMPH;
-	      }
-	    }
-	    pw = pw->next;
-	  }
-	}	
-      }
+      pp_refresh_hilight_refs(pp, trib, ref_mi->timestamp, ref_mi->sub_timestamp);
     }
   } else if (pw_ref && (pw_ref->attr & PWATTR_TSTAMP)) {
-    /* deuxieme cas, on survolle un TIMESTAMP -> active les antiref */
-    for (l=0; l < pp->nb_lignes; l++) {
-      if (pp->lignes[l]) {
-	tribune_msg_info *ref2_mi;
-	int pl;
-	PostWord *pw;
-	pw = pp->lignes[l];
-	pl = pw->ligne;
-	/* parcourt chaque ligne */
-	while (pw && pl == pw->ligne) {
-	  if (pw->attr & PWATTR_REF) {
-	    int bidon;
-	    ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
-	    if (ref2_mi && ref2_mi->timestamp == pw_ref->parent->tstamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
-	      pw->attr |= PWATTR_TMP_EMPH;
-	      /*	      if (nb_anti_ref < MAXANTIREF) {
-		anti_ref_id[nb_anti_ref++] = pw->parent->id;
-		}*/
-	    }
-	  }
-	  pw = pw->next;
-	}
-      }
-    }
+    pp_refresh_hilight_refs(pp, trib, pw_ref->parent->tstamp, pw_ref->parent->sub_tstamp);
   }
 
 
