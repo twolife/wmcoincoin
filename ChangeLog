@@ -1,3 +1,10 @@
+2002-05-28  pouaite  <c0in@altern.org>
+
+	* ajout d'un petit arbre pour que le pinnipède rame moins quand il
+	y a beaucoup de messages (1000 , 2000 ...). Les références doivent
+	aussi fonctionner de manière satisfaisante quand le contenu de la
+	tribune s'étend sur plusieurs jours.
+
 2002-05-27  binny  <binny@baby-linux.net>
 
 	* option option -W et pinnipede.auto_open pour auto-ouvrir le

@@ -998,9 +998,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_scrollcoin_bar_dark_color: {
     CHECK_BICOLOR_ARG(p->sc_bar_dark_color);
   } break; 
-	case OPT_pinnipede_open: {
-		CHECK_BOOL_ARG(p->pinnipede_open_on_start);
-	} break;
+  case OPT_pinnipede_auto_open: {
+    CHECK_BOOL_ARG(p->pinnipede_open_on_start);
+  } break;
   case OPT_spell_enable: {
     CHECK_BOOL_ARG(p->ew_do_spell);
   } break; 

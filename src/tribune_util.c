@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.21 2002/04/26 04:45:51 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.22 2002/05/28 20:11:55 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.22  2002/05/28 20:11:55  pouaite
+  modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
+
   Revision 1.21  2002/04/26 04:45:51  pouaite
   reconnaissance des horloges suivies de 3 pts de suspension
 
@@ -91,32 +94,66 @@
 
 #include "coincoin.h"
 
+
 tribune_msg_info *
 tribune_find_id(const DLFP_tribune *trib, int id)
 {
   tribune_msg_info *it;
-
+  /*
   it = trib->msg; 
   while (it) {
     if (it->id == id) return it;
     it = it->next;
   }
   return NULL;
+
+  */
+
+  it = trib->mi_tree_root;
+
+  while (it && it->id != id) {
+    if (id < it->id) it = it->left;
+    else it = it->right;
+  }
+  return it;
 }
+
+tribune_msg_info*
+tribune_find_previous_from_id(const DLFP_tribune *trib, int id)
+{
+  tribune_msg_info *mi;
+  tribune_msg_info *prev = NULL;
+
+  mi = trib->mi_tree_root;
+
+  while (mi) {
+    if (mi->id < id) {
+      prev = mi;
+      mi = mi->right;
+    } else {
+      mi = mi->left;
+    }
+  }
+  return prev;
+}
+
 
 tribune_msg_info *
 tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
 {
   tribune_msg_info *it;
 
-  it = trib->msg; 
-  while (it) {
-    if (it->next == mi) return it;
-    it = it->next;
-  }
-  return NULL;
+  it = tribune_find_previous_from_id(trib, mi->id);
+  return it;
+    /*
+      trib->msg; 
+      while (it) {
+      if (it->next == mi) return it;
+      it = it->next;
+      }
+      return NULL;
+    */
 }
-
 
 /* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
    son msg_info, et on rempli 'commentaire' 
@@ -393,6 +430,8 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
   return 0;
 }
 
+
+
 static tribune_msg_info *
 tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id, 
 			 int h, int m, int s, int num, unsigned char *commentaire, int comment_sz)
@@ -416,9 +455,20 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
       if ((mi->hmsf[0] == h  || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
 	  && mi->hmsf[1] == m && mi->hmsf[2] == s) {
 	if (num == -1 || num == best_mi_num) {
-	  best_mi = mi; break;
+	  best_mi = mi; //break;
 	}
 	best_mi_num++;
+      } else {
+	best_mi_num = 0; /* la raison est tordue: si on conserve des messages
+			    sur plusieurs jours, le comportement naturel est de
+			    renvoyer la ref la + récente. C'est pour ça que le
+			    break juste au-dessus est maintenant
+			    commenté. Comme ça la boucle est éxecutée jusqu'à
+			    ce qu'on atteigne caller_id, même quand on a trouvé
+			    un message qui matche parfaitement, juste pour être
+			    sûr qu'il n'y en a pas un plus récent qui fasse
+			    l'affaire. Mais il faut aussi penser à réinitialiser
+			    best_mi_num, cqfd ;-) */			    
       }
     }
     mi = mi->next;

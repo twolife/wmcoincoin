@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.61 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.62 2002/05/28 20:11:55 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.62  2002/05/28 20:11:55  pouaite
+  modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
+
   Revision 1.61  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -337,8 +340,8 @@ struct _Pinnipede {
   //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
 
-static int
-pp_thread_filter_find_id(struct _PinnipedeFilter *f, int id) {
+inline static int
+pp_thread_filter_find_id(const struct _PinnipedeFilter *f, int id) {
   int i;
   for (i=0; i < f->nid; i++) {
     if (f->id[i] == id) return 1;
@@ -346,8 +349,8 @@ pp_thread_filter_find_id(struct _PinnipedeFilter *f, int id) {
   return 0;
 }
 
-static int
-filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
+inline static int
+filter_msg_info(const tribune_msg_info *mi, const struct _PinnipedeFilter *filter)
 {
   /* cas particulier: la boitakon */
   if (mi->in_boitakon && filter->filter_boitakon) return 0;
@@ -392,9 +395,26 @@ get_next_id(DLFP_tribune *trib, int id, tribune_msg_info **nmi, struct _Pinniped
   return nid;
 }
 
+
+
 static int 
-get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, struct _PinnipedeFilter *filter) 
+get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, const struct _PinnipedeFilter *filter) 
 {
+  tribune_msg_info *mi;
+
+  while ((mi = tribune_find_previous_from_id(trib, id))) {
+    if (filter == NULL || filter_msg_info(mi,filter)) {
+      break;
+    } else {
+      id = mi->id;
+    }
+  }
+
+  if (prev) *prev = mi;
+  if (mi) return mi->id;
+  else return -1;
+
+  /*
   tribune_msg_info *mi,*pmi;
 
   mi = trib->msg;
@@ -413,6 +433,7 @@ get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, struct _Pinnipe
   }
   if (prev) *prev = NULL;
   return -1;
+  */
 }
 
 /* plutot lente */

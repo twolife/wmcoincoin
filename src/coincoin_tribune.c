@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.33 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.34 2002/05/28 20:11:55 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.34  2002/05/28 20:11:55  pouaite
+  modif pr un pinnipede + fluide qd il y a bcp de messages stockés + tribune sur plusieurs jours
+
   Revision 1.33  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -246,6 +249,64 @@ tribune_get_time_now(const DLFP_tribune *trib)
 }
 
 /*
+  construction d'un arbre binaire pour retrouver + rapidement les
+  messages en fonction de l'id
+*/
+
+static tribune_msg_info *
+tribune_build_tree_recurs(tribune_msg_info **v, int cnt)
+{
+  int i_root;
+  tribune_msg_info *root;
+
+  assert(cnt>0);
+  i_root = cnt/2;
+  
+  root = v[i_root]; assert(root); v[i_root] = NULL;
+
+  if (i_root > 0) {
+    root->left = tribune_build_tree_recurs(v, i_root);
+  } else root->left = NULL;
+  if (i_root+1 < cnt) {
+    root->right = tribune_build_tree_recurs(v+i_root+1, cnt - i_root - 1);
+  } else root->right = NULL;
+  return root;
+}
+
+static void
+tribune_build_tree(DLFP_tribune *trib)
+{
+  int count = 0, i;
+  tribune_msg_info *it;
+  tribune_msg_info **vec;
+
+  /* remise à zero de l'arbre */
+  trib->mi_tree_root = NULL;
+
+  /* on compte le nb de messages */
+  it = trib->msg; 
+  while (it) { count++; it = it->next; }
+  
+  if (count == 0) return;
+
+  /* on s'offre temporairement un accès séquentiel */
+  vec = (tribune_msg_info**) calloc(count, sizeof(tribune_msg_info*)); assert(vec);
+  it = trib->msg; i = 0;
+  while (it) { 
+    vec[i] = it;  it = it->next; i++;
+  }
+  
+  trib->mi_tree_root = tribune_build_tree_recurs(vec, count);
+
+  for (i=0; i < count; i++) {
+    assert(vec[i] == NULL); /* sinon j'ai encore laissé trainer une pouille */
+  }
+
+  free(vec);
+}
+
+
+/*
   c'est triste, mais il faut bien que quelqu'un se charge d'éliminer les messages trop vieux
 */
 static void
@@ -253,6 +314,7 @@ tribune_remove_old_msg(DLFP_tribune *trib)
 {
   tribune_msg_info *it, *pit;
   int cnt;
+  int removed = 0;
 
   cnt = 0;
   it = trib->msg; pit = NULL;
@@ -293,6 +355,11 @@ tribune_remove_old_msg(DLFP_tribune *trib)
     free(trib->msg);
     cnt--;
     trib->msg = it;
+    removed++;
+  }
+  
+  if (removed) {
+    tribune_build_tree(trib);
   }
 }
 
@@ -484,7 +551,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   it->msg = ((char*)it) + sizeof(tribune_msg_info) + strlen(ua) + 1;
   it->login = it->msg + strlen(message) + 1;
   it->in_boitakon = 0; /* voir plus bas */
-  
+  it->left = NULL; it->right = NULL;
 
   it->next = nit;
   if (pit) {
@@ -553,6 +620,17 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
       BLAHBLAH(2, myprintf("bienvenu au message de '%.20s' dans la boitakon\n", it->login ? it->login : it->useragent));
     }
   }
+
+  /* oui faire ça ici c'est pas efficace, surtout quand le coincoin démarre
+     et qu'il ajoute 100 messages d'un coup -> on va refaire 100 fois l'arbre
+
+     mais pour l'instant, ça reste comme ça (c'est quand même très peu couteux finalement)
+
+     et comme le pinnipede peut etre mis a jour en plein milieu du d/l du backend,
+     ça évite toute inconsistence entre la structure de liste des messages, et
+     celle d'arbre */
+     
+  tribune_build_tree(trib);
 
   free(message);
   return it;
@@ -778,7 +856,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
-    myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);
+    myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
   }
 
   wmcc_init_http_request(&r, path);

@@ -123,6 +123,11 @@ struct _tribune_msg_info {
   char *login; /* nouveau !! (non mallocé, comme useragent, msg etc..)*/
   struct _tribune_msg_info *next;
 
+  /* on a aussi une structure d'arbre qui se colle là dessus
+     (la structure de liste triée reste pour des raisons historiques ..) */
+  struct _tribune_msg_info *left;
+  struct _tribune_msg_info *right;
+
   /* tatouage pointe sur la regle que satisfie 'useragent' 
      c'est update_pix_trib_load qui s'en occupe
 
@@ -169,7 +174,9 @@ typedef struct _DLFP_tribune {
 
   int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
 				(pour aider la reconnaissance de nos messages) */
-
+  
+  tribune_msg_info *mi_tree_root; /* rooh un arbre binaire ..
+				     c'est utilisé par tribune_find_id */
 } DLFP_tribune;
 
 typedef struct _DLFP_comment {
@@ -562,6 +569,7 @@ int useragents_file_read_initial(Dock *dock, DLFP *dlfp);
 /* tribune_util.c */
 tribune_msg_info *tribune_find_id(const DLFP_tribune *trib, int id);
 tribune_msg_info *tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi);
+tribune_msg_info *tribune_find_previous_from_id(const DLFP_tribune *trib, int id);
 char *tribune_get_tok(const unsigned char **p, const unsigned char **np, 
 		      unsigned char *tok, int max_toklen, int *has_initial_space);
 int tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *mi);

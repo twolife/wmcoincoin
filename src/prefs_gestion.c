@@ -69,7 +69,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 		 "\t\t tout à fait facultative\n");
 	myprintf(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
 		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n", options_file_name);
-	myprintf(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)");
+	myprintf(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)\n");
 	exit(0);
       } break;
     case 'd': TEST_CMDLINE_OPT(OPT_tribune_delay); break;
