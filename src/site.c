@@ -108,6 +108,9 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
 
   site->news_backend_last_modified = NULL;
   site->news_backend_dl_cnt = 0;
+  site->nb_newslues = 0;
+  site->newslues_uptodate = 0;
+  
   site->messages_last_modified = NULL;
   site->messages_dl_cnt = 0;
   site->comments_last_modified = NULL;
@@ -207,10 +210,10 @@ sl_get_nth_unreaded_news(SiteList *sl, int i)
   for (s = sl->list; s; s = s->next) {
     News *n;    
     for (n = s->news; n; n = n->next) {
-      if (n->flag_unreaded == 1) {
+      if (site_newslues_find(s, id_type_lid(n->id)) == 0) {
 	cnt++;
-	if (cnt == i) return n;
-      }      
+        if (cnt == i) return n;
+      }
     }
   }
   return NULL;

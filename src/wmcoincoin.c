@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.52 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.53 2002/08/21 23:20:57 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.53  2002/08/21 23:20:57  pouaite
+  coin
+
   Revision 1.52  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -563,6 +566,9 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
       fclose(f);
     }
     free(fname);    
+    if (do_restore == 0) {
+      site_news_save_state(site);
+    } else site_news_restore_state(site); 
   }
 }
 

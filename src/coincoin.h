@@ -60,13 +60,6 @@ struct _News {
   id_type id;
   int nb_comment; /* pas très utile... */
   struct _News *next;
-
-  /* =1 si la news n'a pas encore ete lue */
-  /* =0 si elle a ete lue, et que le fichier de
-     sauvegarde des news lues est a jour */
-  /* -1 si elle vient d'etre lue, mais qu'il
-     faut mettre a jour le fichier */
-  int flag_unreaded;
   Site *site;
 };
 
@@ -267,6 +260,10 @@ struct _Site {
   char *comments_last_modified;
   int comments_dl_cnt;
 
+#define MAX_NEWS_LUES 100
+  int newslues[MAX_NEWS_LUES];
+  int nb_newslues;
+  int newslues_uptodate;
 
   /* les xp & fortunes & votes ne sont valides que si monitor_com != 0 */
   int xp, xp_old;
@@ -536,6 +533,10 @@ int useragents_file_read_initial(Dock *dock, Site*dlfp);
 
 
 /* news.c */
+void site_newslues_add(Site *site, int lid);
+int site_newslues_find(Site *site, int lid);
+void site_news_restore_state(Site *site);
+void site_news_save_state(Site *site);
 void site_news_dl_and_update(Site* dlfp);
 Site* site_news_create();
 void site_news_destroy(Site *dlfp);

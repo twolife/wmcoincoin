@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.14 2002/08/17 18:33:39 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.15 2002/08/21 23:20:57 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.15  2002/08/21 23:20:57  pouaite
+  coin
+
   Revision 1.14  2002/08/17 18:33:39  pouaite
   grosse commition
 
@@ -137,9 +140,7 @@ newswin_parsetxt(Dock *dock, News *n)
     strcpy(buff, p1); strcat(buff, n->txt);
 
     /* on signale que la news aura deja ete lue */
-    if (n->flag_unreaded == 1) {
-      n->flag_unreaded = -1; /* demande de maj du fichier 'newslues'*/
-    }
+    site_newslues_add(site, id_type_lid(n->id));
   }
 
   picohtml_parse(dock, nw->phv_news.ph, buff, nw->phv_news.w);
@@ -301,12 +302,13 @@ newswin_update_content(Dock *dock, int reset_decal)
   n = NULL;
   buff[0] = 0;
   while ((n=get_news_sorted(slist->list,n, &site)) != NULL) {
-    int l;
+    int l, unreaded;
     l = strlen(buff); assert(l <= BUFFSZ-1); if (l == BUFFSZ-1) break;
+    unreaded = !site_newslues_find(n->site, id_type_lid(n->id));
     snprintf(buff+l, BUFFSZ-l, "<!special=%d>%s[%s] %s%s<br>", id_type_to_int(n->id), 
-	     n->flag_unreaded <= 0 ? "" : "<b>",
+	     unreaded == 0 ? "" : "<b>",
 	     site->prefs->site_name, n->titre, 
-	     n->flag_unreaded <= 0 ? "" : "</b>");
+	     unreaded == 0 ? "" : "</b>");
   }
   picohtml_parse(dock, nw->phv_titles.ph, buff, nw->phv_titles.w);
   picohtml_gettxtextent(nw->phv_titles.ph, &bidon, &nw->phv_titles.ph_h);
@@ -621,7 +623,7 @@ newswin_update_info(Dock *dock, int mx, int my) {
       if (n) {
 	snprintf(survol, 1024, _("id=<b>%d</b>, date: %s, approved on %02d:%02d, %s"), 
 		 id_type_lid(n->id), n->date, n->heure / 60, n->heure % 60,
-		 (n->flag_unreaded <= 0) ? 
+		 (site_newslues_find(n->site, id_type_lid(n->id))) ? 
 		 _("(already read)"):
 		 _("<b><font color=#8f0000>(new!)</font></b>"));
       } else {

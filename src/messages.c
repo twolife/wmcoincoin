@@ -12,10 +12,13 @@
 /* --------------- gestion des messages perso -------------- */
 
 /*
-  rcsid=$Id: messages.c,v 1.3 2002/08/21 20:22:16 pouaite Exp $
+  rcsid=$Id: messages.c,v 1.4 2002/08/21 23:20:57 pouaite Exp $
 
   ChangeLog:
   $Log: messages.c,v $
+  Revision 1.4  2002/08/21 23:20:57  pouaite
+  coin
+
   Revision 1.3  2002/08/21 20:22:16  pouaite
   fix compil
 
@@ -255,7 +258,7 @@ site_msg_dl_and_update(Site *site)
       FILE *f;
       site->messages_dl_cnt++;
       /* si ce n'est pas le premier lancement, on met à jour le fichier */
-      snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_root);
+      snprintf(fname,2048,"%s/.wmcoincoin/%s/lastmessage", getenv("HOME"), site->prefs->site_name);
       if ((f = fopen(fname, "wt"))) {
 	Message *m;
 

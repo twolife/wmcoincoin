@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.4 2002/08/21 01:11:49 pouaite Exp $
+  rcsid=$Id: news.c,v 1.5 2002/08/21 23:20:57 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.5  2002/08/21 23:20:57  pouaite
+  coin
+
   Revision 1.4  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
 
@@ -274,9 +277,7 @@ site_news_unset_unreaded(Site *site)
 
   n = site->news;
   while (n) {
-    if (n->flag_unreaded == 1) {
-      n->flag_unreaded = -1;
-    }
+    site_newslues_add(site, id_type_lid(n->id));
     n = n->next;
   }
 }
@@ -344,19 +345,12 @@ site_news_remove_old(Site *site)
   }
 }
 
-/*
-  lecture du texte de la news
 
-  hum.. [parental advisory]
-  c'est pas joli-joli, mais comment veux-tu, comment veux-tu
-*/
-static
-int
-site_news_update_txt(Site *site, id_type id)
+static int
+site_news_update_txt_(Site *site, News *n, int silent_error)
 {
 #define MAX_URL 100
 
-  News *n;
   char URL[512];
   int err;
   HttpRequest r;
@@ -370,17 +364,6 @@ site_news_update_txt(Site *site, id_type id)
   int nb_url = 0;
 
   err = 1;
-  n = site_news_find_id(site, id);
-  if (n == NULL) return 1;
-
-
-
-  BLAHBLAH(1,myprintf(_("[%s] Updating text of the news: '%<cya %s>' (date='%10s', id %<cya %d>)\n"), site->prefs->site_name, n->titre, n->date, id_type_lid(n->id)));
-
-  if (site_news_is_news_too_old(site, n->date)) {
-    BLAHBLAH(1, myprintf(_("It's too old (date=%s, max age=%d days)\n"), n->date, site->prefs->news_max_nb_days));
-    return 0;
-  }
 
   /* -1 -> pour le threshold des commentaires
      7 -> pour le theme printable (ce qui evite les commentaires)
@@ -521,7 +504,8 @@ site_news_update_txt(Site *site, id_type id)
     free(s);
     
   } else {
-    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), URL, http_error());
+    if (silent_error == 0)
+      myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), URL, http_error());
   }
  ouups1:
   if (err) {
@@ -536,6 +520,70 @@ site_news_update_txt(Site *site, id_type id)
 
   return err;
 }
+
+
+/*
+  lecture du texte de la news
+
+  hum.. [parental advisory]
+  c'est pas joli-joli, mais comment veux-tu, comment veux-tu
+*/
+static
+int
+site_news_update_txt(Site *site, id_type id)
+{
+#define MAX_URL 100
+
+  News *n;
+
+  n = site_news_find_id(site, id);
+  if (n == NULL) return 1;
+
+  BLAHBLAH(1,myprintf(_("[%s] Updating text of the news: '%<cya %s>' (date='%10s', id %<cya %d>)\n"), site->prefs->site_name, n->titre, n->date, id_type_lid(n->id)));
+
+  if (site_news_is_news_too_old(site, n->date)) {
+    BLAHBLAH(1, myprintf(_("It's too old (date=%s, max age=%d days)\n"), n->date, site->prefs->news_max_nb_days));
+    return 0;
+  }
+
+  return site_news_update_txt_(site, n, 0);
+}
+
+/*
+static 
+void site_check_hidden_news(Site *site) {
+  int id_min, id_max;
+  int i, nb_try = 3;
+
+  if (site->nb_newslues == 0) return;
+  do {
+    int 
+    id_max = -1; id_min = INT_MAX;
+    for (i=0; i < site->nb_newslues; i++) {
+      id_min = MIN(id_min, site->newslues[i]);
+      id_max = MAX(id_max, site->newslues[i]);
+    }
+    if (id_min == id_max) return;
+    
+    if (id_min < id_max - 20) id_min = id_max - 10;
+    id_max += 10;
+    
+    for (i=10; i > 0; i--) {
+      int id;
+      News *n =
+      id = id_min + 1 + (rand() % (id_max-id_min-1));
+      if (site_newslues_find(site, id) == 0) break;
+    }
+    if (i) {
+      News *n;
+      ALLOC_OBJ(n, News);
+      n->titre = NULL;
+    }
+
+    nb_try --;
+  } while (nb_try > 0 && nb_newslues != id_max - id_min + 1);
+}
+*/
 
 /* debug only */
 FILE *
@@ -577,87 +625,76 @@ open_site_file(Site *site, char *base_name)
   return fsave;
 }
 
+void
+site_newslues_add(Site *site, int lid)
+{
+  int n;
+  if (site_newslues_find(site, lid)) return;
+  n = MIN( MAX_NEWS_LUES-1,site->nb_newslues);
+  memmove(site->newslues+1, site->newslues, n*sizeof(int));
+  site->newslues[0] = lid;
+  if (site->nb_newslues < MAX_NEWS_LUES) site->nb_newslues++;
+}
+
+int
+site_newslues_find(Site *site, int lid)
+{
+  if (site->prefs->check_news) {
+    int i;
+    if (site->newslues_uptodate == 0) {
+      site_news_restore_state(site);
+    }    
+    for (i=0; i < site->nb_newslues; i++)
+      if (site->newslues[i] == lid) return 1;
+  }
+  return 0;
+}
+
+
 /*
   appelle lors de l'ajout d'un nouveau site:
   lit les id des news deja connues, pour eviter qu'elles
   ne soient resignalees comme etant de nouvelles news
 */
-static void
-site_news_get_dejalues(Site *site)
+void
+site_news_restore_state(Site *site)
 {
   char s[2048];
   FILE *fsave;
 
   s[2047] = 0;
 
+  if (site->prefs->check_news == 0) return;
+   site->newslues_uptodate = 1;
   fsave = open_site_file(site, "newslues");
   if (fsave) {
-    News *n;
-
-    n = site->news;
-    while (n) {
-      n->flag_unreaded = 1; /* on est au premier lancement, toutes les news
-			       on ete marquees non lues precedement pour 
-			       empecher la diode de clignoter betement,
-			       si maintenant on s'apercoit qu'il y en a de nouvelles
-			       on, on les declare ici */
-      n = n->next;
-    }
-
+    int lid;
     fgets(s, 2047, fsave); // on ouble la premiere ligne (=="#do not edit this file")
-    while (fgets(s,2047,fsave)) {
-      id_type id;
-      id_type_set_lid(&id, atoi(s));
-      id_type_set_sid(&id, site->site_id);
-      n = site_news_find_id(site, id);
-      if (n) {
-	n->flag_unreaded = 0;
-      }
+    while (fscanf(fsave, "%d\n", &lid)==1) {
+      site_newslues_add(site, lid);
     }
     fclose(fsave);
   }
 }
 
-static void
-site_news_update_dejalues(Site *site)
+void
+site_news_save_state(Site *site)
 {
   char fname[2048];
   FILE *fsave;
-  int need_update;
-  News *n;
-  
 
-  n = site->news;
-  need_update = 0;
-  while (n) {
-    assert(!id_type_is_invalid(n->id)); /* piege a bugs */
-    //    myprintf("update_newslues: n->id = %d, n->flag_unreaded=%d n->title=%<yel %s>\n", n->id, n->flag_unreaded, n->titre);
-    if (n->flag_unreaded == -1) { 
-      n->flag_unreaded = 0;
-      need_update = 1;
-    }
-    n = n->next;
-  }
-
-  //  printf("update_newslues: need_update=%d\n", need_update);
-
-  if (need_update == 0) return;
-
+  if (site->prefs->check_news == 0) return;
   /* attention aux ames sensibles */
   snprintf(fname,2048,"%s/.wmcoincoin/%s/newslues", getenv("HOME"), site->prefs->site_name);
   if ((fsave = fopen(fname, "wt"))) {
+    int i;
+    printf("on sauve.. %s\n", site->prefs->site_name);
     fprintf(fsave, "#do not edit this file\n");
-    n = site->news;
-    while (n) {
-      assert(!id_type_is_invalid(n->id)); /* piege a bugs */
-      if (n->flag_unreaded == 0) { 
-	fprintf(fsave, "%d\n", id_type_lid(n->id));
-      }
-      n = n->next;
-    }
+    for (i = 0; i < site->nb_newslues; i++)
+      fprintf(fsave, "%d\n", site->newslues[i]);
     fclose(fsave);
   } else {
-    BLAHBLAH(1,myprintf(_("Unable to open '%s' for writing\n(error: %s)\n"),
+    BLAHBLAH(0,myprintf(_("Unable to open '%s' for writing\n(error: %s)\n"),
 			fname, strerror(errno)));
   }
 }
@@ -847,7 +884,6 @@ site_news_dl_and_update(Site *site)
 	  n->mail = strdup("mailpic");
 	  strncpy(n->date, date, 11); date[10] = 0;
 	  n->id = id;
-	  n->flag_unreaded = (site->news_backend_dl_cnt ? 1 : 0);
 	  site->news_updated = 1;
 	  BLAHBLAH(2,printf(_(" . title='%s'\n"), title));
 	  BLAHBLAH(2,printf(_(" . author='%s', mail='%s'\n"), n->auteur, n->mail));
@@ -882,15 +918,6 @@ site_news_dl_and_update(Site *site)
     site->news_updated = 1; // pour forcer l'affiche d'un message particulier quand ttes les news sont trop vieilles 
   }
 
-  if (site->news_backend_dl_cnt == 1 && transfert_ok) {
-    BLAHBLAH(2,myprintf(_("[%<YEL %s>] Looking for the news already read on the last "
-			  "session.\n"), site->prefs->site_name));
-    site_news_get_dejalues(site);
-  } else if (site->news_backend_dl_cnt > 1 && transfert_ok) {
-    BLAHBLAH(2,myprintf(_("[%<YEL %s>] Updating the file containing the numbers of "
-			  "the news already read\n"), site->prefs->site_name));
-    site_news_update_dejalues(site);
-  }
 
   flag_updating_news--;
 }
