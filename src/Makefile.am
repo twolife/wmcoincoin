@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.15 2002/09/05 23:11:56 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.16 2002/09/08 14:28:45 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.16  2002/09/08 14:28:45  pouaite
+##   bugfixes salutaires
+##
 ##   Revision 1.15  2002/09/05 23:11:56  pouaite
 ##   <blog>ce soir g mangé une omelette</blog>
 ##
@@ -48,7 +51,8 @@
 localedir = $(datadir)/locale
 LIBS = @LIBINTL@ @LIBS@
 
-bin_PROGRAMS = wmcoincoin wmccc
+bin_PROGRAMS = wmcoincoin @WMCCC@
+EXTRA_PROGRAMS = wmccc
 
 EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
@@ -82,7 +86,7 @@ wmcoincoin_SOURCES = cc_queue.c \
 	spell_coin.c spell_coin.h
 
 
-INCLUDES = \
+wmccc_CFLAGS = \
 	@GTK_CFLAGS@
 
 wmccc_SOURCES = \

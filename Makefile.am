@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.20 2002/09/03 22:42:16 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.21 2002/09/08 14:28:44 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.21  2002/09/08 14:28:44  pouaite
+##   bugfixes salutaires
+##
 ##   Revision 1.20  2002/09/03 22:42:16  pouaite
 ##   coin
 ##
@@ -65,7 +68,7 @@ MAINT_CHARSET = latin1
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
 
-SUBDIRS = intl  m4  po src doc intl
+SUBDIRS = intl  m4  po src doc
 EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \

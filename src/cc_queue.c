@@ -39,6 +39,8 @@ ccqueue_push(ccqueue *q, ccqueue_elt_type what, int sid, char *ua, char *msg, in
   ccqueue_elt *qe, *pqe, *iq;
   int is_dup = 0;
 
+  BLAHBLAH(2, printf("push: %s (%s) (%s)\n", ccqueue_elt_type_2_str(what), ua, msg));
+
   /* look for duplicates */
   for (qe = q->first; qe && is_dup == 0; qe = qe->next ) {
     if (qe->what == what) {
@@ -54,7 +56,7 @@ ccqueue_push(ccqueue *q, ccqueue_elt_type what, int sid, char *ua, char *msg, in
   }
 
   if (is_dup) {
-    BLAHBLAH(1, myprintf("dupliquate request: %s for %s\n", ccqueue_elt_type_2_str(what), Prefs.site[sid]->site_name));
+    BLAHBLAH(0, myprintf("dupliquate request: %s for %s\n", ccqueue_elt_type_2_str(what), Prefs.site[sid]->site_name));
     return;
   }
 
@@ -134,18 +136,39 @@ is_board_update_requested(SiteList *sl)
 }
 */
 
-static void ccqueue_pop() {
-  ccqueue_elt *q = queue.first;
-  if (q) {
-    queue.first = q->next;
-    if (q->ua) free(q->ua);
-    if (q->msg) free(q->msg);
-    free(q);
+static void ccqueue_pop(ccqueue_elt *q) {
+  ccqueue_elt *qq, *pq;
+  qq = queue.first; pq = NULL;
+  assert(q);
+  while (qq && qq != q) {
+    pq = qq;
+    qq = qq->next;
   }
+  assert(qq);
+  if (pq == NULL) {
+    queue.first = q->next;
+  } else {
+    pq->next = q->next;
+  }
+  if (q->ua) free(q->ua);
+  if (q->msg) free(q->msg);
+  free(q);
 }
  
 int ccqueue_state() {
   return queue.state;
+}
+
+void
+ccqueue_print() {
+  ccqueue_elt *q = queue.first;
+  myprintf("----- queue : \n");
+  for (; q; q = q->next) {
+    myprintf("%<MAG %15s> [%s] [%d] [%s] [%s]\n", ccqueue_elt_type_2_str(q->what),
+	     q->sid >= 0 ? Prefs.site[q->sid]->site_name : "??",
+	     q->nid, q->ua, q->msg);
+  }
+  myprintf("------\n");
 }
 
 const ccqueue_elt *
@@ -161,8 +184,10 @@ void ccqueue_loop(Dock *dock) {
   while (1) {
     while (queue.first) {
       ccqueue_elt *q = queue.first;
+      BLAHBLAH(2, ccqueue_print());
       queue.state = q->what;
       flag_cancel_task = 0;
+      BLAHBLAH(2, printf("dealing with %s\n", ccqueue_elt_type_2_str(q->what)));
       switch (q->what) {
       case Q_PREFS_UPDATE: {
 	wmcc_prefs_relecture(dock, q->nid); 
@@ -173,6 +198,7 @@ void ccqueue_loop(Dock *dock) {
 	/*	dock->coin_coin_request = -50;*/ /* on va le repasser progressivement à zero (pour permettre à la led
 						    de s'éteindre progressivement) */
 	s = sl_find_site_id(dock->sites, q->sid);
+	if (s == NULL) printf("RROOOOOOARRRRR!\n");
 	if (s && s->board)
 	  ccqueue_push_board_update(q->sid); /* va falloir mettre la tribune à jour */
       } break;
@@ -213,7 +239,7 @@ void ccqueue_loop(Dock *dock) {
       if (flag_cancel_task) {
 	myprintf("you interrupted %<yel %s>\n", ccqueue_elt_type_2_str(q->what));
       }
-      ccqueue_pop();
+      ccqueue_pop(q);
       queue.state = -1;
       pp_set_download_info(NULL,NULL); /* pour les cas où ça a été mal remis à zero */
     }

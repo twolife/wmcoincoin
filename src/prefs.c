@@ -16,7 +16,7 @@
 #define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
 
 /* construit le useragent par défaut */
-static void
+void
 coincoin_default_useragent(char *s, int sz)
 {
   struct utsname utsn;
@@ -1565,7 +1565,7 @@ wmcc_prefs_read_options(GeneralPrefs *p, const char *filename, int verbatim)
   wmcc_prefs_read_options_recurs(p, &global_sp, filename, 1, &error, verbatim);
 
   if (p->nb_sites == 0) {
-    myfprintf(stderr, _("oooooooh !!! you didn't define at least *ONE* site, you bad boy.\ni do it for you, but this is the last time"));
+    myfprintf(stderr, _("oooooooh !!! you didn't define at least *ONE* site, you bad boy.\ni do it for you, but this is the last time\n plz %<YEL use wmccc to add new sites>"));
     wmcc_prefs_add_site(p, &global_sp, "\"plop\"");
   }
 

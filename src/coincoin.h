@@ -527,6 +527,7 @@ void ccqueue_push_messages_update(int sid);
 void ccqueue_push_newslst_update(int sid);
 void ccqueue_push_newstxt_update(int sid, int nid);
 int ccqueue_state();
+void ccqueue_print();
 const ccqueue_elt *ccqueue_doing_what();
 ccqueue_elt* ccqueue_find_next(ccqueue_elt_type what, int sid, ccqueue_elt *q);
 ccqueue_elt* ccqueue_find(ccqueue_elt_type what, int sid);

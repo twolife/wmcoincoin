@@ -383,3 +383,11 @@ on_bt_klist_down_clicked               (GtkButton       *button,
 void
 on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
                                         gpointer         user_data);
+
+void
+on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);
+
+void
+on_button_reset_ua_clicked             (GtkButton       *button,
+                                        gpointer         user_data);

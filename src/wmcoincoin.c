@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.62 2002/09/07 16:21:16 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.63 2002/09/08 14:28:45 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.63  2002/09/08 14:28:45  pouaite
+  bugfixes salutaires
+
   Revision 1.62  2002/09/07 16:21:16  pouaite
   ça va releaser en douce
 
@@ -479,8 +482,8 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   char path[2048];
   Site *site;
 
-  BLAHBLAH(1, myprintf(_("message posted: '%<YEL %s>\n"), msg));
-  BLAHBLAH(1, myprintf(_("    (useragent: '%<CYA %s>\n"), ua));
+  BLAHBLAH(0, myprintf(_("message posted: '%<YEL %s>\n"), msg));
+  BLAHBLAH(0, myprintf(_("    (useragent: '%<CYA %s>\n"), ua));
 
   site = sl_find_site_id(dock->sites, sid);
   if (site == NULL) {
@@ -505,9 +508,9 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg)
   r.user_agent = strdup(ua);
   r.post = str_printf(site->prefs->board_post, urlencod_msg);  free(urlencod_msg);
 
-  
+  printf("r.post = %s\n", r.post);
   http_request_send(&r);
-
+  myprintf("request sent, status=%<YEL %d> (%d)\n", r.error, flag_cancel_task);
   if (r.error == 0) {
     int got;
     char reponse[2048];

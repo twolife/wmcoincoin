@@ -215,7 +215,7 @@ create_main_win (void)
   GtkWidget *label116;
   GtkWidget *hbox19;
   GtkWidget *entry_default_ua;
-  GtkWidget *button58;
+  GtkWidget *button_reset_ua;
   GtkWidget *label114;
   GtkWidget *label115;
   GtkWidget *label113;
@@ -325,12 +325,13 @@ create_main_win (void)
   GtkWidget *frame11;
   GtkWidget *hbox10;
   GtkWidget *table9;
-  GtkWidget *label51;
   GtkWidget *label52;
-  GtkWidget *bt_pp_bb_bgcolor;
   GtkWidget *bt_pp_bb_fgcolor;
-  GtkWidget *bt_pp_bb_bgcolor_trans;
   GtkWidget *bt_pp_bb_fgcolor_trans;
+  GtkWidget *bt_pp_bb_bgcolor_trans;
+  GtkWidget *bt_pp_bb_bgcolor;
+  GtkWidget *label51;
+  GtkWidget *checkbutton_pp_minibar_on;
   GtkWidget *table10;
   GtkWidget *label53;
   GtkWidget *label54;
@@ -2167,12 +2168,12 @@ create_main_win (void)
   gtk_box_pack_start (GTK_BOX (hbox19), entry_default_ua, TRUE, TRUE, 0);
   gtk_tooltips_set_tip (tooltips, entry_default_ua, "yes, you can enter whatever stupid string you want, just try, don't be shy", NULL);
 
-  button58 = gtk_button_new_with_label ("Reset");
-  gtk_widget_ref (button58);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "button58", button58,
+  button_reset_ua = gtk_button_new_with_label ("Reset");
+  gtk_widget_ref (button_reset_ua);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "button_reset_ua", button_reset_ua,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (button58);
-  gtk_box_pack_start (GTK_BOX (hbox19), button58, FALSE, FALSE, 0);
+  gtk_widget_show (button_reset_ua);
+  gtk_box_pack_start (GTK_BOX (hbox19), button_reset_ua, FALSE, FALSE, 0);
 
   label114 = gtk_label_new ("Useragent maximum length (usually 60)");
   gtk_widget_ref (label114);
@@ -3155,69 +3156,78 @@ create_main_win (void)
   gtk_widget_show (table9);
   gtk_box_pack_start (GTK_BOX (hbox10), table9, TRUE, TRUE, 0);
 
-  label51 = gtk_label_new ("Background color");
-  gtk_widget_ref (label51);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "label51", label51,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label51);
-  gtk_table_attach (GTK_TABLE (table9), label51, 0, 1, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label51), 0, 0.5);
-
   label52 = gtk_label_new ("Foreground color");
   gtk_widget_ref (label52);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "label52", label52,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (label52);
-  gtk_table_attach (GTK_TABLE (table9), label52, 0, 1, 1, 2,
+  gtk_table_attach (GTK_TABLE (table9), label52, 0, 1, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label52), 0, 0.5);
-
-  bt_pp_bb_bgcolor = gtk_button_new ();
-  gtk_widget_ref (bt_pp_bb_bgcolor);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_bgcolor", bt_pp_bb_bgcolor,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_bb_bgcolor);
-  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_bgcolor, 1, 2, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_bb_bgcolor, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_bb_bgcolor, "Color in normal (non transparent) mode", NULL);
 
   bt_pp_bb_fgcolor = gtk_button_new ();
   gtk_widget_ref (bt_pp_bb_fgcolor);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_fgcolor", bt_pp_bb_fgcolor,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (bt_pp_bb_fgcolor);
-  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_fgcolor, 1, 2, 1, 2,
+  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_fgcolor, 1, 2, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_widget_set_usize (bt_pp_bb_fgcolor, 50, 20);
   gtk_tooltips_set_tip (tooltips, bt_pp_bb_fgcolor, "Color in normal (non transparent) mode", NULL);
-
-  bt_pp_bb_bgcolor_trans = gtk_button_new ();
-  gtk_widget_ref (bt_pp_bb_bgcolor_trans);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_bgcolor_trans", bt_pp_bb_bgcolor_trans,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_bb_bgcolor_trans);
-  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_bgcolor_trans, 2, 3, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_bb_bgcolor_trans, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_bb_bgcolor_trans, "Color in transparent mode", NULL);
 
   bt_pp_bb_fgcolor_trans = gtk_button_new ();
   gtk_widget_ref (bt_pp_bb_fgcolor_trans);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_fgcolor_trans", bt_pp_bb_fgcolor_trans,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (bt_pp_bb_fgcolor_trans);
-  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_fgcolor_trans, 2, 3, 1, 2,
+  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_fgcolor_trans, 2, 3, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_widget_set_usize (bt_pp_bb_fgcolor_trans, 50, 20);
   gtk_tooltips_set_tip (tooltips, bt_pp_bb_fgcolor_trans, "Color in transparent mode", NULL);
+
+  bt_pp_bb_bgcolor_trans = gtk_button_new ();
+  gtk_widget_ref (bt_pp_bb_bgcolor_trans);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_bgcolor_trans", bt_pp_bb_bgcolor_trans,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (bt_pp_bb_bgcolor_trans);
+  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_bgcolor_trans, 2, 3, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (bt_pp_bb_bgcolor_trans, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_bb_bgcolor_trans, "Color in transparent mode", NULL);
+
+  bt_pp_bb_bgcolor = gtk_button_new ();
+  gtk_widget_ref (bt_pp_bb_bgcolor);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bb_bgcolor", bt_pp_bb_bgcolor,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (bt_pp_bb_bgcolor);
+  gtk_table_attach (GTK_TABLE (table9), bt_pp_bb_bgcolor, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (bt_pp_bb_bgcolor, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_bb_bgcolor, "Color in normal (non transparent) mode", NULL);
+
+  label51 = gtk_label_new ("Background color");
+  gtk_widget_ref (label51);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "label51", label51,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label51);
+  gtk_table_attach (GTK_TABLE (table9), label51, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label51), 0, 0.5);
+
+  checkbutton_pp_minibar_on = gtk_check_button_new_with_label ("Visible on startup");
+  gtk_widget_ref (checkbutton_pp_minibar_on);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_pp_minibar_on", checkbutton_pp_minibar_on,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (checkbutton_pp_minibar_on);
+  gtk_table_attach (GTK_TABLE (table9), checkbutton_pp_minibar_on, 0, 3, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
 
   table10 = gtk_table_new (3, 3, FALSE);
   gtk_widget_ref (table10);
@@ -4707,6 +4717,9 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (entry_default_ua), "changed",
                       GTK_SIGNAL_FUNC (on_editable_changed),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (button_reset_ua), "clicked",
+                      GTK_SIGNAL_FUNC (on_button_reset_ua_clicked),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_pp_auto_open), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
@@ -4827,17 +4840,20 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (bt_pp_strike_color_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_bgcolor), "clicked",
+  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_fgcolor), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_fgcolor), "clicked",
+  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_fgcolor_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (bt_pp_bb_bgcolor_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_fgcolor_trans), "clicked",
+  gtk_signal_connect (GTK_OBJECT (bt_pp_bb_bgcolor), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (checkbutton_pp_minibar_on), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (bt_pp_bb_progressbar_color), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.10 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: board.c,v 1.11 2002/09/08 14:28:45 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.11  2002/09/08 14:28:45  pouaite
+  bugfixes salutaires
+
   Revision 1.10  2002/09/07 16:21:15  pouaite
   ça va releaser en douce
 
@@ -932,9 +935,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   /* remise a jour du flag d'affichage des secondes */
   update_secondes_flag(board);
 
-  /* essaye de detecter si vous étez l'auteur du message */
+  /* essaye de detecter si vous êtes l'auteur du message */
   if (board->site->prefs->user_login && board->site->prefs->user_login[0] && board->just_posted_anonymous == 0) {
-    it->is_my_message = !strcmp(board->site->prefs->user_login, it->login);
+    it->is_my_message = !strcasecmp(board->site->prefs->user_login, it->login);
   } else {
     /* special pour les sites qui rajoutent des trucs à la fin,
        on limite la longueur de la comparaison */

@@ -1,3 +1,11 @@
+--------------------------v2.4.0-b-----------------------------------------
+2002-09-08  pouaite  <c0in@altern.org>
+
+	* configure.ac: ajout de l'option --disable-wmccc pour ceux qui n'ont pas gtk
+	* cc_queue.c: correction d'un beau bug qui bouffait les posts envoyés pendant un download
+	en cours..
+	et des petits bugfixes mineurs.
+
 --------------------------v2.4.0-a-----------------------------------------
 
 2002-09-06  pouaite  <c0in@altern.org>

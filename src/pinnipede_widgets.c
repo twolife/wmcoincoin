@@ -186,7 +186,7 @@ pp_tabs_refresh(Dock *dock)
 	int main_site = 0;
 	if (ccqueue_find(Q_BOARD_UPDATE, pp->tabs[i].site->site_id)) {
 	  int l = ABS((wmcc_tic_cnt % 30) - 15)*10;
-	  t = "-queued-";
+	  t = ((wmcc_tic_cnt % 180) < 30) ? pp->tabs[i].site->prefs->site_name : "-queued-";
 	  fgpixel = 0x303030 + (l<<16) + (l<<8) + l;
 	} else {
 	  t = pp->tabs[i].site->prefs->site_name;
@@ -918,8 +918,8 @@ pp_refresh_fortune(Dock *dock, Drawable d)
 			 DefaultDepth(dock->display,dock->screennum));
     XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.pp_fortune_bgcolor));
     XFillRectangle(dock->display, fpix, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h);
-    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(192,192,192));
-    XDrawLine(dock->display, fpix, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width, pp->fortune_h-1);
+    XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(220,220,220));
+    XDrawLine(dock->display, fpix, dock->NormalGC, 0, pp->fortune_h-1, pp->win_width - (pp->sc ? SC_W : 0), pp->fortune_h-1);
 
     assert(!picohtml_isempty(pp->ph_fortune));
 
@@ -927,11 +927,10 @@ pp_refresh_fortune(Dock *dock, Drawable d)
     picohtml_render(dock, pp->ph_fortune, fpix, dock->NormalGC, x, 0);
     XCopyArea(dock->display, fpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fortune_h, 0, 0);
     XFreePixmap(dock->display, fpix);
-  }/* nettoyage ligne du haut *//* else {
-      
+  } else { /* nettoyage ligne du haut */
     assert(LINEY0(0)>0);
     pp_clear_win_area(dock, 0, 0, pp->win_width, LINEY0(0));
-  }*/
+  }
 }
 
 /* a appeler quand la fortune est changée */

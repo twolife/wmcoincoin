@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.5  2002/09/08 14:28:44  pouaite
+dnl   bugfixes salutaires
+dnl
 dnl   Revision 1.4  2002/09/07 16:21:15  pouaite
 dnl   ça va releaser en douce
 dnl
@@ -100,7 +103,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.4.0a, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.4.0b, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -140,6 +143,10 @@ else
   echo "Vous n'utilisez pas gcc .. attention coincoin peut avoir quelque bugs si les char ne sont pas signés"
 fi
 
+YELLOW="\\033\\1331;33m"
+RESET="\\033\\1330m"
+
+
 AC_PATH_X
 AC_PATH_XTRA
 echo x_cflags=$X_CFLAGS libs=$LIBS pre_lib=$X_PRE_LIBS x_libs=$X_LIBS x_extra=$X_EXTRA_LIBS
@@ -150,12 +157,32 @@ dnl  $X_LIBS -lX11 -lXext)
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
 
-dnl AM_PATH_GTK(1.2.0, ,
-dnl            AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
-GTK_CFLAGS="`gtk-config --cflags`"
-GTK_LIBS="`gtk-config --libs`"
-AC_SUBST(GTK_CFLAGS)
-AC_SUBST(GTK_LIBS)
+
+build_wmccc="yes"
+AC_ARG_ENABLE(wmccc,
+ [  --enable-wmccc        Builds the wmccc (requires gtk-1.2), the graphical wmcoincoin configuration tool (Default is yes)
+  --disable-wmccc         Do not build wmccc],
+ [ if   test "x$enableval" = "xno" ; then
+	build_wmccc="no"
+	echo you disabled wmccc
+   fi
+ ], [build_wmccc="yes"])
+
+if test "x$build_wmccc" = "xno"; then
+  echo wmccc disabled...
+  WMCCC=""
+else
+  echo building with WMCCC, checking for gtk..
+dnl si le test sur gtk ne passe pas (solaris... ?), il suffit de comment la ligne am_path_gtk et de decommenter les 4 lignes suivantes
+dnl GTK_CFLAGS="`gtk-config --cflags`"
+dnl GTK_LIBS="`gtk-config --libs`"
+dnl AC_SUBST(GTK_CFLAGS)
+dnl AC_SUBST(GTK_LIBS)
+
+  AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you don\'t have gtk, you won\'t be able to build the wmccc, try running configure with --disable-wmccc))
+  WMCCC="wmccc"
+fi
+AC_SUBST(WMCCC)
 
 dnl Set PACKAGE_DATA_DIR in config.h.
 if test "x${datadir}" = 'x${prefix}/share'; then
@@ -197,7 +224,7 @@ RESET="\\033\\1330m"
 AC_ARG_WITH(ipv6, [ --with-ipv6    allow use of ipv6 [default=no]], ipv6_ok=$withval, ipv6_ok=no)
 if test "x$ipv6_ok" = "xyes"; then
   echo "IPv6 enabled !"
-  AC_DEFINE(USE_IPV6, 1, [Define if build with IPv6 support])
+  AC_DEFINE_UNQUOTED(USE_IPV6, 1, [Define if build with IPv6 support])
 fi
 
 case "$host" in
@@ -232,3 +259,8 @@ AC_CONFIG_FILES([Makefile doc/Makefile intl/Makefile po/Makefile.in m4/Makefile 
 AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
 AC_OUTPUT
 
+if test "x$build_wmccc" = "xno"; then
+  echo "    I recall you that you choosed to disable wmccc"
+else
+  echo "    wmcc will be built with wmccc"
+fi

@@ -348,7 +348,7 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 
 #define FREE_STRING(x) { if (x) { free(x); x = NULL; }}
 #define ASSIGN_STRING_VAL(x,v) { FREE_STRING(x); x = strdup(v); assert(x); }
-
+void coincoin_default_useragent(char *s, int sz);
 char *string_to_miniuarule(unsigned char *str, MiniUARule *r);
 void miniuarule_clear(MiniUARule *r);
 void miniuarules_destroy(MiniUARules *urs, MiniUARule *ur);

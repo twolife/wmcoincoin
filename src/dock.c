@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.27 2002/09/07 16:21:15 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.28 2002/09/08 14:28:45 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.28  2002/09/08 14:28:45  pouaite
+  bugfixes salutaires
+
   Revision 1.27  2002/09/07 16:21:15  pouaite
   ça va releaser en douce
 
@@ -941,6 +944,7 @@ dock_red_button_check(Dock *dock) {
 	  ccqueue_push_board_post(s->site_id,  
 				  s->board->coin_coin_useragent, 
 				  dock->coin_coin_message);
+	  //	  ccqueue_print();
 	  kikoo = 1;
 	} else {
 	  myprintf("arg, you tried to send a message to a destroyed site (yes, this is a bug)\n");
@@ -1369,7 +1373,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       Site *site;
       for (site = dock->sites->list; site; site = site->next) {
 	if (site->prefs->check_board) {
-	  printf("%d \n",  site->board->board_refresh_cnt );
+	  //	  printf("%d \n",  site->board->board_refresh_cnt );
 	  ccqueue_push_board_update(site->site_id);
 	  site->board->board_refresh_cnt = 0;
 	}

@@ -661,7 +661,9 @@ get_hk(int isplop) {
   categ = get_optionmenu_choice(isplop ? "optionmenu_kplop_categ" : "optionmenu_kemph_categ");
   key = gtk_editable_get_chars(GTK_EDITABLE(lookup_widget(glob.main_win, isplop ? "entry_kplop_key" : "entry_kemph_key")), 0, -1);
   g_assert(key);
-  hk = key_list_add(NULL, key, ktype, categ, 1);
+  if (strlen(key)) {
+    hk = key_list_add(NULL, key, ktype, categ, 1);
+  } else hk = NULL;
   g_free(key);
   return hk;
 }
@@ -673,9 +675,11 @@ on_bt_klist_up_clicked(GtkButton *button, gpointer user_data) {
   GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
   int rownum = clist_selected_row_number(wg);
   int isplop = strcmp(clname, "clist_kemph");
-  if (rownum >= 1) gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum-1);
-  gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
-  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  if (rownum >= 1) {
+    gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum-1);
+    gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
+    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  }
 }
 
 void
@@ -684,37 +688,47 @@ on_bt_klist_down_clicked(GtkButton *button, gpointer user_data) {
   GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
   int rownum = clist_selected_row_number(wg);
   int isplop = strcmp(clname, "clist_kemph");
-  if (rownum >= 0) gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum+1);
-  gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
-  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  if (rownum >= 0) {
+    gtk_clist_row_move(GTK_CLIST(wg), rownum, rownum+1);
+    gtk_clist_moveto(GTK_CLIST(wg), clist_selected_row_number(wg), 0, .0, .0);
+    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  }
 }
 
 void
 on_bt_klist_del_clicked(GtkButton *button, gpointer user_data) {
   char *clname = (char*)user_data;
   GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
-  int row = clist_selected_row_number(wg);
+  int row; 
   int isplop = strcmp(clname, "clist_kemph");
-  KeyList *hk = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk);
-  hk->next = NULL;
-  key_list_destroy(hk);
-  gtk_clist_remove(GTK_CLIST(wg), row);
-  reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  KeyList *hk; 
+  row = clist_selected_row_number(wg);
+  if (row >= 0) {
+    hk = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk);
+    hk->next = NULL;
+    key_list_destroy(hk);
+    gtk_clist_remove(GTK_CLIST(wg), row);
+    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  }
 }
 
 void
 on_bt_klist_change_clicked(GtkButton *button, gpointer user_data) {
   char *clname = (char*)user_data;
   GtkWidget *wg = lookup_widget(GTK_WIDGET(button), clname);
-  int row = clist_selected_row_number(wg);
+  int row;
   int isplop = strcmp(clname, "clist_kemph");
-  KeyList *hk, *hk_old = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk_old);
-  hk = get_hk(isplop);
-  if (hk_old && hk) {
-    hk_old->next = NULL;
-    key_list_destroy(hk_old);
-    clist_klist_set_row(GTK_CLIST(wg), hk, row);
-    reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+  KeyList *hk, *hk_old;
+  row = clist_selected_row_number(wg);
+  if (row >= 0) {
+    hk_old = gtk_clist_get_row_data(GTK_CLIST(wg), row); g_assert(hk_old);
+    hk = get_hk(isplop);
+    if (hk_old && hk) {
+      hk_old->next = NULL;
+      key_list_destroy(hk_old);
+      clist_klist_set_row(GTK_CLIST(wg), hk, row);
+      reorder_hk(GTK_CLIST(wg), isplop ? &Prefs->plopify_key_list : &Prefs->hilight_key_list);
+    }
   }
 }
 
@@ -750,5 +764,13 @@ on_clist_klist_select_row(GtkCList *clist, gint row, gint column,
 
   clist_klist_row_to_entries(GTK_CLIST(wg), row);
   g_print("select_row %d %d %s (%d)\n", row, column, clname, row);
+}
+
+void
+on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
+  GtkWidget *wg = lookup_widget(GTK_WIDGET(button), "entry_default_ua"); g_assert(wg);
+  char default_ua[1024];
+  coincoin_default_useragent(default_ua, 1024);
+  gtk_entry_set_text(GTK_ENTRY(wg), default_ua);
 }
 
