@@ -1,3 +1,17 @@
+--------------------------v2.4.2-b-----------------------------------------
+2002-12-20  pouaite  <c0in@altern.org>
+
+	* src/board.c (board_update): leger assouplissement du parser de backend
+	(qui supportait mal les espaces avant les balises).
+
+	* src/prefs.c: ajout des options bold, souligné etc pour le login, useragent
+	et l'horloge.
+
+	* src/wmcoincoin.c: non suicide du coincoin quand le xopenim foire
+	pour que ça marche sur l'exceed tout pourri de kadreg.
+
+2002-12-16  F.P.
+	* paf la tribune
 --------------------------v2.4.2-a-----------------------------------------
 2002-11-21  pouaite  <c0in@altern.org>
 

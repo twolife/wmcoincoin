@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.48 2002/11/21 18:53:37 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.49 2002/12/20 15:49:51 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.49  2002/12/20 15:49:51  pouaite
+#%  prout 2.4.2b ?
+#%
 #%  Revision 1.48  2002/11/21 18:53:37  pouaite
 #%  correction ptit pb d'ouverture d'url
 #%
@@ -400,6 +403,10 @@
 #[.]pinnipede.visited_url_color: 804080 808080
 #[.]pinnipede.trollscore_color: ff0000 ffff00
 #[.]pinnipede.strike_color: 800000
+#[.]pinnipede.clock_style: 
+#[.]pinnipede.login_style: IB
+#[.]pinnipede.useragent_style: I
+
 #pinnipede.emph_color: ffffff 505050
 #pinnipede.sel_bgcolor: ffd700 008080
 #pinnipede.popup_fgcolor: 000050 000050

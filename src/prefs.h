@@ -77,6 +77,14 @@ typedef struct _URLReplacements {
 #define NB_PP_KEYWORD_CATEG 5
 
 
+
+typedef struct _FontStyle {
+  int underlined;
+  int slanted;
+  int bold;
+  int teletype;
+} FontStyle;
+
 /* les preferences sont stockees dans ces structures */
 
 typedef struct _SitePrefs {
@@ -129,6 +137,7 @@ typedef struct _SitePrefs {
   BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
     pp_login_color, pp_url_color, pp_visited_url_color, pp_strike_color, pp_trollscore_color;
   unsigned pp_bgcolor;
+  FontStyle pp_clock_style, pp_ua_style, pp_login_style;
   int proxy_nocache; /* desactive le cache du proxy lors des requetes */
   int use_if_modified_since; /* utilisation de l'entete http 'If-Modified-Since' */
   enum { locEN=0, locFR=1 } locale; /* "localisation" du site (pour quelques mots-clefs + problèmes d'horloges AM/PM) */
@@ -147,7 +156,7 @@ typedef struct _SitePrefs {
 
 } SitePrefs;
 
-#define MAX_SITES 20 /* au-dela, faut vraiment songer à consulter */
+#define MAX_SITES 30 /* au-dela, faut vraiment songer à consulter */
 
 typedef struct _GeneralPrefs{
   /* en cas d'inactivité les delais vont être progressivement augmentés

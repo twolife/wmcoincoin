@@ -14,6 +14,7 @@
 #endif
 
 #define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
+#define FONTSTYLE_SET(fs,u,i,b,tt) { (fs).underlined = u; (fs).slanted = i; (fs).bold = b; (fs).teletype = tt; }
 
 /* construit le useragent par défaut */
 void
@@ -127,6 +128,36 @@ option_get_xypos_val(const char  *_optarg,
     free(optarg);
     return str_printf(_("Invalid option '%s', we were waiting for 2 numbers x and y with a x:y format"), optname);
   }
+}
+
+static char *
+option_get_font_style(const char  *_optarg, 
+		      const char  *optname, FontStyle *fs) 
+{
+  const char *s = _optarg;
+  fs->underlined = fs->slanted = fs->bold = fs->teletype = 0;
+  while (s && *s) {
+    switch (*s) {
+    case 'u':
+    case 'U':
+      fs->underlined = 1; break;
+    case 'i':
+    case 'I':
+      fs->slanted = 1; break;
+    case 'b':
+    case 'B':
+      fs->bold = 1; break;
+    case 't':
+    case 'T':
+      fs->teletype = 1; break;      
+    default:
+      if (!(*s > 0 && *s < ' ') && *s != '.') {
+	return str_printf(_("wrong style for option %s"), optname);
+      } break;
+    }
+    ++s;
+  }
+  return NULL;
 }
 
 /* special pour l'option de transparence */
@@ -689,6 +720,9 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
   BICOLOR_SET(p->pp_visited_url_color, 0x800080, 0x800080);
   BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
   BICOLOR_SET(p->pp_strike_color,0x800000,0x800000);
+  FONTSTYLE_SET(p->pp_clock_style, 0,0,0,0);
+  FONTSTYLE_SET(p->pp_login_style, 0,0,0,0);
+  FONTSTYLE_SET(p->pp_ua_style, 0,1,0,0);
   p->locale = locFR;
   p->site_name = NULL;
   p->all_names = NULL;
@@ -697,10 +731,10 @@ wmcc_site_prefs_set_default(SitePrefs *p) {
       ASSIGN_STRING_VAL(p->all_names, "linuxfr");*/
   p->time_difference = 0;
   p->mark_id_gaps = 1;
-  p->check_news = 1;
+  p->check_news = 0;
   p->check_board = 1;
-  p->check_comments = 1;
-  p->check_messages = 1;
+  p->check_comments = 0;
+  p->check_messages = 0;
   p->board_auto_refresh = 1;
 }
 
@@ -1027,6 +1061,8 @@ wmcc_prefs_add_site(GeneralPrefs *p, SitePrefs *global_sp, char *arg)
 
 #define CHECK_FILENAME_ARG(x) { FREE_STRING(x); option_get_filename(arg, &x); }
 
+#define CHECK_FONTSTYLE_ARG(x) { char *err = option_get_font_style(arg,opt_name,&x); if (err) return err; }
+
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
 wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp, wmcc_options_id opt_num, unsigned char *arg, int verbatim)
@@ -1282,6 +1318,15 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTSG_pinnipede_strike_color: {
     CHECK_BICOLOR_ARG(sp->pp_strike_color);
   } break; 
+  case OPTSG_pinnipede_clock_style: {
+    CHECK_FONTSTYLE_ARG(sp->pp_clock_style);
+  } break;
+  case OPTSG_pinnipede_login_style: {
+    CHECK_FONTSTYLE_ARG(sp->pp_login_style);
+  } break;
+  case OPTSG_pinnipede_useragent_style: {
+    CHECK_FONTSTYLE_ARG(sp->pp_ua_style);
+  } break;
   case OPT_pinnipede_emph_color: {
     CHECK_BICOLOR_ARG(p->pp_emph_color);
   } break; 

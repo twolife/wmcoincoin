@@ -417,3 +417,12 @@ on_bt_dock_bgcolor_realize             (GtkWidget       *widget,
 void
 on_bt_dock_bgcolor_realize             (GtkWidget       *widget,
                                         gpointer         user_data);
+
+void
+on_togglebutton_pp_login_style_bold_toggled
+                                        (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);
+
+void
+on_checkbutton_toggled                 (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);

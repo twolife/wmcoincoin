@@ -5385,32 +5385,6 @@ LOGIN OR USERAGENT
 		    </widget>
 
 		    <widget>
-		      <class>GtkLabel</class>
-		      <name>label122</name>
-		      <label>Clocks</label>
-		      <justify>GTK_JUSTIFY_CENTER</justify>
-		      <wrap>False</wrap>
-		      <xalign>0</xalign>
-		      <yalign>0.5</yalign>
-		      <xpad>0</xpad>
-		      <ypad>0</ypad>
-		      <child>
-			<left_attach>0</left_attach>
-			<right_attach>1</right_attach>
-			<top_attach>2</top_attach>
-			<bottom_attach>3</bottom_attach>
-			<xpad>0</xpad>
-			<ypad>0</ypad>
-			<xexpand>False</xexpand>
-			<yexpand>False</yexpand>
-			<xshrink>False</xshrink>
-			<yshrink>False</yshrink>
-			<xfill>True</xfill>
-			<yfill>False</yfill>
-		      </child>
-		    </widget>
-
-		    <widget>
 		      <class>GtkButton</class>
 		      <name>bt_pp_bgcolor</name>
 		      <width>50</width>
@@ -5511,7 +5485,40 @@ LOGIN OR USERAGENT
 
 		    <widget>
 		      <class>GtkButton</class>
-		      <name>bt_pp_clock_color</name>
+		      <name>bt_pp_trollscore_color_trans</name>
+		      <width>50</width>
+		      <height>20</height>
+		      <tooltip>Color in transparent mode</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>clicked</name>
+			<handler>on_bt_color_clicked</handler>
+			<last_modification_time>Sat, 24 Aug 2002 19:17:24 GMT</last_modification_time>
+		      </signal>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <child>
+			<left_attach>2</left_attach>
+			<right_attach>3</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+
+		      <widget>
+			<class>Placeholder</class>
+		      </widget>
+		    </widget>
+
+		    <widget>
+		      <class>GtkButton</class>
+		      <name>bt_pp_trollscore_color</name>
 		      <width>50</width>
 		      <height>20</height>
 		      <tooltip>Color in normal (non transparent) mode</tooltip>
@@ -5543,21 +5550,18 @@ LOGIN OR USERAGENT
 		    </widget>
 
 		    <widget>
-		      <class>GtkButton</class>
-		      <name>bt_pp_clock_color_trans</name>
-		      <width>50</width>
-		      <height>20</height>
-		      <tooltip>Color in transparent mode</tooltip>
-		      <can_focus>True</can_focus>
-		      <signal>
-			<name>clicked</name>
-			<handler>on_bt_color_clicked</handler>
-			<last_modification_time>Sat, 24 Aug 2002 19:17:24 GMT</last_modification_time>
-		      </signal>
-		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <class>GtkLabel</class>
+		      <name>label125</name>
+		      <label>Troll score</label>
+		      <justify>GTK_JUSTIFY_CENTER</justify>
+		      <wrap>False</wrap>
+		      <xalign>0</xalign>
+		      <yalign>0.5</yalign>
+		      <xpad>0</xpad>
+		      <ypad>0</ypad>
 		      <child>
-			<left_attach>2</left_attach>
-			<right_attach>3</right_attach>
+			<left_attach>0</left_attach>
+			<right_attach>1</right_attach>
 			<top_attach>2</top_attach>
 			<bottom_attach>3</bottom_attach>
 			<xpad>0</xpad>
@@ -5569,10 +5573,6 @@ LOGIN OR USERAGENT
 			<xfill>True</xfill>
 			<yfill>False</yfill>
 		      </child>
-
-		      <widget>
-			<class>Placeholder</class>
-		      </widget>
 		    </widget>
 		  </widget>
 
@@ -5580,7 +5580,7 @@ LOGIN OR USERAGENT
 		    <class>GtkTable</class>
 		    <name>table22</name>
 		    <rows>3</rows>
-		    <columns>3</columns>
+		    <columns>7</columns>
 		    <homogeneous>False</homogeneous>
 		    <row_spacing>0</row_spacing>
 		    <column_spacing>0</column_spacing>
@@ -5631,32 +5631,6 @@ LOGIN OR USERAGENT
 			<right_attach>1</right_attach>
 			<top_attach>1</top_attach>
 			<bottom_attach>2</bottom_attach>
-			<xpad>0</xpad>
-			<ypad>0</ypad>
-			<xexpand>False</xexpand>
-			<yexpand>False</yexpand>
-			<xshrink>False</xshrink>
-			<yshrink>False</yshrink>
-			<xfill>True</xfill>
-			<yfill>False</yfill>
-		      </child>
-		    </widget>
-
-		    <widget>
-		      <class>GtkLabel</class>
-		      <name>label125</name>
-		      <label>Troll score</label>
-		      <justify>GTK_JUSTIFY_CENTER</justify>
-		      <wrap>False</wrap>
-		      <xalign>0</xalign>
-		      <yalign>0.5</yalign>
-		      <xpad>0</xpad>
-		      <ypad>0</ypad>
-		      <child>
-			<left_attach>0</left_attach>
-			<right_attach>1</right_attach>
-			<top_attach>2</top_attach>
-			<bottom_attach>3</bottom_attach>
 			<xpad>0</xpad>
 			<ypad>0</ypad>
 			<xexpand>False</xexpand>
@@ -5769,7 +5743,66 @@ LOGIN OR USERAGENT
 
 		    <widget>
 		      <class>GtkButton</class>
-		      <name>bt_pp_trollscore_color</name>
+		      <name>bt_pp_login_color</name>
+		      <width>50</width>
+		      <height>20</height>
+		      <tooltip>Color in normal (non transparent) mode</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>clicked</name>
+			<handler>on_bt_color_clicked</handler>
+			<last_modification_time>Sat, 24 Aug 2002 19:17:24 GMT</last_modification_time>
+		      </signal>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <child>
+			<left_attach>1</left_attach>
+			<right_attach>2</right_attach>
+			<top_attach>0</top_attach>
+			<bottom_attach>1</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+
+		      <widget>
+			<class>Placeholder</class>
+		      </widget>
+		    </widget>
+
+		    <widget>
+		      <class>GtkLabel</class>
+		      <name>label122</name>
+		      <label>Clocks</label>
+		      <justify>GTK_JUSTIFY_CENTER</justify>
+		      <wrap>False</wrap>
+		      <xalign>0</xalign>
+		      <yalign>0.5</yalign>
+		      <xpad>0</xpad>
+		      <ypad>0</ypad>
+		      <child>
+			<left_attach>0</left_attach>
+			<right_attach>1</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkButton</class>
+		      <name>bt_pp_clock_color</name>
 		      <width>50</width>
 		      <height>20</height>
 		      <tooltip>Color in normal (non transparent) mode</tooltip>
@@ -5802,7 +5835,7 @@ LOGIN OR USERAGENT
 
 		    <widget>
 		      <class>GtkButton</class>
-		      <name>bt_pp_trollscore_color_trans</name>
+		      <name>bt_pp_clock_color_trans</name>
 		      <width>50</width>
 		      <height>20</height>
 		      <tooltip>Color in transparent mode</tooltip>
@@ -5834,21 +5867,54 @@ LOGIN OR USERAGENT
 		    </widget>
 
 		    <widget>
-		      <class>GtkButton</class>
-		      <name>bt_pp_login_color</name>
-		      <width>50</width>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_login_style_bold</name>
+		      <width>16</width>
 		      <height>20</height>
-		      <tooltip>Color in normal (non transparent) mode</tooltip>
+		      <tooltip>Bold</tooltip>
 		      <can_focus>True</can_focus>
 		      <signal>
-			<name>clicked</name>
-			<handler>on_bt_color_clicked</handler>
-			<last_modification_time>Sat, 24 Aug 2002 19:17:24 GMT</last_modification_time>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
 		      </signal>
+		      <label>B</label>
 		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
 		      <child>
-			<left_attach>1</left_attach>
-			<right_attach>2</right_attach>
+			<left_attach>3</left_attach>
+			<right_attach>4</right_attach>
+			<top_attach>0</top_attach>
+			<bottom_attach>1</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>False</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_login_style_teletype</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Teletype</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>T</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>6</left_attach>
+			<right_attach>7</right_attach>
 			<top_attach>0</top_attach>
 			<bottom_attach>1</bottom_attach>
 			<xpad>0</xpad>
@@ -5860,10 +5926,316 @@ LOGIN OR USERAGENT
 			<xfill>True</xfill>
 			<yfill>False</yfill>
 		      </child>
+		    </widget>
 
-		      <widget>
-			<class>Placeholder</class>
-		      </widget>
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_ua_style_bold</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Bold</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>B</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>3</left_attach>
+			<right_attach>4</right_attach>
+			<top_attach>1</top_attach>
+			<bottom_attach>2</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_clock_style_bold</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Bold</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>B</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>3</left_attach>
+			<right_attach>4</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_ua_style_underlined</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Underlined</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>U</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>4</left_attach>
+			<right_attach>5</right_attach>
+			<top_attach>1</top_attach>
+			<bottom_attach>2</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_clock_style_underlined</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Underlined</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>U</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>4</left_attach>
+			<right_attach>5</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_ua_style_slanted</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Italic</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>I</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>5</left_attach>
+			<right_attach>6</right_attach>
+			<top_attach>1</top_attach>
+			<bottom_attach>2</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_clock_style_slanted</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Italic</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>I</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>5</left_attach>
+			<right_attach>6</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_ua_style_teletype</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Teletype</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>T</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>6</left_attach>
+			<right_attach>7</right_attach>
+			<top_attach>1</top_attach>
+			<bottom_attach>2</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_clock_style_teletype</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Teletype</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>T</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>6</left_attach>
+			<right_attach>7</right_attach>
+			<top_attach>2</top_attach>
+			<bottom_attach>3</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_login_style_underlined</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Underlined</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>U</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>4</left_attach>
+			<right_attach>5</right_attach>
+			<top_attach>0</top_attach>
+			<bottom_attach>1</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
+		    </widget>
+
+		    <widget>
+		      <class>GtkToggleButton</class>
+		      <name>togglebutton_pp_login_style_slanted</name>
+		      <width>16</width>
+		      <height>20</height>
+		      <tooltip>Italic</tooltip>
+		      <can_focus>True</can_focus>
+		      <signal>
+			<name>toggled</name>
+			<handler>on_checkbutton_toggled</handler>
+			<last_modification_time>Fri, 20 Dec 2002 14:40:42 GMT</last_modification_time>
+		      </signal>
+		      <label>I</label>
+		      <relief>GTK_RELIEF_NORMAL</relief>
+		      <active>False</active>
+		      <child>
+			<left_attach>5</left_attach>
+			<right_attach>6</right_attach>
+			<top_attach>0</top_attach>
+			<bottom_attach>1</bottom_attach>
+			<xpad>0</xpad>
+			<ypad>0</ypad>
+			<xexpand>False</xexpand>
+			<yexpand>False</yexpand>
+			<xshrink>False</xshrink>
+			<yshrink>False</yshrink>
+			<xfill>True</xfill>
+			<yfill>False</yfill>
+		      </child>
 		    </widget>
 		  </widget>
 
@@ -8201,6 +8573,7 @@ dillo %s &amp;
 			<class>GtkEntry</class>
 			<child_name>GtkCombo:entry</child_name>
 			<name>comboentry_browser</name>
+			<tooltip>be very careful if you want to use kstart</tooltip>
 			<can_focus>True</can_focus>
 			<signal>
 			  <name>changed</name>

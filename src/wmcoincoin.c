@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.70 2002/12/20 11:26:35 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.71 2002/12/20 15:49:53 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.71  2002/12/20 15:49:53  pouaite
+  prout 2.4.2b ?
+
   Revision 1.70  2002/12/20 11:26:35  pouaite
   deux trois conneries
 
@@ -657,8 +660,10 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
     }
     free(fname);    
     if (do_restore == 0) {
-      site_news_save_state(site);
-      site_msg_save_state(site);
+      if (site->prefs->check_news)
+	site_news_save_state(site);
+      if (site->prefs->check_messages)
+	site_msg_save_state(site);
     } else site_news_restore_state(site); 
   }
   unlink(get_wmcc_tmp_options_filename());

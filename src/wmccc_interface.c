@@ -293,22 +293,34 @@ create_main_win (void)
   GtkWidget *table21;
   GtkWidget *label120;
   GtkWidget *label121;
-  GtkWidget *label122;
   GtkWidget *bt_pp_bgcolor;
   GtkWidget *bt_pp_fgcolor;
   GtkWidget *bt_pp_fgcolor_trans;
-  GtkWidget *bt_pp_clock_color;
-  GtkWidget *bt_pp_clock_color_trans;
+  GtkWidget *bt_pp_trollscore_color_trans;
+  GtkWidget *bt_pp_trollscore_color;
+  GtkWidget *label125;
   GtkWidget *table22;
   GtkWidget *label123;
   GtkWidget *label124;
-  GtkWidget *label125;
   GtkWidget *bt_pp_login_color_trans;
   GtkWidget *bt_pp_ua_color;
   GtkWidget *bt_pp_ua_color_trans;
-  GtkWidget *bt_pp_trollscore_color;
-  GtkWidget *bt_pp_trollscore_color_trans;
   GtkWidget *bt_pp_login_color;
+  GtkWidget *label122;
+  GtkWidget *bt_pp_clock_color;
+  GtkWidget *bt_pp_clock_color_trans;
+  GtkWidget *togglebutton_pp_login_style_bold;
+  GtkWidget *togglebutton_pp_login_style_teletype;
+  GtkWidget *togglebutton_pp_ua_style_bold;
+  GtkWidget *togglebutton_pp_clock_style_bold;
+  GtkWidget *togglebutton_pp_ua_style_underlined;
+  GtkWidget *togglebutton_pp_clock_style_underlined;
+  GtkWidget *togglebutton_pp_ua_style_slanted;
+  GtkWidget *togglebutton_pp_clock_style_slanted;
+  GtkWidget *togglebutton_pp_ua_style_teletype;
+  GtkWidget *togglebutton_pp_clock_style_teletype;
+  GtkWidget *togglebutton_pp_login_style_underlined;
+  GtkWidget *togglebutton_pp_login_style_slanted;
   GtkWidget *table23;
   GtkWidget *label126;
   GtkWidget *label127;
@@ -2843,16 +2855,6 @@ create_main_win (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label121), 0, 0.5);
 
-  label122 = gtk_label_new ("Clocks");
-  gtk_widget_ref (label122);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "label122", label122,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label122);
-  gtk_table_attach (GTK_TABLE (table21), label122, 0, 1, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label122), 0, 0.5);
-
   bt_pp_bgcolor = gtk_button_new ();
   gtk_widget_ref (bt_pp_bgcolor);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_bgcolor", bt_pp_bgcolor,
@@ -2886,29 +2888,39 @@ create_main_win (void)
   gtk_widget_set_usize (bt_pp_fgcolor_trans, 50, 20);
   gtk_tooltips_set_tip (tooltips, bt_pp_fgcolor_trans, "Color in transparent mode", NULL);
 
-  bt_pp_clock_color = gtk_button_new ();
-  gtk_widget_ref (bt_pp_clock_color);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_clock_color", bt_pp_clock_color,
+  bt_pp_trollscore_color_trans = gtk_button_new ();
+  gtk_widget_ref (bt_pp_trollscore_color_trans);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_trollscore_color_trans", bt_pp_trollscore_color_trans,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_clock_color);
-  gtk_table_attach (GTK_TABLE (table21), bt_pp_clock_color, 1, 2, 2, 3,
+  gtk_widget_show (bt_pp_trollscore_color_trans);
+  gtk_table_attach (GTK_TABLE (table21), bt_pp_trollscore_color_trans, 2, 3, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_clock_color, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_clock_color, "Color in normal (non transparent) mode", NULL);
+  gtk_widget_set_usize (bt_pp_trollscore_color_trans, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_trollscore_color_trans, "Color in transparent mode", NULL);
 
-  bt_pp_clock_color_trans = gtk_button_new ();
-  gtk_widget_ref (bt_pp_clock_color_trans);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_clock_color_trans", bt_pp_clock_color_trans,
+  bt_pp_trollscore_color = gtk_button_new ();
+  gtk_widget_ref (bt_pp_trollscore_color);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_trollscore_color", bt_pp_trollscore_color,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_clock_color_trans);
-  gtk_table_attach (GTK_TABLE (table21), bt_pp_clock_color_trans, 2, 3, 2, 3,
+  gtk_widget_show (bt_pp_trollscore_color);
+  gtk_table_attach (GTK_TABLE (table21), bt_pp_trollscore_color, 1, 2, 2, 3,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_clock_color_trans, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_clock_color_trans, "Color in transparent mode", NULL);
+  gtk_widget_set_usize (bt_pp_trollscore_color, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_trollscore_color, "Color in normal (non transparent) mode", NULL);
 
-  table22 = gtk_table_new (3, 3, FALSE);
+  label125 = gtk_label_new ("Troll score");
+  gtk_widget_ref (label125);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "label125", label125,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label125);
+  gtk_table_attach (GTK_TABLE (table21), label125, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label125), 0, 0.5);
+
+  table22 = gtk_table_new (3, 7, FALSE);
   gtk_widget_ref (table22);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "table22", table22,
                             (GtkDestroyNotify) gtk_widget_unref);
@@ -2934,16 +2946,6 @@ create_main_win (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label124), 0, 0.5);
-
-  label125 = gtk_label_new ("Troll score");
-  gtk_widget_ref (label125);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "label125", label125,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (label125);
-  gtk_table_attach (GTK_TABLE (table22), label125, 0, 1, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label125), 0, 0.5);
 
   bt_pp_login_color_trans = gtk_button_new ();
   gtk_widget_ref (bt_pp_login_color_trans);
@@ -2978,28 +2980,6 @@ create_main_win (void)
   gtk_widget_set_usize (bt_pp_ua_color_trans, 50, 20);
   gtk_tooltips_set_tip (tooltips, bt_pp_ua_color_trans, "Color in transparent mode", NULL);
 
-  bt_pp_trollscore_color = gtk_button_new ();
-  gtk_widget_ref (bt_pp_trollscore_color);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_trollscore_color", bt_pp_trollscore_color,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_trollscore_color);
-  gtk_table_attach (GTK_TABLE (table22), bt_pp_trollscore_color, 1, 2, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_trollscore_color, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_trollscore_color, "Color in normal (non transparent) mode", NULL);
-
-  bt_pp_trollscore_color_trans = gtk_button_new ();
-  gtk_widget_ref (bt_pp_trollscore_color_trans);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_trollscore_color_trans", bt_pp_trollscore_color_trans,
-                            (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (bt_pp_trollscore_color_trans);
-  gtk_table_attach (GTK_TABLE (table22), bt_pp_trollscore_color_trans, 2, 3, 2, 3,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-  gtk_widget_set_usize (bt_pp_trollscore_color_trans, 50, 20);
-  gtk_tooltips_set_tip (tooltips, bt_pp_trollscore_color_trans, "Color in transparent mode", NULL);
-
   bt_pp_login_color = gtk_button_new ();
   gtk_widget_ref (bt_pp_login_color);
   gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_login_color", bt_pp_login_color,
@@ -3010,6 +2990,170 @@ create_main_win (void)
                     (GtkAttachOptions) (0), 0, 0);
   gtk_widget_set_usize (bt_pp_login_color, 50, 20);
   gtk_tooltips_set_tip (tooltips, bt_pp_login_color, "Color in normal (non transparent) mode", NULL);
+
+  label122 = gtk_label_new ("Clocks");
+  gtk_widget_ref (label122);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "label122", label122,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (label122);
+  gtk_table_attach (GTK_TABLE (table22), label122, 0, 1, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_misc_set_alignment (GTK_MISC (label122), 0, 0.5);
+
+  bt_pp_clock_color = gtk_button_new ();
+  gtk_widget_ref (bt_pp_clock_color);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_clock_color", bt_pp_clock_color,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (bt_pp_clock_color);
+  gtk_table_attach (GTK_TABLE (table22), bt_pp_clock_color, 1, 2, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (bt_pp_clock_color, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_clock_color, "Color in normal (non transparent) mode", NULL);
+
+  bt_pp_clock_color_trans = gtk_button_new ();
+  gtk_widget_ref (bt_pp_clock_color_trans);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "bt_pp_clock_color_trans", bt_pp_clock_color_trans,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (bt_pp_clock_color_trans);
+  gtk_table_attach (GTK_TABLE (table22), bt_pp_clock_color_trans, 2, 3, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (bt_pp_clock_color_trans, 50, 20);
+  gtk_tooltips_set_tip (tooltips, bt_pp_clock_color_trans, "Color in transparent mode", NULL);
+
+  togglebutton_pp_login_style_bold = gtk_toggle_button_new_with_label ("B");
+  gtk_widget_ref (togglebutton_pp_login_style_bold);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_login_style_bold", togglebutton_pp_login_style_bold,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_login_style_bold);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_login_style_bold, 3, 4, 0, 1,
+                    (GtkAttachOptions) (0),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_login_style_bold, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_login_style_bold, "Bold", NULL);
+
+  togglebutton_pp_login_style_teletype = gtk_toggle_button_new_with_label ("T");
+  gtk_widget_ref (togglebutton_pp_login_style_teletype);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_login_style_teletype", togglebutton_pp_login_style_teletype,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_login_style_teletype);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_login_style_teletype, 6, 7, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_login_style_teletype, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_login_style_teletype, "Teletype", NULL);
+
+  togglebutton_pp_ua_style_bold = gtk_toggle_button_new_with_label ("B");
+  gtk_widget_ref (togglebutton_pp_ua_style_bold);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_ua_style_bold", togglebutton_pp_ua_style_bold,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_ua_style_bold);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_ua_style_bold, 3, 4, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_ua_style_bold, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_ua_style_bold, "Bold", NULL);
+
+  togglebutton_pp_clock_style_bold = gtk_toggle_button_new_with_label ("B");
+  gtk_widget_ref (togglebutton_pp_clock_style_bold);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_clock_style_bold", togglebutton_pp_clock_style_bold,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_clock_style_bold);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_clock_style_bold, 3, 4, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_clock_style_bold, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_clock_style_bold, "Bold", NULL);
+
+  togglebutton_pp_ua_style_underlined = gtk_toggle_button_new_with_label ("U");
+  gtk_widget_ref (togglebutton_pp_ua_style_underlined);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_ua_style_underlined", togglebutton_pp_ua_style_underlined,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_ua_style_underlined);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_ua_style_underlined, 4, 5, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_ua_style_underlined, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_ua_style_underlined, "Underlined", NULL);
+
+  togglebutton_pp_clock_style_underlined = gtk_toggle_button_new_with_label ("U");
+  gtk_widget_ref (togglebutton_pp_clock_style_underlined);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_clock_style_underlined", togglebutton_pp_clock_style_underlined,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_clock_style_underlined);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_clock_style_underlined, 4, 5, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_clock_style_underlined, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_clock_style_underlined, "Underlined", NULL);
+
+  togglebutton_pp_ua_style_slanted = gtk_toggle_button_new_with_label ("I");
+  gtk_widget_ref (togglebutton_pp_ua_style_slanted);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_ua_style_slanted", togglebutton_pp_ua_style_slanted,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_ua_style_slanted);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_ua_style_slanted, 5, 6, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_ua_style_slanted, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_ua_style_slanted, "Italic", NULL);
+
+  togglebutton_pp_clock_style_slanted = gtk_toggle_button_new_with_label ("I");
+  gtk_widget_ref (togglebutton_pp_clock_style_slanted);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_clock_style_slanted", togglebutton_pp_clock_style_slanted,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_clock_style_slanted);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_clock_style_slanted, 5, 6, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_clock_style_slanted, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_clock_style_slanted, "Italic", NULL);
+
+  togglebutton_pp_ua_style_teletype = gtk_toggle_button_new_with_label ("T");
+  gtk_widget_ref (togglebutton_pp_ua_style_teletype);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_ua_style_teletype", togglebutton_pp_ua_style_teletype,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_ua_style_teletype);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_ua_style_teletype, 6, 7, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_ua_style_teletype, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_ua_style_teletype, "Teletype", NULL);
+
+  togglebutton_pp_clock_style_teletype = gtk_toggle_button_new_with_label ("T");
+  gtk_widget_ref (togglebutton_pp_clock_style_teletype);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_clock_style_teletype", togglebutton_pp_clock_style_teletype,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_clock_style_teletype);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_clock_style_teletype, 6, 7, 2, 3,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_clock_style_teletype, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_clock_style_teletype, "Teletype", NULL);
+
+  togglebutton_pp_login_style_underlined = gtk_toggle_button_new_with_label ("U");
+  gtk_widget_ref (togglebutton_pp_login_style_underlined);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_login_style_underlined", togglebutton_pp_login_style_underlined,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_login_style_underlined);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_login_style_underlined, 4, 5, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_login_style_underlined, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_login_style_underlined, "Underlined", NULL);
+
+  togglebutton_pp_login_style_slanted = gtk_toggle_button_new_with_label ("I");
+  gtk_widget_ref (togglebutton_pp_login_style_slanted);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "togglebutton_pp_login_style_slanted", togglebutton_pp_login_style_slanted,
+                            (GtkDestroyNotify) gtk_widget_unref);
+  gtk_widget_show (togglebutton_pp_login_style_slanted);
+  gtk_table_attach (GTK_TABLE (table22), togglebutton_pp_login_style_slanted, 5, 6, 0, 1,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+  gtk_widget_set_usize (togglebutton_pp_login_style_slanted, 16, 20);
+  gtk_tooltips_set_tip (tooltips, togglebutton_pp_login_style_slanted, "Italic", NULL);
 
   table23 = gtk_table_new (3, 3, FALSE);
   gtk_widget_ref (table23);
@@ -4057,6 +4201,7 @@ create_main_win (void)
   gtk_object_set_data_full (GTK_OBJECT (main_win), "comboentry_browser", comboentry_browser,
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (comboentry_browser);
+  gtk_tooltips_set_tip (tooltips, comboentry_browser, "be very careful if you want to use kstart", NULL);
   gtk_entry_set_text (GTK_ENTRY (comboentry_browser), "galeon -n %s &");
 
   label66 = gtk_label_new ("Main browser (left clic on an url)");
@@ -4810,10 +4955,10 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (bt_pp_fgcolor_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_clock_color), "clicked",
+  gtk_signal_connect (GTK_OBJECT (bt_pp_trollscore_color_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_clock_color_trans), "clicked",
+  gtk_signal_connect (GTK_OBJECT (bt_pp_trollscore_color), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (bt_pp_login_color_trans), "clicked",
@@ -4825,14 +4970,50 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (bt_pp_ua_color_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_trollscore_color), "clicked",
-                      GTK_SIGNAL_FUNC (on_bt_color_clicked),
-                      NULL);
-  gtk_signal_connect (GTK_OBJECT (bt_pp_trollscore_color_trans), "clicked",
-                      GTK_SIGNAL_FUNC (on_bt_color_clicked),
-                      NULL);
   gtk_signal_connect (GTK_OBJECT (bt_pp_login_color), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (bt_pp_clock_color), "clicked",
+                      GTK_SIGNAL_FUNC (on_bt_color_clicked),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (bt_pp_clock_color_trans), "clicked",
+                      GTK_SIGNAL_FUNC (on_bt_color_clicked),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_login_style_bold), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_login_style_teletype), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_ua_style_bold), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_clock_style_bold), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_ua_style_underlined), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_clock_style_underlined), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_ua_style_slanted), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_clock_style_slanted), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_ua_style_teletype), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_clock_style_teletype), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_login_style_underlined), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
+                      NULL);
+  gtk_signal_connect (GTK_OBJECT (togglebutton_pp_login_style_slanted), "toggled",
+                      GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (bt_pp_url_color), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),

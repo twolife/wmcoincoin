@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.14 2002/09/08 18:21:26 pouaite Exp $
+  rcsid=$Id: http.h,v 1.15 2002/12/20 15:49:51 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.15  2002/12/20 15:49:51  pouaite
+  prout 2.4.2b ?
+
   Revision 1.14  2002/09/08 18:21:26  pouaite
   microfix pou cygwin + compil
 
@@ -112,6 +115,7 @@ void http_request_send(HttpRequest *r);
 void http_request_close(HttpRequest *r);
 int  http_read(HttpRequest *r, char *buff, int max_len);
 int http_get_line(HttpRequest *r, char *s, int sz);
+int http_get_line_trim(HttpRequest *r, char *s, int sz);
 char *http_url_encode(const char *string);
 unsigned char *http_read_all(HttpRequest *r, char *what);
 #endif

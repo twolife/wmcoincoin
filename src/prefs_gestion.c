@@ -328,6 +328,21 @@ transp_copy_if_changed(TransparencyInfo *a, TransparencyInfo b) {
 }
 
 static int
+font_style_copy_if_changed(FontStyle *a, FontStyle b)
+{
+  if (a->underlined != b.underlined ||
+      a->slanted != b.slanted ||
+      a->bold != b.bold ||
+      a->teletype != b.teletype) {
+    a->underlined = b.underlined;
+    a->slanted = b.slanted;
+    a->bold = b.bold;
+    a->teletype = b.teletype;
+    return 1;
+  } else return 0;
+}
+
+static int
 key_list_copy_if_changed(KeyList **a, KeyList *b)
 {
   KeyList *hk;
@@ -428,6 +443,9 @@ string_list_copy_if_changed(char ***a, int *na, char * const *b, const int nb)
 
 #define KEY_LIST_COPY_IF_CHANGED(_a,_b,_x) (key_list_copy_if_changed(&_a._x, _b._x))
 #define G_KEY_LIST_COPY_IF_CHANGED(_x) KEY_LIST_COPY_IF_CHANGED(Prefs,newPrefs,_x)
+
+#define FONTSTYLE_COPY_IF_CHANGED(_a,_b,_x) (font_style_copy_if_changed(&_a._x, _b._x))
+#define SP_FONTSTYLE_COPY_IF_CHANGED(_x) FONTSTYLE_COPY_IF_CHANGED((*p),(*np),_x)
 
 #define STRING_LIST_COPY_IF_CHANGED(_a,_b,_x,_nb) (string_list_copy_if_changed(&_a._x, &_a._nb, \
    _b._x, _b._nb))
@@ -541,7 +559,7 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	G_STR_OPT_COPY_IF_CHANGED(pp_fortune_fn_family) +
         G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fn_size) +
         G_INT_OPT_COPY_IF_CHANGED(pp_fortune_bgcolor) +
-        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor) +
+        G_INT_OPT_COPY_IF_CHANGED(pp_fortune_fgcolor) +	
         G_INT_OPT_COPY_IF_CHANGED(pp_show_sec_mode) +
         G_INT_OPT_COPY_IF_CHANGED(pp_html_mode)) {
       rebuild_pinni = 1;
@@ -637,7 +655,10 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_login_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_url_color) +
 	  SP_BIC_OPT_COPY_IF_CHANGED(pp_visited_url_color) +
-	  SP_BIC_OPT_COPY_IF_CHANGED(pp_strike_color)) {
+	  SP_BIC_OPT_COPY_IF_CHANGED(pp_strike_color) +
+	  SP_FONTSTYLE_COPY_IF_CHANGED(pp_login_style) +
+	  SP_FONTSTYLE_COPY_IF_CHANGED(pp_ua_style) +
+	  SP_FONTSTYLE_COPY_IF_CHANGED(pp_clock_style)) {
 	redraw_pinni = 1;
       }
       if (SP_INT_OPT_COPY_IF_CHANGED(use_AM_PM)) {

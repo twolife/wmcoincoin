@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.14 2002/11/30 00:10:39 pouaite Exp $
+  rcsid=$Id: board.c,v 1.15 2002/12/20 15:49:51 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.15  2002/12/20 15:49:51  pouaite
+  prout 2.4.2b ?
+
   Revision 1.14  2002/11/30 00:10:39  pouaite
   2.4.2a
 
@@ -1358,7 +1361,7 @@ board_update(Board *board)
 
   if (r.error == 0) {
     int roll_back_cnt = 0;
-    while (http_get_line(&r, s, 16384) > 0 && r.error == 0) {
+    while (http_get_line_trim(&r, s, 16384) > 0 && r.error == 0) {
       if (strncasecmp(s,board_sign_posttime, strlen(board_sign_info)) == 0) {
 	char stimestamp[15];
 	char ua[BOARD_UA_MAX_LEN];
@@ -1410,8 +1413,7 @@ board_update(Board *board)
 	  }
 	}
 
-	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(info)"; goto err; }
-
+	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(info)"; goto err; }
 	if (strncasecmp(s, board_sign_info,strlen(board_sign_info))) { errmsg="infosign"; goto err; }
 	if (strncasecmp("</info>", s+strlen(s)-7,7)) { errmsg="</info>"; goto err; }
 	s[strlen(s)-7] = 0; /* vire le /info */
@@ -1419,7 +1421,7 @@ board_update(Board *board)
 
         convert_to_ascii(ua, p, BOARD_UA_MAX_LEN);
 
-	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(message)"; goto err; }
+	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(message)"; goto err; }
 	if (strncasecmp(s, board_sign_msg,strlen(board_sign_msg))) { errmsg="messagesign"; goto err; }
 	
 	//	myprintf("message: '%<YEL %s>'\n\n", s); 
@@ -1429,7 +1431,7 @@ board_update(Board *board)
 	  int l;
 	  l = strlen(s);
 	  while (strncasecmp("</message>", s+l-10,10)) {
-	    if (http_get_line(&r, s+l, 16384 - l) <= 0) {
+	    if (http_get_line_trim(&r, s+l, 16384 - l) <= 0) {
 	      errmsg="</message>"; goto err; 
 	    }
 	    l = strlen(s);
@@ -1454,7 +1456,7 @@ board_update(Board *board)
 	/* attention, les '&lt;' deviennent '\t<' et les '&amp;lt;' devienne '<' */
 	board_decode_message(board, msg, p);
 
-	if (http_get_line(&r, s, 16384) <= 0) { errmsg="httpgetline(login)"; goto err; }
+	if (http_get_line_trim(&r, s, 16384) <= 0) { errmsg="httpgetline(login)"; goto err; }
 	if (strncasecmp(s, board_sign_login,strlen(board_sign_login))) { errmsg="messagesign_login"; goto err; }
 	if (strncasecmp("</login>", s+strlen(s)-8,8)) { errmsg="</login>"; goto err; }
 

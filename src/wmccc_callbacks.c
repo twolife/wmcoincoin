@@ -811,3 +811,5 @@ on_button_reset_ua_clicked(GtkButton *button, gpointer user_data UNUSED) {
   gtk_entry_set_text(GTK_ENTRY(wg), default_ua);
 }
 
+
+

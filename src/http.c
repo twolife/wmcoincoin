@@ -868,6 +868,18 @@ http_get_line(HttpRequest *r, char *s, int sz)
   return SOCKET_ERROR;
 }
 
+int
+http_get_line_trim(HttpRequest *r, char *s, int sz) {
+  int err;
+  assert(sz); s[0] = 0;  
+  while ((err = http_get_line(r,s,sz)) > 0) {
+    str_trim(s);
+    if (s[0]) break;
+  }
+  if (err == SOCKET_ERROR) return err; 
+  else return strlen(s);
+}
+
 #define CRLF "\015\012"
 
 

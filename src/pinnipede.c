@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.86 2002/11/30 00:10:39 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.87 2002/12/20 15:49:51 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -231,6 +231,17 @@ pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr
   pw->attr = attr;
   pw->parent = parent;
   return pw;
+}
+
+static void
+pw_add_style(PostWord *pw, FontStyle *fs)
+{
+  if (fs && pw) {
+    if (fs->underlined) { pw->attr |= PWATTR_U; }
+    if (fs->slanted) { pw->attr |= PWATTR_IT; }
+    if (fs->bold) { pw->attr |= PWATTR_BD; }
+    if (fs->teletype) { pw->attr |= PWATTR_TT; }
+  }
 }
 
 /* remplace de maniere +/- aleatoire un mot par plop, grouik etc.. 
@@ -524,9 +535,10 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
     snprintf(s, PVTP_SZ, "%02d:%02d",mi->hmsf[0], mi->hmsf[1]);
   }
   
-  tmp = pw_create(s, PWATTR_TSTAMP | (pw == NULL ? 0 : PWATTR_HAS_INITIAL_SPACE), NULL, pv);
+  tmp = pw_create(s, PWATTR_TSTAMP | (pw == NULL ? 0 : PWATTR_HAS_INITIAL_SPACE), NULL, pv);  
   if (pw == NULL) { pv->first = tmp; } else { pw->next = tmp; }
   pw = tmp;
+  pw_add_style(pw, &board->site->prefs->pp_clock_style);
 
   if (nick_mode) {
     char *p;
@@ -557,12 +569,14 @@ pv_tmsgi_parse(Pinnipede *pp, Board *board, board_msg_info *mi, int with_seconds
       tmp = pw_create(p, (is_login == 0 ? PWATTR_NICK : PWATTR_LOGIN) | PWATTR_HAS_INITIAL_SPACE, NULL, pv);
       if (pw == NULL) { pv->first = tmp; } else { pw->next = tmp; }
       pw = tmp;
+      pw_add_style(pw, (is_login == 0 ? &board->site->prefs->pp_ua_style : &board->site->prefs->pp_login_style));
     }
 
     if ((nick_mode == 2 || nick_mode == 3) && strlen(mi->login)) {
       tmp = pw_create(mi->login, PWATTR_LOGIN | PWATTR_HAS_INITIAL_SPACE, NULL, pv);
       if (pw == NULL) { pv->first = tmp; } else { pw->next = tmp; }
       pw = tmp;      
+      pw_add_style(pw, &board->site->prefs->pp_login_style);
     }
   }
 
@@ -2308,35 +2322,38 @@ pp_balloon_help(Dock *dock, int x, int y)
   //	       0, 0, pp->win_width, pp->win_height,
   balloon_show(dock, pp->win_real_xpos + x, pp->win_real_ypos + y, 40, 40, 
 	       _("<p align=center> Welcome to the <b><font color=#008000>Pinnipede Teletype</font></b></p>"
-	       "This window was specially designed by the greatest experts to offer you "
-	       "optimal mouling conditions.<br>"
-	       "Here is a summary of its functionalities:<br><br>"
-	       "<b>To scroll</b>, use the mouse wheel, or 'drag' "
-	       "while clicking with the right button. "
-	       "Scrolling is automatic when a new message appears.<br><br>"
-	       "To bring the <b>button bar</b> or make it disappear, use the right clic. "
-	       "The two first buttons allow "
-	       "to scroll, faster or slower.<br><br>"
-	       "The available actions on the <b>clock</b> near each message are:<br>"
-	       "<font color=blue>Left Click</font><tab>: opens the palmipede editor, and inserts a reference to the message<br>"
-	       "<font color=blue>Middle Click</font><tab>: copies the contents of the message to the clipboard<br>"
-	       "<font color=blue>Right Click</font><tab>: copies the useragent to the clipboard<br><br>"
-	       "If you click on an <b>[url]</b>, the result will be:<br>"
-	       "<font color=blue>Left Click</font><tab>: opens the url in the external browser (if it has been "
-	       "defined in the ~/.wmcoincoin/options file). <b>Warning</b>, even if precautions have been taken"
-	       "since the inominious wmcoincoin 2.0, this kind of things is generally considered as a security weakness...<br>"
-	       "<font color=blue>Middle Click</font><tab>: opens the url with the second browser (the http.browser2 option)<br>"
-	       "<font color=blue>Right Click</font><tab>: copies the url to the clipboard<br><br>"
-	       "When the pointer is over a <b>reference to a previous post</b>, it will be underlined. If you click:<br>"
-	       "<font color=blue>Left Click</font><tab>: brings the referenced message<br>"
-	       "<font color=blue>Right Click</font><tab>: copies the reference to the clipboard (okay, it's not very useful...)<br><br>"
-	       "Some basic filtering is available with the help of <font color=blue>Ctrl+Left Click</font> "
-	       "on a word, login, useragent... Use the blue button to cancel.<br> If you want to emphasize the messages of a personne, or those containing a word, <font color=blue>Shift+Left Click</font> will be your friend<br>"
-	       "<b>New:</b> someone is annoying you ? You have launched a troll that you don't control ? Then plopify the evil with a <font color=blue>Shift+Right Click</font> on his login/useragent<br><br>"
-	       "You can take a 'shot' of the board (the so-called seafood tray), with <font color=blue>Ctrl+Middle Click</font><br><br>"
-	       "To understand the display of the <b>useragents</b> activated by the dark red button (about fifteen pixels on your left), you can see "
-	       "the <tt>~/.wmcoincoin/useragents</tt><br> file (hint: the button has 5 different positions)<br><br>"
-	       "The pinnipede teletype wishes you a nice mouling."), 500);
+		 "This window was specially designed by the greatest experts to offer you "
+		 "optimal mouling conditions.<br>"
+		 "Here is a summary of its functionalities:<br><br>"
+		 "<b>To scroll</b>, use the mouse wheel, or 'drag' "
+		 "while clicking with the middle button. "
+		 "Scrolling is automatic when a new message appears.<br><br>"
+		 "To bring the <b>button bar</b> or make it disappear, use the middle clic. "
+		 "<br><br>"
+		 "The available actions on the <b>clock</b> near each message are:<br>"
+		 "<font color=blue>Left Click</font><tab>: opens the palmipede editor, and inserts a reference to the message<br>"
+		 "If you click on an <b>[url]</b>, the result will be:<br>"
+		 "<font color=blue>Left Click</font><tab>: opens the url in the external browser (if it has been "
+		 "defined in the ~/.wmcoincoin/options file). <b>Warning</b>, even if precautions have been taken"
+		 "since the inominious wmcoincoin 2.0, this kind of things is generally considered as a security weakness...<br>"
+		 "<font color=blue>Middle Click</font><tab>: opens the url with the second browser (the http.browser2 option)<br>"
+		 "When the pointer is over a <b>reference to a previous post</b>, it will be underlined. If you click:<br>"
+		 "<font color=blue>Left Click</font><tab>: brings the referenced message<br>"
+		 "You can use the right clic everywhere to bring a popup menu, which gives your more choices, such as "
+		 "putting a message in the boitakon, plopifying, filtering, copying in clipboard etc.<br>"
+		 "Some basic filtering is available with the help of <font color=blue>Right Click</font> "
+		 "on a word, login, useragent... Use the blue button to cancel the filter.<br>"
+		 "If you want to emphasize the messages of a given user, or those containing a given word, use the "
+		 " emphasize entry of the contextual menu.<br>"
+		 "Someone is annoying you ? You have launched a troll that you don't control ? Then <b>plopify</b> the "
+		 "evil with a <font color=blue>Right Click/Plopify</font> (or put in boitakon) on his login/useragent. "
+		 "You can later remove the boitakonned message from the boitakon with a right clic on the left-most gray "
+		 "button.<br><br>"
+		 "You can take a 'shot' of the board (the so-called seafood tray), with <font color=blue>Ctrl+Middle Click</font><br><br>"
+		 "In order to understand the display of the <b>useragents</b> activated by the dark red button "
+		 "(about fifteen pixels on your left), you can see "
+		 "the <tt>~/.wmcoincoin/useragents</tt><br> file (hint: the button has 5 different positions)<br><br>"
+		 "The pinnipede teletype wishes you a nice mouling."), 500);
 }
 
 
