@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.16 2002/03/19 09:55:58 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.17 2002/03/28 00:06:15 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.17  2002/03/28 00:06:15  pouaite
+  le clic sur un login ouvre le palmipede en remplissant '/msg lelogin '
+
   Revision 1.16  2002/03/19 09:55:58  pouaite
   bugfixes compilation
 
@@ -432,7 +435,7 @@ editw_erase_selection(EditW *ew)
 }
 
 /* efface tout le buffer si il n'y a pas de selection active */
-static void
+void
 editw_erase(EditW *ew)
 {
   if (editw_has_selection(ew)) {

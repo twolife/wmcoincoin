@@ -662,6 +662,7 @@ void editw_action(Dock *dock, EditW *ew);
 int editw_ismapped(EditW *ew);
 void editw_balloon_test(Dock *dock, EditW *ew, int x, int y);
 void editw_refresh(Dock *dock, EditW *ew);
+void editw_erase(EditW *ew);
 int editw_insert_string(EditW *ew, const unsigned char *s); /* utilise par le pinnipede */
 void editw_move_end_of_line(EditW *ew, int shift_move); /* utilise par le pinnipede */
 

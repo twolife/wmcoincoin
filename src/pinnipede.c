@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.40 2002/03/27 20:45:06 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.41 2002/03/28 00:06:15 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.41  2002/03/28 00:06:15  pouaite
+  le clic sur un login ouvre le palmipede en remplissant '/msg lelogin '
+
   Revision 1.40  2002/03/27 20:45:06  pouaite
   deuxième vague de bugfix
 
@@ -3357,7 +3360,20 @@ pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
 	pp_refresh(dock, trib, pp->win, NULL);
 #endif
       }
-    } 
+    } else if (pw->attr & PWATTR_LOGIN) {
+      char s[60];
+      snprintf(s, 60, "/msg %s ", pw->w);
+      if (editw_ismapped(dock->editw) == 0) {
+	strncpy(dock->coin_coin_message, s, MESSAGE_MAX_LEN);
+	dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
+	editw_show(dock, dock->editw, 0);
+	editw_move_end_of_line(dock->editw, 0);
+      } else {
+	editw_erase(dock->editw);editw_erase(dock->editw); /* deux fois pour être sur de tout effacer (un peu gruik mais j'ai la flemme) */
+	editw_insert_string(dock->editw, s);
+      }
+      editw_refresh(dock, dock->editw);
+    }
   } /* if (pw) */  
 }
 
