@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.54 2002/04/15 19:56:38 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.55 2002/04/22 13:03:03 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.55  2002/04/22 13:03:03  pouaite
+  un ptit bug tout naze dans le survol des horloges (fantomes)
+
   Revision 1.54  2002/04/15 19:56:38  pouaite
   v2.3.7a
 
@@ -2526,6 +2529,7 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
       }
       if (trouve) break;
     }
+    pw = NULL; /* raa le bug tout naze */
   }
   return pw;
 }
