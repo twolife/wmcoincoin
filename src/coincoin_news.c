@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.7 2001/12/17 16:01:33 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.8 2002/01/10 09:31:40 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.8  2002/01/10 09:31:40  pouaite
+  j'avais oublie un fichier.. dernier morceau du pacth de glandium...
+
   Revision 1.7  2001/12/17 16:01:33  pouaite
   fix suite à un petit changement dans le /backend.rdf
 
@@ -51,6 +54,9 @@
 #include "http.h"
 #include "regexp.h"
 
+/* C'est sale, mais j'ai pas envie de la triballer dans toutes les fonctions
+   - n'est accédé que dans ce fichier */
+char news_last_modified[512] = "";
 
 /* fonction a-la-con: lecture de toutes les données en mémoire.. */
 unsigned char *
@@ -374,7 +380,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     snprintf(URL, 512, "%s%s",n->url, Prefs.path_end_news_url);
     BLAHBLAH(1,printf("get %s\n",URL));
     fd = http_get(Prefs.site_root, Prefs.site_port, URL, 
-		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT);
+		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,NULL);
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", getenv("HOME"), n->id);
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", URL);
@@ -669,7 +675,7 @@ dlfp_updatenews(DLFP *dlfp)
   if ((Prefs.debug & 2) == 0) {
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
     fd =  http_get(Prefs.site_root, Prefs.site_port, path, 
-		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT);
+		   Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT,news_last_modified);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
@@ -976,7 +982,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/myposts.php3", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
@@ -1053,14 +1059,14 @@ dlfp_yc_update_comments(DLFP *dlfp)
       if (p != NULL)
 	regexp_extract(p, pat_votes, &(dlfp->votes_max), &(dlfp->votes_cur));
     } else {
-      printf("mmmh, bizarre la page myposts.php3 ... pas de champ 'loginfo' ..\n");
+      printf("mmmh, bizarre la page '%s' ... pas de champ 'loginfo' ..\n", Prefs.path_myposts);
     }
 
-    p = strstr(s,"myposts.php3?order=news_id"); // on se positionne bien...
+    p = strstr(s,"?order=news_id"); // on se positionne bien...
     if (p == NULL) {
       if (strstr(s, "Vous n'avez encore rien posté ???") != NULL)
 	goto ouups1;
-      myprintf("myposts.php3: ouuups, le cookie est-il encore valide ??\n");
+      myprintf("'%s': ouuups, le cookie est-il encore valide ??\n", Prefs.path_myposts);
       err = 2; goto ouups1;
     }
     
@@ -1143,8 +1149,8 @@ dlfp_yc_update_comments(DLFP *dlfp)
 	BLAHBLAH(1,printf("commentaire %d, nid=%d, nrep=%d, modified=%d,old=%d\n",
 	       c->com_id, c->news_id, c->nb_answers, c->modified, c->old));
 	if (c->old) {
-	  BLAHBLAH(1,myprintf("DESTRUCTION DU COMMENTAIRE %d (trop vieux, n'est plus liste dans myposts.php3)\n",
-			      c->com_id));
+	  BLAHBLAH(1,myprintf("DESTRUCTION DU COMMENTAIRE %d (trop vieux, n'est plus liste dans '%s')\n",
+			      c->com_id, Prefs.path_myposts));
 	  n = c->next;
 	  dlfp_yc_delete_comment(dlfp,c->com_id);
 	  c = n;
@@ -1272,7 +1278,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
       snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie); 
     } else cookie[0] = 0;
     fd =  http_get_with_cookie(Prefs.site_root, Prefs.site_port, path, 
-			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie);
+			       Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, cookie, NULL);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
     myprintf("DEBUG: ouverture de %<RED %s>\n", path);
