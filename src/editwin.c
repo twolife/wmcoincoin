@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.3 2001/12/16 16:46:12 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.3  2001/12/16 16:46:12  pouaite
+  Clippouille joins C0IN C0IN
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -43,6 +46,7 @@
 #include "coin_util.h"
 #include "coincoin.h"
 #include "../xpms/editwin_minib.xpm"
+#include "../xpms/clippy.xpm"
 
 #include "spell_coin.h" 
 
@@ -156,6 +160,9 @@ struct _EditW {
 
   /* utilise pour le undo */
   EditWCommandClass last_command;
+
+  Pixmap clippy_pixmap;
+  int clippy_w, clippy_h;
 };
 
 #define IS_SEP(c,nc) (((c) <=' ') || ((c)=='.') || ((c)==',')  || \
@@ -1335,7 +1342,16 @@ editw_build(Dock *dock)
 
     assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
 				   editwin_minib_xpm, &ew->minipix, NULL, NULL) == XpmSuccess);
+
+    
+    snprintf(s_xpm_bgcolor, 30, " \tc #%06X", (255 << 16) + (231 << 8) + 186);
+    clippy_xpm[1] = s_xpm_bgcolor;
+    assert(XpmCreatePixmapFromData(dock->display, dock->rootwin, 
+				   clippy_xpm, &ew->clippy_pixmap, NULL, NULL) == XpmSuccess);
+
+    sscanf(clippy_xpm[0], "%d %d", &ew->clippy_w, &ew->clippy_h);
   }
+
 
   {
     static int bt_x[NB_MINIBT] = { 0, 12, 27, 41, 55, 69, 83, 97, 111};
@@ -2027,6 +2043,19 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de poster un jeu de mot bien pourri",
     "demander où est la FAQ de la tribune",
     "de signaler que WindowMaker 0.70.0 is out!",
+    "de lancer un troll sur les user-agents",
+    "d'annoncer avec émotion que vous venez de passer moine",
+    "de tenter un concours de trollomètre",
+    "de convaincre les moules de lancer un manual DDOS",
+    "de poster un lien sur un forum externe (hard-war, aufeminin...)",
+    "d'arrêter de mouler sur la tribune",
+    "de lancer un débat sur pbpg",
+    "de demander pourquoi wmcoincoin n'affiche pas la tribune",
+    "de demander à la cantonnade \"qu'est ce qu'une moule ?\"",
+    "de dire que la tribune hard-war est revenue",
+    "de donner la météo",
+    "de dire qu'aucune news n'a été modérée depuis bien longtemps",
+    "de demander ce que peuvent bien faire les modérateurs",
     NULL
   };
   char txt[512];
@@ -2041,9 +2070,15 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
   snprintf(txt, 512, "<p align=center><b>wmCoinCoin Agent</b></p>"
 	   "mmmh, j'ai l'impression que vous ne savez pas quoi dire, alors si je puis me permettre, "
 	   "je vous suggère <font color=blue>%s</font>", suggestion[i]);
-  balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 15000,
-	       EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
-	       ew->buff_num == 0 ? txt : "Entrez le useragent");
+  if (ew->buff_num == 0) {
+    balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 150,
+			    EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
+			    txt, ew->clippy_pixmap, ew->clippy_w+8, ew->clippy_h);
+  } else {
+    balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 15000,
+		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
+		 "Entrez le useragent");
+  }
 
   s[BT_CLOSE] = "Replier le palmipede<p>raccourci: <b>escape</b>";
   s[BT_CHANGE] = (ew->buff_num == 0 ? "Editer le useragent" : "Editer le message<p>raccourci: <b>Tab</b>");

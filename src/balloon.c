@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.3 2001/12/16 16:46:12 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.3  2001/12/16 16:46:12  pouaite
+  Clippouille joins C0IN C0IN
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -42,6 +45,9 @@ struct _Balloon {
   int mapped;
   int scr_width, scr_height;
   unsigned long bgpixel;
+
+  Pixmap imgpix; /* affichage d'un pixmap à gauche (pour le clippy dans editwin ! ) */
+  int imgpix_w, imgpix_h;
 };
 
 
@@ -83,6 +89,7 @@ balloon_build(Dock *dock)
   //  XSetFont(display, b->gc, tw->fn_base->fid);
   b->monoGC = None;
   b->mapped = 0;
+  b->imgpix = None; b->imgpix_w = b->imgpix_h = 0;
 
   b->scr_width = WidthOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
   b->scr_height = HeightOfScreen(XScreenOfDisplay(dock->display, dock->screennum));
@@ -181,6 +188,8 @@ balloon_hide(Dock *dock)
     XUnmapWindow(dock->display, b->win);
     assert(b->pix);
     XFreePixmap(dock->display, b->pix); b->pix = None;
+
+    b->imgpix = None; b->imgpix_w = b->imgpix_h = 0;
   }
 }
 
@@ -211,8 +220,10 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
 
   //  printf("ballon width=%d, h=%d\n", width, height);
 
+  height = MAX(height, b->imgpix_h);
+
   height += 7;
-  width += 10;
+  width += 10 + b->imgpix_w;
   //h = 1;//height;
   //w = 1;//width;
   
@@ -248,7 +259,11 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   
   balloon_makepixmap(dock, b, width, height, side, &b->pix, &mask);
 
-  picohtml_render(dock, b->ph, b->pix, dock->NormalGC, 5, 3+ty);
+  picohtml_render(dock, b->ph, b->pix, dock->NormalGC, 5+b->imgpix_w, 3+ty);
+
+  if (b->imgpix != None) {
+    XCopyArea(dock->display, b->imgpix, b->pix, dock->NormalGC, 0, 0, b->imgpix_w, b->imgpix_h, 3, 3);
+  }
 
   XSetWindowBackgroundPixmap(dock->display, b->win, b->pix);
 
@@ -260,6 +275,16 @@ balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidt
   XMapRaised(dock->display, b->win);
     
   b->mapped = 1;
+}
+
+void
+balloon_show_with_image(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth, Pixmap image, int img_w, int img_h)
+{
+  Balloon *b = dock->balloon;
+  b->imgpix = image;
+  b->imgpix_w = img_w;
+  b->imgpix_h = img_h;
+  balloon_show(dock,x,y,h,w,text,bwidth);
 }
 
 int 
@@ -293,6 +318,17 @@ balloon_test(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int
   if (dock->mouse_cnt >= (bcnt)) {
     if (IS_INSIDE(x,y,(bx),(by),(bx)+(bw)-1,(by)+(bh)-1)) {
       balloon_show(dock, winx+(bx), winy+(by), (bw), (bh), (btxt), 300);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+int
+balloon_test_with_image(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt, Pixmap image, int img_w, int img_h) {
+  if (dock->mouse_cnt >= (bcnt)) {
+    if (IS_INSIDE(x,y,(bx),(by),(bx)+(bw)-1,(by)+(bh)-1)) {
+      balloon_show_with_image(dock, winx+(bx), winy+(by), (bw), (bh), (btxt), 300, image, img_w, img_h);
       return 1;
     }
   }

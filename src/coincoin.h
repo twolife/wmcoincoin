@@ -543,10 +543,12 @@ void editw_cb_handle_selectionrequest(Dock *dock, XSelectionRequestEvent *rq);
 void balloon_build(Dock *dock);
 void balloon_hide(Dock *dock);
 void balloon_show(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth);
+void balloon_show_with_image(Dock *dock, int x, int y, int h, int w, const char *text, int bwidth, Pixmap image, int img_w, int img_h);
 int balloon_ismapped(Dock *dock);
 void balloon_check_event(Dock *dock, XEvent *event);
 
 int balloon_test(Dock *dock, int x, int y, int win_xpos, int win_ypos, int bcnt, int bx, int by, int bw, int bh, const char *btxt);
+int balloon_test_with_image(Dock *dock, int x, int y, int winx, int winy, int bcnt, int bx, int by, int bw, int bh, const char *btxt, Pixmap image, int img_w, int img_h);
 
 /* msgbox.c */
 void msgbox_dispatch_event(Dock *dock, XEvent *event);

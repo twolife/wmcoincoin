@@ -1,4 +1,9 @@
-2001-12-16  pommier julien  <jul@dr.com>
+2001-12-16  pouaite  <jul@dr.com>
+
+	* src/editwin.c: ajout des suggestions proposées par Amaury.
+	Clippy joins C0IN C0IN !
+
+2001-12-16  pouaite <jul@dr.com>
 
 	* src/pinnipede.c (filter_msg_info): ajout du filtrage des
 	messages, et meilleure gestion des posts multiples (attention,
@@ -14,6 +19,8 @@
 	* src/spell_coin.c : Patch nickel chrome qui elimine le clignotement 
 	lors de la frappe
 
+--------------------------v2.3.1--------------------------------------------
+	
 2001-12-06  pouaite  <jul@dr.com>
 
 	* src/wmcoincoin.c (dock_refresh_horloge_mode): patch de glandium

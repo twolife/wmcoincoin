@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.3 2001/12/02 20:29:31 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.4 2001/12/16 16:46:12 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.4  2001/12/16 16:46:12  pouaite
+##   Clippouille joins C0IN C0IN
+##
 ##   Revision 1.3  2001/12/02 20:29:31  pouaite
 ##   rajout de 'options' et 'useragents' dans le Makefile.am ...
 ##
@@ -10,7 +13,12 @@
 ## Process this file with automake to produce Makefile.in
 
 SUBDIRS = src doc
-EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm xpms/coin.xpm  xpms/leds.h  xpms/fleche.xpm xpms/leds.xcf xpms/porte.xcf xpms/pp_minib.xpm xpms/weekday.xpm xpms/month.xpm xpms/clock.xpm xpms/date.xpm xpms/led.xpm ./wmcoincoin.spec ./wmpanpan ./config.sub ./config.guess ./useragents ./options
+EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
+             xpms/coin.xpm  xpms/leds.h  xpms/fleche.xpm xpms/leds.xcf \
+             xpms/porte.xcf xpms/pp_minib.xpm xpms/weekday.xpm xpms/month.xpm \
+             xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm \
+             ./wmcoincoin.spec ./wmpanpan ./config.sub ./config.guess \
+             ./useragents ./options
 
 rpm-dist: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz $(HOME)/rpm/SOURCES

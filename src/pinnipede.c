@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.3 2001/12/16 01:43:33 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.4 2001/12/16 16:46:12 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.4  2001/12/16 16:46:12  pouaite
+  Clippouille joins C0IN C0IN
+
   Revision 1.3  2001/12/16 01:43:33  pouaite
   filtrage des posts, meilleure gestion des posts multiples
 
@@ -2198,7 +2201,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  } else {
 	    char s[60];
 	    snprintf(s, 60, "%s ", s_ts);
-	    editw_insert_string(dock->editw, s_ts);
+	    editw_insert_string(dock->editw, s);
 	    editw_refresh(dock, dock->editw);
 	  }
 	} else {
