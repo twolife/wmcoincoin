@@ -1,4 +1,9 @@
-2002-01-15  pouaite  <jul@dr.com>
+2002-01-16  pouaite  <c0in@altern.org>
+
+	* src/dock.c, src/wmcoincoin.c, src/useragents_file.c, src/coincoin.h
+	wmcoincoin.c a été splitté en trois fichiers
+
+2002-01-15  pouaite  <c0in@altern.org>
 
 	* nouvelles options 'palmipede.userlogin: <votre login dlfp>' et
 	'pinnipede.my_msg_bgcolor: couleurRGB' ces deux options ont pour
