@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.33 2002/08/18 20:52:15 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.34 2002/08/19 00:21:29 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.34  2002/08/19 00:21:29  pouaite
+#%  "troll du soir, espoir"
+#%
 #%  Revision 1.33  2002/08/18 20:52:15  pouaite
 #%  les locales des sites fonctionnent (c bon pour les news)
 #%
@@ -446,8 +449,8 @@ board.miniua_rule:  ua:".*[Bb][Oo][Tt].*"  => ua:="un bot!",symb:="circ",color:=
 board.miniua_rule:  ua:".*[Dd][Aa][Ee].*"  => ua:="dae",symb:="cross",color:="#00ff00"
 board.miniua_rule: ua:"Mozilla/4.73 \(compatible; MSIE 5.0; BeOS R5.0.4;I\) Opera 3.6" => ua:="mmu"
 
-board.miniua_rule:  ua:"py[Cc].*/([0-9]\.[0-9.]+)" => ua="pyc²/\1"
-board.miniua_rule:  ua:"wm[Cc].*/([0-9]\.[0-9.]+)" => ua="wmc²/\1"
+board.miniua_rule:  ua:"py[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w+)" => ua="pyc²/\1"
+board.miniua_rule:  ua:"wm[Cc]\w*[/ ]?([0-9]\.[0-9.]+\w+)" => ua="wmc²/\1"
 
 ### Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1b) Gecko/20020
 board.miniua_rule:  ua:"Mozilla/5.0.* Linux ([^;]+).*; rv:([[:alnum:].]+)\)" => ua:="Moz\2/Lnx\1"

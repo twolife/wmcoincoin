@@ -59,6 +59,8 @@ struct _PostVisual {
 			  =2, le message est plopifié (mots remplacés par plop, grouik..)
 			  =3, le message est superplopifié (message remplacé par 'plop')
 			*/
+  int    new_decnt; /* compteur decrementé jusqu'à zéro pour les messages qui viennent d'être recus
+		       (pour fait une animation ) */
   struct _PostVisual *next;
 };
 

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.50 2002/08/18 20:52:15 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.51 2002/08/19 00:21:29 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.51  2002/08/19 00:21:29  pouaite
+  "troll du soir, espoir"
+
   Revision 1.50  2002/08/18 20:52:15  pouaite
   les locales des sites fonctionnent (c bon pour les news)
 
@@ -822,6 +825,7 @@ void X_loop()
   if (timer_cnt % 5 == 0) {
     pp_animate(dock);   /* omg ! il bouge ! */
   }
+  pp_hilight_newest_messages(dock); /* lui aussi ! */
 
   if (timer_cnt % 1 == 0) {
     if (dock->horloge_mode == 0) {
@@ -1505,7 +1509,7 @@ void *Net_loop (Dock *dock) {
     ALLOW_X_LOOP;
     for (site = dock->sites->list; site; site = site->next) {
       site->news_refresh_cnt++;
-      site->board->board_refresh_cnt++;
+      if (site->board) site->board->board_refresh_cnt++;
     }
     temps_depuis_dernier_event++;
     save_state_cnt++;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.68 2002/08/18 19:00:28 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.69 2002/08/19 00:21:29 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.69  2002/08/19 00:21:29  pouaite
+  "troll du soir, espoir"
+
   Revision 1.68  2002/08/18 19:00:28  pouaite
   plop
 
@@ -647,6 +650,17 @@ pv_tmsgi_parse(Board *board, board_msg_info *mi, int with_seconds, int html_mode
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
 
+  pv->new_decnt = MAX((time(NULL) - (pv->tstamp + board->time_shift)),0);
+  //printf("new_decnt = %d\n", pv->new_decnt);
+  if (pv->new_decnt < 20) {
+    //    static int i = 1;
+
+    //    if (i == 1) {
+      myprintf("id=%d %<YEL set decnt %d>\n", id_type_lid(pv->id), 20-pv->new_decnt);
+      pv->new_decnt = ((20-pv->new_decnt) * (1000/WMCC_TIMER_DELAY_MS));
+      //    } else pv->new_decnt = 0;
+      //    i = 0;
+  } else pv->new_decnt = 0;
   
   pv->sub_tstamp = mi->sub_timestamp;
   pv->is_my_message = mi->is_my_message;
@@ -1593,6 +1607,97 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
   }
 
   pp_widgets_refresh(dock);
+}
+
+#define MAXAGE 30
+void
+pp_hilight_newest_messages(Dock *dock)
+{
+  Pinnipede *pp = dock->pinnipede;
+  
+  int l = 0;
+
+
+
+
+  return;
+
+
+  if (pp->lignes == NULL) return;
+  while (l < pp->nb_lignes) {
+    PostVisual *pv;
+    if (pp->lignes[l] == NULL) { l++; continue; }
+    pv = pp->lignes[l]->parent;
+    if (pv->new_decnt) {
+      int rw,rh,rx0,ry0;
+      int spot;
+      pv->new_decnt--;
+      rx0 = 2; ry0 = LINEY0(l-pp->lignes[l]->ligne) - pp->fn_h;
+      rw = pp->win_width - 2*rx0 - (pp->sc ? SC_W : 0);
+      rh = pv->nblig * pp->fn_h;
+
+      //myprintf("id=%d %<yel update decnt %d>\n", id_type_lid(pv->id), pv->new_decnt);
+
+
+      for (spot = 0; spot < 10; spot++) {
+	int pos[2], x[3], y[3];
+	int side[2];
+	int halfperim, j;
+	/*
+
+	  _______0_______
+         |               | 
+       3 |_______________|1
+                 2
+	 */
+
+	unsigned long pix;
+	halfperim = (rw-2+rh);
+	pos[0] = ((spot * 2* halfperim)/10 + 100000 - pv->new_decnt);
+	pos[1] = pos[0] + 200;
+
+	for (j=0; j < 2; j++) {
+	  pos[j] %= 2*halfperim;
+	  side[j] = ((pos[j] / (halfperim)) % 2)*2 + ((pos[j] % (halfperim)) < rw-1 ? 0 : 1);
+	  switch (side[j]) {
+	  case 0: x[j] = rx0 + pos[j]; y[j] = ry0; break;
+	  case 1: x[j] = rx0 + rw-1; y[j] = ry0+(pos[j]-rw+1); break;
+	  case 2: x[j] = rx0 + rw-1 - (pos[j]-halfperim); y[j] = ry0+rh-1; break;
+	  case 3: x[j] = rx0; y[j] = ry0+rh - (pos[j]-halfperim-rw)-2; break;
+	  }
+	}
+	
+	j = 0;
+	//	printf("j=%d, halfperim=%d, rw=%d, rh=%d, pos=%4d side =%d x=%3d, y=%3d\n", j, halfperim, rw, rh, pos[j], side[j], x[j], y[j]-ry0); 
+
+	/*
+	if (side0 != side1) {
+	  switch (side0) {
+	  case 0: x[2] = rx0 + rw-1; y[2] = ry0; break;
+	  case 1: x[2] = rx0 + rw-1; y[2] = ry0+rh-1; break;
+	  case 2: x[2] = rx0; y[2] = ry0+rh-1; break;
+	  case 3: x[2] = rx0; y[2] = ry0; break;
+	  }
+	  XDrawLine(dock->display, pp->win, dock->NormalGC, x0, y0, x[2],y[2]);
+	  XDrawLine(dock->display, pp->win, dock->NormalGC, x[2], y[2], x1,y1);
+	} else {
+	  XDrawLine(dock->display, pp->win, dock->NormalGC, x0, y0, x1,y1);
+	}
+	*/
+	pix = RGB2PIXEL(0xff,0,0);
+	XSetForeground(dock->display, dock->NormalGC, pp_get_win_bgcolor(dock));
+	XDrawPoint(dock->display, pp->win, dock->NormalGC, x[0], y[0]);
+	XDrawPoint(dock->display, pp->win, dock->NormalGC, x[0], y[0]+1);
+	XSetForeground(dock->display, dock->NormalGC, pix);
+	XDrawPoint(dock->display, pp->win, dock->NormalGC, x[1], y[1]);
+	XDrawPoint(dock->display, pp->win, dock->NormalGC, x[1], y[1]+1);
+      }
+    }
+
+    do {
+      l++;
+    } while (l < pp->nb_lignes && (pp->lignes[l]==NULL || pv == pp->lignes[l]->parent));
+  }
 }
 
 
