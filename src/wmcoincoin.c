@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.34 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.35 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.35  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.34  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -496,7 +499,7 @@ void check_balloons(Dock *dock)
 		     "Quand le curseur de la souris est au-dessus cette led, le niveau du <font color=#a00000><i>Trollometre</i></font> est affiché<br>"
 		     "<font color=blue><tt>Click Gauche</tt></font><tab>: INVOQUER <b>C01N C01N</b> !<br>"
 		     "<font color=blue><tt>Click Droit</tt></font><tab>: voir les stats de fréquentation de la tribune, ainsi que vos XP/votes (si vous avez fourni votre cookie d'authentification)<br>"
-		     "<font color=blue><tt>Click Milieu</tt></font>: demande de relecture de <tt>~/.wmcoincoin/useragents</tt>");
+		     "<font color=blue><tt>Click Milieu</tt></font>: demande de relecture de <tt>~/.wmcoincoin/options</tt>");
 	balloon_test(dock,x,y,iconx,icony,0,3,49,57,12,
 		     "Heure du dernier message reçu sur la tribune, ainsi que le nombre de secondes qui se sont écoulées depuis<br>"
 		     "<font color=blue><tt>Click Gauche</tt></font>: montrer/cacher le <b>palmipède editor</b><br>"
@@ -671,7 +674,7 @@ void X_loop()
   if (dock->coin_coin_request < 0) dock->coin_coin_request++; /* pour éteindre la led[1] apres un cours délai */
 
   /* verifie si il y a des ballons d'aide a afficher */
-  if (Prefs.use_balloons == 0) check_balloons(dock);
+  if (Prefs.use_balloons) check_balloons(dock); 
   
   editw_action(dock, dock->editw); /* animation du palmipede si necessaire */
 
@@ -930,6 +933,7 @@ wmcc_set_wm_icon(Dock *dock) {
   RGBAImage *in_img, *out_img;
 #include "../xpms/icon.xpm"
 
+  w = 0; h = 0;
   fprintf(stderr,"creation de l'icone des fenetres, si ça fait planter votre wm faites-moi signe!\n");
   if (XGetIconSizes(dock->display, dock->win, &isz, &nbsz) != 0) {
     int i;
@@ -943,9 +947,10 @@ wmcc_set_wm_icon(Dock *dock) {
     }
     XFree(isz);
   } else {
-    printf("pas de taille d'icone par défaut, voila un wmanager qui suce des ours\n");
+    //    printf("pas de taille d'icone par défaut, voila un wmanager qui suce des ours\n");
     w = 48; h = 48;
   }
+  assert(w>0 && h>0);
 
   in_img = RGBACreateRImgFromXpmData(icon_xpm); assert(in_img);
   assert(in_img->w == 16 && in_img->w == 16);
@@ -1107,22 +1112,25 @@ void initx(Dock *dock, int argc, char **argv) {
   /* set class hints */
 
 
-  xch.res_name = Prefs.app_name; 
-  xch.res_class = Prefs.app_name; /* ca chie avec KDE:
-				    quand KDE sauve la session, il sauve ce champ et execute ce nom
-				    a la session suivante, donc: 
-				    * rec_class doit etre le nom de l'executable
-				    * et la ligne de commande, je la mets ou ?
+  xch.res_name = argv[0]; //Prefs.app_name; 
+  xch.res_class = argv[0]; //Prefs.app_name; 
+  /* ca chie avec KDE:
+     quand KDE sauve la session, il sauve ce champ et execute ce nom
+     a la session suivante, donc: 
+     * rec_class doit etre le nom de l'executable
+     * et la ligne de commande, je la mets ou ?
+     
+     pour l'instant, pas de sauvegarde de session kde..
+  */
 
-				    pour l'instant, pas de sauvegarde de session kde..
-				    */
+
   XSetClassHint(dock->display, dock->win, &xch);
   
   /* set size hints */
   XSetWMNormalHints(dock->display, dock->win, &xsh);
   
   /* tell window manager app name */
-  if(!XStringListToTextProperty(&Prefs.app_name, 1, &xtp)) {
+  if(!XStringListToTextProperty(&argv[0], 1, &xtp)) {
     fprintf(stderr, "Couldn't create text property\n");
     exit(1);
   }
@@ -1399,6 +1407,14 @@ main(int argc, char **argv)
 
   if (Prefs.debug & 1) {
     _Xdebug = 1; /* oblige la synchronisation */
+  }
+
+  myprintf("%<yel on considère que le backend de tribune est >");
+  switch (Prefs.tribune_backend_type) {
+  case 1: myprintf("%<YEL de style moderne>\n"); break;
+  case 2: myprintf("%<YEL à l'ancienne>\n"); break;
+  case 3: myprintf("%<YEL sans slip>\n"); break;
+  default: myprintf("%<YEL prout>\n"); break;
   }
 
   ALLOC_VEC(dock->newstitles,MAX_NEWSTITLES_LEN, unsigned char);

@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.8 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.8  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.7  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -232,7 +235,7 @@ textout_msg(Dock *dock, unsigned char *msg, int x, int y, int w)
   XRectangle xr;
 
   xr.x = x; xr.y = y; xr.width = w; xr.height = 11;
-  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.fgcolor));
+  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.dock_fgcolor));
   XSetFont(dock->display, dock->NormalGC, dock->fixed_font->fid);
   XSetClipRectangles(dock->display, dock->NormalGC, 0, 0, &xr, 1, Unsorted); /* faut pas que ça bave sur les bord :) */
   if (dock->flag_survol_trollo) {
@@ -298,7 +301,7 @@ textout_msginfo(Dock *dock, int x, int y)
 
   xr.x = x; xr.y = y; xr.width = 56; xr.height = 11;
   XSetFont(dock->display, dock->NormalGC, dock->fixed_font->fid);
-  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.fgcolor));
+  XSetForeground(dock->display, dock->NormalGC, IRGB2PIXEL(Prefs.dock_fgcolor));
   XSetClipRectangles(dock->display, dock->NormalGC, 0, 0, &xr, 1, Unsorted); /* faut pas que ça bave sur les bord :) */
 
   if (dock->msginfo_defil) {
@@ -891,17 +894,18 @@ dock_build_pixmap_porte(Dock *dock)
   /* chargement de pix_porte suivant si pixmap de fond */
 
   dock->pix_porte = None;
-  if (Prefs.bgpixmap) {
+  if (Prefs.dock_bgpixmap) {
     int w, h;
-    bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.bgpixmap, &w, &h);
+    bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.dock_bgpixmap, &w, &h);
     if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
-      return str_printf("Erreur en chargeant le fichier : '%s' [xpm de 64x64 pixels svp]", Prefs.bgpixmap);
+      return str_printf("Erreur en chargeant le fichier : '%s' [xpm de 64x64 pixels svp]", Prefs.dock_bgpixmap);
     } else {
       RGBAImage *rgba_porte;
       XImage *XiPixPixmap;
       int i, j;
 
-      rgba_porte = rimage_create_from_raw(porte_image.width, porte_image.height,porte_image.bytes_per_pixel,porte_image.pixel_data);
+      rgba_porte = rimage_create_from_raw(porte_image.width, porte_image.height,
+					  porte_image.bytes_per_pixel,porte_image.pixel_data);
 
       XiPixPixmap= XGetImage (dock->display, 
 			      bg_pixmap, 
@@ -959,7 +963,7 @@ dock_build_pixmap_porte(Dock *dock)
 						       porte_image.height, 
 						       porte_image.bytes_per_pixel, 
 						       porte_image.pixel_data, 
-						       Prefs.bgcolor);
+						       Prefs.dock_bgcolor);
     
   }
   /* bouh comme c vilain */
@@ -972,7 +976,7 @@ dock_build_pixmap_porte(Dock *dock)
   /* les trois couleurs du dock */
   {
     int r,g,b;
-    r = (Prefs.bgcolor>>16)&0xff; g = (Prefs.bgcolor>>8)&0xff; b = Prefs.bgcolor &0xff;
+    r = (Prefs.dock_bgcolor>>16)&0xff; g = (Prefs.dock_bgcolor>>8)&0xff; b = Prefs.dock_bgcolor &0xff;
 
     /* ces valeurs ne sont pas utilisees pour le dock lui-meme, qui passe par l'intermediaire
        de l'horrible rcreate_image_from_raw_with_tint et compagnie

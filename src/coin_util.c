@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.19 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.20 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.20  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.19  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -278,9 +281,9 @@ mark_html_tags(char *s, int sz) {
   for (i=0,j=0; i < sz && s2[i]; i++) {
     if ((s2[i] == '<' || s2[i] == '>') && j < sz-2) {
       s[j++] = '\t';
-      s[j++] = s2[i]; i++;
+      s[j++] = s2[i];
     } else if (j < sz-1) {
-      s[j++] = s2[i]; i++;
+      s[j++] = s2[i];
     }
   }
   assert(j < sz); assert(i <= sz);

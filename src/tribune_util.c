@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.12 2002/03/27 20:45:06 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.13 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.13  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.12  2002/03/27 20:45:06  pouaite
   deuxième vague de bugfix
 
@@ -271,8 +274,8 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
       } else {
 	/* sinon on ignore */
 	end++;
-	printf("get_tok pas reconnu: '");
-	while (*end && *end != '<' && *end > ' ') { printf("%c", *end); end++;}
+	printf("get_tok pas reconnu: (len=%d)'", strlen(end));
+	while (*end) { printf("%c", *end); end++;}
 	printf("\n");
       }
     }

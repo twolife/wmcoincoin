@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.27 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.28 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.28  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.27  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -346,7 +349,7 @@ nettoie_message_tags(const char *inmsg)
   in_comment = 0;
   p = outmsg;
   for (s = inmsg; *s; s++) {
-    if (strncmp(s, "\t<!--",4)==0 && in_comment == 0) {
+    if (strncmp(s, "\t<!--",5)==0 && in_comment == 0) {
       w = strstr(s, "--\t>");
       if (w) {
 	in_comment = w+4-s;
@@ -370,6 +373,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   char *message = NULL;
 
   message = nettoie_message_tags(_message);
+  BLAHBLAH(4, printf("message logué: '%s'\n", message));
   nit = trib->msg;
   pit = NULL;
   while (nit) {
@@ -594,15 +598,15 @@ tribune_check_my_messages(DLFP_tribune *trib, int old_last_post_id) {
 void
 tribune_decode_message(char *dest, const char *src) {
   strncpy(dest, src, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0;
-  if (Prefs.tribune_encoding == 1) {
+  if (Prefs.tribune_backend_type == 1) {
     mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);
   }
   convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
-  if (Prefs.tribune_encoding == 2) {
+  if (Prefs.tribune_backend_type == 2) {
     mark_html_tags(dest, TRIBUNE_MSG_MAX_LEN);    
     convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN);
   }
-  if (Prefs.tribune_encoding == 3) {
+  if (Prefs.tribune_backend_type == 3) {
     char *s, *s2;
     
     s = strdup(dest); assert(s);
@@ -623,6 +627,8 @@ tribune_decode_message(char *dest, const char *src) {
     strncpy(dest, s, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0; free(s);
     convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN); /* deuxième passe, à tout hasard */
   }
+  BLAHBLAH(4,myprintf("message original: '%<CYA %s>'\n", src));
+  BLAHBLAH(4,myprintf("message décodé: '%<MAG %s>'\n", dest));
 }
 
 /*

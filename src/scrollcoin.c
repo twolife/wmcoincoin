@@ -355,6 +355,14 @@ scrollcoin_handle_button_release(ScrollCoin *sc, XButtonEvent *ev, Drawable d)
 	} else if (ev->button == Button3) {
 	  sc->requested_pos = sc->vmax;
 	} 
+      } else if (!IS_IN_BAR(sc,mx,my)) {
+	int q = (my < sc->y + sc->pixel_pos) ? -1 : +1;
+	if (ev->button == Button1) {
+	  sc->requested_pos = MAX(MIN(sc->pos + 10*q, sc->vmax), sc->vmin);
+	} else if (ev->button == Button2) {
+	  sc->requested_pos = ((my-sc->y) * (sc->vmax - sc->vmin))/(sc->h-2*BT_H) + sc->vmin;
+	  sc->requested_pos = MAX(MIN(sc->requested_pos, sc->vmax), sc->vmin);	  
+	}
       }
     }
     if (sc->bt_state != BT_NONE) {

@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.18 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.19 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.19  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.18  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -1364,7 +1367,7 @@ editw_reload_colors(Dock *dock, EditW *ew)
   /* on remplace la ligne de la couleur transparente par notre couleur de fond,
      c une ruse de sioux */
   if (ew->minipix) { XFreePixmap(dock->display, ew->minipix); ew->minipix = None; }
-  snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.bgcolor);
+  snprintf(s_xpm_bgcolor, 30, " \tc #%06X", Prefs.dock_bgcolor);
   editwin_minib_xpm[1] = s_xpm_bgcolor;
   ew->minipix = RGBACreatePixmapFromXpmData(dock->rgba_context, editwin_minib_xpm); assert(ew->minipix);
     

@@ -45,8 +45,8 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	myprintf(" %<GRN -v> %<CYA n>\t\t: verbosité (defaut %<grn %d>) ,%<CYA n>=0,1,2,3\n", The_Prefs->verbosity);
 	myprintf(" %<GRN -p> %<CYA n>\t\t: ne s'interesse qu'aux news postees il y a moins de %<CYA n> jours\n"
 		 "\t\t (defaut: %<grn %d> jours)\n", The_Prefs->news_max_nb_days);
-	myprintf(" %<GRN -b> %<CYA hexcoul>\t: couleur de fond, en RGB hexa (par defaut: %<grn %06x>, un magnifique(!) jaune)\n", The_Prefs->bgcolor);
-	myprintf(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n", The_Prefs->fgcolor);
+	myprintf(" %<GRN -b> %<CYA hexcoul>\t: couleur de fond, en RGB hexa (par defaut: %<grn %06x>, un magnifique(!) jaune)\n", The_Prefs->dock_bgcolor);
+	myprintf(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n", The_Prefs->dock_fgcolor);
 	myprintf(" %<GRN -X> %<CYA file.xpm>\t: Fichier pixmap à mettre en fond du dock (fichier.xpm de 64x64)\n");
 	myprintf(" %<GRN -w> \t\t: utilise le mode windowed plutot que le mode icone\n");
 	myprintf("\t\tcette option est nécessaire pour utiliser wmcoincoin avec le kicker de KDE\n");
@@ -209,6 +209,22 @@ int_copy_if_changed(int *a, int b) {
   } else return 0;
 }
 
+static int
+bic_copy_if_changed(BiColor *a, BiColor b) {
+  if (a->opaque != b.opaque || a->transp != b.transp) {
+    *a = b; return 1;
+  } else return 0;
+}
+
+static int
+transp_copy_if_changed(TransparencyInfo *a, TransparencyInfo b) {
+  if (a->shading != b.shading || 
+      a->tint_black != b.tint_black ||
+      a->tint_white != b.tint_white) {
+    *a = b; return 1;
+  } else return 0;
+}
+
 #define INT_OPT_CHANGED(_x) (Prefs._x != (int)newPrefs._x)
 #define STR_OPT_CHANGED(_x) ((Prefs._x == NULL && newPrefs._x) || \
                              (Prefs._x && newPrefs._x == NULL) || \
@@ -218,6 +234,13 @@ int_copy_if_changed(int *a, int b) {
 #define STR_OPT_COPY(_x) {FREE_STRING(Prefs._x); if (newPrefs._x) Prefs._x = strdup(newPrefs._x); }
 #define STR_OPT_COPY_IF_CHANGED(_x) (str_copy_if_changed(&Prefs._x, newPrefs._x))
 #define INT_OPT_COPY_IF_CHANGED(_x) (int_copy_if_changed(&Prefs._x, newPrefs._x))
+
+#define BIC_OPT_CHANGED(_x) ((Prefs._x.opaque != (int)newPrefs._x.opaque) || \
+                             (Prefs._x.transp != (int)newPrefs._x.transp))
+#define BIC_OPT_COPY_IF_CHANGED(_x) (bic_copy_if_changed(&Prefs._x, newPrefs._x))
+
+#define TRANSP_OPT_COPY_IF_CHANGED(_x) (transp_copy_if_changed(&Prefs._x, newPrefs._x))
+
 
 /* c'est un peu bourrin comme approche mais ça devrait marcher..*/
 void
@@ -251,7 +274,7 @@ wmcc_prefs_relecture(Dock *dock)
     INT_OPT_COPY(dlfp_max_refresh_delay);
     INT_OPT_COPY(dlfp_switch_off_coincoin_delay);
     INT_OPT_COPY(tribune_max_msg);
-    INT_OPT_COPY(tribune_encoding);
+    INT_OPT_COPY(tribune_backend_type);
     INT_OPT_COPY(news_max_nb_days);
     INT_OPT_COPY(use_balloons);
 
@@ -310,8 +333,8 @@ wmcc_prefs_relecture(Dock *dock)
 	Prefs.draw_border && Prefs.use_iconwin==0) {
       XMoveWindow(dock->display, DOCK_WIN(dock), newPrefs.dock_xpos, newPrefs.dock_ypos);
     }
-    if (STR_OPT_COPY_IF_CHANGED(bgpixmap) || INT_OPT_COPY_IF_CHANGED(bgcolor)) {
-      STR_OPT_COPY_IF_CHANGED(bgpixmap);
+    if (STR_OPT_COPY_IF_CHANGED(dock_bgpixmap) || INT_OPT_COPY_IF_CHANGED(dock_bgcolor)) {
+      STR_OPT_COPY_IF_CHANGED(dock_bgpixmap);
       if ((errmsg=dock_build_pixmap_porte(dock))) {
 	fprintf(stderr, errmsg);
       }
@@ -320,7 +343,7 @@ wmcc_prefs_relecture(Dock *dock)
       editw_reload_colors(dock, dock->editw);
       if (showed) editw_show(dock, dock->editw,0);
     }
-    INT_OPT_COPY(fgcolor);
+    INT_OPT_COPY(dock_fgcolor);
   
 
     /* test sur les grosses options du pinnipede */
@@ -337,19 +360,24 @@ wmcc_prefs_relecture(Dock *dock)
     }
 
     /* les options plus light se négocient avec un bon gros refresh */
-    if (INT_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
+    if (BIC_OPT_COPY_IF_CHANGED(pp_fgcolor) ||
         INT_OPT_COPY_IF_CHANGED(pp_bgcolor) ||
-        INT_OPT_COPY_IF_CHANGED(pp_tstamp_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_login_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_url_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_button_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_emph_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_keyword_color) ||
-        INT_OPT_COPY_IF_CHANGED(pp_plopify_color)) {
+        BIC_OPT_COPY_IF_CHANGED(pp_tstamp_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_useragent_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_login_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_url_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_button_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_emph_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_sel_bgcolor) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_popup_fgcolor) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_popup_bgcolor) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
+	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency))
+      {
       if (pp_ismapped(dock)) {
 	pp_unmap(dock);
 	pp_set_prefs_colors(dock);

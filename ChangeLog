@@ -1,3 +1,11 @@
+2002-04-02  pouaite  <c0in@altern.org>
+
+	* src/coin_xutil.c src/prefs.[ch] etc.. : pas mal de boulot sur la
+	pseudo-transp pour le pinnipède, avec les options qui vont
+	bien. Pour la pseudo-transp, se reporter au RTFF, y'a des astuces.
+	Le type de backend est spécifié par l'option
+	'tribune.backend_type' (void le fichier d'options)
+	
 2002-04-01  pouaite  <c0in@altern.org>
 
 	* très gros remaniement des préférences, l'ex-coincoin_prefs.c est splitté

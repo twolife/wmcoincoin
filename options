@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.17 2002/04/01 01:39:38 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.18 2002/04/01 22:56:03 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.18  2002/04/01 22:56:03  pouaite
+#%  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+#%
 #%  Revision 1.17  2002/04/01 01:39:38  pouaite
 #%  grosse grosse commition (cf changelog)
 #%
@@ -98,6 +101,13 @@
 ### nom du fichier dans lequel sont sauvés les scrinechotes de la tribune
 #tribune.archive: ~/wmcc_tribune_shot.html
 
+### pour essayer de gèrer un peu mieux les variations saisonnière de codage
+### du backend, cette option permet de le préciser 
+### 1 -> backend new style ('<b>' -> '<b>')
+### 2 -> backend old style ('<b>' -> '&lt;b&gt;')
+### 3 -> backend without slip ('<b>' -> ça dépend)
+#tribune.backend_type: 1, 2 ou 3
+
 ### les couleurs sont en héxadecimal ( '00000' = noir, 'ff0000' = rouge, '00ff00' = vert ...)
 
 #dock.bg_color: ffb12b
@@ -154,7 +164,6 @@
 #palmipede.useragent: my name is $u and i love you
 #palmipede.default_message: je ne suis pas du tout d'accord avec toi
 
-
 ### equivalent de l'option '-r' -> url de la page principale
 #http.site_url: http://linuxfr.org
 #http.path_tribune_backend: board/remote.xml
@@ -208,18 +217,31 @@
 #pinnipede.font_family: verdana
 #pinnipede.font_size: 11
 #pinnipede.bg_color: dae6e6
-#pinnipede.fg_color: 303030
-#pinnipede.clock_color: 004000
-#pinnipede.useragent_color: 800000
-#pinnipede.login_color: ffff00
-#pinnipede.url_color: 0000ff
-#pinnipede.trollscore_color:
-#pinnipede.button_color: dae6e6
-#pinnipede.emph_color: ffffff
-#pinnipede.hilight.my_msg_color: f07000
-#pinnipede.hilight.answer_my_msg_color: e0b080
-#pinnipede.hilight.keyword_color: 008080
-#pinnipede.plopify_color: a0a0a0
+
+### transparence, si vous spécifiez un seul chiffre (entre 0 et 100),
+### alors le mode 'shading' est utilisé, si vous donnez deux couleurs RGB
+### alors c'est le mode 'teinte'
+#pinnipede.start_in_transparency_mode: false
+#pinnipede.transparency: 303030 f0f060
+
+### la plupart des options de couleur acceptent deux valeurs,
+### qui sont la couleur en mode normal, et la couleur
+### en mode transparent
+#pinnipede.fg_color: 303030 d0d0d0
+#pinnipede.clock_color: 004000 ffff80
+#pinnipede.useragent_color: 800000 a0ffa0
+#pinnipede.login_color: ffff00 c0ffc0
+#pinnipede.url_color: 0000ff 80f0ff
+#pinnipede.trollscore_color: ff0000 ffff00
+#pinnipede.button_color: dae6e6 404040
+#pinnipede.emph_color: ffffff 505050
+#pinnipede.sel_bgcolor: ffd700 008080
+#pinnipede.popup_fgcolor: 000050 000050
+#pinnipede.popup_bgcolor: c0d0d0 c0d0d0
+#pinnipede.hilight.my_msg_color: f07000 f07000
+#pinnipede.hilight.answer_my_msg_color: e0b080 e0b080
+#pinnipede.hilight.keyword_color: 008080 008080
+#pinnipede.plopify_color: a0a0a0 a0a0a0
 #pinnipede.fortune_bgcolor: b0b0b0
 #pinnipede.fortune_fgcolor: 000000
 #pinnipede.fortune_font_family: helvetica

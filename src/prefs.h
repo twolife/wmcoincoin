@@ -6,6 +6,24 @@
 #define MESSAGE_MAX_LEN 255
 #define USERAGENT_MAX_LEN 60
 
+/* deux type de transparence: 
+ - shading : le fond est obscurci (0=>transparence totale, 100=>opacité(noir) complète)
+ - teinte  : le noir devient tint_black, le blanc prend la couleur tint_white,
+             et les couleurs d'intensité intermédiaires sont interpolées entre ces deux valeurs (activé si shade == -1)
+*/
+typedef struct {
+  int shading;
+  unsigned long tint_white, tint_black;
+} TransparencyInfo;
+
+/*
+  pour stocker deux couleurs (une pour le mode normal, ou pour le mode transparent)
+*/
+typedef struct {
+  unsigned opaque;
+  unsigned transp;
+} BiColor;
+
 /* les preferences sont stockees dans cette structure */
 
 typedef struct _structPrefs{
@@ -24,7 +42,7 @@ typedef struct _structPrefs{
   /* nb max de messages conserves en memoire */
   int tribune_max_msg;
 
-  int tribune_encoding; /* pour gerer les variations saisonnières du format de backend..
+  int tribune_backend_type; /* pour gerer les variations saisonnières du format de backend..
 			   peut prendre 3 valeurs: 
 			   1: les tags apparaissent sous la forme '<b>'
 			   2: les tags sont du type '&lt;b;&gt'
@@ -71,11 +89,8 @@ typedef struct _structPrefs{
   int balloon_fn_size;
   int dock_xpos, dock_ypos;
   int start_in_boss_mode; /* demarrage en mode horloge */
-  int bgcolor, fgcolor;
-  char *bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
-  char *app_name; /* pointeur vers le nom sous lequel a ete invoque
-		    wmcoincoin (pour reconnaitre quand on l'appelle
-		    sous le nom wmcoincoin-kde */
+  int dock_bgcolor, dock_fgcolor;
+  char *dock_bgpixmap; /* nom du fichier xpm de fond (c)(tm)(r)kadreg :) */
 
   char *site_root; /* par defaut: 'linuxfr.org' */
   char *site_path; /* par defaut: "" */
@@ -96,8 +111,13 @@ typedef struct _structPrefs{
   char *browser2_cmd; /* le browser alternative (lancé par un clic milieu au lieu d'un clic gauche) */
   char *pp_fn_family; /* defaut : 'helvetica' */
   int pp_fn_size;
-  unsigned pp_bgcolor, pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
+  unsigned pp_bgcolor;
+  int pp_start_in_transparency_mode;
+  TransparencyInfo pp_transparency;
+
+  BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
     pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
+    pp_sel_bgcolor, pp_popup_fgcolor, pp_popup_bgcolor,
     pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, 
     pp_keyword_color, pp_plopify_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;

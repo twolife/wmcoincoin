@@ -27,4 +27,8 @@ void alpha2mask(int w, int h, unsigned char *bitmap, const unsigned char *rgba, 
 Pixmap alpha2pixmap_mask(Display *dpy, Window win, int w, int h, const unsigned char *rgba, unsigned char mask_val);
 void colorize_black_pixmap(char **pixtxt, int tint);
 void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int *screen_y);
+void get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y);
+Pixmap get_rootwin_pixmap(const RGBAContext *rc);
+void shade_XImage(const RGBAContext *rc, XImage *ximg, int shade, unsigned tw, unsigned tb);
+Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, int shade, unsigned tint_black, unsigned tint_white);
 #endif

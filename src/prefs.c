@@ -5,6 +5,8 @@
 #include "myprintf.h"
 #include <sys/utsname.h> /* pour la fonction uname */
 
+#define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
+
 static void
 coincoin_default_useragent(char *s, int sz)
 {
@@ -113,8 +115,29 @@ option_get_xypos_val(const char  *_optarg,
     return NULL;
   } else {
     free(optarg);
-    return str_printf("option '%s' invalide, on attendait deux nombre x et y au format x:y\n", optname);
+    return str_printf("option '%s' invalide, on attendait deux nombre x et y au format x:y", optname);
   }
+}
+
+static char *
+option_get_transp_val(const char *arg, const char * opt_name,TransparencyInfo *ti) {
+  int a,b;
+
+  if (sscanf(arg, "%x %x", &a, &b) != 2) {
+    if (sscanf(arg, "%d", &a) != 1) {
+      goto err;
+    }
+    if (a < 0 || a > 100) goto err;
+    ti->shading = a;
+    ti->tint_black = ti->tint_white = 0;
+  } else {
+    if (a < 0 || b < 0 || a > 0xffffff || b > 0xffffff) goto err;
+    ti->shading = -1;
+    ti->tint_black = a; ti->tint_white = b;
+  }
+  return NULL;
+ err:
+  return str_printf("option '%s' invalide, il faut spécifier {une valeur de shading entre 0 et 100} ou {deux couleurs RGB correspondant aux teintes du noir, et du blanc}", opt_name);
 }
 
 static void
@@ -314,7 +337,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->tribune_max_msg = 300;
   p->debug = 0;
   p->verbosity = 0;
-  p->tribune_encoding = 3;
+  p->tribune_backend_type = 3;
 
   ASSIGN_STRING_VAL(p->font_encoding, "iso8859-1");
   p->news_max_nb_days = 1;
@@ -332,9 +355,9 @@ wmcc_prefs_set_default(structPrefs *p) {
   coincoin_default_useragent(p->user_agent, USERAGENT_MAX_LEN+1);
   ASSIGN_STRING_VAL(p->coin_coin_message, "coin ! coin !");
   p->user_name = NULL;
-  p->bgcolor = (255L<<16) + (193L<<8) + 44; /* un joli jaune (je trouve) (NDKad : y'a que toi)*/
-  p->fgcolor = 0x000000;
-  p->bgpixmap = NULL;
+  p->dock_bgcolor = (255L<<16) + (193L<<8) + 44; /* un joli jaune (je trouve) (NDKad : y'a que toi)*/
+  p->dock_fgcolor = 0x000000;
+  p->dock_bgpixmap = NULL;
   p->http_timeout = 40;
   p->proxy_auth = NULL;
   p->proxy_name = NULL;
@@ -348,7 +371,6 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->draw_border = 0; /* idem */
   p->dock_xpos = p->dock_ypos = 0;
   p->start_in_boss_mode = 0;
-  p->app_name = NULL;
   ASSIGN_STRING_VAL(p->site_root, "linuxfr.org");
   p->site_port = 80;
   ASSIGN_STRING_VAL(p->site_path, "");
@@ -368,18 +390,24 @@ wmcc_prefs_set_default(structPrefs *p) {
   ASSIGN_STRING_VAL(p->pp_fn_family, "helvetica");
   p->pp_fn_size = 12;
   p->pp_bgcolor = 0xdae6e6;
-  p->pp_fgcolor = 0x303030;
-  p->pp_tstamp_color = 0x004000;
-  p->pp_useragent_color = 0x800000;
-  p->pp_login_color = 0xff0000;
-  p->pp_url_color = 0x0000ff;
-  p->pp_trollscore_color = 0xff0000;
-  p->pp_button_color = 0xdae6e6;
-  p->pp_emph_color = 0xffffff;
-  p->pp_my_msg_color = 0xf07000;
-  p->pp_answer_my_msg_color = 0xe0b080;
-  p->pp_keyword_color = 0x008080;
-  p->pp_plopify_color = 0xa0a0a0;
+  p->pp_start_in_transparency_mode = 0;
+  p->pp_transparency.shading = -1; 
+  p->pp_transparency.tint_black = 0x808080; p->pp_transparency.tint_white = 0xd0d0d0; 
+  BICOLOR_SET(p->pp_fgcolor,0x303030,0xd0d0d0);
+  BICOLOR_SET(p->pp_tstamp_color,0x004000, 0xffff80);
+  BICOLOR_SET(p->pp_useragent_color, 0x800000, 0xa0ffa0);
+  BICOLOR_SET(p->pp_login_color, 0xff0000, 0xc0ffc0);
+  BICOLOR_SET(p->pp_url_color, 0x0000ff, 0x80f0ff);
+  BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
+  BICOLOR_SET(p->pp_button_color, 0xdae6e6, 0x404040);
+  BICOLOR_SET(p->pp_emph_color, 0xffffff, 0x505050);
+  BICOLOR_SET(p->pp_sel_bgcolor, 0xffd700, 0x008080);
+  BICOLOR_SET(p->pp_popup_fgcolor, 0x000050, 0x000050);
+  BICOLOR_SET(p->pp_popup_bgcolor, 0xc0d0d0, 0xc0d0d0);
+  BICOLOR_SET(p->pp_my_msg_color, 0xf07000, 0xf07000);
+  BICOLOR_SET(p->pp_answer_my_msg_color, 0xe0b080, 0xe0b080);
+  BICOLOR_SET(p->pp_keyword_color, 0x008080, 0x00ffff);
+  BICOLOR_SET(p->pp_plopify_color,0xa0a0a0, 0x808080);
 
   p->plop_words = NULL;
   option_plop_words("plop,grouik,gruiiik,glop,buurp,miaou,sluurpe,côôoot,pika,pikaaaa,ka-pika,"
@@ -421,8 +449,7 @@ wmcc_prefs_destroy(structPrefs *p)
   FREE_STRING(p->user_agent);
   FREE_STRING(p->coin_coin_message);
   FREE_STRING(p->balloon_fn_family);
-  FREE_STRING(p->bgpixmap);
-  FREE_STRING(p->app_name);
+  FREE_STRING(p->dock_bgpixmap);
   FREE_STRING(p->site_root);
   FREE_STRING(p->site_path);
   FREE_STRING(p->proxy_auth); 
@@ -455,10 +482,13 @@ wmcc_prefs_destroy(structPrefs *p)
 #define CHECK_BOOL_ARG(x) { x = option_get_bool_val(arg); if (x < 0) return str_printf("valeur invalide pour l'option '%s' : doit être une valeur du type on/off, 1/0, true/false ou yes/no", opt_name); }
 #define CHECK_BOOLNOT_ARG(x) { CHECK_BOOL_ARG(x); x = !x ; }
 
-#define CHECK_COLOR_ARG(x) { if (sscanf(arg, "%x", &x)!=1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB", opt_name); }
+#define CHECK_COLOR_ARG(x) { if (sscanf(arg, "%x", &x)!=1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB", opt_name); if (strchr(arg, ' ')) return str_printf("erreur, l'option '%s' n'accepte qu'une seule valeur de couleur", opt_name); }
 
 #define CHECK_XYPOS_ARG(xpos,ypos) { char *err=option_get_xypos_val(arg,opt_name,&xpos,&ypos); if (err) return err; }
 
+#define CHECK_BICOLOR_ARG(x) { if (sscanf(arg, "%x %x", &x.opaque, &x.transp)<1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB (suivie optionnellement d'une deuxième couleur utilisée pour le mode transparent)", opt_name); }
+
+#define CHECK_TRANSP_ARG(x) { char *err=option_get_transp_val(arg,opt_name,&x); if (err) return err; }
 
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
@@ -493,13 +523,13 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
     ASSIGN_STRING_VAL(p->tribune_scrinechote, arg);
   } break; 
   case OPT_dock_bg_color: {
-    CHECK_COLOR_ARG(p->bgcolor);
+    CHECK_COLOR_ARG(p->dock_bgcolor);
   } break; 
   case OPT_dock_bg_pixmap: {
-    ASSIGN_STRING_VAL(p->bgpixmap, arg);
+    ASSIGN_STRING_VAL(p->dock_bgpixmap, arg);
   } break; 
   case OPT_dock_fg_color: {
-    CHECK_COLOR_ARG(p->fgcolor);
+    CHECK_COLOR_ARG(p->dock_fgcolor);
   } break; 
   case OPT_dock_draw_border: {
     CHECK_BOOL_ARG(p->draw_border);
@@ -555,6 +585,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_palmipede_default_message: {
     ASSIGN_STRING_VAL(p->coin_coin_message, arg); 
   } break; 
+  case OPT_tribune_backend_type: {
+    CHECK_INTEGER_ARG(1,3, p->tribune_backend_type);
+  } break; 
   case OPT_http_site_url: {
     option_site_root(arg,p);
   } break; 
@@ -609,41 +642,56 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_bg_color: {
     CHECK_COLOR_ARG(p->pp_bgcolor);
   } break; 
+  case OPT_pinnipede_start_in_transparency_mode: {
+    CHECK_BOOL_ARG(p->pp_start_in_transparency_mode);
+  } break;
+  case OPT_pinnipede_transparency: {
+    CHECK_TRANSP_ARG(p->pp_transparency);
+  } break;
   case OPT_pinnipede_fg_color: {
-    CHECK_COLOR_ARG(p->pp_fgcolor);
+    CHECK_BICOLOR_ARG(p->pp_fgcolor);
   } break; 
   case OPT_pinnipede_clock_color: {
-    CHECK_COLOR_ARG(p->pp_tstamp_color);
+    CHECK_BICOLOR_ARG(p->pp_tstamp_color);
   } break; 
   case OPT_pinnipede_useragent_color: {
-    CHECK_COLOR_ARG(p->pp_useragent_color);
+    CHECK_BICOLOR_ARG(p->pp_useragent_color);
   } break; 
   case OPT_pinnipede_login_color: {
-    CHECK_COLOR_ARG(p->pp_login_color);
+    CHECK_BICOLOR_ARG(p->pp_login_color);
   } break; 
   case OPT_pinnipede_url_color: {
-    CHECK_COLOR_ARG(p->pp_url_color);
+    CHECK_BICOLOR_ARG(p->pp_url_color);
   } break; 
   case OPT_pinnipede_trollscore_color: {
-    CHECK_COLOR_ARG(p->pp_trollscore_color);
+    CHECK_BICOLOR_ARG(p->pp_trollscore_color);
   } break; 
   case OPT_pinnipede_button_color: {
-    CHECK_COLOR_ARG(p->pp_button_color);
+    CHECK_BICOLOR_ARG(p->pp_button_color);
   } break; 
   case OPT_pinnipede_emph_color: {
-    CHECK_COLOR_ARG(p->pp_emph_color);
+    CHECK_BICOLOR_ARG(p->pp_emph_color);
+  } break; 
+  case OPT_pinnipede_sel_bgcolor: {
+    CHECK_BICOLOR_ARG(p->pp_sel_bgcolor);
+  } break; 
+  case OPT_pinnipede_popup_bgcolor: {
+    CHECK_BICOLOR_ARG(p->pp_popup_bgcolor);
+  } break; 
+  case OPT_pinnipede_popup_fgcolor: {
+    CHECK_BICOLOR_ARG(p->pp_popup_fgcolor);
   } break; 
   case OPT_pinnipede_hilight_my_msg_color: {
-    CHECK_COLOR_ARG(p->pp_my_msg_color);
+    CHECK_BICOLOR_ARG(p->pp_my_msg_color);
   } break; 
   case OPT_pinnipede_hilight_answer_my_msg_color: {
-    CHECK_COLOR_ARG(p->pp_answer_my_msg_color);
+    CHECK_BICOLOR_ARG(p->pp_answer_my_msg_color);
   } break; 
   case OPT_pinnipede_hilight_keyword_color: {
-    CHECK_COLOR_ARG(p->pp_keyword_color);
+    CHECK_BICOLOR_ARG(p->pp_keyword_color);
   } break; 
   case OPT_pinnipede_plopify_color: {
-    CHECK_COLOR_ARG(p->pp_plopify_color);
+    CHECK_BICOLOR_ARG(p->pp_plopify_color);
   } break; 
   case OPT_pinnipede_fortune_bgcolor: {
     CHECK_COLOR_ARG(p->pp_fortune_bgcolor);

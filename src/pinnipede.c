@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.42 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.43 2002/04/01 22:56:03 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.43  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.42  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -267,7 +270,7 @@ struct _Pinnipede {
   struct _PinnipedeFilter filter;
 
   Pixmap bg_pixmap;
-  int use_bg_pixmap;
+  int transparency_mode;
   //  int selection_mode; /* non nul quand on est en train de selectionner du texte à copier dans le clipboard (en dragant avec la souris) */
 };
 
@@ -1370,14 +1373,16 @@ pp_minib_refresh(Dock *dock)
 	XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc, 2, xc, 8);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-1, 3, xc-1, 7);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc-2, 4, xc-2, 6);
 	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+1, 3, xc+1, 7);
+	XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+2, 4, xc+2, 6);
       } break;
     case TRANSPARENT:
       {
 	int j;
-	for (j=0; j < 8; j++) {
-	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL(j*20,0,0));
-	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-4, 3, xc+j-4, 7);
+	for (j=0; j < 7; j++) {
+	  XSetForeground(dock->display, dock->NormalGC, RGB2PIXEL((j*40),(6-j)*30,0));
+	  XDrawLine(dock->display, pp->lpix, dock->NormalGC, xc+j-3, 3, xc+j-3, 7);
 	}
       } break;
     case REFRESH_TRIBUNE:
@@ -1586,7 +1591,7 @@ static void
 pp_clear_win_area(Dock *dock, int x, int y, int w, int h)
 {
   Pinnipede *pp = dock->pinnipede;
-  if (pp->use_bg_pixmap == 0 && w > 0 && h > 0) {
+  if (pp->transparency_mode == 0 && w > 0 && h > 0) {
     XClearArea(dock->display, pp->win, x, y, w, h, False);
   } else {
     XCopyArea(dock->display, pp->bg_pixmap, pp->win, dock->NormalGC, x, y, 
@@ -1750,6 +1755,13 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	pixel = pp->plopify_pixel;
       }
 
+      if (pw->attr & (PWATTR_TMP_EMPH)) {
+	XSetForeground(dock->display, dock->NormalGC, pp->popup_bgpixel);
+	XFillRectangle(dock->display, lpix, dock->NormalGC,pw->xpos, 1, pw->xwidth, pp->fn_h-1);
+	pixel = pp->popup_fgpixel;
+	XSetForeground(dock->display, dock->NormalGC, pixel);
+      }
+
       if (pixel != old_pixel) {
 	XSetForeground(dock->display, dock->NormalGC, pixel);
 	old_pixel = pixel;
@@ -1759,6 +1771,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 	XSetFont(dock->display, dock->NormalGC, fn->fid);
 	prev_font = fn;
       }
+
 
       XDrawString(dock->display, lpix, dock->NormalGC, pw->xpos, y, pw->w, strlen(pw->w));
 
@@ -1953,7 +1966,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     }
 
     pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
-		 pp->use_bg_pixmap && bgpixel == pp->win_bgpixel, LINEY0(l));
+		 pp->transparency_mode && bgpixel == pp->win_bgpixel, LINEY0(l));
 
     XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
   }
@@ -2111,29 +2124,40 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   return 0;
 }
 
+#define GET_BICOLOR(x) (pp->transparency_mode ? IRGB2PIXEL(x.transp) : IRGB2PIXEL(x.opaque))
+
 void
 pp_set_prefs_colors(Dock *dock) 
 {
   Pinnipede *pp = dock->pinnipede;
   pp->win_bgpixel = IRGB2PIXEL(Prefs.pp_bgcolor);
-  pp->timestamp_pixel = IRGB2PIXEL(Prefs.pp_tstamp_color);
-  pp->lnk_pixel = IRGB2PIXEL(Prefs.pp_url_color);
+
+  pp->timestamp_pixel = GET_BICOLOR(Prefs.pp_tstamp_color);
+  pp->lnk_pixel = GET_BICOLOR(Prefs.pp_url_color);
   pp->strike_pixel = RGB2PIXEL(128,0,0);
-  pp->txt_pixel = IRGB2PIXEL(Prefs.pp_fgcolor);
-  pp->popup_fgpixel = RGB2PIXEL(0, 0, 0);
-  pp->popup_bgpixel = RGB2PIXEL(228, 228, 192);
-  pp->nick_pixel = IRGB2PIXEL(Prefs.pp_useragent_color);
-  pp->login_pixel = IRGB2PIXEL(Prefs.pp_login_color);
+  pp->txt_pixel = GET_BICOLOR(Prefs.pp_fgcolor);
+  pp->popup_fgpixel = GET_BICOLOR(Prefs.pp_popup_fgcolor);
+  pp->popup_bgpixel = GET_BICOLOR(Prefs.pp_popup_bgcolor);
+  pp->nick_pixel = GET_BICOLOR(Prefs.pp_useragent_color);
+  pp->login_pixel = GET_BICOLOR(Prefs.pp_login_color);
   pp->minib_pixel = IRGB2PIXEL(0xcdcdcd);
   pp->minib_dark_pixel = IRGB2PIXEL(0x626262);
 
-  pp->sel_bgpixel = RGB2PIXEL(255, 215, 0);
-  pp->emph_pixel = IRGB2PIXEL(Prefs.pp_emph_color);
-  pp->trollscore_pixel = IRGB2PIXEL(Prefs.pp_trollscore_color);
-  pp->hilight_my_msg_pixel = IRGB2PIXEL(Prefs.pp_my_msg_color);
-  pp->hilight_answer_my_msg_pixel = IRGB2PIXEL(Prefs.pp_answer_my_msg_color);
-  pp->hilight_keyword_pixel = IRGB2PIXEL(Prefs.pp_keyword_color);
-  pp->plopify_pixel = IRGB2PIXEL(Prefs.pp_plopify_color);
+  pp->sel_bgpixel = GET_BICOLOR(Prefs.pp_sel_bgcolor);
+  pp->emph_pixel = GET_BICOLOR(Prefs.pp_emph_color);
+  pp->trollscore_pixel = GET_BICOLOR(Prefs.pp_trollscore_color);
+  pp->hilight_my_msg_pixel = GET_BICOLOR(Prefs.pp_my_msg_color);
+  pp->hilight_answer_my_msg_pixel = GET_BICOLOR(Prefs.pp_answer_my_msg_color);
+  pp->hilight_keyword_pixel = GET_BICOLOR(Prefs.pp_keyword_color);
+  pp->plopify_pixel = GET_BICOLOR(Prefs.pp_plopify_color);
+}
+
+void
+pp_change_transparency_mode(Dock *dock, int on_off)
+{
+  Pinnipede *pp = dock->pinnipede;
+  pp->transparency_mode = on_off;
+  pp_set_prefs_colors(dock);
 }
 
 /* initialisation */
@@ -2189,7 +2213,7 @@ pp_build(Dock *dock)
   picohtml_set_line_skip(pp->ph_fortune, 1.0);
 
   pp->bg_pixmap = None;
-  pp->use_bg_pixmap = 0;
+  pp->transparency_mode = Prefs.pp_start_in_transparency_mode;
 
   pp->pv = NULL;
   pp->survol_hash = 0;
@@ -2221,9 +2245,10 @@ pp_destroy(Dock *dock)
   picohtml_destroy(dock->display, pp->ph_fortune);
   XFreeFont(dock->display, pp->fn_base); XFreeFont(dock->display, pp->fn_it); 
   XFreeFont(dock->display, pp->fn_bd); XFreeFont(dock->display, pp->fn_itbd);
-  
   free(pp); dock->pinnipede = NULL;
 }
+
+
 
 static void
 pp_update_bg_pixmap(Dock *dock)
@@ -2234,68 +2259,19 @@ pp_update_bg_pixmap(Dock *dock)
   if (pp->bg_pixmap != None) {
     XFreePixmap(dock->display, pp->bg_pixmap); pp->bg_pixmap = None;
   }
-  if (pp->use_bg_pixmap) {
-    //    XSetWindowAttributes wa;
-    pp->bg_pixmap = XCreatePixmap(dock->display, pp->win, 
-				  pp->win_width, pp->win_height,
-				  DefaultDepth(dock->display,dock->screennum));
-    assert(pp->bg_pixmap != None);
-    /*
-    wa.override_redirect = True;
-    XChangeWindowAttributes (dock->display, pp->win,
-			     CWOverrideRedirect, &wa);
-    */
-    XSetWindowBackgroundPixmap(dock->display, pp->win, ParentRelative);
-    XClearWindow(dock->display, pp->win);
-
-    /*
-    XCopyArea(dock->display, dock->rootwin, pp->bg_pixmap, dock->NormalGC, 
-	      pp->win_xpos, pp->win_ypos, 
-	      pp->win_width, pp->win_height, 0, 0);
-    */
-    XFlush(dock->display);
-    XCopyArea(dock->display, pp->win, pp->bg_pixmap, dock->NormalGC, 
-	      0, 0, pp->win_width, pp->win_height, 0, 0);
-
-    printf("coucou!\n");
-    /*
-    XCopyArea(dock->display, dock->rootwin, pp->win, dock->NormalGC, 
-	      pp->win_xpos, pp->win_ypos, pp->win_width, pp->win_height, 0, 0);
-    */
-    XLowerWindow(dock->display, pp->win);
-
-    //    XSetWindowBackgroundPixmap(dock->display, pp->win, None);
-    /*
-    wa.override_redirect = False;
-    XChangeWindowAttributes (dock->display, pp->win,
-			     CWOverrideRedirect, &wa);
-    */
-   
-    if (1) {
-      int i,j;
-      XImage *ximg;
-      ximg = XGetImage(dock->display, pp->bg_pixmap, 0, 0, pp->win_width, pp->win_height, 
-		       AllPlanes, ZPixmap);
-      for (i=0; i < pp->win_width; i++) {
-	for (j=0; j < pp->win_height; j++) {
-	  unsigned long pixel;
-	  unsigned char r, g, b;
-
-#define TRANSFO(x,m,d) ((d) > 0 ? (((x)&(m))>>(unsigned)(d)) : (((x)&(m))<<(unsigned)(-(d))))
-
-	  pixel = XGetPixel(ximg, i, j);
-	  
-	  r = TRANSFO(pixel, dock->rgba_context->visual->red_mask,   dock->rgba_context->rdecal);
-	  g = TRANSFO(pixel, dock->rgba_context->visual->green_mask, dock->rgba_context->gdecal);
-	  b = TRANSFO(pixel, dock->rgba_context->visual->blue_mask,  dock->rgba_context->bdecal);
-	  r = MIN((r*2)/3 + 40,255);
-	  g = MIN((g*2)/3 + 80,255);
-	  b = MIN((b*2)/3 + 40,255);
-	  XPutPixel(ximg, i, j, RGB2PIXEL(r,g,b));
-	}
-      }
-      XPutImage(dock->display, pp->bg_pixmap, dock->NormalGC, ximg, 0, 0, 0, 0, pp->win_width, pp->win_height);
-      XDestroyImage(ximg);
+  if (pp->transparency_mode) {
+    int xpos, ypos;
+    get_window_pos_without_decor(dock->display, dock->rootwin, pp->win, &xpos, &ypos);
+    //    printf("window pos: %d, %d (pp_xpos=%d, pp_ypos=%d)\n", xpos, ypos, pp->win_xpos, pp->win_ypos);
+    pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
+						  xpos, ypos, 
+						  pp->win_width, pp->win_height,
+						  Prefs.pp_transparency.shading,
+						  Prefs.pp_transparency.tint_black,
+						  Prefs.pp_transparency.tint_white);
+    if (pp->bg_pixmap == None) {
+      myprintf("%<yel impossible d'utiliser la pseudo-transp> (solution probable: relancer wmsetbg ou autre)\n");
+      pp_change_transparency_mode(dock, 0);
     }
   }
 }
@@ -2339,11 +2315,11 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     LeaveWindowMask;
 
   /* ça sera a changer .. pour l'instant ça ira */
-  if (pp->use_bg_pixmap) {
-    wa.override_redirect = True ;
-  } else {
+  //  if (pp->use_bg_pixmap) {
+  //    wa.override_redirect = True ;
+  //  } else {
     wa.override_redirect = False ;
-  }
+
   
   //wa.background_pixmap = ParentRelative;
   //wa.override_redirect = False ;
@@ -2823,7 +2799,7 @@ pp_balloon_help(Dock *dock, int x, int y)
 	       "<font color=blue>Click Droite</font><tab>: copier cette référence dans le clipboard (d'accord, c'est pas très utile...)<br><br>"
 
 	       "Un filtrage rudimentaire est disponible à l'aide de <font color=blue>Ctrl+left clic</font> "
-	       "sur un mot, login, useragent.. (utiliser le bouton bleu pour l'annuler)<br> Si vous voulez au contraire mettre en relief les post d'une personne ou bien ceux contenant un certain mot, le <font color=blue>Shift+Click Droite</font> sera votre ami<br>"
+	       "sur un mot, login, useragent.. (utiliser le bouton bleu pour l'annuler)<br> Si vous voulez au contraire mettre en relief les post d'une personne ou bien ceux contenant un certain mot, le <font color=blue>Shift+Click Gauche</font> sera votre ami<br>"
 	       
 	       "<b>Nouveau:</b> quelqu'un vous saoule méchamment ? vous avez lancé un troll qui vous échappe ? Alors plopifiez les malfaisants avec un <font color=blue>Shift+Click Droite</font> sur son login/useragent<br><br>"
 
@@ -2962,9 +2938,11 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
       } break;
     case TRANSPARENT:
       {
-	pp_unmap(dock);
-	pp->use_bg_pixmap = 1-pp->use_bg_pixmap;
-	pp_show(dock, trib);
+	//	pp_unmap(dock);
+	pp_change_transparency_mode(dock, 1-pp->transparency_mode);
+	//	pp_show(dock, trib);
+	pp_update_bg_pixmap(dock);
+	pp_refresh(dock, trib, pp->win, NULL);
       } break;
     default:
       assert(0); 
@@ -3684,7 +3662,7 @@ pp_selection_refresh(Dock *dock)
 
     if (pp->lignes_sel[l].trashed) {
     
-      pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l], pp->use_bg_pixmap, LINEY0(l));
+      pp_draw_line(dock, pp->lpix, pp->lignes[l], pp->win_bgpixel, &pp->lignes_sel[l], pp->transparency_mode, LINEY0(l));
       XCopyArea(dock->display, pp->lpix, pp->win, dock->NormalGC, 0, 0, pp->win_width - (pp->sc ? SC_W-1 : 0), pp->fn_h, 0, LINEY0(l));
     }
   }
@@ -3883,7 +3861,8 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
       			    wa.x, wa.y, &pp->win_xpos, &pp->win_ypos, &child);
       
       //printf(" -> xpos=%d, ypos=%d\n", pp->win_xpos,pp->win_ypos);
-      if (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height) {
+      if (event->xconfigure.width != pp->win_width || event->xconfigure.height != pp->win_height ||
+	  pp->transparency_mode) {
 	pp->win_width = MAX(event->xconfigure.width,80);
 	pp->win_height = MAX(event->xconfigure.height,80);
 	

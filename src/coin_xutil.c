@@ -1,15 +1,20 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.1 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.2 2002/04/01 22:56:03 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.2  2002/04/01 22:56:03  pouaite
+  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
+
   Revision 1.1  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
 */
 
+#include <X11/Xatom.h>
+#include <X11/Xmd.h>
 #include <string.h>
 #include "coin_xutil.h"
 
@@ -211,3 +216,183 @@ get_window_pos_with_decor(Display *display, Window base_win, int *screen_x, int 
 			  &child_win);
   } 
 }
+
+void 
+get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y)
+{
+  Window child_win;
+  XWindowAttributes win_attr;
+
+  XGetWindowAttributes(display, win, &win_attr);
+  XTranslateCoordinates(display, win, root_win,
+			0, 0, screen_x, screen_y,
+			&child_win);
+}
+
+/* volée dans les sources de aterm :) 
+   maintenant, faut voir dans quelles conditions cette fonction marche 
+   (avec wmaker/wmsetbg ça marche en tout cas)
+
+   race condition possible si le rootpixmap est changé entre le moment où cette fonction
+   est appelée et le moment où on utilise le pixmap...
+*/
+Pixmap
+get_rootwin_pixmap(const RGBAContext *rc)
+{
+  Atom id;
+  Pixmap currentRootPixmap = None;
+  id = XInternAtom (rc->dpy, "_XROOTPMAP_ID", True);
+
+  if (id != None) {
+    Atom act_type;
+    int act_format;
+    unsigned long nitems, bytes_after;
+    unsigned char *prop = NULL;
+    
+    /*fprintf(stderr, "\n aterm GetRootPixmap(): root pixmap is set");    		    */
+    if (XGetWindowProperty (rc->dpy, rc->drawable, id, 0, 1, False, XA_PIXMAP,
+			    &act_type, &act_format, &nitems, &bytes_after,
+			    &prop) == Success)
+      {
+	if (prop)
+	  {
+	    currentRootPixmap = *((Pixmap *) prop);
+	    XFree (prop);
+	  }
+      }
+  }
+  return currentRootPixmap ;
+}
+
+/* une de mes macros les plus laides :) */
+#define SELECT_SHADE_OR_TINT(_c1,_c2) { if (shade != -1) { _c1; \
+          r = (r*cshade)/256; \
+          g = (g*cshade)/256; \
+          b = (b*cshade)/256; \
+          _c2; } else { _c1; \
+          int l = (r*76)/256 + (g*150)/256 + (b*30)/256; \
+          r = (l*wr + (256-l)*br)/256; \
+	  g = (l*wg + (256-l)*bg)/256; \
+	  b = (l*wb + (256-l)*bb)/256; _c2; } }
+
+#define TRANSFO(x,m,d) ((d) > 0 ? (((x)&(m))>>(unsigned)(d)) : (((x)&(m))<<(unsigned)(-(d))))
+
+void
+shade_XImage(const RGBAContext *rc, XImage *ximg, int shade, unsigned tb, unsigned tw)
+{
+  int wr,wg,wb,br,bg,bb; 
+  int x, y;
+  int cshade;
+
+  wr = (tw & 0xff0000)>>16; wg = (tw & 0x00ff00)>>8; wb = (tw & 0x0000ff);
+  br = (tb & 0xff0000)>>16; bg = (tb & 0x00ff00)>>8; bb = (tb & 0x0000ff);
+
+  //  int l_tint = (tr*76)/256 + (tg*150)/256 + (tb*30)/256;
+  
+  cshade = ((100-shade)*256)/100;
+
+  if (ximg->bits_per_pixel == 16 || ximg->bits_per_pixel == 15) {
+    CARD16 *p = (CARD16*)ximg->data;
+    SELECT_SHADE_OR_TINT(
+			 for (y=0; y < ximg->height; y++) {
+			   for (x=0; x < ximg->width; x++) {
+			     int r = TRANSFO(p[x], rc->visual->red_mask, rc->rdecal);
+			     int g = TRANSFO(p[x], rc->visual->green_mask, rc->gdecal);
+			     int b = TRANSFO(p[x], rc->visual->blue_mask, rc->bdecal);
+				,;
+				p[x] = rc->rtable[r] + rc->gtable[g] + rc->btable[b];
+			   }
+			   p += ximg->bytes_per_line/2;
+			 }
+			 );
+  } else if (ximg->bits_per_pixel == 24) {
+    unsigned char *p = (unsigned char*) ximg->data;
+    SELECT_SHADE_OR_TINT(
+			 for (y=0; y < ximg->height; y++) {
+			   for (x=0; x < ximg->width; x++) {
+			     int r = p[x*3];
+			     int g = p[x*3+1];
+			     int b = p[x*3+2];
+			     ,;
+			     p[x*3] = r; p[x*3+1] = g; p[x*3+2] = b;
+			   }
+			   p += ximg->bytes_per_line;
+			 }
+			 );
+    
+  } else if (ximg->bits_per_pixel == 32) {
+    CARD32 *p = (CARD32*) ximg->data;
+    SELECT_SHADE_OR_TINT(
+			 for (y=0; y < ximg->height; y++) {
+			   for (x=0; x < ximg->width; x++) {
+			     int r = (p[x] & 0xff0000)>>16;
+			     int g = (p[x] & 0x00ff00)>>8;
+			     int b = (p[x] & 0x0000ff);;
+			     ,;
+			     p[x] = (p[x] & 0xff000000) + (r << 16) + (g << 8) + b;
+			   }
+			   p += ximg->bytes_per_line/4;
+			 }
+			 );
+  } else {
+    printf("shade_ximage non supporté (bitsperpix=%d) !! bizarre\n",ximg->bits_per_pixel);
+  }
+}
+
+int x11_error_occured = 0;
+
+int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
+{
+  char errmsg[80]; 
+  XGetErrorText(dpy, err->error_code, errmsg, 80);
+  fprintf(stderr, "X11 error detectee dans une zone à risque:\n  %s\n", errmsg);
+  fprintf(stderr, "  Protocol request: %d\n", err->request_code);
+  fprintf(stderr, "  Resource ID:      0x%lx\n", err->resourceid);
+  fprintf(stderr, " --> THE SHOW MUST GO ON!\n");
+  x11_error_occured = 1;
+  return 0;
+}
+
+/* obligé de gérer les erreurs de manière un peu cavalière, car le root pixmap peut être détruit
+   à tout bout de champ etc.. */
+Pixmap
+extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, int shade, unsigned tint_black, unsigned tint_white)
+{
+  Pixmap root_pix, shade_pix;
+  XImage *ximg;
+  
+
+  if (rc->depth < 15) return None; /* pas de pseudotransp sur les visual non truecolor */
+
+  root_pix = get_rootwin_pixmap(rc);
+  if (root_pix == None) return None;
+
+  x11_error_occured = 0;
+
+  /* transparence pure, ça va vite */
+  if (shade == 100 && tint_white == tint_black) {
+    shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
+			      w, h, rc->depth); assert(shade_pix != None);
+    XSetErrorHandler(x_error_handler_bidon);
+    XCopyArea(rc->dpy, root_pix, shade_pix, rc->copy_gc, 
+	      x, y, w, h, 0, 0);
+    XSync(rc->dpy,0);
+    XSetErrorHandler(NULL); if (x11_error_occured) { XFreePixmap(rc->dpy, shade_pix); shade_pix = None; };
+    return shade_pix;
+  }
+
+  /* shade/tinte, il faut retravailler l'image */
+
+  x11_error_occured = 0; XSetErrorHandler(x_error_handler_bidon);
+  ximg = XGetImage(rc->dpy, root_pix, x, y, w, h, 
+		   AllPlanes, ZPixmap); 
+  XSetErrorHandler(NULL); if (x11_error_occured || ximg == NULL) return None;
+
+  shade_XImage(rc, ximg, shade,  tint_black, tint_white);
+  shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
+			    w, h, rc->depth); assert(shade_pix != None);
+  XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, 0, 0, w, h);
+  XDestroyImage(ximg);
+  return shade_pix;
+}
+
