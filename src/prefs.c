@@ -616,6 +616,16 @@ wmcc_prefs_destroy(structPrefs *p)
   FREE_STRING(p->tribune_scrinechote);
 }
 
+void
+option_get_filename(char *arg, char **fname) {
+  assert(arg); assert(*fname == NULL);
+  if (*arg == '~') {
+    *fname = str_printf("%s%s", getenv("HOME"), arg+1);
+  } else {
+    *fname = strdup(arg);
+  }
+  assert(*fname);
+}
 
 /* les macros c'est sale mais c'est j'aime ça */
 #define CHECK_INTEGER_ARG(bmin,bmax,i) { i=atoi(arg); if (i<(bmin) || ((bmax)>(bmin) && i > (bmax))) { return str_printf("valeur invalide pour l'option '%s' (doit être dans l'intervalle %d-%d", opt_name, (bmin), (bmax)==0 ? 10000000 : (bmax)); } }
@@ -632,6 +642,8 @@ wmcc_prefs_destroy(structPrefs *p)
 #define CHECK_TRANSP_ARG(x) { char *err=option_get_transp_val(arg,opt_name,&x); if (err) return err; }
 
 #define CHECK_KEY_LIST(x,_min,_max) { char *err=option_get_key_list(arg,opt_name,&x,_min,_max); if (err) return err; }
+
+#define CHECK_FILENAME_ARG(x) { FREE_STRING(x); option_get_filename(arg, &x); }
 
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
@@ -654,7 +666,7 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
     CHECK_INTEGER_ARG(1,0, p->dlfp_switch_off_coincoin_delay);
   } break; 
   case OPT_tribune_max_messages: {
-    CHECK_INTEGER_ARG(1,0, p->dlfp_switch_off_coincoin_delay);
+    CHECK_INTEGER_ARG(1,0, p->tribune_max_msg);
   } break; 
   case OPT_tribune_troll_detector: {
     CHECK_BOOL_ARG(p->enable_troll_detector);
@@ -666,13 +678,13 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
     ASSIGN_STRING_VAL(p->tribune_wiki_emulation, arg);
   } break; 
   case OPT_tribune_archive: {
-    ASSIGN_STRING_VAL(p->tribune_scrinechote, arg);
+    CHECK_FILENAME_ARG(p->tribune_scrinechote);
   } break; 
   case OPT_dock_bg_color: {
     CHECK_COLOR_ARG(p->dock_bgcolor);
   } break; 
   case OPT_dock_bg_pixmap: {
-    ASSIGN_STRING_VAL(p->dock_bgpixmap, arg);
+    CHECK_FILENAME_ARG(p->dock_bgpixmap);
   } break; 
   case OPT_dock_fg_color: {
     CHECK_COLOR_ARG(p->dock_fgcolor);
@@ -926,7 +938,7 @@ wmcc_prefs_read_options(structPrefs *p, const char *filename)
 
   f = fopen(filename, "rt");
   if (f == NULL) {
-    return str_printf("impossible d'ouvrir le fichier '%s' en lecture", filename);
+    return str_printf("impossible d'ouvrir le fichier '%s' en lecture [attention wmcc ne le crée plus tout seul, si vous voulez utiliser les options par défaut, faites juste un 'touch %s', sinon copiez-y le fichier 'options' fourni avec wmc², et abondamment commenté]", filename, filename);
   }
   lcnt = 0;
   do {

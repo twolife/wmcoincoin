@@ -255,6 +255,9 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
       *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
     } else if (hka->num != hk->num) {
       changed = 1;
+      /* on l'enleve puis la rajoute pour assurer un tri dans le bon ordre */
+      *a = tribune_key_list_remove(*a, hk->key, hk->type);
+      *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
     }
     hk = hk->next;
   }

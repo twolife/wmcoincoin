@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.6 2002/04/02 22:29:29 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.7 2002/04/10 22:53:44 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.7  2002/04/10 22:53:44  pouaite
+  un commit et au lit
+
   Revision 1.6  2002/04/02 22:29:29  pouaite
   bugfixes transparence
 
@@ -68,7 +71,7 @@ RGBAImage* RGBACreateImage(int width, int height);
 void RGBADestroyImage(RGBAImage *img);
 XImage *RGBAImage2XImage(RGBAContext *ctx, RGBAImage *rimg);
 Pixmap RGBAImage2Pixmap(RGBAContext *ctx, RGBAImage *rimg);
-RGBAImage *RGBACreateRImgFromXpmData(char **xpm);
+RGBAImage *RGBACreateRImgFromXpmData(RGBAContext *ctx, char **xpm);
 Pixmap RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm);
 Pixmap RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h);
 #endif

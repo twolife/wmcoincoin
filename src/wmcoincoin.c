@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.37 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.38 2002/04/10 22:53:44 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.38  2002/04/10 22:53:44  pouaite
+  un commit et au lit
+
   Revision 1.37  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -960,7 +963,7 @@ wmcc_set_wm_icon(Dock *dock) {
   }
   assert(w>0 && h>0);
 
-  in_img = RGBACreateRImgFromXpmData(icon_xpm); assert(in_img);
+  in_img = RGBACreateRImgFromXpmData(dock->rgba_context, icon_xpm); assert(in_img);
   assert(in_img->w == 16 && in_img->w == 16);
   out_img = RGBACreateImage(w, h); assert(out_img);
   for (i=0; i < w; i++) {

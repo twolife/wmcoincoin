@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.16 2002/04/09 23:38:29 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.17 2002/04/10 22:53:44 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.17  2002/04/10 22:53:44  pouaite
+  un commit et au lit
+
   Revision 1.16  2002/04/09 23:38:29  pouaite
   boitakon et son cortège de bugfixes
 
@@ -435,7 +438,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
       } else if (best_mi->id == caller_mi->id) {
 	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
       } else if (best_mi->in_boitakon) {
-	snprintf(commentaire, comment_sz, "kikoo depuis la boitakon !"); return NULL;
+	snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon !", (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent);
       }
     }
   }
@@ -711,11 +714,11 @@ tribune_key_list_find(KeyList *hk, const char *s, KeyListType t)
 }
 
 KeyList *
-tribune_key_list_swap(KeyList *first, const char *s, KeyListType t)
+tribune_key_list_swap(KeyList *first, const char *s, KeyListType t, int num)
 {
   /* verifie si le mot est déjà dans la liste */
   if (tribune_key_list_find(first, s, t) == NULL) {
-    return tribune_key_list_add(first, s, t, 0, 1);
+    return tribune_key_list_add(first, s, t, num, 0);
   } else {
     return tribune_key_list_remove(first, s, t);
   }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.47 2002/04/09 23:38:29 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.48 2002/04/10 22:53:44 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.48  2002/04/10 22:53:44  pouaite
+  un commit et au lit
+
   Revision 1.47  2002/04/09 23:38:29  pouaite
   boitakon et son cortège de bugfixes
 
@@ -253,6 +256,8 @@ struct _Pinnipede {
   int id_base, decal_base;
   int last_post_id; /* utilise pour savoir si la tribune a ete mise a jour.. */
 
+  int colle_en_bas; /* pour savoir si on scrolle lors de nouveaux messages */
+
   //  int html_mode;
   int nick_mode; /* 0 : n'affiche rien, 
 		    1:  affiche les useragent raccourcis, 
@@ -367,6 +372,24 @@ get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, struct _Pinnipe
   if (prev) *prev = NULL;
   return -1;
 }
+
+/* plutot lente */
+static int
+get_last_id(DLFP_tribune *trib, struct _PinnipedeFilter *filter) {
+  tribune_msg_info *mi;
+  int nid;
+
+  mi = trib->msg;
+  nid = -1;
+  while (mi) {
+    if (filter == NULL || filter_msg_info(mi,filter)) {
+      nid = mi->id;
+    }
+    mi = mi->next;
+  }
+  return nid;  
+}
+
 
 static int
 count_all_id(DLFP_tribune *trib, struct _PinnipedeFilter *filter) {
@@ -1146,11 +1169,19 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
 
   if (flag_updating_tribune) return;
 
+
   if (pp->lignes_sel) {
     pp_selection_unselect(pp);
   }
 
   pp_update_fortune(dock);
+
+  //  printf("[colle_en_bas=%d] ..", pp->colle_en_bas);
+  if (id_base == -1 || id_base == get_last_id(trib, &pp->filter)) pp->colle_en_bas = 1;
+  else pp->colle_en_bas = 0;
+
+  //  printf("id_base = %d, pp->id_base=%d, last_id=%d, colle_en_bas=%d\n",
+  //	 id_base, pp->id_base, get_last_id(trib, &pp->filter), pp->colle_en_bas);
 
   pp->last_post_id = trib->last_post_id;
 
@@ -2012,13 +2043,15 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     mi = ref_mi;
     while (mi && mi->timestamp == ref_mi->timestamp) {
       PostVisual *pv;
-      pv = pp_pv_add(pp, trib, mi->id);
-      if (pv) {
-	PostWord *pw = pv->first;
-	while (pw) {
-	  pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); //WhitePixel(dock->display, dock->screennum));
-	  XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
-	  y += pp->fn_h;
+      if (mi->in_boitakon == 0 || pp->disable_plopify) {
+	pv = pp_pv_add(pp, trib, mi->id);
+	if (pv) {
+	  PostWord *pw = pv->first;
+	  while (pw) {
+	    pw = pp_draw_line(dock, pp->lpix, pw, pp->emph_pixel, NULL, 0, y); //WhitePixel(dock->display, dock->screennum));
+	    XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h, 0, y);
+	    y += pp->fn_h;
+	  }
 	}
       }
       get_next_id(trib, mi->id, &mi, NULL);
@@ -2027,7 +2060,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 
     /* affichage du commentaire (optionnel) */
     if (ref_mi || strlen(ref_comment)) {
-      if (strlen(ref_comment)) {
+      if (strlen(ref_comment) && (ref_mi==NULL || (ref_mi->in_boitakon && pp->disable_plopify == 0))) {
 	XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
 	XSetBackground(dock->display, dock->NormalGC, pp->emph_pixel); //WhitePixel(dock->display, dock->screennum));
@@ -2065,9 +2098,10 @@ pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
       if (pp->sc) { 
 	pp_scrollcoin_update_bounds(dock, trib); 
       }      
-      if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base) { // && pp->decal_base == 0) {
+      int last_id = get_last_id(trib, &pp->filter);
+      if (trib->last_post_id != pp->last_post_id && pp->colle_en_bas) { // && pp->decal_base == 0) {
 	//	myprintf("pp_check_tribune_updated, on %<yel colle> de %d à %d\n", pp->last_post_id, trib->last_post_id);
-	pp_update_content(dock, trib, trib->last_post_id, 0, 0, 0);
+	pp_update_content(dock, trib, last_id, 0, 0, 0);
       } else {
 	/*	if (trib->last_post_id != pp->last_post_id)
 		printf("pp_check_tribune_updated, on laisse filer de %d à %d (pos=%d/%d)\n", pp->last_post_id, trib->last_post_id, pp->id_base, pp->decal_base);*/
@@ -2207,6 +2241,7 @@ pp_build(Dock *dock)
   pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
 
   pp->id_base = -1; pp->decal_base = 0;
+  pp->colle_en_bas = 1;
 
   pp->win_width = Prefs.pp_width;
   pp->win_height = Prefs.pp_height;
@@ -2441,7 +2476,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
   //  XMoveWindow(dock->display, pp->win, 100, 100);
   pp->mapped = 1;
-  pp_update_content(dock, trib, trib->last_post_id, 0, 0, 1);
+  pp_update_content(dock, trib, pp->colle_en_bas ? get_last_id(trib, &pp->filter) : pp->id_base, 0, 0, 1);
     
   pp->survol_hash = 0;
 }
@@ -2453,18 +2488,20 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
   int l;
   pw = NULL;
   if (y >= pp->zmsg_y && y < pp->zmsg_y + pp->zmsg_h) {
+    int trouve = 0;
     for (l=0; l < pp->nb_lignes; l++) {
       pw = pp->lignes[l];
       
-      while (pw) {
+      while (pw && pw->ligne == pp->lignes[l]->ligne) {
 	if (x >= pw->xpos && x < pw->xpos+pw->xwidth &&
 	    y >= LINEY0(l) && y <= LINEY1(l)) 
 	  {
+	    trouve = 1;
 	    break;
 	  }
 	pw = pw->next;
       }
-      if (pw) break;
+      if (trouve) break;
     }
   }
   return pw;
@@ -3196,6 +3233,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
   Pinnipede *pp = dock->pinnipede;
   PostWord *pw;
   int thread_clic;
+  int num;
 
   thread_clic = 0;
   pw = pp_get_pw_at_xy(pp, mx, my);
@@ -3210,6 +3248,10 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
     }
   }
 
+
+  num = 0;
+  if (plopify_flag == 2) num = 2; /* on a fait la mega combo pour rentrer un nuisible dans la boitakon */
+
   if (pw) {
     tribune_msg_info *mi;
     mi = tribune_find_id(trib, pw->parent->id);
@@ -3217,20 +3259,20 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
     if (mi && thread_clic) {
       char sid[15];
       snprintf(sid, 15, "%d", mi->id);
-      *pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD);
+      *pkl = tribune_key_list_swap(*pkl, sid, HK_THREAD, num);
     } else if (mi && pw->attr & PWATTR_NICK) {
       if (plopify_flag == 0) {
-	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA);
+	*pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA, num);
       } else {
-	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);
-	else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN);
+	if (mi->login[0]) *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
+	else *pkl = tribune_key_list_swap(*pkl, mi->useragent, HK_UA_NOLOGIN, num);
       }
     } else if (pw->attr & PWATTR_LOGIN) {
-      *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN);
+      *pkl = tribune_key_list_swap(*pkl, mi->login, HK_LOGIN, num);
     } else if (pw->attr & PWATTR_TSTAMP) {
       char sid[10];
       snprintf(sid,10,"%d", pw->parent->id);
-      *pkl = tribune_key_list_swap(*pkl, sid, HK_ID);
+      *pkl = tribune_key_list_swap(*pkl, sid, HK_ID, num);
     } else {
       char *s, *p;
       KeyList *hk;
@@ -3252,7 +3294,7 @@ pp_handle_shift_clic(Dock *dock, DLFP_tribune *trib, KeyList **pkl, int mx, int 
 	
 	if (strlen(p) == 0) p = pw->w;
 	
-	*pkl = tribune_key_list_swap(*pkl, p, HK_WORD);
+	*pkl = tribune_key_list_swap(*pkl, p, HK_WORD, num);
 	free(s);
       }
     }
@@ -3454,7 +3496,14 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
     }
   } else if (event->button == Button3) {
     if (event->state & ShiftMask) {
-      pp_handle_shift_clic(dock, trib, &Prefs.plopify_key_list, mx, my, 1);
+      int plop_level = 1;
+      if ((event->state & ControlMask) && 
+	  (event->state & Mod4Mask) && 
+	  (event->state & Mod1Mask)) {
+	printf("yo! %04X\n", event->state);
+	plop_level = 2;
+      }
+      pp_handle_shift_clic(dock, trib, &Prefs.plopify_key_list, mx, my, plop_level);
     } else {
       PostWord *pw;
       

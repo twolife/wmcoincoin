@@ -195,7 +195,7 @@ KeyList* tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListT
 KeyList* tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType type);
 KeyList* tribune_key_list_find(KeyList *hk, const char *s, KeyListType t);
 const char* tribune_key_list_type_name(KeyListType t);
-KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t);
+KeyList* tribune_key_list_swap(KeyList *first, const char *s, KeyListType t, int num);
 void tribune_key_list_destroy(KeyList *first);
 KeyList *tribune_key_list_clear_from_prefs(KeyList *first);
 #endif

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.8 2002/04/02 22:29:29 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.9 2002/04/10 22:53:44 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.9  2002/04/10 22:53:44  pouaite
+  un commit et au lit
+
   Revision 1.8  2002/04/02 22:29:29  pouaite
   bugfixes transparence
 
@@ -237,7 +240,7 @@ RGBAImage2Pixmap(RGBAContext *ctx, RGBAImage *rimg)
   Update: coupée en deux
 */
 RGBAImage *
-RGBACreateRImgFromXpmData(char **xpm)
+RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
 {
   int w,h,ncolor,cpp;
   RGBAImage *rimg;
@@ -266,8 +269,16 @@ RGBACreateRImgFromXpmData(char **xpm)
     s++; assert(*s == ' ');
     s++;
     if (strcasecmp(s, "None") != 0) {
-      assert(*s == '#');
-      assert(sscanf(s+1, "%x", &rgb)==1);
+      if (*s != '#') {
+	XColor xc;
+	if (XParseColor(rc->dpy, DefaultColormap(rc->dpy, rc->screen_number), s, &xc)) {
+	  fprintf(stderr, "couleur inconnue dans le .xpm : '%s'\n'", s);
+	  exit(0);
+	}
+	rgb = ((xc.red>>8) << 16) + ((xc.green>>8) << 8) + (xc.blue>>8);
+      } else {
+	assert(sscanf(s+1, "%x", &rgb)==1);
+      }
       col_tab[i].r = (rgb & 0xff0000) >> 16;
       col_tab[i].g = (rgb & 0x00ff00) >> 8;
       col_tab[i].b = (rgb & 0x0000ff);
@@ -317,7 +328,7 @@ RGBACreatePixmapFromXpmData(RGBAContext *ctx, char **xpm)
   RGBAImage *rimg;
   Pixmap pix;
 
-  rimg = RGBACreateRImgFromXpmData(xpm);
+  rimg = RGBACreateRImgFromXpmData(ctx, xpm);
   pix = RGBAImage2Pixmap(ctx, rimg);
   RGBADestroyImage(rimg);
   return pix;
