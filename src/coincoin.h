@@ -88,16 +88,35 @@ typedef struct _DLFP_trib_load_rule {
   char *name; /* nom de la regle  */
 } DLFP_trib_load_rule;
 
+typedef struct _tribune_msg_info tribune_msg_info;
 
-typedef struct _tribune_msg_info {
+typedef struct _tribune_msg_ref {
+  unsigned int h:5;
+  unsigned int m:8;
+  int s:9;    /* si positif, les secondes sont indiquées dans la ref */
+  int num:5;  /* si positif, le sous-numéro (pour les post multiples dans une même seconde) est indiqué dans la ref */
+  unsigned int nbmi:6; /* nb de messages consecutifs pointés (généralement 1 sauf si la ref désigne plusieurs messages, forcement consecutifs)
+			  0 => ref non determinee (ipot, mauvaise reference, le message n'existe plus..) 
+		       */
+  tribune_msg_info *mi; /* non mallocé, forcément, et mis à jour lors de la destruction des messages trop vieux 
+			  peut être NULL (ipot, message effacé..)
 
+			  remarque: les refs DOIVENT être vers des messages du passe (ipot interdit)
+			  c'est necessaire au bon fonctionnement de la construction des threads du pinnipede
+			*/
+} tribune_msg_ref;
+
+/* ne pas déplacer ce genre de structure après son allocation
+   --> pas de realloc la dessus !
+   (à cause des tribune_msg_ref qui les relient entre elles)
+*/
+struct _tribune_msg_info {
   int id;
-  /* (year-2000)|month|day|h|m|s */
   time_t timestamp;
   char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
 			 (-1 -> pas (encore) d'autre post avec le meme tstamp)
-		      */
-
+		       */
+  /* (year-2000)|month|day|h|m|s */
   char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
   char *useragent; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(useragent) !!! */
   char *msg; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(msg) !!! */
@@ -112,9 +131,13 @@ typedef struct _tribune_msg_info {
      juste un element de 'tribune.rules'
   */
   DLFP_trib_load_rule *tatouage;
-  short troll_score; /* le niveau de trollitude du post (cf troll_detector.c) */
-  char is_my_message, is_answer_to_me;
-} tribune_msg_info;
+
+  int troll_score:14; /* le niveau de trollitude du post (cf troll_detector.c) */
+  int is_my_message:1;
+  int is_answer_to_me:1;
+  short nb_refs;
+  tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
+};
 
 
 
@@ -503,9 +526,21 @@ void dock_set_horloge_mode(Dock *dock);
 int useragents_file_reread(Dock *dock, DLFP *dlfp);
 int useragents_file_read_initial(Dock *dock, DLFP *dlfp);
 
-/* coincoin_tribune.c */
+/* tribune_util.c */
 tribune_msg_info *tribune_find_id(const DLFP_tribune *trib, int id);
 tribune_msg_info *tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi);
+char *tribune_get_tok(const unsigned char **p, const unsigned char **np, 
+		      unsigned char *tok, int max_toklen, int *has_initial_space);
+int tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *mi);
+tribune_msg_info *check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
+					const unsigned char *ww, 
+					unsigned char *commentaire, int comment_sz, 
+					int *is_a_ref, int *ref_num);
+int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, 
+				int *ref_m, int *ref_s, int *ref_num);
+void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
+
+/* coincoin_tribune.c */
 void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);
 /* renvoie l'age du message, en secondes */
 time_t tribune_get_msg_age(const DLFP_tribune *trib, const tribune_msg_info *it);
@@ -601,7 +636,6 @@ void pp_minib_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event);
 Window pp_get_win(Dock *dock);
 void pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib);
 void pp_set_tribune_updated(Dock *dock);
-int tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *mi);
 
 /* troll_detector.c */
 void troll_detector(tribune_msg_info *mi);

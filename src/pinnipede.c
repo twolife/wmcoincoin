@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.12 2002/01/16 00:35:26 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.13 2002/01/18 00:28:42 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.13  2002/01/18 00:28:42  pouaite
+  le ménage continue + grosses modifs (experimentales pour l'instant)
+
   Revision 1.12  2002/01/16 00:35:26  pouaite
   debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
 
@@ -75,8 +78,8 @@ typedef struct _PostWord PostWord;
 /* une liste de mots avec leurs attributs */
 struct _PostWord {
   unsigned char *w; /* non mallocé, stocke dans la même zone que cette structure */
-  unsigned short attr;
   unsigned char *attr_s;
+  unsigned short attr;
   short xpos, xwidth, ligne;
   struct _PostWord *next;
   struct _PostVisual *parent;
@@ -85,12 +88,13 @@ struct _PostWord {
 /* liste chainée de posts */
 struct _PostVisual {
   int id; // message id 
+  PostWord *first; /* la liste des mots */
   time_t tstamp;
   char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
-  PostWord *first; /* la liste des mots */
-  int nblig; // nombre de lignes necessaire pour afficher ce message
-  int ref_cnt; // compteur de references
-  char is_my_message, is_answer_to_me;
+  int nblig:12; // nombre de lignes necessaire pour afficher ce message
+  int ref_cnt:10; // compteur de references
+  int is_my_message:1;
+  int is_answer_to_me:1;
   struct _PostVisual *next;
 };
 
@@ -101,7 +105,8 @@ struct _PinnipedeFilter {
   char *ua;
   char *login;
   char *word;
-  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
+  //  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
+  int *id; int nid; /* liste des id des messages affichés dans le filtre de threads */
 };
 
 struct _Pinnipede {
@@ -148,207 +153,15 @@ struct _Pinnipede {
 };
 
 
-/* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
-   son msg_info, et on rempli 'commentaire' 
 
-
-   avertissement au lecteur téméraire:
-     cette fonction est un sac de noeuds et ça ne va pas en s'arrangeant
-
-     (en gros c'est toute une serie de tests pour filtres les refs invalides tout en
-     etant le plus général possible ..)
-*/
-int
-check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
-{
-  int l, h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
-  const unsigned char *p;
-  int use_deuxpt;
-  unsigned char w[11];
-
-  *ref_h = -1; *ref_m = -1; *ref_s = -1; *ref_num = -1;
-  num = -1; h = -1; m = -1; s = -1;
-  l = strlen(ww);
-
-  if (l < 4 || l > 10) return 0; /* on enlimine les cas les plus explicites */
-  strncpy(w, ww, 10); w[10] = 0;
-
-  use_deuxpt = 0;
-  p = w; 
-  /* verifie que la chaine ne contient que des chiffres et des ':' ou des '.' (les ':' n'etant pas en premiere ou derniere position) */
-  while (*p) { 
-    if ((*p == ':' || *p == '.' || 
-	 (use_deuxpt == 0 && *p == 'h') || (use_deuxpt == 1 && *p == 'm')) 
-	&& p != w && *(p+1)) {
-      use_deuxpt++;
-    } else if (*p < '0' || *p > '9') {
-      if (*(p+1) == 0 && strchr("¹²³",*p) == NULL)
-	break;
-    }
-
-    p++;
+static int
+pp_thread_filter_find_id(struct _PinnipedeFilter *f, int id) {
+  int i;
+  for (i=0; i < f->nid; i++) {
+    if (f->id[i] == id) return 1;
   }
-  if (*p) return 0;
-  
-  if (use_deuxpt == 0) {
-    if (l == 4) {
-      /* type '1630' */
-      h = (w[0]-'0')*10 + (w[1]-'0');
-      m = (w[2]-'0')*10 + (w[3]-'0');
-      s = -1;
-    } else if (l == 6) {
-      h = (w[0]-'0')*10 + (w[1]-'0');
-      m = (w[2]-'0')*10 + (w[3]-'0');
-      s = (w[4]-'0')*10 + (w[5]-'0');
-    } else if (l == 7) {
-      h = (w[0]-'0')*10 + (w[1]-'0');
-      m = (w[2]-'0')*10 + (w[3]-'0');
-      s = (w[4]-'0')*10 + (w[5]-'0');
-      if (w[6] == (unsigned char)'¹') num = 0; 
-      else if (w[6] == (unsigned char)'²') num = 1; 
-      else if (w[6] == (unsigned char)'³') num = 2; else return 0;
-    } else return 0;
-
-    /* ci-dessous minipatch pour Dae qui reference les posts multiples
-       sous la forme hh:mm:ss:num -> wmc2 ne les reconnaissait pas comme des 
-       refs, maintenant si */
-
-    //  } else if (use_deuxpt <= 2) {
-  } else if (use_deuxpt <= 3) {
-    /* il y a des separateurs entre les heure et les minutes [et les secondes] */
-    int nb_char_h, nb_char_m, nb_char_s;
-    p = w;
-    h = 0;
-    nb_char_h = nb_char_m = nb_char_s = 0;
-    while (*p != ':' && *p != '.' && *p != 'h') {
-      if (*p < '0' || *p > '9') return 0;
-      h = 10*h + (*p - '0'); p++;
-      nb_char_h++;
-    }
-    p++;
-    m = 0;
-    while (*p != ':' && *p != '.' && *p != 'm' && *p) {
-      if (*p < '0' || *p > '9') return 0;
-      m = 10*m + (*p - '0'); p++;
-      nb_char_m++;
-    }
-    if (*p == ':' || *p == '.' || *p == 'm') {
-      p++;
-      s = 0;
-      while (*p && *p != ':' && 
-	     *p != (unsigned char)'¹' && *p != (unsigned char)'²' && *p != (unsigned char)'³') {
-	if (*p < '0' || *p > '9') return 0;
-	s = 10*s + (*p - '0'); p++;
-	nb_char_s++;
-      }
-      if (*p == (unsigned char)'¹') num = 0;
-      if (*p == (unsigned char)'²') num = 1;
-      if (*p == (unsigned char)'³') num = 2;
-      if (*p == ':') {
-	p++; if (*p >= '0' && *p <= '9') num = *p - '1';
-      }
-    } else s = -1;
-
-    /* le test qui tue pour arrêter de confondre la version du kernel avec une horloge .. */
-    /* ça ira jusqu'au kernel 2.10.10 */
-    if (nb_char_h > 2 || nb_char_m != 2 || nb_char_s == 1 || nb_char_s > 2) return 0;
-
-  } else return 0;
-
-  if (h > 23 || m > 59 || s > 59) return 0;
-
-  *ref_h = h; *ref_m = m; *ref_s = s; *ref_num = num;
-
-  return 1;
+  return 0;
 }
-
-/* ceci est un commentaire à la con pour forcer le commit (oui je suis un tocard mais g la flemme de chercher à comprendre */
-
-
-/* dans la famille des fonction pourries, je demande ... */
-static char *
-tribune_get_tok(const unsigned char **p, const unsigned char **np, 
-	unsigned char *tok, int max_toklen, int *has_initial_space)
-{
-  const unsigned char *start, *end;
-
-  assert(p); 
-  assert(*p); 
-  assert(tok);
-
-  //has_initial_space doit etre initialise dans la procedure appelante (sinon y'a des pbs avec les tag html)
-  //*has_initial_space = 0; /* indique si le token commence par un (ou plusieurs) espace */
-
-  start = *p; *np = NULL;
-  // saute les espaces
-  while (*start <= ' ' && *start) { start++; *has_initial_space = 1; }
-  end = start;
-
-  /* les bon vieux tags html */
-  if (*start == '<') {
-    static const char *balise = "abusiABUSI";
-    int i;
-    /* c'est un peu chiant, on risque de mal reconnaitre les balise ou
-       d'en reconnaitre qui ont ete ajoutees a la main 
-       on teste d'abord les balises courantes
-    */
-    for (i=0; i < 10; i++) { 
-      if (start[1] == balise[i] && start[2] == '>') {
-	end = start+3;
-	break;
-      } else if (start[1] == '/' && start[2] == balise[i] && start[3] == '>') {
-	end = start+4;
-	break;
-      }
-    }
-    if (end == start) {
-      int is_href;
-      const unsigned char *s1 = "<a href=\"http://";
-      const unsigned char *s2 = "<a href=\"ftp://";
-      const unsigned char *s3 = "<a href=\"https://";
-      /* puis les <a href> (c'est un peu particulier */
-
-      /* c'est un peu facho, d'autant que c'est reverifié au niveau de open_url, mais
-	 bon, apres la douche froide... */
-      is_href = 0;
-      if (strncasecmp(start, s1, strlen(s1)) == 0) is_href = 1; 
-      if (strncasecmp(start, s2, strlen(s2)) == 0) is_href = 1; 
-      if (strncasecmp(start, s3, strlen(s3)) == 0) is_href = 1; 
-      if (is_href) {
-	//	printf("get_tok: '");
-	while (*end && *end != '>') end++; //{ printf("%c", *end); end++; }
-	//printf("\n");
-	if (*end) end++;
-      } else {
-	/* sinon on ignore */
-	end++;
-	//	printf("get_tok pas reconnu: '");
-	while (*end && *end != '<' && *end > ' ') end++; //{ printf("%c", *end); end++;}
-	//printf("\n");
-      }
-    }
-  } else {
-    /* pour aider la reconnaissance des timestamp */
-    if (*end >= '0' && *end <= '9') {
-      while (*end && 
-	     ((*end >= '0' && *end <= '9') || strchr(":.hm¹²³", *end))) {
-	end++;
-      }
-      /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
-      if (end-start > 4 && (*(end-1) == ':' || *(end-1) == '.' || *(end-1) == 'm')) end--;
-    } else {
-      /* un mot normal */
-      while (*end && *end != '<' && *end > ' ' && (*end < '0' || *end > '9')) end++;
-    }
-  }
-  if (end == start) return NULL;
-  else strncpy(tok, start, MIN(end-start, max_toklen-1));
-  tok[MIN(end-start, max_toklen-1)] = 0;
-  *p = start;
-  *np = end;
-  return tok;
-}
-
 
 static int
 filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
@@ -360,80 +173,13 @@ filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
     return (strcmp(filter->login, mi->login) == 0);
   } else if (filter->word && strlen(filter->word)) {
     return (strstr(mi->msg, filter->word) != NULL);
-  } else if (filter->hms[0] != -1) { /* là c'est lourd... */
-    int has_initial_space = 0; /* inutilisé */
-    unsigned char tok[512];
-    const unsigned char *p, *np;
-
-    /* c'est du filtre qui va ramer si y'a 10000 messages en mémoire... */
-    p = mi->msg;
-    while (p) {
-      if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
-      if (tok[0] >= '0' && tok[0] <= '9') {
-	int h,m,s,num;
-	if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
-	  if (h == filter->hms[0] && m == filter->hms[1] && 
-	      (filter->hms[2] == -1 || filter->hms[2] == s)) {
-	    return 1;
-	  }
-	}
-      }
-      p=np;
-    }
-    return 0;
+  } else if (filter->id != NULL) {
+    return pp_thread_filter_find_id(filter, mi->id);
   } else {
     return 1;
   }
 }
 
-
-
-/* oh le joli nom en anglais 
-
-  cette fonction n'est pas utilisée ici mais dans coincoin_tribune
-
-  c'est le bordel , ça évoluera surement
-
-  TODO: pb à l'initialisation, il faut l'appeler dans l'ordre des ID, sinon y'a pb
-
-  TODO: CETTE FONCTION EST NAZE MAIS JE SUIS TROP CREVE JE FAIS RIEN QUE DES CONNERIES CE SOIR
-*/
-int
-tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
-  tribune_msg_info *mi;
-
-  mi = trib->msg;
-  
-  printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);
-  while (mi) {
-    const unsigned char *p, *np;
-
-    if (mi->is_my_message) {
-      /* c'est du filtre qui va ramer si y'a 10000 messages en mémoire... */
-      p = ref_mi->msg;
-      while (p) {
-	int has_initial_space = 0; /* inutilisé */
-	unsigned char tok[512];
-	
-	if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
-	if (tok[0] >= '0' && tok[0] <= '9') {
-	  int h,m,s,num;
-	  if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
-	    //	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);
-	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
-		(mi->hmsf[3] == 0 || mi->hmsf[2] == s)) {
-	      printf("ref au message trouvée !\n");
-	      return 1;
-	    }
-	  }
-	}
-	p=np;
-      }
-    }
-    mi = mi->next;
-  }
-  return 0;
-}
 
 
 /* les deux fonctions suivantes permettent de se balader dans la liste des posts 
@@ -487,11 +233,11 @@ void
 pp_unset_filter(struct _PinnipedeFilter *f)
 {
   f->filter_mode = 0;
-  if (f->filter_name) free(f->filter_name); f->filter_name = NULL;
-  if (f->ua) free(f->ua); f->ua = NULL;
-  if (f->login) free(f->login); f->login = NULL;
-  if (f->word) free(f->word); f->word = NULL;
-  f->hms[0] = -1;
+  if (f->filter_name) { free(f->filter_name); f->filter_name = NULL;}
+  if (f->ua) { free(f->ua); f->ua = NULL;}
+  if (f->login) { free(f->login); f->login = NULL; }
+  if (f->word) { free(f->word); f->word = NULL; }
+  if (f->id) { free(f->id); f->id = NULL; f->nid = 0; }
 }
 
 static void
@@ -534,81 +280,6 @@ pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr
 
 
 
-
-
-
-
-tribune_msg_info *
-check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
-		      const unsigned char *ww, unsigned char *commentaire, int comment_sz, int *is_a_ref, int *ref_num)
-{
-  int h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
-  tribune_msg_info *mi, *best_mi;
-  int best_mi_num;
-
-  *is_a_ref = 0;
-  if (check_for_horloge_ref_basic(ww, &h, &m, &s, &num) == 0) return NULL;
-  *is_a_ref = 1;
-  
-  mi = trib->msg;
-  best_mi = NULL;
-  best_mi_num = 0;
-
-  while (mi) {
-    if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
-    if (s == -1) {
-      if (mi->hmsf[0] == h && mi->hmsf[1] == m && best_mi == NULL) {
-	best_mi = mi;
-      }
-    } else {
-      if (mi->hmsf[0] == h && mi->hmsf[1] == m && mi->hmsf[2] == s) {
-	if (num == -1 || num == best_mi_num) {
-	  best_mi = mi; break;
-	}
-	best_mi_num++;
-      }
-    }
-    mi = mi->next;
-  }
-  
-  if (commentaire) {
-    char s_ts[12];
-    tribune_msg_info *caller_mi;
-
-    commentaire[0] = 0;
-    caller_mi = tribune_find_id(trib, caller_id);
-    if (caller_mi) {
-      commentaire[0] = 0;
-      if (s == -1) {    
-	snprintf(s_ts, 10, "%02d:%02d", h,m);
-      } else {
-	char snum[3];
-	snum[0] = snum[1] = snum[2] = 0;
-	switch (num) {
-	case -1: break;
-	case 0: snum[0] = '¹'; break;
-	case 1: snum[0] = '²'; break;
-	case 2: snum[0] = '³'; break;
-	default: snum[0] = ':'; snum[1] = '1' + num;
-	}
-	snprintf(s_ts, 12, "%02d:%02d:%02d%s", h,m,s,snum);
-      }
-      if (best_mi == NULL) {
-	if (caller_mi->hmsf[0]*60+caller_mi->hmsf[1] < h*60+m) {
-	  snprintf(commentaire, comment_sz, "IPOT(tm) detected");
-	} else {
-	  snprintf(commentaire, comment_sz, "où qu'il est '%s' ?", s_ts);
-	}
-      } else if (best_mi->id > caller_mi->id) {
-	snprintf(commentaire, comment_sz, "[IPOT(tm)]");
-      } else if (best_mi->id == caller_mi->id) {
-	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
-      }
-    }
-  }
-  if (ref_num) *ref_num = num;
-  return best_mi;
-}
 
 
 /* construction d'un postvisual à partir du message 'mi' */
@@ -856,9 +527,6 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
       with_seconds = mi->hmsf[3];
     }
 
-    if (mi->is_answer_to_me) printf("polop (%d)\n", id);
-
-    //pv = pv_tmsgi_parse(trib, mi, with_seconds, pp->html_mode, pp->nick_mode, pp->trollscore_mode); 
     pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, pp->nick_mode, pp->trollscore_mode); 
     pv_justif(pp, pv, 8, pp->win_width);
     assert(pv);
@@ -1739,7 +1407,7 @@ pp_build(Dock *dock)
   pp->filter.ua = NULL;
   pp->filter.login = NULL;
   pp->filter.word = NULL;
-  pp->filter.hms[0] = -1;
+  pp->filter.nid = 0; pp->filter.id = NULL;
 
   pp->fortune_mode = Prefs.pp_fortune_mode; 
   pp->fortune_h = 0;
@@ -2236,25 +1904,110 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
   } else pp_minib_refresh(dock);
 }
 
+#define THREAD_FILTER_SZ_REALLOC 10
+
+static void
+pp_thread_filter_add_refs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tribune_msg_info *base_mi)
+{
+  int i,j;
+  if (base_mi == NULL) return;
+
+  /* on inspecte toutes les references */
+  for (i = 0; i < base_mi->nb_refs; i++) {
+    tribune_msg_info *mi;
+    
+    mi = base_mi->refs[i].mi;
+
+    for (j = 0; j < base_mi->refs[i].nbmi; j++) {
+      /* realloc la liste si il faut */
+      if ((f->nid)%THREAD_FILTER_SZ_REALLOC == 0) {
+	f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC) * sizeof(int)); assert(f->id);
+      }
+      /* si la ref n'etait pas déjà dans la liste, on l'ajoute */
+      if (pp_thread_filter_find_id(f, mi->id)==0) {
+	myprintf("    ref(%d): ajout de %<YEL %d> <-- %<MAG %d>\n", f->nid, mi->id, base_mi->id);
+	f->id[f->nid++] = mi->id;
+	/* et on recurse ... */
+	pp_thread_filter_add_refs(trib, f, mi);
+      }
+      mi = mi->next;
+    }
+  }
+}
+
+static void
+pp_thread_filter_add_backrefs(DLFP_tribune *trib, struct _PinnipedeFilter *f, tribune_msg_info *base_mi)
+{
+  tribune_msg_info *mi;
+  
+  if (base_mi == NULL) return;
+
+  /* on parcourt tous les message postérieurs à base_mi */
+  mi = base_mi->next;
+  while (mi) {
+    int i;
+    /* on regarde toutes ses references */
+    for (i = 0; i < mi->nb_refs; i++) {
+      tribune_msg_info *ref_mi;
+      int j;
+
+      /* pour chaque ref, on regarde la liste (generalement de taille 1 ou 0) des messages pointés */
+      for (j = 0, ref_mi = mi->refs[i].mi; j < mi->refs[i].nbmi; j++, ref_mi=ref_mi->next) {
+	assert(ref_mi);
+
+	/* si on pointe vers le bon */
+	if (ref_mi == base_mi) {
+	  /* realloc de la liste si necessaire */
+	  if ((f->nid)%THREAD_FILTER_SZ_REALLOC == 0) {
+	    f->id = realloc(f->id, (f->nid+THREAD_FILTER_SZ_REALLOC)*sizeof(int)); assert(f->id);
+	  }
+	  
+	  /* si le message n'a pas encore ete traite on l'ajoute */
+	  if (pp_thread_filter_find_id(f, mi->id)==0) {
+	    myprintf("backref(%d): ajout de %<YEL %d> --> %<MAG %d>\n", f->nid, mi->id, base_mi->id);
+	    
+	    f->id[f->nid++] = mi->id;
+	    /* et hop ça recurse un coup */
+	    pp_thread_filter_add_backrefs(trib, f, mi);
+	  }
+	}
+      }
+    }
+    mi = mi->next;
+  }
+}
 
 void
-pp_set_hms_filter(Dock *dock, DLFP_tribune *trib, int h, int m, int s)
+pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
 {
+  
   Pinnipede *pp = dock->pinnipede;
   char fname[200];
+  tribune_msg_info *mi;
 
-  if (s == -1) {
-    snprintf(fname, 200, "ref: %02d:%02d", h, m);
+  
+  mi = tribune_find_id(trib, base_id);
+  if (mi == NULL) return;
+
+  if (mi->hmsf[3] == 0) {
+    snprintf(fname, 200, "thread: %02d:%02d", mi->hmsf[0], mi->hmsf[1]);
   } else {
-    snprintf(fname, 200, "ref: %02d:%02d:%02d", h, m, s);
+    snprintf(fname, 200, "thread: %02d:%02d:%02d", mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
   }
+
 
   pp_unset_filter(&pp->filter);
   pp->filter.filter_mode = 1;
   pp->filter.filter_name = strdup(fname);
-  pp->filter.hms[0] = h;
-  pp->filter.hms[1] = m;
-  pp->filter.hms[2] = s;  
+
+  pp->filter.nid = 1;
+  pp->filter.id = calloc(THREAD_FILTER_SZ_REALLOC, sizeof(int)); assert(pp->filter.id);
+  pp->filter.id[0] = base_id;
+
+
+  pp_thread_filter_add_refs(trib, &pp->filter, mi);
+  pp_thread_filter_add_backrefs(trib, &pp->filter, mi);
+
 
   BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
   pp_update_content(dock, trib, -1, 0, 0);
@@ -2393,11 +2146,11 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	} else {
 	  /* control+clic sur l'horloge -> activation du filtre */
 
-	  struct tm t;
+	  //	  struct tm t;
 
-	  localtime_r(&pw->parent->tstamp, &t);
+	  //	  localtime_r(&pw->parent->tstamp, &t);
 
-	  pp_set_hms_filter(dock, trib, t.tm_hour, t.tm_min, t.tm_sec);
+	  pp_set_thread_filter(dock, trib, pw->parent->id); 
 
 	}
       } else if (pw->attr & PWATTR_REF) {
@@ -2415,11 +2168,11 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  }
 	} else {
 	  /* control+clic sur une reference, on filtre tous les message qui ont la meme reference */
-	  
+	  /*	  
 	  int h,m,s,num;
 
 	  check_for_horloge_ref_basic(pw->w, &h, &m, &s, &num);
-	  pp_set_hms_filter(dock, trib, h, m, s);
+	  pp_set_thread_filter(dock, trib, pw->parent->id);*/
 	}
       } else if ((pw->attr & PWATTR_LOGIN) && (event->state & ControlMask)) {
       

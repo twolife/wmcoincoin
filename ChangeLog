@@ -1,3 +1,12 @@
+2002-01-18  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c src/coincoin_tribune.c src/tribune_util.c le
+	ménage continue (un nouveau fichier: tribune_util.c), le ctrl+clic
+	sur l'horloge active le filtre de 'threads'. tout ceci n'a
+	quasiment pas été testé, présence de bugs plus ou moins fatals
+	certaine à 100% (et oui, je sais, les couleurs des reponses sont
+	hideuses, ça viendra plus tard).
+	
 2002-01-16  pouaite  <c0in@altern.org>
 
 	* src/dock.c, src/wmcoincoin.c, src/useragents_file.c, src/coincoin.h

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: picohtml.h,v 1.3 2002/01/18 00:28:42 pouaite Exp $
   ChangeLog:
   $Log: picohtml.h,v $
+  Revision 1.3  2002/01/18 00:28:42  pouaite
+  le ménage continue + grosses modifs (experimentales pour l'instant)
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -23,7 +26,7 @@ typedef unsigned char c_attr;
 
 struct _PicoHtmlItem {
   unsigned char *s;
-  int x, y, w, h;
+  short x, y, w, h;
   c_attr attr;
   PicoHtmlItem *next;
   XFontStruct *fn;

@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.14 2002/01/16 00:35:26 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.15 2002/01/18 00:28:42 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.15  2002/01/18 00:28:42  pouaite
+  le ménage continue + grosses modifs (experimentales pour l'instant)
+
   Revision 1.14  2002/01/16 00:35:26  pouaite
   debut de detection des reponse à nos message avec des couleurs hideuses et certainement plein de bugs moisis
 
@@ -71,7 +74,10 @@
 #include <fcntl.h>
 
 /* C'est sale, mais j'ai pas envie de la triballer dans toutes les fonctions
-   - n'est accédé que dans ce fichier */
+   - n'est accédé que dans ce fichier 
+
+<pouaite> ce n'est pas sale, ton source change c'est normal ;)
+*/
 char tribune_last_modified[512] = "";
 
 /* utilise tres localement, c'est la longueur DANS remote.rdf, la longueur réelle sera moindre
@@ -79,32 +85,6 @@ char tribune_last_modified[512] = "";
 #define TRIBUNE_UA_MAX_LEN 1000
 #define TRIBUNE_MSG_MAX_LEN 6000
 #define TRIBUNE_LOGIN_MAX_LEN 60
-
-tribune_msg_info *
-tribune_find_id(const DLFP_tribune *trib, int id)
-{
-  tribune_msg_info *it;
-
-  it = trib->msg; 
-  while (it) {
-    if (it->id == id) return it;
-    it = it->next;
-  }
-  return NULL;
-}
-
-tribune_msg_info *
-tribune_find_previous(const DLFP_tribune *trib, tribune_msg_info *mi)
-{
-  tribune_msg_info *it;
-
-  it = trib->msg; 
-  while (it) {
-    if (it->next == mi) return it;
-    it = it->next;
-  }
-  return NULL;
-}
 
 
 /*
@@ -236,39 +216,43 @@ tribune_remove_old_msg(DLFP_tribune *trib)
   while (cnt > Prefs.tribune_max_msg && trib->msg) {
     BLAHBLAH(4, printf("tribune_remove_old_msg: destruction de id=%d (date=%s)\n", trib->msg->id, ctime(&trib->msg->timestamp)));
     it = trib->msg->next;
+
+    /* nettoyage des references à trib->msg */
+    {
+      tribune_msg_info *mi;
+      int i;
+      mi = trib->msg->next;
+      while (mi) {
+	for (i=0; i < mi->nb_refs; i++) {
+	  /* si on trouve un ref à ce message ... */
+	  if (mi->refs[i].mi == trib->msg) {
+	    assert(mi->refs[i].nbmi>=1);
+	    
+	    /* alors on l'efface si la ref pointe uniquement sur lui,
+	       et si c'est un ref sur plusieurs messages consécutifs, alors
+	       un decremente le compteur et on la fait pointer sur le suivant. */
+	    mi->refs[i].nbmi--;
+	    if (mi->refs[i].nbmi == 0) {
+	      mi->refs[i].mi = NULL;
+	    } else {
+	      mi->refs[i].mi = trib->msg->next;
+	    }
+	  }
+	}
+	mi = mi->next;
+      }
+    }
+
     free(trib->msg);
     cnt--;
     trib->msg = it;
   }
-
-    //    age = tribune_get_msg_age(trib, it);
-    //    BLAHBLAH(4, printf("tribune_remove_old_msg: test de id=%d: son age est %d secondes (max=%d) (nbsec_since_last_msg=%d, last_timestamp=%02d:%02d, time_stamp=%02d:%02d)\n", it->id, age,TRIBUNE_LOAD_NB_MINUTES*60, trib->nbsec_since_last_msg, ts2hm(trib->last_post_timestamp), ts2hm(it->timestamp)));
-    //    if (age > (TRIBUNE_LOAD_WIDTH*8+7)*60) {
-    //if (age > 7200) {
-  /*
-    if (cnt > TRIBUNE_MAX_MSG) {
-      if (pit) {
-	pit->next = it->next;
-	free(it);
-	it = pit->next;
-      } else {
-	trib->msg = it->next;
-	free(it);
-	it = trib->msg;
-      }
-    } else {
-      pit = it;
-      it = it->next;
-    }
-  }
-  */
-
 }
 
 /*
   prout
 */
-time_t
+static time_t
 timestamp_str_to_time_t(char *sts) 
 {
   struct tm t;
@@ -396,6 +380,9 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   strcpy(it->msg, message);
   strcpy(it->login, login);
 
+  it->nb_refs = 0;
+  it->refs = NULL; /* ça sera traité un peu plus tard */
+
   BLAHBLAH(3, printf("log msg id=%d, login=%s timestamp=%u msg='%s'\n", id, it->login, (unsigned)it->timestamp, it->msg));
 
   /* et on n'oublie pas..*/
@@ -466,7 +453,7 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
 
   appelle le programme externe (dans l'ordre des id) pour chaque nouveau message reçu
 */
-void
+static void
 dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
 {
   tribune_msg_info *it;
@@ -526,6 +513,40 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
   }
 }
 
+
+
+
+/*
+  detecte les refs par petites horloges
+  (mais ne tente rien pour ipot)
+*/
+void
+tribune_check_my_messages(DLFP_tribune *trib, int old_last_post_id) { 
+  if (trib->last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+    tribune_msg_info *it;
+
+    /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
+     */
+    if (old_last_post_id != -1) { /* si ce n'est pas le premier appel.. */
+      it = tribune_find_id(trib, old_last_post_id);
+      if (it) it = it->next;
+    } else {
+      it = trib->msg;
+    }
+    while (it) {
+      if (tribune_msg_is_ref_to_me(trib, it)) {
+	flag_updating_tribune++;
+	it->is_answer_to_me = 1;
+	flag_updating_tribune--;
+      }
+      flag_updating_tribune++;
+      tribune_msg_find_refs(trib, it);
+      flag_updating_tribune--;
+      it = it->next;
+    }
+  }
+}
+
 /*
   lecture des nouveaux messages reçus
 
@@ -568,7 +589,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     fd = http_get(Prefs.site_root, Prefs.site_port, s, 
 		  Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, APP_USERAGENT, tribune_last_modified);
   } else {
-    snprintf(s, 8192, "%s/wmcoincoin/test/remote.rdf", getenv("HOME"));
+    snprintf(s, 8192, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
     myprintf("DEBUG: ouverture de '%<RED %s>'\n", s);
     fd = open(s, O_RDONLY);
   }
@@ -662,28 +683,10 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
   tribune_remove_old_msg(&dlfp->tribune);
   flag_updating_tribune--;
 
+  tribune_check_my_messages(&dlfp->tribune, old_last_post_id);
+
   flag_tribune_updated = 1;  
-
   if (dlfp->tribune.last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
-    tribune_msg_info *it;
-
-    /* essaye de detecter si il s'agit d'une réponse à un de vos messages 
-     */
-    if (old_last_post_id != -1) { /* si ce n'est pas le premier appel.. */
-      it = tribune_find_id(&dlfp->tribune, old_last_post_id);
-      if (it) it = it->next;
-    } else {
-      it = dlfp->tribune.msg;
-    }
-    while (it) {
-      if (tribune_msg_is_ref_to_me(&dlfp->tribune, it)) {
-	flag_updating_tribune++;
-	it->is_answer_to_me = 1;
-	flag_updating_tribune--;
-      }
-      it = it->next;
-    }
-
     dlfp_tribune_call_external(&dlfp->tribune, old_last_post_id);    
   }
 }
