@@ -1,4 +1,5 @@
 #define __PREFS_C
+#include <errno.h>
 #include "config.h"
 #include "prefs.h"
 #include "coin_util.h"
@@ -941,20 +942,44 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   return NULL;
 }
 
-
-/* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
-char *
-wmcc_prefs_read_options(structPrefs *p, const char *filename)
+/* lecture (recursive) du fichier d'option */
+static int
+wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename, 
+			       int lvl, char **err_str)
 {
-  FILE *f;
-  char *error;
   int lcnt;
   char *opt_name = NULL, *opt_arg = NULL;
+  char *error = NULL, *filename = NULL;
+  FILE *f;
 
+
+  if (lvl > 10) {
+    *err_str = str_printf("je crois que vous faites n'importe quoi avec les include de fichier d'option (sniff !? récursion infinie ?)\n");
+    return 1;
+  }
+
+  /* verif du nom de fichier */
+  if (_filename == NULL) {
+    *err_str = str_printf("vous n'avez pas précisé de nom de fichier\n");
+    return 1;
+  } else if (_filename[0] != '/') {
+    filename = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), _filename);
+  } else filename = strdup(_filename);
+
+
+  /* ouverture */
   f = fopen(filename, "rt");
   if (f == NULL) {
-    return str_printf("impossible d'ouvrir le fichier '%s' en lecture [attention wmcc ne le crée plus tout seul, si vous voulez utiliser les options par défaut, faites juste un 'touch %s', sinon copiez-y le fichier 'options' fourni avec wmc², et abondamment commenté]", filename, filename);
+    if (lvl != 1) {
+      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [%s]\n", filename, strerror(errno));
+    } else {
+      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [attention wmcc ne le crée plus tout seul, si vous voulez utiliser les options par défaut, faites juste un 'touch %s', sinon copiez-y le fichier 'options' fourni avec wmc², et abondamment commenté]", filename, filename);
+      free(filename);
+    }
+    return 1;
   }
+
+  /* lecture */
   lcnt = 0;
   do {
     error = read_option_line(f, &lcnt, &opt_name, &opt_arg); if (error) goto ouille;
@@ -968,17 +993,36 @@ wmcc_prefs_read_options(structPrefs *p, const char *filename)
 	}
       }
       if (i == NB_WMCC_OPTIONS) {
-	error = str_printf("[ligne %d] l'option '%s' est inconnue", lcnt, opt_name);
-	goto ouille;
+	if (strcasecmp(opt_name, "include") == 0) {
+	  if (wmcc_prefs_read_options_recurs(p, opt_arg, lvl+1, err_str)) {
+	    error = str_printf(" [ligne %d] %s\n", lcnt, *err_str);
+	    free(*err_str); *err_str = NULL;
+	    goto ouille;
+	  }
+	} else {
+	  error = str_printf("[ligne %d] l'option '%s' est inconnue", lcnt, opt_name);
+	  goto ouille;
+	}
       }
     }
     FREE_STRING(opt_name); FREE_STRING(opt_arg);
   } while (!feof(f));
   fclose(f);
-  return NULL;
+  return 0;
 
  ouille:
   FREE_STRING(opt_name); FREE_STRING(opt_arg);
   fclose(f);
+  *err_str = str_printf(" [%s] %s\n", filename, error);
+  free(error); free(filename);
+  return 1;
+}
+
+/* lecture d'un fichier d'options, renvoie un message d'erreur si y'a un pb */
+char *
+wmcc_prefs_read_options(structPrefs *p, const char *filename)
+{
+  char *error = NULL;
+  wmcc_prefs_read_options_recurs(p, filename, 1, &error);
   return error;
 }

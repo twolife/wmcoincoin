@@ -775,7 +775,7 @@ http_request_send(HttpRequest *r)
     free(auth);
   }
 
-  if (r->p_last_modified && *(r->p_last_modified)) {
+  if (r->p_last_modified && *(r->p_last_modified) && Prefs.use_if_modified_since) {
     unsigned char *s = *r->p_last_modified;
     int l;
     l = strlen(s); l--;
