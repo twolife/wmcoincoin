@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.12 2002/09/22 23:16:33 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.13 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
+  Revision 1.13  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.12  2002/09/22 23:16:33  pouaite
   i had a friend, but he does not move anymore
 
@@ -69,7 +72,10 @@ get_tok(const unsigned char **p, const unsigned char **np,
   return tok;
 }
 
-
+void
+picohtml_set_url_path(PicoHtml *ph, const char *s) {
+  ph->url_path = strdup(s);
+}
 
 /* ajoute un mot dans la liste */
 static PicoHtmlItem *
@@ -299,16 +305,26 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 	s2 = s1;
 	while (*s2 != '"' && *s2) s2++;
 	if (*s2 == '"') {
+	  char *url;
 	  *s2 = 0;
+	  url = NULL;
 	  if (strncasecmp(s1, "http://", 7) == 0 ||
 	      strncasecmp(s1, "https://", 8) == 0 ||
 	      strncasecmp(s1, "ftp://", 6) == 0) {
+	    url = strdup(s1);
+	  } else if (ph->url_path
+		     && (strncmp(s1, "./",2) == 0 ||
+			 strncmp(s1, "../",3) == 0)) {
+	    url = str_printf("%s%s", ph->url_path, s1);
+	  }
+	  if (url) {
 	    if (ph->nb_links < PH_MAX_LINKS) {
 	      attrib |= CATTR_LNK;
-	      ph->links_array[ph->nb_links] = strdup(s1);
+	      ph->links_array[ph->nb_links] = url; url = NULL;
 	      cur_link = ph->links_array[ph->nb_links];
 	      ph->nb_links++;
 	    }
+	    COND_FREE(url);
 	  }
 	}
       }
@@ -608,6 +624,7 @@ PicoHtml *picohtml_create(Dock *dock, char *base_family, int base_size, int whit
   ph->parag_indent = 20;
   ph->nb_links = 0;
   ph->required_width = -1;
+  ph->url_path = NULL;
   return ph;
 }
 
@@ -623,6 +640,7 @@ void picohtml_destroy(Display *display, PicoHtml *ph)
   XFreeFont(display, ph->fn_ital);
   XFreeFont(display, ph->fn_bold);
   XFreeFont(display, ph->fn_tt);
+  COND_FREE(ph->url_path);
   if (ph->txt) picohtml_freetxt(ph);
   free(ph);
 }

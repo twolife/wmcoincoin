@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-10-14 01:31+0200\n"
+"POT-Creation-Date: 2002-10-14 23:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -585,7 +585,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr ""
 
-#: src/comments.c:355 src/news.c:919 src/board.c:1491
+#: src/comments.c:355 src/news.c:933 src/board.c:1491
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
@@ -615,7 +615,7 @@ msgid ""
 "site_msg_update_messages: %<RED Error while downloading> '%s' (err=%d)\n"
 msgstr ""
 
-#: src/messages.c:272 src/news.c:526
+#: src/messages.c:272 src/news.c:531
 msgid "Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
@@ -655,86 +655,81 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:396 src/news.c:746 src/board.c:1347
+#: src/news.c:401 src/news.c:753 src/board.c:1347
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
-#: src/news.c:504
+#: src/news.c:509
 msgid "date: '%<BLU %s>' => time: %d\n"
 msgstr ""
 
-#: src/news.c:514
+#: src/news.c:519
 msgid "We just got the news !!\n"
 msgstr ""
 
-#: src/news.c:530
+#: src/news.c:535
 msgid "%<RED Error while downloading '%s' (err=%d)>\n"
 msgstr ""
 
-#: src/news.c:564
+#: src/news.c:569
 msgid ""
 "[%s] Updating text of the news: '%<cya %s>' (date='%10s', id %<cya %d>)\n"
 msgstr ""
 
-#: src/news.c:567
+#: src/news.c:572
 #, c-format
 msgid "It's too old (date=%s, max age=%d days)\n"
 msgstr ""
 
-#: src/news.c:627
+#: src/news.c:634
 msgid ""
 "Warning: unable to create file '%s' \n"
 "[error: '%<red %s>']\n"
 msgstr ""
 
-#: src/news.c:634 src/news.c:639
+#: src/news.c:641 src/news.c:646
 msgid ""
 "Warning: unable to create directory '%s'\n"
 "[error: '%<red %s>']\n"
 msgstr ""
 
-#: src/news.c:719
+#: src/news.c:726
 #, c-format
 msgid ""
 "Unable to open '%s' for writing\n"
 "(error: %s)\n"
 msgstr ""
 
-#: src/news.c:772
+#: src/news.c:780
 #, c-format
 msgid "[%s] Download looks OK\n"
 msgstr ""
 
-#: src/news.c:849
-#, c-format
-msgid "[%s] The '%s' backend doesn't look good...\n"
-msgstr ""
-
-#: src/news.c:875
+#: src/news.c:888
 #, c-format
 msgid "[%s] Probleme in the news backend: line '%s' -> id='%s'=%d\n"
 msgstr ""
 
-#: src/news.c:885
+#: src/news.c:898
 #, c-format
 msgid "[%s] The news id=%d is too old (date=%s, max age=%d), let's delete it\n"
 msgstr ""
 
-#: src/news.c:905
+#: src/news.c:919
 #, c-format
 msgid " . title='%s'\n"
 msgstr ""
 
-#: src/news.c:906
+#: src/news.c:920
 #, c-format
 msgid " . author='%s', mail='%s'\n"
 msgstr ""
 
-#: src/news.c:907
+#: src/news.c:921
 msgid "** News ADDED\n"
 msgstr ""
 
-#: src/news.c:913
+#: src/news.c:927
 msgid ""
 "%<RED OOOOPS!> %<grn site_updatenews> there has been an error (err=%d) when "
 "parsing the news backend.\n"

@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.6 2002/08/18 20:52:15 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.7 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.7  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.6  2002/08/18 20:52:15  pouaite
   les locales des sites fonctionnent (c bon pour les news)
 
@@ -56,6 +59,17 @@ typedef struct _patterns_t
   const char *format;
 } patterns_t;
 
+#define NB_MAX_URL 512
+typedef struct _news_extract_t {
+  char *txt;
+  char *date;
+  char *auteur;
+  char *section;
+  int nb_url;
+  char *url_tab[NB_MAX_URL];
+  char *url_descr[NB_MAX_URL];
+} news_extract_t;
+
 /*
 ** Format can be:
 **  d => decimal number (need int *)
@@ -67,7 +81,8 @@ const char *site_locale_str(SitePrefs *sp, const char *s);
 int regexp_extract(const char *str, pat_type_t pattern, ...);
 
 /* et une fonction speciale qui n'utilise pas les regex.. */
-void extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens);
+void extract_news_txt_dacode14(SitePrefs *sp, const char *s, news_extract_t *extr);
+void extract_news_txt_dacode2(SitePrefs *sp, const char *s, news_extract_t *extr);
 
 /* et deux fonctions à la con qui peuvent etre utiles */
 char *mystrndup(const char *s, int n);

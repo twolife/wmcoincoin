@@ -189,11 +189,13 @@ pp_tabs_refresh(Dock *dock)
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
 		   x+1, 1, w-3, h-1);
       } else if (pt == pp->active_tab) {
-	XSetForeground(dock->display, dock->NormalGC, 
+	/*
+	  XSetForeground(dock->display, dock->NormalGC, 
 		       lighten_color(pp->transparency_mode ?
 				     Prefs.pp_buttonbar_bgcolor.transp : Prefs.pp_buttonbar_bgcolor.opaque, 1.2));
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 
 		       x+1, 1, w-3, h-1);
+	*/
       }
     
 

@@ -55,13 +55,14 @@ struct _News {
   unsigned char *topic;
   unsigned char *mail;
   unsigned char *url; /* tronquee (cad moins le http://, le port, et le ,0,-1,7.html) */
-
+unsigned char *url_path; /* pour pouvoir résoudre les urls relatives */
   char date[11];
   int heure; /* en nombre de minutes depuis minuit */
   id_type id;
   int nb_comment; /* pas très utile... */
+  enum {NEWS_DACODE14, NEWS_DACODE2} type;
   int dl_nb_tries; /* nombre d'essais de d/l du texte de la news */
-  struct _News *next;
+  struct _News *next;  
   Site *site;
 };
 
@@ -510,6 +511,7 @@ void exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg);
 void wmcc_save_or_restore_state(Dock *dock, int do_restore);
 
 /* picohtml.c */
+void picohtml_set_url_path(PicoHtml *ph, const char *s);
 void picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width);
 void picohtml_gettxtextent(PicoHtml *ph, int *width, int *height);
 void picohtml_render(Dock *dock, PicoHtml *ph, Drawable d, GC gc, int x, int y);

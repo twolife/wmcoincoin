@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: picohtml.h,v 1.3 2002/01/18 00:28:42 pouaite Exp $
+  rcsid=$Id: picohtml.h,v 1.4 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: picohtml.h,v $
+  Revision 1.4  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.3  2002/01/18 00:28:42  pouaite
   le ménage continue + grosses modifs (experimentales pour l'instant)
 
@@ -47,6 +50,7 @@ struct _PicoHtml {
 			 c'est le cas quand certains elements sont centrés,
 		        dans ce cas, required width == la width demandee */
 
+  char *url_path; /* url de base (pour les liens relatifs) */
   char *links_array[PH_MAX_LINKS]; /* liste des urls citées */
   int nb_links;
 };

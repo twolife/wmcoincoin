@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.15 2002/08/21 23:20:57 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.16 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.16  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.15  2002/08/21 23:20:57  pouaite
   coin
 
@@ -108,7 +111,6 @@ struct _Newswin {
     Site *site;
   } *ztitle;
   int nb_ztitle;
-
   int active_znum;
   Pixmap pix; /* un gros pixmap de la taille de la fenetre: c'est pas très classe */
 };
@@ -144,6 +146,7 @@ newswin_parsetxt(Dock *dock, News *n)
   }
 
   picohtml_parse(dock, nw->phv_news.ph, buff, nw->phv_news.w);
+  if (n->url_path) picohtml_set_url_path(nw->phv_news.ph, n->url_path);
 
   free(buff);
 }

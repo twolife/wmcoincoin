@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.11 2002/08/23 00:25:21 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.12 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.12  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.11  2002/08/23 00:25:21  pouaite
   oué
 
@@ -106,6 +109,7 @@ site_locale_str(SitePrefs *sp, const char *s) {
 		{"Posted by"   , {NULL, "Posté par"}},
 		{"Topic:"      , {NULL, NULL}},
 		{"Theme:"      , {NULL, "Thème:"}},
+		{"Modéré :"    , {NULL, NULL}},
 		{NULL,           {NULL,NULL}}};
   int i = 0;
   while (traduc[i].ref) {
@@ -144,21 +148,23 @@ after_substr(const char *s, const char *substr)
 }
 
 
+
+
 /* remplace pat_news */
 void
-extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, char **p_section, char **p_txt, char **p_liens)
+extract_news_txt_dacode14(SitePrefs *sp, const char *s, news_extract_t *extr)
 {
   const unsigned char *p, *p2=NULL;
 
-  *p_date = *p_auteur = *p_section = *p_txt = *p_liens = NULL;
-
+  extr->date = extr->auteur = extr->section = extr->txt = NULL;
+  extr->nb_url = 0;
   
   p = after_substr(s, "class=\"newsinfo\"");
   p = after_substr(s, site_locale_str(sp, "Approved on "));
   if (p) {
     p2 = strchr(p, '<');
     if (p2) {
-      *p_date = mystrndup(p, p2-p);
+      extr->date = mystrndup(p, p2-p);
     }
   }
 
@@ -169,10 +175,10 @@ extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, c
   if (p) {
     p2 = strstr(p, site_locale_str(sp, "Approved on "));
     if (p2) {
-      *p_auteur = mystrndup(p, p2-p);
+      extr->auteur = mystrndup(p, p2-p);
     }
   }
-  if (*p_auteur == NULL) { *p_auteur = strdup("???"); }
+  if (extr->auteur == NULL) { extr->auteur = strdup("???"); }
 
   /* recherche de la section */
   p2 = p;
@@ -184,38 +190,196 @@ extract_news_txt(SitePrefs *sp, const char *s, char **p_date, char **p_auteur, c
       p++;
       p2 = strchr(p, '<');
       if (p2 && p2 - p < 100) {
-	*p_section = mystrndup(p, p2-p);
+	extr->section = mystrndup(p, p2-p);
       }
     }
   }
-  if (*p_section == NULL) *p_section = strdup("???");
+  if (extr->section == NULL) extr->section = strdup("???");
 
   p = after_substr(p2, "class=\"newstext\"");
   p = after_substr(p, ">");  
   if (p) {
     p2 = strstr(p, "</td>");
     if (p2) {
-      *p_txt = mystrndup(p, p2-p);
+      extr->txt = mystrndup(p, p2-p);
     }
   }
 
-  //  printf("p_txt = '%s'\n", *p_txt);
+  //  printf("p_txt = '%s'\n", extr->txt);
 
-  if (*p_txt) { /* si pas de txt , on ne s'acharne pas */
+  /* les urls SAI CHIANT */
+  if (extr->txt) { /* si pas de txt , on ne s'acharne pas */
     p = after_substr(p2, "class=\"newslink\"");
     p = after_substr(p, ">");
     if (p) {
-      p2 = strstr(p, "</td>");
-      if (p2) {
-	*p_liens = mystrndup(p, p2-p);
+      char *url, *url_descr;
+      const unsigned char *p_fin;
+      url = NULL; url_descr = NULL;
+      p_fin = strstr(p, "</td>");
+      p2 = p;
+      while (p2 && p_fin && p2 < p_fin) {
+	const unsigned char *p3, *p4;
+	/* bourrin .. au moindre problème on laisse tomber */
+	
+	/* essai 1 : y'a t-il un onmouseover ? (pour chopper le vrai lien) */
+	p3 = after_substr(p2, " onmouseover=\"javascript: window.status='");
+	if (p3 && p3 < p_fin) {
+	  p4 = p3;
+	  p3 = strchr(p3, '\'');
+	  if (p3) {
+	    url = mystrndup(p4, p3-p4);
+	  }
+	}
+
+	/* essai 2, il y a juste un href= */
+	if (url == NULL) {
+	  p3 = after_substr(p2, "<a href=\"");
+	  if (p3 == NULL || p3 > p_fin) goto stop_url;
+	  p4 = p3;
+	  p3 = strchr(p3, '"');
+	  if (p3 == NULL) goto stop_url;
+	  url = mystrndup(p4, p3-p4);
+	}
+
+	/* chope la descriptuion de l'url */
+	p3 = strstr(p3, ">");
+	if (p3 == NULL) goto stop_url;
+	p4 = p3+1;
+	p3 = strstr(p3, "<");
+	if (p3 == NULL) goto stop_url;
+	url_descr = mystrndup(p4, p3-p4);
+	//      printf("LINK='%s' , DESC='%s'\n", url_tab[nb_url], url_tab_desc[nb_url]);
+	extr->url_tab[extr->nb_url] = url;
+	extr->url_descr[extr->nb_url] = url_descr;
+	extr->nb_url++;
+	url = NULL; url_descr = NULL;
+	p2 = p3;
       }
+    stop_url:
+      if (url) free(url);
+      if (url_descr) free(url_descr);
+    }
+  }
+}
+
+
+void
+extract_news_txt_dacode2(SitePrefs *sp, const char *s, news_extract_t *extr)
+{
+  const unsigned char *p, *p2=NULL;
+
+  extr->date = extr->auteur = extr->section = extr->txt = NULL;
+  extr->nb_url = 0;
+  
+  p = after_substr(s, "class=\"newstitle\"");
+  p = after_substr(s, site_locale_str(sp, "Modéré :"));
+  if (p) {
+    p2 = strchr(p, '<');
+    if (p2) {
+      extr->date = mystrndup(p, p2-p);
     }
   }
 
-  //  printf("p_liens = '%s'\n", *p_liens);
+  //  printf("p_date = '%s'\n", *p_date);
+
+  p = after_substr(s, "class=\"newstitle\"");
+  p = after_substr(s, site_locale_str(sp, "Posted by"));
+  p = after_substr(p, ">");
+  if (p) {
+    p2 = strstr(p, "<");
+    if (p2) {
+      extr->auteur = mystrndup(p, MIN(p2-p, 500));
+      myprintf("Auteur = '%s'\n", extr->auteur);
+    }
+  }
+  if (extr->auteur == NULL) { extr->auteur = strdup("???"); }
+
+  /* recherche de la section */
+  p2 = p;
+  p = after_substr(s, "class=\"newstitle\"");
+  if (p) {
+    p = after_substr(p, "<a "); p = after_substr(p, "\">");
+    if (p) {
+      p2 = strchr(p, '<');
+      if (p2 && p2 - p < 100) {
+	extr->section = mystrndup(p, p2-p);
+      }
+    }
+  }
+  if (extr->section == NULL) extr->section = strdup("???");
+
+  p = after_substr(p2, "class=\"bodydiv\"");
+  p = after_substr(p, "</div>");
+  if (p) {
+    p2 = strstr(p, "<ul>");
+    if (p2 == NULL) p2 = strstr(p, "</div>");
+    if (p2) {
+      extr->txt = mystrndup(p, p2-p);
+    }
+  }
 
 
+
+  printf("p_txt = '%s'\n", extr->txt);
+
+  /* les urls SAI CHIANT */
+  if (extr->txt) { /* si pas de txt , on ne s'acharne pas */
+    p = after_substr(s, "class=\"newslink\"");
+    if (p) {
+      int cnt = 0;
+      while (p > (const unsigned char*)s && strncmp(p, "<li>", 4) && cnt < 200) { p--; cnt++; }
+    }
+    if (p) {
+      char *url, *url_descr;
+      const unsigned char *p_fin;
+      url = NULL; url_descr = NULL;
+      p_fin = strstr(p, "</ul>");
+      p2 = p;
+      while (p2 && p_fin && p2 < p_fin) {
+	const unsigned char *p3, *p4;
+	/* bourrin .. au moindre problème on laisse tomber */
+	p2 = after_substr(p2, "<li>");
+	/* essai 1 : y'a t-il un onmouseover ? (pour chopper le vrai lien) */
+	p3 = after_substr(p2, " onmouseover=\"javascript: window.status='");
+	if (p3 && p3 < p_fin) {
+	  p4 = p3;
+	  p3 = strchr(p3, '\'');
+	  if (p3) {
+	    url = mystrndup(p4, p3-p4);
+	  }
+	}
+
+	/* essai 2, il y a juste un href= */
+	if (url == NULL) {
+	  p3 = after_substr(p2, "<a href=\"");
+	  if (p3 == NULL || p3 > p_fin) goto stop_url;
+	  p4 = p3;
+	  p3 = strchr(p3, '"');
+	  if (p3 == NULL) goto stop_url;
+	  url = mystrndup(p4, p3-p4);
+	}
+
+	/* chope la descriptuion de l'url */
+	p3 = strstr(p3, ">");
+	if (p3 == NULL) goto stop_url;
+	p4 = p3+1;
+	p3 = strstr(p3, "<");
+	if (p3 == NULL) goto stop_url;
+	url_descr = mystrndup(p4, p3-p4);
+	printf("LINK='%s' , DESC='%s'\n", url, url_descr);
+	extr->url_tab[extr->nb_url] = url;
+	extr->url_descr[extr->nb_url] = url_descr;
+	extr->nb_url++;
+	url = NULL; url_descr = NULL;
+	p2 = p3;
+      }
+    stop_url:
+      if (url) free(url);
+      if (url_descr) free(url_descr);
+    }
+  }
 }
+
 
 int 
 regexp_extract(const char *str, pat_type_t pattern, ...)

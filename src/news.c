@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.9 2002/10/13 23:30:49 pouaite Exp $
+  rcsid=$Id: news.c,v 1.10 2002/10/15 23:17:28 pouaite Exp $
   ChangeLog:
   $Log: news.c,v $
+  Revision 1.10  2002/10/15 23:17:28  pouaite
+  rustinage à la truelle
+
   Revision 1.9  2002/10/13 23:30:49  pouaite
   plop
 
@@ -187,12 +190,12 @@ site_news_delete_news(Site *site, id_type id) {
    site->news = n->next;
   }
 
-  if (n->titre) free(n->titre);
-  if (n->txt) free(n->txt);
-  if (n->auteur) free(n->auteur);
-  if (n->topic) free(n->topic);
-  if (n->mail) free(n->mail);
-  if (n->url) free(n->url);
+  COND_FREE(n->titre);
+  COND_FREE(n->txt);
+  COND_FREE(n->auteur);
+  COND_FREE(n->topic);
+  COND_FREE(n->mail);
+  COND_FREE(n->url);
   free(n);
   site->news_updated = 1;
   flag_news_updated = 1;
@@ -359,21 +362,13 @@ site_news_remove_old(Site *site)
 
 
 static int
-site_news_update_txt_(Site *site, News *n, int silent_error)
+site_news_update_txt_dacode(Site *site, News *n, int silent_error)
 {
 #define MAX_URL 100
 
   char URL[512];
   int err;
   HttpRequest r;
-
-  char *date = NULL, *auteur = NULL, *section = NULL;
-  char *texte = NULL, *liens = NULL;
-
-  /* la table des liens (donnés en fin de news) */
-  char *url_tab[MAX_URL];
-  char *url_tab_desc[MAX_URL];
-  int nb_url = 0;
 
   {
     char *s = str_printf("news #%d", id_type_lid(n->id));
@@ -388,7 +383,11 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
   */
 
   if ((Prefs.debug & 2) == 0) {
-    snprintf(URL, 512, "%s%s",n->url, site->prefs->path_end_news_url);
+    if (n->type == NEWS_DACODE14) {
+      snprintf(URL, 512, "%s%s",n->url, site->prefs->path_end_news_url);
+    } else {
+      snprintf(URL, 512, "%s",n->url);      
+    }
     BLAHBLAH(1,printf("get %s\n",URL));
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", 
@@ -401,145 +400,88 @@ site_news_update_txt_(Site *site, News *n, int silent_error)
   if (r.error == 0) {
     char *s;
     char *p, *p2;
+    news_extract_t extr;
 
     err = 2;
 
     s = http_read_all(&r, n->url);
     http_request_close(&r);
-
     n->heure = 0;
-
     
-    extract_news_txt(site->prefs, s, &date, &auteur, &section, &texte, &liens); /* fonction definie dans regexp.c */
-
-    /*    fprintf(stderr, "\n--\n%s\n--\n", p);*/
-    /*
-    {
-      int res;
-      res = regexp_extract(s, pat_news, &date,
-			   &texte, &liens);
-      if (!res) {
-	printf("fuck!\n");
-      }
-      }
-*/
-    
-    if (texte == NULL) { err = 7; goto ouups1; }
-
-    //myprintf("liens: '%<BLU %s>'\n", liens);
-    
-    p2 = liens;
-    while (p2) {
-      char *p3;
-
-
-      url_tab[nb_url] = NULL;
-      /* bourrin .. au moindre problème on laisse tomber */
-
-      /* essai 1 : y'a t-il un onmouseover ? (pour chopper le vrai lien) */
-      p3 = after_substr(p2, " onmouseover=\"javascript: window.status='");
-      if (p3) {
-	url_tab[nb_url] = p3;
-	p3 = strchr(p3, '\'');
-	if (p3) {
-	  *p3 = 0; p3++;
-	}
-      }
-
-      /* essai 2, il y a juste un href= */
-      if (url_tab[nb_url] == NULL) {
-	p3 = after_substr(p2, "<a href=\"");
-	if (p3 == NULL) goto stop_url;
-	url_tab[nb_url] = p3;
-	p3 = strchr(p3, '"');
-	if (p3 == NULL) goto stop_url;
-	*p3 = 0; p3++;
-      }
-
-      /* chope la descriptuion de l'url */
-      p3 = strstr(p3, ">");
-      if (p3 == NULL) goto stop_url;
-      url_tab_desc[nb_url] = p3+1;
-      p3 = strstr(p3, "<");
-      if (p3 == NULL) goto stop_url;
-      *p3 = 0; p3++;
-      //      printf("LINK='%s' , DESC='%s'\n", url_tab[nb_url], url_tab_desc[nb_url]);
-      nb_url++;
-      p2 = p3;
+    switch (n->type) {
+    case NEWS_DACODE14: extract_news_txt_dacode14(site->prefs, s, &extr); break;
+    case NEWS_DACODE2: extract_news_txt_dacode2(site->prefs, s, &extr); break;
+    default: assert(0);
     }
 
-  stop_url:      
-    if (nb_url > 0) {
-      /* reformatage de la liste des urls, c'est aussi un peu bourrin */
-#define URL_BSIZE 8192
-      char url_buff[URL_BSIZE];
-      int i;
-      int l = 0;
-      strcpy(url_buff, "<p align=center>");
-      url_buff[URL_BSIZE-1] = 0;
-      for (i=0; i < nb_url; i++) {
-	l = strlen(url_buff);
-	if (l < URL_BSIZE-1) {
-	  snprintf(url_buff+l, URL_BSIZE-l, "<a href=\"%s\">%s</a>%s", url_tab[i], url_tab_desc[i],
-		   i != nb_url-1 ? "<br>" : "</p>");
-	  if (strlen(url_buff) >= URL_BSIZE-1) {
-	    url_buff[l] = 0; /* on tronque, tant pis pour l'url qui deborde */
+    if (extr.txt) {
+      if (extr.nb_url > 0) {
+	/* reformatage de la liste des urls, c'est aussi un peu bourrin */
+#       define URL_BSIZE 8192
+	char url_buff[URL_BSIZE];
+	int i;
+	int l = 0;
+	strcpy(url_buff, "<p align=center>");
+	url_buff[URL_BSIZE-1] = 0;
+	for (i=0; i < extr.nb_url; i++) {
+	  BLAHBLAH(2,myprintf("url: %<cya %s> \"%<yel %s>\"\n", extr.url_tab[i], extr.url_descr[i]));
+	  l = strlen(url_buff);
+	  if (l < URL_BSIZE-1) {
+	    snprintf(url_buff+l, URL_BSIZE-l, "<a href=\"%s\">%s</a>%s", extr.url_tab[i], extr.url_descr[i],  i != extr.nb_url-1 ? "<br>" : "</p>");
+	    if (strlen(url_buff) >= URL_BSIZE-1) {
+	      url_buff[l] = 0; /* on tronque, tant pis pour l'url qui deborde */
+	    }
 	  }
 	}
+	n->txt = malloc(strlen(extr.txt) + strlen(url_buff) + 1);
+	strcpy(n->txt, extr.txt);
+	strcat(n->txt, url_buff);
+      } else n->txt = strdup(extr.txt);
+      
+      if (extr.date) {
+	p = strstr(extr.date, "à");
+	if (p) {
+	  while (!isdigit((unsigned)*p) && *p) p++;
+	  n->heure = atoi(p) * 60;
+	  p += 2;
+	  while (!isdigit((unsigned)*p) && *p) p++;      
+	  n->heure += atoi(p);     
+	}
+	BLAHBLAH(2,myprintf(_("date: '%<BLU %s>' => time: %d\n"), extr.date, n->heure));
       }
-      n->txt = malloc(strlen(texte) + strlen(url_buff) + 1);
-      strcpy(n->txt, texte);
-      strcat(n->txt, url_buff);
-    } else n->txt = strdup(texte);
-
-    if (date) {
-      p = strstr(date, "à");
-      if (p) {
-	while (!isdigit((unsigned)*p) && *p) p++;
-	n->heure = atoi(p) * 60;
-	p += 2;
-	while (!isdigit((unsigned)*p) && *p) p++;      
-	n->heure += atoi(p);     
+      
+      n->auteur = strdup(extr.auteur);
+      n->topic = strdup(extr.section);
+      
+      p = n->txt;
+      /* anti rougnure à tout hasard */
+      while (*p) { if (((unsigned char)*p) <= ' ') *p = ' '; p++; }
+      
+      n->nb_comment = 0;
+      BLAHBLAH(2,myprintf(_("We just got the news !!\n")));
+      BLAHBLAH(3,myprintf(" --> %<YEL %s>\n", n->txt));
+      p2++;
+      
+      flag_news_updated = 1;
+      err = 0; n->nb_comment = 0;
+      COND_FREE(extr.txt);
+      COND_FREE(extr.date);
+      COND_FREE(extr.auteur);
+      COND_FREE(extr.section);
+      while (extr.nb_url > 0) { 
+	extr.nb_url--; 
+	COND_FREE(extr.url_tab[extr.nb_url]);
+	COND_FREE(extr.url_descr[extr.nb_url]);
       }
-      BLAHBLAH(2,myprintf(_("date: '%<BLU %s>' => time: %d\n"), date, n->heure));
+    } else {
+      myfprintf(stderr,_("%<RED Wow this news ('%<YEL %s>') announces the OFFICIAL RELEASE OF HURD 1.0!!! Ahaah .. but i coulnd'nt retrieve it :'(\n"), URL);
     }
-    
-    n->auteur = strdup(auteur);
-    n->topic = strdup(section);
-
-    p = n->txt;
-    while (*p) { if (((unsigned char)*p) <= ' ') *p = ' '; p++; }
-    
-    n->nb_comment = 0;
-    BLAHBLAH(2,myprintf(_("We just got the news !!\n")));
-    BLAHBLAH(3,myprintf(" --> %<YEL %s>\n", n->txt));
-    p2++;
-	    
-
-    flag_news_updated = 1;
-    err = 0; n->nb_comment = 0;
-
     free(s);
-    
   } else {
     if (silent_error == 0)
       myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), URL, http_error());
   }
- ouups1:
-  if (err) {
-    myfprintf(stderr,_("%<RED Error while downloading '%s' (err=%d)>\n"), URL, err);
-    if (n->txt) { free(n->txt); n->txt = NULL; }
-    if (n->auteur) { free(n->auteur); n->auteur = NULL; }
-    if (n->topic) { free(n->topic); n->topic = NULL; }
-  }
   pp_set_download_info(NULL,NULL);
-
-  if (texte) free(texte);
-  if (liens) free(liens);
-  if (date) free(date);
-  if (auteur) free(auteur);
-  if (section) free(section);
-
   return err;
 }
 
@@ -568,44 +510,8 @@ site_news_update_txt(Site *site, id_type id)
     return 0;
   }
 
-  return site_news_update_txt_(site, n, 0);
+  return site_news_update_txt_dacode(site, n, 0);
 }
-
-/*
-static 
-void site_check_hidden_news(Site *site) {
-  int id_min, id_max;
-  int i, nb_try = 3;
-
-  if (site->nb_newslues == 0) return;
-  do {
-    int 
-    id_max = -1; id_min = INT_MAX;
-    for (i=0; i < site->nb_newslues; i++) {
-      id_min = MIN(id_min, site->newslues[i]);
-      id_max = MAX(id_max, site->newslues[i]);
-    }
-    if (id_min == id_max) return;
-    
-    if (id_min < id_max - 20) id_min = id_max - 10;
-    id_max += 10;
-    
-    for (i=10; i > 0; i--) {
-      int id;
-      News *n =
-      id = id_min + 1 + (rand() % (id_max-id_min-1));
-      if (site_newslues_find(site, id) == 0) break;
-    }
-    if (i) {
-      News *n;
-      ALLOC_OBJ(n, News);
-      n->titre = NULL;
-    }
-
-    nb_try --;
-  } while (nb_try > 0 && nb_newslues != id_max - id_min + 1);
-}
-*/
 
 /* debug only */
 FILE *
@@ -765,7 +671,8 @@ site_news_dl_and_update(Site *site)
     char s[512], url[512], base_url[512];
     int l_cnt;
     int news_err;
-
+    int news_type = 0;
+      
     ALLOW_X_LOOP;
     news_err = 0;
 
@@ -832,6 +739,11 @@ site_news_dl_and_update(Site *site)
 	base_url[0] = '/';
 	strncpy(base_url+1, p, 512); base_url[511]=0;
 
+	if (strlen(base_url) < 3) {
+	  myprintf("where is my slip ?\n");
+	  news_err = 12; break;
+	}
+
 	/* suppression du numero de port si on le trouve dans l'url (A TESTER) */
 	p = strstr(base_url, ":");
 	if (p) {
@@ -845,10 +757,10 @@ site_news_dl_and_update(Site *site)
 	p = strstr(base_url, ",");
 	if (p && p != base_url) {
 	  *p = 0;
+	  news_type = NEWS_DACODE14;
 	} else {
-	  BLAHBLAH(1,myprintf(_("[%s] The '%s' backend doesn't look good...\n"), 
-			      site->prefs->site_name, site->prefs->path_news_backend));
-	  news_err = 7; break;
+	  news_type = NEWS_DACODE2;
+	  p = base_url + strlen(base_url) - 1;
 	}
 
 	/* recupere l'id */
@@ -890,10 +802,14 @@ site_news_dl_and_update(Site *site)
 	    site_news_delete_news(site, id);
 	  }
 	} else if (site_news_find_id(site,id) == NULL) {
+	  int i;
 	  ALLOW_X_LOOP;
 	  n = site_news_insert_news(site); assert(n);
 	  n->titre = strdup(title);
 	  n->url = strdup(base_url);
+	  n->url_path = strdup(url);
+	  for (i = strlen(n->url_path)-1; n->url_path[i] != '/' && i > 0; i--)
+	    n->url_path[i] = 0;
 	  n->txt = NULL;
 	  n->auteur = NULL; 
 	  n->topic = NULL;
@@ -901,6 +817,7 @@ site_news_dl_and_update(Site *site)
 	  strncpy(n->date, date, 11); date[10] = 0;
 	  n->id = id;
 	  n->dl_nb_tries = 0;
+	  n->type = news_type;
 	  site->news_updated = 1;
 	  BLAHBLAH(2,printf(_(" . title='%s'\n"), title));
 	  BLAHBLAH(2,printf(_(" . author='%s', mail='%s'\n"), n->auteur, n->mail));

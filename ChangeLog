@@ -1,3 +1,8 @@
+2002-10-16  pouaite  <c0in@altern.org>
+
+	* src/regexp.c (extract_news_txt_dacode2): retour experimental des
+	news de linuxfr
+
 2002-10-14  pouaite  <c0in@altern.org>
 
 	* rendons à jr ce qui appartient à jr :°)
