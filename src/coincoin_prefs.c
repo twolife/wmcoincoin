@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.15 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.16 2002/02/03 23:07:32 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.16  2002/02/03 23:07:32  pouaite
+  *** empty log message ***
+
   Revision 1.15  2002/02/02 23:49:17  pouaite
   plop
 
@@ -1190,7 +1193,7 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->path_tribune_add = strdup("board/add.php3");
   The_Prefs->path_myposts = strdup("users/myposts.php3?order=id");
   The_Prefs->path_messages = strdup("messages/");
-  The_Prefs->default_trollo_speed = 2;
+  The_Prefs->default_trollo_speed = 4;
   The_Prefs->user_cookie = NULL; 
   The_Prefs->user_login = NULL;
   The_Prefs->force_fortune_retrieval = 0;

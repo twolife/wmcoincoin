@@ -741,7 +741,7 @@ http_post_with_cookie(const char *host_name, int host_port, const char *host_pat
 
   snprintf(buff+strlen(buff), BSIZE-strlen(buff),
 	   "Content-Type: application/x-www-form-urlencoded" CRLF
-	   "Content-Length: %d" CRLF CRLF "%s", strlen(post),post);
+	   "Content-Length: %d" CRLF CRLF "%s", (int)strlen(post),post);
   
   if (userpass) {
     free(auth);

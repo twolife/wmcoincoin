@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.18 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.19 2002/02/03 23:07:32 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.19  2002/02/03 23:07:32  pouaite
+  *** empty log message ***
+
   Revision 1.18  2002/02/02 23:49:17  pouaite
   plop
 
@@ -123,7 +126,7 @@ tribune_frequentation(const DLFP_tribune *trib, int nb_minutes, int *ua_cnt, int
   t_last = it->timestamp;
   t_last += trib->nbsec_since_last_msg;
 
-  bzero(hash_cnt, sizeof(hash_cnt));
+  memset(hash_cnt, 0, sizeof(hash_cnt));
   it = trib->msg; 
   while (it) {
     if (difftime(t_last, it->timestamp) < nb_minutes*60) {
@@ -496,7 +499,7 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     qmessage = shell_quote(it->msg);
     qua = shell_quote(it->useragent);
     snprintf(sid, 20, "%d", it->id);
-    snprintf(stimestamp, 20, "%ld", it->timestamp);
+    snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
     if (it->is_my_message) stypemessage = "1";
     else if (it->is_answer_to_me) stypemessage = "2";

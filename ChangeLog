@@ -1,11 +1,17 @@
-2002-02-02  pouaite  <jul@dr.com>
+2002-02-02  pouaite  <c0in@altern.org>
 
-	* src/dock.c (dock_update_pix_trolloscope): augmentation de la vitesse de défilement du trolloscope: la vitesse max était de un décalage toutes les minutes, elle est maintenant de un décalage toutes les 15secondes.
+	* src/dock.c (dock_update_pix_trolloscope): augmentation de la
+	vitesse de défilement du trolloscope: la vitesse max était de un
+	décalage toutes les minutes, elle est maintenant de un décalage
+	toutes les 15secondes. Gros ménage dans http*.c, vérif du bon
+	fonctionnement sous cygwin et openbsd.
 
 2002-02-01  pouaite  <c0in@altern.org>
 
-	* src/tribune_util.c, src/pinnipede.c: bugfix pour les refs aux post multiples
-	* src/coincoin.h, src/wmcoincoin.c, src/dock.c: bugfix (définitif j'espère) du flamomètre
+	* src/tribune_util.c, src/pinnipede.c: bugfix pour les refs aux
+	post multiples 
+	* src/coincoin.h, src/wmcoincoin.c, src/dock.c:
+	bugfix (définitif j'espère) du flamomètre
 
 --------------------------v2.3.4-----------------------------------------
 

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.18 2002/02/02 23:49:17 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.19 2002/02/03 23:07:32 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.19  2002/02/03 23:07:32  pouaite
+  *** empty log message ***
+
   Revision 1.18  2002/02/02 23:49:17  pouaite
   plop
 
@@ -2198,9 +2201,9 @@ pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
       char *s, *p;
       s = strdup(pw->w);
       p = s + strlen(s) -1;
-      while (p > s && !isalnum(*p)) { *p = 0; p--; }
+      while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
       p = s;
-      while (*p && !isalnum(*p)) p++;
+      while (*p && !isalnum((unsigned char)*p)) p++;
       if (strlen(p)) {
 	pp_set_word_filter(dock, trib, p);
       } else {
@@ -2239,9 +2242,9 @@ pp_handle_shift_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
       /* simplification du mot */
       s = strdup(pw->w);
       p = s + strlen(s) -1;
-      while (p > s && !isalnum(*p)) { *p = 0; p--; }
+      while (p > s && !isalnum((unsigned char)*p)) { *p = 0; p--; }
       p = s;
-      while (*p && !isalnum(*p)) p++;
+      while (*p && !isalnum((unsigned char)*p)) p++;
 
       if (strlen(p) == 0) p = pw->w;
 
