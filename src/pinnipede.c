@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.56 2002/04/22 14:38:17 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.57 2002/04/23 23:16:29 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.57  2002/04/23 23:16:29  pouaite
+  \o/ j'ai enfin réussi à chopper le bug mysterieux de l'autoscroll du pinni \o/
+
   Revision 1.56  2002/04/22 14:38:17  pouaite
   bugfix du bugfix du slip
 
@@ -276,6 +279,7 @@ struct _Pinnipede {
   int sel_anchor_x, sel_anchor_y;
   int sel_head_x, sel_head_y;
   int sel_l0, sel_l1;
+  time_t time_sel; /* pour la deselection automatique quand il est *vraiment* temps de rafraichir le pinnipede */
 
   char *last_selected_text; /* stockage temporaire à usage interne au pinnipede */
 
@@ -2118,7 +2122,15 @@ void
 pp_check_tribune_updated(Dock *dock, DLFP_tribune *trib)
 {
   Pinnipede *pp = dock->pinnipede;
-  if (pp && pp->mapped && flag_updating_tribune == 0 && pp->lignes_sel == NULL) {
+  if (pp && pp->mapped && flag_updating_tribune == 0) {
+    if (pp->lignes_sel) {
+      if (difftime(time(NULL), pp->time_sel) > 20.) {
+	pp_selection_unselect(pp);
+      } else {
+	return;
+      }
+    }
+
     /* test si on scrolle qutomatiquement pour afficher le nouveau message */
     //    if (trib->last_post_id != pp->last_post_id && pp->last_post_id == pp->id_base && pp->decal_base == 0) {
     if (pp->flag_tribune_updated) {
@@ -3996,9 +4008,11 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	
 	blen = pp_selection_copy(dock, NULL);
 	if (blen) {
-	  if (pp->last_selected_text) { free(pp->last_selected_text); pp->last_selected_text=NULL;}	  	  pp->last_selected_text = malloc(blen); assert(pp->last_selected_text);
+	  if (pp->last_selected_text) { free(pp->last_selected_text); pp->last_selected_text=NULL;}	  	  
+	  pp->last_selected_text = malloc(blen); assert(pp->last_selected_text);
 	  pp_selection_copy(dock, pp->last_selected_text);
 	  editw_cb_copy(dock, pp->win, pp->last_selected_text, blen-1);
+	  pp->time_sel = time(NULL);
 	}
       } else {
 	if (pp->sc && scrollcoin_handle_button_release(pp->sc, &event->xbutton, pp->win)) {

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.18  2002/04/23 23:16:29  pouaite
+dnl   \o/ j'ai enfin réussi à chopper le bug mysterieux de l'autoscroll du pinni \o/
+dnl
 dnl   Revision 1.17  2002/04/14 23:24:21  pouaite
 dnl   re-fix pour kde ..
 dnl
@@ -54,7 +57,7 @@ dnl
 
 AC_INIT(src/wmcoincoin.c)
 
-AM_INIT_AUTOMAKE(wmcoincoin, 2.3.7a)
+AM_INIT_AUTOMAKE(wmcoincoin, 2.3.7CVS)
 AM_CONFIG_HEADER(src/config.h)
 
 dnl Checks for host/os name
@@ -96,7 +99,7 @@ CFLAGS="$CFLAGS $X_CFLAGS"
   
 case "$host" in
     *-linux-*)
-          echo "vous utilisez linux, c'est Bien(c)(tm) !"
+          echo "vous utilisez GNU/linux, c'est Bien(c)(tm) !"
           ;;
     *-solaris*)
           echo "oh oh !! wmcc sur solaris marche a peu pres, bon courage !"
