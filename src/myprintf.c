@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: myprintf.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: myprintf.c,v 1.3 2003/03/02 14:41:22 pouaite Exp $
   ChangeLog:
   $Log: myprintf.c,v $
+  Revision 1.3  2003/03/02 14:41:22  pouaite
+  ce commit est dédié à la mémoire de jacques martin
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -32,6 +35,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "myprintf.h"
 
 int use_ansi_codes = 1;
@@ -113,6 +117,7 @@ myprintf_enable_color()
   use_color_codes = 1;
 }
 
+
 int
 myfprintf(FILE *f, const char *fmt, ...)
 {
@@ -120,6 +125,11 @@ myfprintf(FILE *f, const char *fmt, ...)
   char *fmt2;
   int nchar;
 
+  if (isatty(fileno(f))) {
+    myprintf_enable_color();
+  } else {
+    myprintf_disable_ansi_codes();
+  }
   va_start(ap, fmt);
   fmt2 = reformat(fmt);
   if (fmt2) {
@@ -139,6 +149,11 @@ myprintf(const char *fmt, ...)
   char *fmt2;
   int nchar;
 
+  if (isatty(STDOUT_FILENO)) {
+    myprintf_enable_color();
+  } else {
+    myprintf_disable_ansi_codes();
+  }
   va_start(ap, fmt);
   fmt2 = reformat(fmt);
   if (fmt2) {
@@ -201,7 +216,7 @@ reformat(const char *fmt)
   maxsize = strlen(format_in) + FMT_MARGE;
   format_out = (char*)malloc(maxsize+1); 
   if (format_out == NULL) { return NULL; }
-  
+  format_out[0]=0;
   j = 0;
   p1 = format_in;
   do {
@@ -292,6 +307,7 @@ reformat(const char *fmt)
 	}
 	for (p = esc2; *p; p++)
 	  format_out[j++] = *p;
+        format_out[j] = 0;
 	p1 = def_pos+1;
       }
 

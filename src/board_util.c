@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.12 2003/02/17 19:16:58 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.13 2003/03/02 14:41:22 pouaite Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.13  2003/03/02 14:41:22  pouaite
+  ce commit est dédié à la mémoire de jacques martin
+
   Revision 1.12  2003/02/17 19:16:58  pouaite
   fix urls relatives pour la tribune
 
@@ -653,9 +656,11 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
 	start++;
 	end=start+1;
 	p = start;
-	printf(_("get_tok not recognized: (len=%d)'"), (int)strlen(p));
-	while (*p) { printf("%c", *p); p++;}
-	printf("\n");
+        if (Prefs.verbosity >= Prefs.verbosity_underpants) {
+          printf(_("get_tok not recognized: (len=%d)'"), (int)strlen(p));
+          while (*p) { printf("%c", *p); p++;}
+          printf("\n");
+        }
       }
     }
     /*
@@ -668,7 +673,9 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
     */
   } else if (*start == '\t') { /* ça pue .. le backend ou le coincoin est sans slip */
     /* arf ça c'est de la traduction ! vive les slips et jjb */
-    printf(_("Hmmm, looks like there's an underpants problem here: %s\n"), start);
+    if (Prefs.verbosity >= Prefs.verbosity_underpants) {
+      printf(_("Hmmm, looks like there's an underpants problem here: %s\n"), start);
+    }
     start++;
     if (*start) end = start+1;
   } else {

@@ -2,6 +2,8 @@
 
 	* src/http.c: passage de tout le truc en ipv6 d'après le patch de
 	woof. Tant pis pour les loosers qui n'ont pas getaddrinfo et consorts.
+	* src/wmccc.c: le wmccc ne sauve plus que les options dont les valeurs
+	sont différentes des valeurs par défaut.
 
 2003-02-28  pouaite  <c0in@altern.org>
 

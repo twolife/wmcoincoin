@@ -1,8 +1,11 @@
 /*
-  rcsid=$Id: myprintf.h,v 1.3 2002/04/04 20:38:10 pouaite Exp $
+  rcsid=$Id: myprintf.h,v 1.4 2003/03/02 14:41:22 pouaite Exp $
 
   ChangeLog:
   $Log: myprintf.h,v $
+  Revision 1.4  2003/03/02 14:41:22  pouaite
+  ce commit est dédié à la mémoire de jacques martin
+
   Revision 1.3  2002/04/04 20:38:10  pouaite
   plop
 
@@ -22,10 +25,6 @@
 #  define __attribute__(x) /*nothing*/
 #endif
 
-void myprintf_disable_ansi_codes();
-void myprintf_disable_color();
-void myprintf_enable_ansi_codes();
-void myprintf_enable_color();
 int  myfprintf(FILE *f, const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/
 int  myprintf(const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/
 int  mysprintf(char *s, const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/

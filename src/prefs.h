@@ -183,7 +183,8 @@ typedef struct _GeneralPrefs{
   /* pour mise au point ... */
   int debug;
   int verbosity; /* 1, 2 ou 3 voire plus */
-
+  int verbosity_underpants; /* 0 par défaut, fixe le niveau a partir duquel le coincoin râle sur les pb de slip */
+  int verbosity_http; /* 1 par defaut, niveau général de verbosité pour http */
   int http_timeout; /* en secondes */
   int http_inet_ip_version; /* 4 => IPV4 only, 6 => IPV6 only, autre => n'importe lequel */
   char *gogole_search_url;

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.18 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.19 2003/03/02 14:41:22 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.19  2003/03/02 14:41:22  pouaite
+  ce commit est dédié à la mémoire de jacques martin
+
   Revision 1.18  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -168,7 +171,7 @@ get_host_ip_str_nonbloq(const char *hostname, int port) {
   int tube[2];
   char *iplist = NULL;
 
-  BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("Welcome to the forked gethostbyname, everything is experimental, beware the zombies\n")));
+  BLAHBLAH(Prefs.verbosity_http,fprintf(stderr, _("Welcome to the forked gethostbyname, everything is experimental, beware the zombies\n")));
 
   if (pipe(tube) == -1) {
     fprintf(stderr, _("Broken pipe: %s\n"), strerror(errno)); return NULL;
@@ -183,13 +186,13 @@ get_host_ip_str_nonbloq(const char *hostname, int port) {
     if (close(tube[0]) == -1) {
       fprintf(stderr, _("son: pipe full (%s)\n"), strerror(errno)); close(tube[1]); exit(-1);
     }
-    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("son: gethostbyname going on...\n")));
+    BLAHBLAH(Prefs.verbosity_http,fprintf(stderr, _("son: gethostbyname going on...\n")));
     iplist = get_host_ip_str(hostname,port);
-    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("son: gethostbyname finished.\n")));
+    BLAHBLAH(Prefs.verbosity_http,fprintf(stderr, _("son: gethostbyname finished.\n")));
     if( iplist != NULL ) {
       assert(strlen(iplist) < 100000); /* faut pas pousser grand mère */
       n = write( tube[1], iplist, strlen(iplist)+1); /* on écrit aussi le 0 terminal */
-      BLAHBLAH(VERBOSE_LVL,printf("son: wrote iplist=%s, len %d [status: %s]\n", iplist, n, strerror(errno)));
+      BLAHBLAH(Prefs.verbosity_http,printf("son: wrote iplist=%s, len %d [status: %s]\n", iplist, n, strerror(errno)));
     } else {
       fprintf(stderr, _("son: gethostbyname on '%s' failed.\n"), hostname);
     }
@@ -227,10 +230,10 @@ get_host_ip_str_nonbloq(const char *hostname, int port) {
 	*/
 
 	if (got == 0) {
-	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,_("The son got the pipe full again!\n")));
+	  BLAHBLAH(Prefs.verbosity_http, fprintf(stderr,_("The son got the pipe full again!\n")));
 	  break;
 	} else if (got == -1) {
-	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,_("What a fucking pipe! %s\n"), strerror(errno))); break;
+	  BLAHBLAH(Prefs.verbosity_http, fprintf(stderr,_("What a fucking pipe! %s\n"), strerror(errno))); break;
 	} else { 
           iplist_len += got; iplist[iplist_len] = 0; 
           if (iplist[iplist_len-1] == 0) { /* on a reçu le 0 terminal de fiston */
@@ -239,11 +242,11 @@ get_host_ip_str_nonbloq(const char *hostname, int port) {
           }
         }
       } else if (retval == 0) { /* rien a lire pour l'instant */
-	BLAHBLAH(4,fprintf(stderr, _("select .. awaiting\n")));
+	BLAHBLAH(Prefs.verbosity_http+3, fprintf(stderr, _("select .. awaiting\n")));
       } else if (errno == EINTR) {
-	BLAHBLAH(4,fprintf(stderr, _("select .. interrupted\n")));
+	BLAHBLAH(Prefs.verbosity_http+3, fprintf(stderr, _("select .. interrupted\n")));
       } else {
-	BLAHBLAH(4,fprintf(stderr, _("select .. problem : %s\n"), strerror(errno)));
+	BLAHBLAH(Prefs.verbosity_http+3, fprintf(stderr, _("select .. problem : %s\n"), strerror(errno)));
       }
     } /* while ((got == -1 && (errno == EAGAIN || errno == EINTR)) ||
          	 len == -1 || cnt < len+1); */

@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.53 2003/03/01 17:31:20 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.54 2003/03/02 14:41:21 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.54  2003/03/02 14:41:21  pouaite
+#%  ce commit est dédié à la mémoire de jacques martin
+#%
 #%  Revision 1.53  2003/03/01 17:31:20  pouaite
 #%  compat ipv6 a tester
 #%
@@ -281,6 +284,10 @@
 ### age maximal des news rapartrièes, en jours (1 jour par defaut)
 #[.]news.max_age: 1
 
+### niveau de verbosité à partir duquel le coincoin râle
+#verbosity.underpants: 0
+#verbosity.http: 1
+
 ### la fonte des news ... verdana en 11, c'est plus joli
 #news.font_family: helvetica
 #news.font_size: 12
@@ -529,19 +536,29 @@ pinnipede.url_replace: "01net.com" => "[01net]"
 pinnipede.url_replace: "forum.hardware" => "[hfr]"
 pinnipede.url_replace: "linuxfr.org/" => "[dlfp]"
 pinnipede.url_replace: "goatse" => "[pas cliquer!]"
+pinnipede.url_replace: "goat.cx" => "[pas cliquer!]"
+pinnipede.url_replace: "minilien" => "[minilien]"
+pinnipede.url_replace: "britney" => "[britney]"
 pinnipede.url_replace: "http://wiki.woof.lu/index.php?url" => "[url]"
 pinnipede.url_replace: "wiki" => "[wiki]"
 pinnipede.url_replace: "wickedweasel" => "[WW]"
+pinnipede.url_replace: "teen" => "ducul"
+pinnipede.url_replace: "horse" => "ducheval"
+pinnipede.url_replace: "stileproject" => "stileproject"
 pinnipede.url_replace: "slashdot.org" => "[/.]"
 pinnipede.url_replace: "kde" => "[kde]"
 pinnipede.url_replace: "gnome" => "[gnome]"
+pinnipede.url_replace: "xfree86" => "[xf86]"
+pinnipede.url_replace: "somethingawful.com" => "[SA]"
 pinnipede.url_replace: "osnews" => "[osnews]"
 pinnipede.url_replace: "zdnet" => "[zdnet]"
 pinnipede.url_replace: "kuro5hin" => "[K5]"
 pinnipede.url_replace: "freshmeat" => "[FM]"
+pinnipede.url_replace: "securityfocus.com" => "[securityfocus]"
 pinnipede.url_replace: "debian" => "[debian]"
 pinnipede.url_replace: "mandrake" => "[mdk]"
 pinnipede.url_replace: "redhat" => "[rh]"
+pinnipede.url_replace: "rpmfind" => "[rpmfind]"
 pinnipede.url_replace: "gentoo" => "[gentoo]"
 pinnipede.url_replace: "microsoft" => "[MS]"
 pinnipede.url_replace: "wmcoincoin" => "[wmc²]"
@@ -560,7 +577,9 @@ pinnipede.url_replace: ".ogg" => "[ogg]"
 pinnipede.url_replace: ".pdf" => "[pdf]"
 pinnipede.url_replace: "ftp://" => "[ftp]"
 pinnipede.url_replace: "dtc" => "[dtc]"
-pinnipede.url_replace: "liberation.fr" => "[libé]"
+pinnipede.url_replace: "free.fr" => "[free]"
+pinnipede.url_replace: "dyndns.org" => "[dyndns]"
+
 
 ### pour reconnaitre les horloges hh:mm:ssAM/PM du dacode anglais
 #[.]pinnipede.use_AM_PM: off

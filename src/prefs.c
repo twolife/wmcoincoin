@@ -823,6 +823,8 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->switch_off_coincoin_delay = 24*60; /* au bout d'un jour d'inactivité, le coincoin passe en horloge et arrête les refresh */
   p->debug = 0;
   p->verbosity = 0;
+  p->verbosity_underpants = 0;
+  p->verbosity_http = 1;
   ASSIGN_STRING_VAL(p->font_encoding, "iso8859-1");
   ASSIGN_STRING_VAL(p->news_fn_family, "helvetica");
   p->news_fn_size = 12;
@@ -1098,6 +1100,12 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   case OPTS_board_auto_refresh: {
     CHECK_BOOL_ARG(sp->board_auto_refresh);
   } break;
+  case OPT_verbosity_underpants: {
+    CHECK_INTEGER_ARG(0,10, p->verbosity_underpants);
+  } break;  
+  case OPT_verbosity_http: {
+    CHECK_INTEGER_ARG(0,10, p->verbosity_http);
+  } break;
   case OPT_font_encoding: { 
     ASSIGN_STRING_VAL(p->font_encoding,arg); 
   } break; 
@@ -1289,7 +1297,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     CHECK_INTEGER_ARG(20,600, p->http_timeout);
   } break;
   case OPT_http_inet_ip_version: {
-    CHECK_INTEGER_ARG(20,600, p->http_inet_ip_version);
+    CHECK_INTEGER_ARG(0,10, p->http_inet_ip_version);
   } break;
   case OPT_pinnipede_font_family: {
     ASSIGN_STRING_VAL(p->pp_fn_family, arg); 

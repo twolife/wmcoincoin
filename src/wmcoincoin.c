@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.76 2003/03/01 17:31:22 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.77 2003/03/02 14:41:22 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.77  2003/03/02 14:41:22  pouaite
+  ce commit est dédié à la mémoire de jacques martin
+
   Revision 1.76  2003/03/01 17:31:22  pouaite
   compat ipv6 a tester
 
@@ -755,7 +758,8 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
 	site_msg_save_state(site);
     } else site_news_restore_state(site); 
   }
-  unlink(get_wmcc_tmp_options_filename());
+  fname = get_wmcc_tmp_options_filename();
+  unlink(fname); free(fname);
 }
 
 /* declenchement des ballons d'aide...*/
@@ -1842,7 +1846,7 @@ main(int argc, char **argv)
 
   {
     Site *s;
-    myprintf("Site         Locale     Board                    News    Comments     Messages\n");
+    myprintf("Site         Locale     Board                News       Comments    Messages\n");
     for (s = dock->sites->list; s; s = s->next) {
       myprintf("%<YEL %10s>   \t", s->prefs->site_name);
       switch (s->prefs->locale) {

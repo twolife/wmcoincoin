@@ -719,43 +719,73 @@ prefs_write_to_file_keylist(FILE *f, int opt, KeyList *hk) {
   }
 }
 
+void
+prefs_savestr(FILE *f, const char *o, int with_dot, const char *s, const char *default_s) {
+  if (s && s[0] && (default_s == NULL || strcmp(s,default_s))) {
+    if (with_dot) fprintf(f, ".");
+    fprintf(f, "%s: %s\n", o, s);
+  }
+}
+
+void
+prefs_savefontstyle(FILE *f, const char *o, int with_dot, FontStyle *fs, FontStyle *default_fs) {
+  if (memcmp(fs,default_fs,sizeof(FontStyle))) {
+    if (with_dot) fprintf(f, ".");
+    fprintf(f, "%s: %s%s%s%s\n", o, 
+            (fs->underlined ? "U" : "."), 
+            (fs->slanted ? "I" : "."), 
+            (fs->bold ? "B" : "."),
+            (fs->teletype ? "T" : "."));
+  }
+}
+
 #define SAVESTR(o,_s, p) if (p->_s && p->_s[0]) { fprintf(f, "%s: %s\n", o, p->_s); }
 #define SAVEBOOL(o,_b, p) fprintf(f, "%s: %s\n", o, (p->_b)?"on":"off");
 #define SAVEINT(o,_i, p) fprintf(f, "%s: %d\n", o, p->_i);
 #define SAVEPOS(o,_x,_y, p) fprintf(f, "%s: %d:%d\n", o, p->_x, p->_y);
 #define SAVECOL(o,_c, p) fprintf(f, "%s: %06x\n", o, p->_c);
 #define SAVEBICOL(o, _bic, p) fprintf(f, "%s: %06x %06x\n", o, p->_bic.opaque, p->_bic.transp);
-#define SAVEFONTSTYLE(o, _fs, p) fprintf(f, "%s: %s%s%s%s\n", o, (p->_fs.underlined ? "U" : "."), \
-(p->_fs.slanted ? "I" : "."), (p->_fs.bold ? "B" : "."), (p->_fs.teletype ? "T" : "."));
 
 
-#define G_SAVESTR(o,_s) SAVESTR(wmcc_options_strings[o], _s, p)
-#define G_SAVEBOOL(o,_b) SAVEBOOL(wmcc_options_strings[o], _b, p)
-#define G_SAVEINT(o,_i) SAVEINT(wmcc_options_strings[o], _i, p)
-#define G_SAVEPOS(o,_x,_y) SAVEPOS(wmcc_options_strings[o],_x,_y, p)
-#define G_SAVECOL(o,_c) SAVECOL(wmcc_options_strings[o],_c, p)
-#define G_SAVEBICOL(o, _bic) SAVEBICOL(wmcc_options_strings[o], _bic, p)
-#define G_SAVEFONTSTYLE(o, _fs) SAVEFONTSTYLE(wmcc_options_strings[i], _fs, p)
+#define G_SAVESTR(o,_s) prefs_savestr(f, wmcc_options_strings[o], 0, p->_s, default_p->_s)
+#define G_SAVEBOOL(o,_b) if (p->_b != default_p->_b) { SAVEBOOL(wmcc_options_strings[o], _b, p);}
+#define G_SAVEINT(o,_i) if (p->_i != default_p->_i) { SAVEINT(wmcc_options_strings[o], _i, p); }
+#define G_SAVEPOS(o,_x,_y) if (p->_x != default_p->_x || p->_y != default_p->_y) \
+                           { SAVEPOS(wmcc_options_strings[o],_x,_y, p); }
+#define G_SAVECOL(o,_c) if (p->_c != default_p->_c) { SAVECOL(wmcc_options_strings[o],_c, p); }
+#define G_SAVEBICOL(o, _bic) if (p->_bic.opaque != default_p->_bic.opaque || p->_bic.transp != default_p->_bic.transp) { SAVEBICOL(wmcc_options_strings[o], _bic, p); }
+#define G_SAVEFONTSTYLE(o, _fs) prefs_savefontstyle(f, wmcc_options_strings[o], 0, &(p->_fs), &(default_p->_fs))
 #define G_SAVESTRLST(o,lst,nb) if (p->nb) { int i; fprintf(f, "%s: ", wmcc_options_strings[o]); \
       for (i=0; i < (int)p->nb; i++) { fprintf(f, "\"%s\"%s", p->lst[i], (i==(int)p->nb-1)?"\n":", \\\n"); } }
 #define G_SAVEKL(o, hk) { prefs_write_to_file_keylist(f, o, p->hk); }
 
 #define DOTIFY(o) (wmcc_options_strings[o]+1)
 
-#define SP_SAVESTR(o,_s) if (sp->_s && sp->_s[0])  { fprintf(f, "."); SAVESTR(DOTIFY(o),_s, sp); }
-#define SP_SAVEBOOL(o,_b) { fprintf(f, ".");  SAVEBOOL(DOTIFY(o),_b, sp); }
-#define SP_SAVEINT(o,_i) { fprintf(f, "."); SAVEINT(DOTIFY(o),_i, sp); }
-#define SP_SAVEPOS(o,_x,_y) { fprintf(f, "."); SAVEPOS(DOTIFY(o),_x,_y, sp); }
-#define SP_SAVECOL(o,_c) { fprintf(f, "."); SAVECOL(DOTIFY(o),_c, sp); }
-#define SP_SAVEBICOL(o, _bic) { fprintf(f, "."); SAVEBICOL(DOTIFY(o), _bic, sp); }
-#define SP_SAVEFONTSTYLE(o, _fs) { fprintf(f, "."); SAVEFONTSTYLE(DOTIFY(o), _fs, sp); }
+#define SP_SAVESTR(o,_s) prefs_savestr(f, DOTIFY(o), 1, sp->_s, default_sp->_s)
+#define SP_SAVEBOOL(o,_b) if (sp->_b != default_sp->_b) { fprintf(f, ".");  SAVEBOOL(DOTIFY(o),_b, sp); }
+#define SP_SAVEINT(o,_i) if (sp->_i != default_sp->_i) { fprintf(f, "."); SAVEINT(DOTIFY(o),_i, sp); }
+#define SP_SAVEPOS(o,_x,_y) if (sp->_x != default_sp->_x || sp->_y != default_sp->_y) { fprintf(f, "."); SAVEPOS(DOTIFY(o),_x,_y, sp); }
+#define SP_SAVECOL(o,_c) if (sp->_c != default_sp->_c) { fprintf(f, "."); SAVECOL(DOTIFY(o),_c, sp); }
+#define SP_SAVEBICOL(o, _bic) if (sp->_bic.opaque != default_sp->_bic.opaque || sp->_bic.transp != default_sp->_bic.transp) { fprintf(f, "."); SAVEBICOL(DOTIFY(o), _bic, sp); }
+#define SP_SAVEFONTSTYLE(o, _fs) prefs_savefontstyle(f, DOTIFY(o), 1, &(sp->_fs), &(default_sp->_fs))
 
 void
 prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   char default_ua[1024];
-  
+  GeneralPrefs _default_p, *default_p;
+  SitePrefs _default_sp, *default_sp;
   int site_num;
+
+  /* prefs par defaut, pour reperer les valeurs modifiées */
+  memset(&_default_p, 0, sizeof(_default_p));
+  memset(&_default_sp, 0, sizeof(_default_sp));
+  wmcc_prefs_set_default(&_default_p);
+  wmcc_site_prefs_set_default(&_default_sp);
+  default_p = &_default_p; default_sp = &_default_sp;
+
   coincoin_default_useragent(default_ua, 1024);
+  G_SAVEINT(OPT_verbosity_underpants, verbosity_underpants);
+  G_SAVEINT(OPT_verbosity_http, verbosity_http);
   G_SAVESTR(OPT_font_encoding, font_encoding);
   G_SAVEINT(OPT_tribunenews_max_refresh_delay, max_refresh_delay);
   G_SAVEINT(OPT_tribunenews_switch_off_coincoin_delay, switch_off_coincoin_delay);
@@ -790,6 +820,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVESTR(OPT_http_browser2,browser2_cmd);
   G_SAVESTR(OPT_http_gogole_search_url, gogole_search_url);
   G_SAVEINT(OPT_http_timeout, http_timeout);
+  G_SAVEINT(OPT_http_inet_ip_version, http_inet_ip_version);
   G_SAVESTR(OPT_pinnipede_font_family,pp_fn_family);
   G_SAVEINT(OPT_pinnipede_font_size,pp_fn_size);
   G_SAVEBOOL(OPT_pinnipede_start_in_transparency_mode,pp_start_in_transparency_mode);
@@ -798,7 +829,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEBOOL(OPT_pinnipede_use_colored_tabs,pp_use_colored_tabs);
   G_SAVEBOOL(OPT_pinnipede_hungry_boitakon,hungry_boitakon);
 
-  {
+  if (memcmp(&p->pp_transparency, &default_p->pp_transparency, sizeof(p->pp_transparency))) {
     fprintf(f, "%s: ", wmcc_options_strings[OPT_pinnipede_transparency]);
     switch (p->pp_transparency.type) {
     case FULL_TRANSPARENCY: fprintf(f, "full\n"); break;
@@ -978,6 +1009,7 @@ save_prefs(gchar *filename, int do_backup) {
   } else {
     char *backup[4];
     int i;
+    fprintf(f, "### -*- mode: wmccoptions -*-\n### edited by wmccc -- look for *.wmccc.*.bak for backups");
     prefs_write_to_file(Prefs, f);
     fclose(f);
     if (do_backup) {

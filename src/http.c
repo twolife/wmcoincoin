@@ -85,10 +85,9 @@ HostEntry *dns_cache = NULL;
 
 int http_close(SOCKET fd);
 
-#define VERBOSE_LVL 1
 
-
-void dns_cache_destroy(HostEntry *h) {
+static void 
+dns_cache_destroy(HostEntry *h) {
   assert(h);
   free(h->host_name); 
   free(h->numeric_host);
@@ -96,16 +95,37 @@ void dns_cache_destroy(HostEntry *h) {
   free(h);
 }
 
-void dns_cache_remove_host(HostEntry *h) {
+static void 
+dns_cache_remove_host(HostEntry *h) {
   if (h == NULL) return;
   if (h == dns_cache) {
     dns_cache = h->next;
   } else {
     HostEntry *hh = dns_cache;
     while (hh->next != h) hh = hh->next;
+    assert(hh->next == h);
     hh->next = h->next;
   }
   dns_cache_destroy(h);
+}
+
+static HostEntry *
+dns_cache_find_host_by_name(const char *host_name, int port) {
+  HostEntry *h = NULL;
+  h = dns_cache;
+  while (h) {
+    if (strcasecmp(host_name, h->host_name) == 0 && port == h->port) {
+      break;
+    }
+    h = h->next;
+  }
+  return h;
+}
+
+static void
+dns_cache_remove_host_by_name(const char *host_name, int port) {
+  HostEntry *h = dns_cache_find_host_by_name(host_name,port);
+  if (h) dns_cache_remove_host(h);
 }
 
 /* 
@@ -245,7 +265,6 @@ int base64_encode(const void *data, int size, char **str)
    gpl roulaize :)
 */
 
-#ifdef HAVE_SELECT
 /* Wait for file descriptor FD to be readable, MAXTIME being the
    timeout in seconds.  If WRITEP is non-zero, checks for FD being
    writable instead.
@@ -274,7 +293,6 @@ http_select_fd (SOCKET fd, int maxtime_sec, int maxtime_usec, int writep)
   ALLOW_X_LOOP_MSG("http_select_fd.2"); ALLOW_ISPELL;
   return retval;
 }
-#endif /* HAVE_SELECT */
 
 
 /* Read at most LEN bytes from FD, storing them to BUF.  This is
@@ -293,7 +311,7 @@ http_iread (SOCKET fd, char *buf, int len)
   do
     {
       if (flag_cancel_task) goto error;
-#ifdef HAVE_SELECT
+      //#ifdef HAVE_SELECT
       if (Prefs.http_timeout)
 	{
 	  int tic0;
@@ -328,7 +346,7 @@ http_iread (SOCKET fd, char *buf, int len)
 	  }
 #endif
 	}
-#endif
+      //#endif
 
 #ifdef __CYGWIN__      	  
       res = recv (fd, buf, len, 0);
@@ -372,7 +390,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
   while (len > 0) {
     do {
       if (flag_cancel_task) goto error;
-#ifdef HAVE_SELECT
+      //#ifdef HAVE_SELECT
       if (Prefs.http_timeout) {
 	do {
 	  res = http_select_fd (fd, Prefs.http_timeout, 0, 1);
@@ -396,7 +414,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 	}
 #endif /* ifndef __CYGWIN__ */
       }
-#endif
+      //#endif
 
 #ifdef __CYGWIN__
       res = send (fd, buf, len, 0);
@@ -429,8 +447,8 @@ http_error() {
   return http_last_err_msg;
 }
 
-
-char * /* stolen from woof patch and from wget debian sources (vanilla wget does not have ipv6) */
+/* stolen from woof patch and from wget debian sources (vanilla wget does not have ipv6) */
+static char * 
 get_host_ip_str(const char *hostname, int port) {
   int error;
   struct addrinfo hints, *res;
@@ -462,6 +480,7 @@ get_host_ip_str(const char *hostname, int port) {
     freeaddrinfo(res);
   } else {
     myfprintf(stderr, "error from getaddrinfo: %s", gai_strerror(error));
+    freeaddrinfo(res);
   }
   return s;
 }
@@ -469,7 +488,7 @@ get_host_ip_str(const char *hostname, int port) {
 char *
 get_host_ip_str_bloq(const char *hostname, int port) {
   char *s = NULL;
-  BLAHBLAH(1, printf(_("get_host_ip_str_bloq('%s') -> if the network lags, the coincoin can be blocked here\n"), hostname));
+  BLAHBLAH(Prefs.verbosity_http, printf(_("get_host_ip_str_bloq('%s') -> if the network lags, the coincoin can be blocked here\n"), hostname));
   ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à jour la led indiquant 'gethostbyname' */
   ALLOW_X_LOOP_MSG("get_host_ip_str_bloq(1)"); ALLOW_ISPELL;
   s = get_host_ip_str(hostname, port);
@@ -494,14 +513,7 @@ http_resolv_name(const char *host_name, int port, int force_dns_query)
   int do_dns_query = force_dns_query;
 
   /* recherche de l'host_name dans la liste des noms déjà connus */
-  h = dns_cache;
-  while (h) {
-    if (strcasecmp(host_name, h->host_name) == 0 && port == h->port) {
-      h_found = 1;
-      break;
-    }
-    h = h->next;
-  }
+  h = dns_cache_find_host_by_name(host_name, port);
 
   if (h == NULL) {
     h = (HostEntry*) calloc(1, sizeof(HostEntry)); assert(h);
@@ -510,16 +522,16 @@ http_resolv_name(const char *host_name, int port, int force_dns_query)
     h->port = port;
     h->next = dns_cache;
     do_dns_query = 1;
-  }
+  } else h_found = 1;
 
   if (do_dns_query) {
     flag_gethostbyname = 1;
     if (h->numeric_host) { free(h->numeric_host); h->numeric_host = NULL; }
-#ifndef DONOTFORK_GETHOSTBYNAME	  
-    h->numeric_host = get_host_ip_str_nonbloq(host_name, port);
-#else
-    h->numeric_host = get_host_ip_str_bloq(host_name, port);
-#endif
+    if ((Prefs.debug & 8) == 0) {
+      h->numeric_host = get_host_ip_str_nonbloq(host_name, port);
+    } else {
+      h->numeric_host = get_host_ip_str_bloq(host_name, port);
+    }
     flag_gethostbyname = 0;
     if (h_found == 0) {
       if (h->numeric_host) {
@@ -538,9 +550,106 @@ http_resolv_name(const char *host_name, int port, int force_dns_query)
 
   if (h && h->numeric_host) {
     snprintf(http_used_ip, 100, "%s", h->numeric_host);
-    BLAHBLAH(0/* --- PLOP --- VERBOSE_LVL*/, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
+    BLAHBLAH(Prefs.verbosity_http, myprintf("--> host='%<YEL %s>', ip=%<MAG %s>\n", host_name, http_used_ip));
     return h;
   } else return NULL;
+}
+
+static SOCKET
+http_try_connect_to_resolved_host(HostEntry *h) {
+  SOCKET sockfd = INVALID_SOCKET;
+  char *hostnumstr;
+
+  hostnumstr = h->numeric_host; assert(hostnumstr);
+  /* boucle sur toutes les ips */
+  do {
+    /* convert the the string containing numeric ip into the adequate structure */
+    struct sockaddr_storage sock_name;
+    struct addrinfo hints, *res;
+    char portstr[NI_MAXSERV];
+    int err;
+    char *end;
+    char *currenthost;
+    int salen;
+
+    /* remplissage de sock_name */
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICHOST;
+    snprintf(portstr, sizeof(portstr), "%d", h->port);
+    end = strchr(hostnumstr, '|'); 
+    if (end) { currenthost = str_ndup(hostnumstr, end-hostnumstr); ++end; }
+    else currenthost = strdup(hostnumstr);
+    err = getaddrinfo(currenthost, portstr, &hints, &res);
+    if (err) {
+      printf("erreur dans getaddrinfo(%s) : %s\n", currenthost, gai_strerror (err));
+      printf("comme a priori ça ne devrait pas arriver, ==> moment suicide <==\n");
+      printf("si vous pensez que cette décision n'est pas justifiée, "
+             "addressez-vous aux autorités compétetentes\n");
+      assert(0);
+    }
+    memset (&sock_name, 0, sizeof (sock_name));
+    memcpy (&sock_name, res->ai_addr, res->ai_addrlen);
+    salen = res->ai_addrlen;
+    freeaddrinfo (res);
+
+    /* creation du sockect */
+
+    sockfd = socket (((struct sockaddr *)&sock_name)->sa_family, SOCK_STREAM, 0);
+    ALLOW_X_LOOP; ALLOW_ISPELL;
+    if (sockfd == INVALID_SOCKET) {
+      if (end) {
+        BLAHBLAH(Prefs.verbosity_http,myfprintf(stderr, "avertissement sans frais: la chaussette sur '%<YEL %s>' "
+                                       "a renvoyé '%<MAG %s>'\n",
+                                       currenthost, STR_LAST_ERROR));
+      } else {
+        set_http_err();
+        snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to create a socket ! (%s) [ip=%s]"), STR_LAST_ERROR, h->numeric_host);
+      }
+    } else {
+      /* y'a le probleme des timeout de connect ...
+         d'ailleurs je n'ai toujours pas compris pourquoi tous les
+         sigalrm balance par l'itimer de wmcoincoin n'interferent
+         pas avec le connect...
+      */
+      BLAHBLAH(Prefs.verbosity_http, printf(_("connecting...\n")));
+#ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
+      err = net_tcp_connect(sockfd, (struct sockaddr *)&sock_name, salen);
+#else
+      err = net_tcp_connect_with_timeout(sockfd, (struct sockaddr *)&sock_name, 
+                                         salen, Prefs.http_timeout);
+#endif
+      if (err) {
+        http_close(sockfd); sockfd = INVALID_SOCKET;
+        if ( end == NULL) {
+          set_http_err();
+          snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "connect(): %s", STR_LAST_ERROR);
+          ALLOW_X_LOOP; ALLOW_ISPELL;
+          BLAHBLAH(Prefs.verbosity_http, printf(_("connection failed: %s..\n"), http_last_err_msg));
+          dns_cache_remove_host(h); /* pour relancer un gethostbyname au prochain coup */
+        } else {
+          BLAHBLAH(Prefs.verbosity_http,printf("avertissement sans frais: le connect vers '%s' vient d'echouer (%s), on tente l'ip suivante\n", currenthost, STR_LAST_ERROR));
+        }
+      } else { /* ouéééé */
+        /* ruse de sioux: comme cette ip a l'air de bien marcher, on la fait passer en premier */
+        if (hostnumstr != h->numeric_host) {
+          end = h->numeric_host+strlen(h->numeric_host); assert(*end == 0);
+          memmove(h->numeric_host+strlen(currenthost)+1, 
+                  h->numeric_host, hostnumstr-h->numeric_host);
+          *end = 0; /* on l'a écrasé si hostnumstr était le dernier */
+          strcpy(h->numeric_host, currenthost);
+          h->numeric_host[strlen(currenthost)] = '|';
+          BLAHBLAH(Prefs.verbosity_http,myprintf("version rearrangée de la liste d'ips: '%<YEL %s>'\n", h->numeric_host));
+        }
+      }
+    }
+    free(currenthost); currenthost=NULL;
+    hostnumstr = end;
+  } while (sockfd == INVALID_SOCKET && hostnumstr);
+  
+  return sockfd;
 }
 
 /* -1 => erreur */
@@ -549,12 +658,9 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
 {
   SOCKET sockfd = INVALID_SOCKET;
 
-  struct sockaddr_storage sock_name;
-  int salen;
   int num_try;
 
   HostEntry *h;
-  char *hostnumstr;
 
    /* 
      un peu tordu : 
@@ -565,100 +671,27 @@ http_connect(const char *host_name, int port, int *connect_tic_cnt)
      BIEN SUR CA NE MARCHE QUE SI L'ON S'ADDRESSE TOUJOURS AU MEME SITE !
   */
 
-  for (num_try = 0; num_try < 2; num_try++) 
-    {
+  for (num_try = 0; num_try < 2; num_try++) {
 
-      /* fait un gethostbyname */
-      h = http_resolv_name(host_name, port, (num_try == 1));
-
-      if (h == NULL) {
-	if (num_try == 0) continue; /* on a droit a un deuxième essai */
-	else {
-	  set_http_err();
-	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to resolve '%s'"), host_name);
-	  return INVALID_SOCKET;
-	}
+    /* fait un gethostbyname */
+    h = http_resolv_name(host_name, port, (num_try == 1));
+    
+    if (h == NULL) {
+      if (num_try == 0) continue; /* on a droit a un deuxième essai */
+      else {
+        set_http_err();
+        snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to resolve '%s'"), host_name);
+        return INVALID_SOCKET;
       }
-      if (connect_tic_cnt && *connect_tic_cnt == -1)
-	*connect_tic_cnt = wmcc_tic_cnt;
-
-      hostnumstr = h->numeric_host; assert(hostnumstr);
-      do {
-        /* convert the the string containing numeric ip into the adequate structure */
-        struct addrinfo hints, *res;
-        char portstr[NI_MAXSERV];
-        int err;
-        char *end;
-        char *currenthost;
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = PF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_NUMERICHOST;
-        snprintf(portstr, sizeof(portstr), "%d", port);
-        end = strchr(hostnumstr, '|'); 
-        if (end) { currenthost = str_ndup(hostnumstr, end-hostnumstr); ++end; }
-        else currenthost = strdup(hostnumstr);
-        err = getaddrinfo(currenthost, portstr, &hints, &res);
-        if (err) {
-          printf("erreur dans getaddrinfo(%s) : %s\n", currenthost, gai_strerror (err));
-          printf("comme a priori ça ne devrait pas arriver, ==> moment suicide <==\n");
-          assert(0);
-        }
-        memset (&sock_name, 0, sizeof (sock_name));
-        memcpy (&sock_name, res->ai_addr, res->ai_addrlen);
-        salen = res->ai_addrlen;
-        freeaddrinfo (res);
-        sockfd = socket (((struct sockaddr *)&sock_name)->sa_family, SOCK_STREAM, 0);
-        if (sockfd == INVALID_SOCKET && end) {
-          myfprintf(stderr, "avertissement sans frais: la chaussette sur '%<YEL %s>' "
-                    "a renvoyé '%<MAG %s>'\n",
-                    currenthost, STR_LAST_ERROR);
-        }
-        free(currenthost);
-        hostnumstr = end;
-      } while (hostnumstr && sockfd == INVALID_SOCKET)
-;
-
-      ALLOW_X_LOOP; ALLOW_ISPELL;
-      if (sockfd == INVALID_SOCKET) {
-	set_http_err();
-	snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to create a socket ! (%s) [ip=%s]"), STR_LAST_ERROR, h->numeric_host);
-	return INVALID_SOCKET;
-      }
-  
-      /* y'a le probleme des timeout de connect ...
-	 d'ailleurs je n'ai toujours pas compris pourquoi tous les
-	 sigalrm balance par l'itimer de wmcoincoin n'interferent
-	 pas avec le connect...
-      */
-      BLAHBLAH(VERBOSE_LVL, printf(_("connecting...\n")));
-      //      if (connect(sockfd, (struct sockaddr *)&dest_addr, sizeof(dest_addr))) {
-
-#ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
-      if (net_tcp_connect(sockfd, (struct sockaddr *)&sock_name, salen))
-#else
-      if (net_tcp_connect_with_timeout(sockfd, (struct sockaddr *)&sock_name, 
-                                       salen, Prefs.http_timeout))
-#endif
-	{
-	  set_http_err();
-	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "connect(): %s", STR_LAST_ERROR);
-	  http_close(sockfd);
-	  ALLOW_X_LOOP; ALLOW_ISPELL;
-	  BLAHBLAH(VERBOSE_LVL, printf(_("connection failed: %s..\n"), http_last_err_msg));
-	  dns_cache_remove_host(h); /* pour relancer un gethostbyname au prochain coup */
-	  //	  if (num_try == 1) {
-	    return INVALID_SOCKET;
-	    //	  }
-	} 
-      else 
-	{
-	  BLAHBLAH(VERBOSE_LVL, printf(_("connected..\n")));
-	  break;
-	}
     }
+    if (connect_tic_cnt && *connect_tic_cnt == -1)
+      *connect_tic_cnt = wmcc_tic_cnt;
+    
+    if ((sockfd = http_try_connect_to_resolved_host(h)) != INVALID_SOCKET) break;
+  }
   return sockfd;
 }
+
 
 
 void
@@ -712,7 +745,7 @@ http_skip_header(HttpRequest *r)
   do {
     while((got = http_iread(r->fd, buff+i, 1)) > 0) {
       buff[i+1] = 0;
-      BLAHBLAH(VERBOSE_LVL, myprintf("%<GRN %c>", buff[i]););
+      BLAHBLAH(Prefs.verbosity_http, myprintf("%<GRN %c>", buff[i]););
       if(buff[i] == '\n' && (last == '\n')) {
 	ok = 1; /* on vient de lire le header tranquillement */
 	break;
@@ -739,6 +772,7 @@ http_skip_header(HttpRequest *r)
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
 	      myprintf(_("[%<MAG %s>]: %<yel %s>"), http_last_url, buff+j+1);
 	      r->error = 1;
+              dns_cache_remove_host_by_name(r->host,r->port);
 	    }
 	  }
 	} else {
@@ -754,7 +788,7 @@ http_skip_header(HttpRequest *r)
 	  }
 	  if (strncmp(buff, "Content-Length:", 15) == 0) {
 	    r->content_length = atoi(buff+15);
-	    BLAHBLAH(VERBOSE_LVL,printf("content length: %d\n", r->content_length));
+	    BLAHBLAH(Prefs.verbosity_http,printf("content length: %d\n", r->content_length));
 	  }
 	}
 	lnum++;
@@ -787,7 +821,7 @@ http_read(HttpRequest *r, char *buff, int len)
   assert(r->error == 0);
 
   if (len>1) {
-    BLAHBLAH(2, printf(_("http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"), len, r->chunk_pos, r->chunk_num, r->chunk_size));
+    BLAHBLAH(Prefs.verbosity_http+1, printf(_("http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"), len, r->chunk_pos, r->chunk_num, r->chunk_size));
   }
 
   if (r->is_chunk_encoded == 1) {
@@ -818,7 +852,7 @@ http_read(HttpRequest *r, char *buff, int len)
 	printf(_("error in chunk '%s'\n"), s_chunk_size);
 	return 0;
       }
-      BLAHBLAH(VERBOSE_LVL, printf("http_read: CHUNK %d, size = %ld ['0x%s']\n", r->chunk_num, r->chunk_size, s_chunk_size));
+      BLAHBLAH(Prefs.verbosity_http, printf("http_read: CHUNK %d, size = %ld ['0x%s']\n", r->chunk_num, r->chunk_size, s_chunk_size));
     }
 
     if (len > r->chunk_size - r->chunk_pos) len = r->chunk_size - r->chunk_pos;
@@ -848,7 +882,7 @@ http_read(HttpRequest *r, char *buff, int len)
   }
 
   if (len>1) { // || (r->content_length != -1 && (r->content_length - r->chunk_pos < 200))) {
-    BLAHBLAH(2,printf(_("http_read: length finally requested: %d, received: %d, new pos=%ld\n"),
+    BLAHBLAH(Prefs.verbosity_http+1,printf(_("http_read: length finally requested: %d, received: %d, new pos=%ld\n"),
 	   len, got, r->chunk_pos));
   }
 
@@ -896,12 +930,12 @@ http_get_line(HttpRequest *r, char *s, int sz)
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
     goto error;
   }
-  BLAHBLAH(VERBOSE_LVL+1,myprintf(_("http_get_line sent (cnt=%d): '%<yel %s>'\n"), cnt, s));
+  BLAHBLAH(Prefs.verbosity_http+1,myprintf(_("http_get_line sent (cnt=%d): '%<yel %s>'\n"), cnt, s));
   flag_http_transfert--;
 
   flag_http_error = 0;
 
-  BLAHBLAH(VERBOSE_LVL,myprintf("%<yel .>"); fflush(stdout));
+  BLAHBLAH(Prefs.verbosity_http,myprintf("%<yel .>"); fflush(stdout));
   return cnt;
 
 
@@ -951,7 +985,7 @@ http_request_send(HttpRequest *r)
 
   flag_http_transfert++;
 
-  BLAHBLAH(VERBOSE_LVL,myprintf("http_request_send: %<grn %s>\n", r->host_path));
+  BLAHBLAH(Prefs.verbosity_http,myprintf("http_request_send: %<grn %s>\n", r->host_path));
 
 
   header = strdup("");
@@ -1044,7 +1078,7 @@ http_request_send(HttpRequest *r)
   }
   if (r->fd == INVALID_SOCKET) goto error_close;
 
-  BLAHBLAH(VERBOSE_LVL, myprintf("HTTP_REQUEST: \n%<YEL %s>\n", header));
+  BLAHBLAH(Prefs.verbosity_http, myprintf("HTTP_REQUEST: \n%<YEL %s>\n", header));
 
   if (http_iwrite(r->fd, header, strlen(header)) == SOCKET_ERROR) {
     set_http_err();
@@ -1052,7 +1086,7 @@ http_request_send(HttpRequest *r)
     goto error_close;
   }
 
-  BLAHBLAH(VERBOSE_LVL,printf(_("ok, request sent\n")));
+  BLAHBLAH(Prefs.verbosity_http ,printf(_("ok, request sent\n")));
   
   http_skip_header(r);
   if (r->error) {
@@ -1134,7 +1168,7 @@ http_read_all(HttpRequest *r, char *what)
     } else {
       s[bi] = 0;
     }
-    BLAHBLAH(4, myprintf(_("%s, read: %<mag %s>\n"), what, s));
+    BLAHBLAH(Prefs.verbosity_http+3, myprintf(_("%s, read: %<mag %s>\n"), what, s));
   }
   return s;
 }

@@ -107,7 +107,10 @@ wmcc_prefs_from_cmdline(int argc, char **argv, GeneralPrefs *The_Prefs)
 	if (optarg == NULL) {
 	  The_Prefs->debug = 1;
 	} else The_Prefs->debug = atoi(optarg);
-	
+	/* | 1 : force X à synchroniser toutes ses op 
+           | 2 : utilise les backends dans ~/wmcoincoin/test
+           | 4 : ralenti considérablement la maj de l'animation de l'applet (pratique pour des displays exportés de très loin sur un modem)
+           | 8 : désactive le fork sur le gethostbyname */
 	myprintf(_("Activation of the secret %<YEL debug> mode (dbg=%d)!\n"), The_Prefs->debug);
       } break;
       /*
@@ -496,7 +499,9 @@ wmcc_prefs_relecture(Dock *dock, int whatfile)
     /* parametres de refresh */
     G_INT_OPT_COPY(max_refresh_delay);
     G_INT_OPT_COPY(switch_off_coincoin_delay);
-
+    G_INT_OPT_COPY(verbosity_underpants);
+    G_INT_OPT_COPY(verbosity_http);
+    G_INT_OPT_COPY(http_inet_ip_version);
     G_INT_OPT_COPY(use_balloons);
     G_INT_OPT_COPY(pp_use_classical_tabs);
     G_INT_OPT_COPY(pp_use_colored_tabs);

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.20  2003/03/02 14:41:21  pouaite
+dnl   ce commit est dédié à la mémoire de jacques martin
+dnl
 dnl   Revision 1.19  2003/02/28 19:08:42  pouaite
 dnl   trucs divers
 dnl
@@ -264,7 +267,7 @@ AC_CHECK_HEADERS(sys/select.h sys/utsname.h pwd.h signal.h windows.h)
 AC_HEADER_TIME
 AC_CHECK_FUNCS(strdup strstr strcasecmp strncasecmp)
 AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
-AC_CHECK_FUNCS(uname gethostname)
+AC_CHECK_FUNCS(uname getaddrinfo)
 
 AC_C_CONST
 AC_C_INLINE
@@ -275,12 +278,6 @@ AC_STRUCT_TM
 
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
-
-AC_ARG_WITH(ipv6, [ --with-ipv6    allow use of ipv6 [default=no]], ipv6_ok=$withval, ipv6_ok=no)
-if test "x$ipv6_ok" = "xyes"; then
-  echo "IPv6 enabled !"
-  AC_DEFINE_UNQUOTED(USE_IPV6, 1, [Define if build with IPv6 support])
-fi
 
 case "$host" in
     *-linux-*)
@@ -310,6 +307,9 @@ case "$host" in
     *GNU*)
 	  echo -e "\n${YELLOW}GNU/Hurd ! you need to shave yourself${RESET}\n"
 	  ;;
+    *hpux*)
+          echo "HPUX detected !! you are hairy"
+          ;;
     *)
 	  echo -e "\n${YELLOW}you are compiling on $host , it's original${RESET}\n"
          ;;
