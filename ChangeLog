@@ -1,0 +1,295 @@
+2001-11-26  Frédéric Py <fpy@laas.fr>
+
+	* src/spell_coin.[ch]: Ajout de ces deux fichiers regroupant les 
+	fonctions permettant l'appel a ispell et de recuperer le resultat.
+	Doit marcher pour aspell mais j'ai pas verifie
+
+	* src/editwin.c(editw_colorize): refonte et optimisation (?) de la 
+	fonction pour qu'elle supporte le spellcheck et mette en EWC_SPELLWORD
+	les mots inconnus.
+
+	* src/global.h: ajout des champs ew_do_spell,ew_spell_cmd et 
+	ew_spell_dict dans la structure strucPrefs
+
+	* src/coincoins.c: ajout des options spell.enable, spell.cmd et 
+	spell.dict
+
+	* src/defaultoptionsfile.h: ajout des options spell.*
+
+2001-11-25  Hommey Mike <mh@glandium.org>
+
+	* src/wmcoincoin.c: j'avais mal pompé le code d'asclock et la date
+	s'affichait mal, c'est réglé
+
+2001-11-23  Julien Pommier  <jul@dr.com>
+
+	* src/wmcoincoin.c: miniretouche du patch de glandium pour que
+	l'horloge (qui roulaize) s'affiche correctement à la reception de SIGUSR1
+
+2001-11-23  hommey mike <mh@glandium.org>
+
+	* src/wmcoincoin.c (dock_refresh_horloge_mode): modification de
+	l'horloge ; maintenant, elle ressemble à asclock (xpms lâchement
+	repompés) et s'affiche même si la tribune est indisponible
+	* src/wmcoincoin.c (dock_handle_button_press): gestion de la
+	transparence de l'horloge
+	* src/wmcoincoin.c (dock_handle_button_press_horloge_mode): retour au
+	mode normal uniquement sur ctrl+clic et gestion de la transparence de
+	l'horloge.
+	* src/wmcoincoin.c (initx): initialisation des pixmaps pour l'horloge.
+
+2001-11-18  pommier julien  <jul@dr.com>
+
+	* src/coincoin_prefs.c (init_default_prefs): ajout d'option pour
+	specifier le chemin des differents backends etc.. + option '-o'
+	pour specifier le fichier d'options
+
+	* src/coincoin_tribune.c (dlfp_updatetribune): le remote.php3 est maintenant un remote.rdf
+
+	* src/picohtml.c (picohtml_parse): gestion du tag bizarre <br />
+
+2001-11-11  pommier julien  <jul@dr.com>
+
+	* src/wmcoincoin.c (X_loop), src/newswin.c,
+	src/msgbox.c,src/pinnipede.c: suppression des appels à
+	flush_expose
+	(c'est Mal(tm)), remplacés par l'inspection du champ 'count' de
+	l'evenement expose ajout de flag_sending_coin_coin, et modif de la
+	led 1 pour indiquer quand un post est en attente d'expedition/en
+	expedition/expedié
+	(dock_refresh_horloge_mode): ajout du mode horloge, pour toujours
+	plus de discretion -- et sinon plein de petites modifs (decrassage
+	de code) dans un peu tous les fichiers.
+
+2001-11-07  le mignot gaël <kilobug@freesurf.fr>
+
+	* src/coincoin_prefs.c (option_set_useragent): patch pour la
+	substitution des $v $r $m dans le useragent
+
+2001-10-27  pommier julien  <jul@dr.com>
+
+	* src/coincoin_news.c (dlfp_msg_update_messages): ajout de la
+	messagerie + modifs des regexp de kilobug
+
+2001-11-05 le mignot gaël <kilobug@freesurf.fr>
+
+	* src/wmcoincoin_news.c: utilisation des regexp
+	* src/regexp.*: système de gestion des regexp
+
+2001-11-04 le mignot gaël <kilobug@freesurf.fr>
+
+	* src/wmcoincoin_news.c: hotfix pour la nouvelle version de DaCode
+	
+2001-10-28  pommier julien  <jul@dr.com>
+
+	* src/wmcoincoin.c (install_sighandlers): gestion des signaux
+	SIGUSR1 et SIGUSR2 pour cacher/restaurer rapidement les fenetres
+	du coincoin. La v2.2beta est prete.
+
+2001-10-27  pommier julien  <jul@dr.com>
+
+	* src/wmcoincoin.c (prepare_pixmap_porte): petits amenagements sur
+	le pixmap de fond
+
+2001-10-26  pommier julien  <jul@dr.com>
+
+	* src/picohtml.c (picohtml_parse): encore du travail sur picohtml
+	qui interprete mieux les &eacute et cie.
+
+	* src/pinnipede.c, src/coincoin_news.c: on recupere la charge cpu
+	et un fortune sur myposts.php3 !
+
+2001-10-25  pommier julien  <jul@dr.com>
+
+	* src/http_unix.c (net_tcp_connect_with_timeout): wmcc fonctionne
+	dorénavant sous openbsd 2.9 !!
+
+2001-10-25  pommier julien  <jul@dr.com>
+
+	* src/wmcoincoin.c (prepare_pixmap_porte): integration du patch de
+	kadreg (bg_pixmap)
+
+2001-10-21  pommier julien  <jul@dr.com>
+
+	* src/picohtml.c: amélioration du parse de l'html (reconnaissance
+	des urls, un nouveau tag pourri pour la newswin, etc...).
+
+	* src/coincoin_prefs.c (option_browser): nouvelles options + bugfixes
+
+	* src/coincoin_news.c (dlfp_updatenews): correction d'un vilain
+	bug (double free beurk), récupération de l'heure de la modération
+	d'une news, récupération de la liste des liens de la news.
+
+	* src/wmcoincoin.c: gestion d'une seconde commande de
+	browser externe + modifs liées à newswin.
+
+	* newswin.c: nouveau nom de l'ex-txtwin.c, entierement rebricolé
+	pour un affichage des news plus convivial.
+
+2001-10-15  pommier julien  <jul@dr.com>
+
+	* src/raster.[ch]: et hop, la libwraster s'est pris un coup de
+	pied au cul, on se contente désormais de raster.c et coin_util.c
+	(le source reste néanmoins dégueulasse)
+
+2001-10-12  pommier julien  <jul@dr.com>
+
+	* src/pinnipede.c (pp_show): petite modif du positionnement
+	initial du pinnipede pour que ça marche avec pwm.
+
+	* src/http_win.c (http_get_with_cookie) src/http_unix.c (http_get_with_cookie): 
+	changement de 'Authrozation:' par 'Proxy-Authorization:'
+
+2001-10-11  pommier julien  <jul@dr.com>
+
+	* src/http_unix.c (http_get_with_cookie) src/http_win.c
+	(http_get_with_cookie): ajout de l'option proxy_use_nocache pour
+	les proxy avec un cache casse-ouille (merci msieur anonyme)
+
+	* inclusion de la branche cygwin de gege !
+
+	* src/wmcoincoin.c (update_pix_tribune_load): le retour de la
+	multiresolution dans le trolloscope
+
+	* src/msgbox.c (dispatch_msgbox_event): appel de msgbox_hide sur
+	buttonrelease et pas buttonpress, c'etait idiot.
+
+	* src/coincoin_news.c (dlfp_updatenews): bugfix pour la detection
+	des nouvelles news, ça devrait *enfin* marcher 
+
+	* src/picohtml.c, src/pinnipede.c: modif des fontes: on impose
+	l'encoding iso8859-1
+	(merci loïc !)
+
+	* src/pinnipede.c (pp_check_tribune_updated): rajout du bugfix du
+	défilement automatique qui clochait en cas d'apparition simultanée
+	de plusieurs messages.
+	(pp_handle_button_release): ajout de l'option
+	'palmipede.autoprompt'
+
+2001-09-30  pommier julien  <jul@dr.com>
+
+	* src/wmcoincoin.c (main): remplacement de l'appel signal() par
+	sigaction(), plus portable. ça devrait fixer le problème de la
+	non-réinstallage du gestionnaire de signal sous solaris.
+
+2001-09-29  pommier julien  <jul@dr.com>
+
+	* src/pinnipede.c (pp_show): oh mon dieu ! j'avais fait une fote d'ortografe dans le titre de la fenetre
+
+	* src/wmcoincoin.c: ajout de   setlocale(LC_ALL, ""); XSetLocaleModifiers("@im=none"); (c'est ça qui manquait pour que l'azerty marche à 100%)
+	* src/editwin.c (editw_show): modif XInputContext, l'azerty marche
+	au poil :), j'espere ne pas avoir nické le fonctionnimeent des
+	qwerty
+
+2001-09-28  pommier julien  <jul@dr.com>
+
+	* src/coincoin_tribune.c (dlfp_updatetribune): les '&eacute;' et
+	compagnie présent dans les useragents sont maintenant correctement
+	interpretes.
+
+	* src/http.c (net_tcp_connect): ajout de cette fonction, qui est
+	utilise si on fait un #define CONNECT_WITHOUT_TIMEOUT (. ça
+	arrangera peut être ceux qui ont des messages d'erreur du style
+	connect: scket already opened (problème qui apparaissait sous
+	bsd). par contre, le connect peut devenir bloquant, il n'y a plus
+	de timeout
+	
+	* src/pinnipede.c: amélioration de la reconnaissance des hh:mm:ss,
+	ballon d'aide du pinnipede -- ajout de l'option
+	'pinnipede.buttons' -- amélioration du rendu du pinnipède
+
+2001-09-27  pommier julien  <jul@dr.com>
+
+	* src/pinnipede.c: bugfix sécurite + mémorisation de la position
+	du pinnipede -- ajout de l'option 'pinnipede.location' soulignage
+	des post faisant références au timestamp survolé (les antiref..)
+
+2001-09-18  pommier julien  <jul@dr.com>
+
+	* src/pinnipede.c: ajout du pinnipede teletype
+
+2001-08-16  pommier julien  <jul@dr.com>
+
+	* src/*: sauvegarde des news lues d'une session a l'autre, et
+	flamophone.
+
+2001-08-14  pommier julien  <jul@dr.com>
+
+	* src/coincoin_tribune.c
+	* src/coincoin_news.c
+	* src/wmcoincoin.c: trolloscope multivitesse, ajout de l'option
+	-r pour fonctionner avec l'ensemble des sites sous dacode , et de
+	l'option -s pour modifier la vitesse initiale du trolloscope
+
+2001-07-17  julien pommier  <jul@dr.com>
+
+	* src/coincoin_tribune.c: décidément... c'est le format des news
+	(pour le style 7) qui a changé..-> rerebugfix
+
+2001-07-12  julien pommier  <jul@dr.com>
+
+	* src/coincoin_tribune.c (dlfp_updatetribune): remodif de
+	trib_sign suite au rechangement de linuxfr.org/board... maintenant
+	ca devrait toujours marcher
+
+2001-07-04  julien pommier  <jul@dr.com>
+
+	* src/coincoin_tribune.c (dlfp_updatetribune): changement
+	trib_sign apres la modif de dacode
+
+2001-06-19  pommier julien  <jul@dr.com>
+
+	* src/http.c (http_get): implement du timeout dans connect()
+
+2001-06-12  pommier julien  <jul@dr.com>
+
+	* configure.in: ça devrait marcher correctement avec la
+	libwraster-0.65 de debian qui est liee a la lib hermes
+	* src/editwin.c: ajout d'un bouton pour restaurer le user-agent
+	par defaut, remplacement balise <strong> par <b>, correction d'un
+	petit bug
+
+2001-06-06  pommier julien  <jul@dr.com>
+
+	* src/coincoin_news: recuperation des news en format 'printable'
+	ce qui evite de se coltiner les commentaire sur les news un peu
+	grosses
+
+2001-05-25  pommier julien  <jul@dr.com>
+
+	* src/coincoin.h: passage de certains flags en volatile, c'est plus adequat
+	* src/coincoin_tribune.c: flag_updating_tribune un peu plus ciblé
+
+2001-05-24  pommier julien  <pommier@localhost.localdomain>
+
+	* src/balloon.c: creation (ballons d'aide du style de ceux de windowmaker)
+	* src/msgbox.c: creation (affichage de petits messages)
+	* src/http.c: creation (remplace curl)
+	* src/editwin.c: creation (edition des messages/useragent a poster
+	sur la tribune)
+	* src/picohtml.c: routines extraites de wmcoincoin.c utilise par
+	ballon,msgbox et txtwin * src/divers modifs: integration des
+	fichiers precedents, compatibilite KDE
+
+2001-03-10  ned flanders  <pommier@darkstar>
+
+	* tout: grosses grosses modifs .. la 1.0beta est prête.
+
+2001-02-21  ned flanders  <pommier@darkstar>
+
+	* wmcoincoin.c: fix de l'affichage de l'option -h (merci Amaury!)
+
+2001-02-21  julien pommier  <jul@dr.com>
+
+	* README: qqes modifs: la version min. de wmaker EST la 0.62
+
+2001-02-21  ned flanders  <pommier@darkstar>
+
+	* threads virees, ca marchait bien mais c'etait vraiment pas judicieux.
+	maintenant on utilise un bon vieux SIGALRM.
+
+2001-02-19  ned flanders  <jul@dr.com>
+
+	* initial release, comme on dit chez les pros.
+
