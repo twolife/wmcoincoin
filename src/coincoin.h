@@ -94,6 +94,10 @@ typedef struct _tribune_msg_info {
   int id;
   /* (year-2000)|month|day|h|m|s */
   time_t timestamp;
+  char sub_timestamp; /* sous numerotation quand plusieurs posts ont le même timestamp 
+			 (-1 -> pas (encore) d'autre post avec le meme tstamp)
+		      */
+
   char hmsf[4]; /* heure, minute, seconde + flag d'affichage des secondes (1 == secondes necessaires)  */
   char *useragent; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(useragent) !!! */
   char *msg; /* pointe dans la zone mémoire allouée pour tribune_msg_info -> ne pas faire de free(msg) !!! */
@@ -420,7 +424,9 @@ typedef struct _Dock {
   MsgBox *msgbox;
 
   unsigned char coin_coin_message[MESSAGE_MAX_LEN+1];
+  unsigned char real_coin_coin_message[MESSAGE_MAX_LEN+1];
   unsigned char coin_coin_useragent[USERAGENT_MAX_LEN+1];
+  unsigned char real_coin_coin_useragent[USERAGENT_MAX_LEN+1];
 
   int trolloscope_speed; /* vitesse de defilement du trolloscope (1,2,4 ou 8), defaut:2 */
 

@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.4 2001/12/06 22:41:11 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.5 2001/12/16 01:43:33 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.5  2001/12/16 01:43:33  pouaite
+  filtrage des posts, meilleure gestion des posts multiples
+
   Revision 1.4  2001/12/06 22:41:11  pouaite
   patch de glandium (bugfix du mode asclock)
 
@@ -1077,10 +1080,10 @@ exec_coin_coin(Dock *dock)
   char *urlencod_msg;
   char cookie[200];
 
-  BLAHBLAH(1, myprintf("message posté: '%<YEL %s>\n", dock->coin_coin_message));
-  BLAHBLAH(1, myprintf("   (useragent: '%<CYA %s>\n", dock->coin_coin_useragent));
+  BLAHBLAH(1, myprintf("message posté: '%<YEL %s>\n", dock->real_coin_coin_message));
+  BLAHBLAH(1, myprintf("   (useragent: '%<CYA %s>\n", dock->real_coin_coin_useragent));
   flag_sending_coin_coin = 1;
-  urlencod_msg = http_url_encode(dock->coin_coin_message); assert(urlencod_msg);
+  urlencod_msg = http_url_encode(dock->real_coin_coin_message); assert(urlencod_msg);
   snprintf(s, 2048, "message=%s", urlencod_msg);
   free(urlencod_msg);
   snprintf(referer, 2048,"http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
@@ -1089,7 +1092,7 @@ exec_coin_coin(Dock *dock)
      snprintf(cookie, 200, "session_id=%s", Prefs.user_cookie);
   } else cookie[0] = 0;
   fd = http_post_with_cookie(Prefs.site_root, Prefs.site_port, path,
-			     Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, dock->coin_coin_useragent,
+			     Prefs.proxy_name, Prefs.proxy_auth, Prefs.proxy_port, dock->real_coin_coin_useragent,
 			     referer, cookie, s);
 
 
@@ -1211,6 +1214,14 @@ dock_red_button_check(Dock *dock) {
     /* si on a appuye assez fort ... */
     if (dock->red_button_press_state == 5) {
       BLAHBLAH(1,printf("Coin !\n"));
+
+      /* On utilise real_coin_coin_message pour éviter un bug si on modifier
+       le message entre l'appuie du bouton rouge et exec_coin_coin */
+      strncpy(dock->real_coin_coin_message, dock->coin_coin_message, 
+	      MESSAGE_MAX_LEN);
+      strncpy(dock->real_coin_coin_useragent, dock->coin_coin_useragent, 
+	      USERAGENT_MAX_LEN);
+      
       dock->coin_coin_request = 1;
       //	  exec_coin_coin();
     }

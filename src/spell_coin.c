@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.6 2001/12/03 08:20:59 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.7 2001/12/16 01:43:33 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.7  2001/12/16 01:43:33  pouaite
+  filtrage des posts, meilleure gestion des posts multiples
+
   Revision 1.6  2001/12/03 08:20:59  pouaite
   remplacement du GRUIKesque vfork par un honnete fork (damned!)
 
@@ -212,41 +215,34 @@ static unsigned char *current_spell_string = NULL;
 ErrList spellString(const char* str)
 {
   static unsigned char *requested_spell_string = NULL;
-  ErrList errlst;
 
-  if (flag_spell_request) return NULL;
+  if (!flag_spell_request) {
 
-  errlst = NULL;
-  requested_spell_string = convert4Spell(str);
-  if( current_spell_string && strcmp(requested_spell_string, current_spell_string)==0) {
-    /* Si la nouvelle chaine est comme l'ancienne on renvoit 
-       l'ancien resultat.
-    */
-    free(requested_spell_string);
-    errlst = current_errlist;
-  } else {
-    /* si les chaines commencent pareil, on renvoie les vieilles erreurs pour eviter des phenomène de clignotement .. */
-    errlst = NULL;
-    if (current_spell_string) {
-      int l;
-      l = strlen(current_spell_string);
-      if (l && strncmp(requested_spell_string, current_spell_string, l)==0) {
-	errlst = current_errlist;
-      }
+    requested_spell_string = convert4Spell(str);
+    if( current_spell_string && strcmp(requested_spell_string, current_spell_string)==0) {
+      /* Si la nouvelle chaine est comme l'ancienne on ne fait rien
+      */
+      free(requested_spell_string);
+    } else {    
+      /* Sinon on relance ispell */
+      if( current_spell_string )
+	free(current_spell_string);
+      current_spell_string = requested_spell_string; 
+      flag_spell_request = 1;
     }
-    
-    if( current_spell_string )
-      free(current_spell_string);
-    current_spell_string = requested_spell_string; 
-    flag_spell_request = 1;
   }
-  return errlst;
+  /* dans tout les cas on renvoie les anciennes erreurs
+     ca peut merder un peu sur la correction mais ca peut aller
+     le relancement de ispell_run_background corrigera tout
+  */
+  return current_errlist;
 }
 
 void
 ispell_run_background(const char* spellCmd, const char* spellDict)
 {
-  ErrList *end_of_ret = &current_errlist;
+  ErrList new_errlist = NULL, tmp;
+  ErrList *end_of_ret = &new_errlist;
   
   int save_errno; /* comme cette fonction est susceptible d'etre appelee depuis http.c,
 		     il ne faut pas qu'elle modifie errno !
@@ -258,10 +254,13 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 					  --> au cas ou un jour coincoin deviendrait threadé (et il l'est déjà +ou- sous cygwin)) autant faire des  choses pas trop trop nazes */
   
 
-  /* reinitailise le passe de cette fonction */
-  
-  freeErrList(current_errlist);
-  current_errlist = NULL;
+  /* reinitailise le passe de cette fonction 
+     Ben non en fait c pour ca que coincoin il clignotte 
+     on va d'abord calculer et ensuite on swappera 
+     
+     freeErrList(current_errlist);
+     current_errlist = NULL;
+  */
 
   /* lancement de ispell */
 
@@ -274,7 +273,6 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
   } else {
     char buff[1024];
     unsigned char *s;
-    ErrList tmp;
 
     /*      free(spellSh);*/
 
@@ -372,7 +370,10 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 			      son affichage, c'est juste pour éviter un clignotement trop
 			      chiant quand on tape
 			      -> on decremente progressivement flag_spell_finished dans X_loop
-			     */
+			    */
+  tmp = current_errlist;
+  current_errlist = new_errlist;
+  freeErrList(tmp);
   flag_spell_request = 0;
   errno = save_errno;
 }

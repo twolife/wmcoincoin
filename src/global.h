@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: global.h,v 1.3 2001/12/16 01:43:33 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.3  2001/12/16 01:43:33  pouaite
+  filtrage des posts, meilleure gestion des posts multiples
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -15,6 +18,8 @@
 
 #define MESSAGE_MAX_LEN 255
 #define USERAGENT_MAX_LEN 60
+#define USERNAME_MAX_LEN 60 // lg max du username affiché dans la tribune, pour les personnes loggées
+
 
 #ifdef GLOBALS_HERE
 # define DECL_GLOB(x) x;

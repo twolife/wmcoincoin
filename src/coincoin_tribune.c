@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.3 2001/12/16 01:43:33 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.3  2001/12/16 01:43:33  pouaite
+  filtrage des posts, meilleure gestion des posts multiples
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -220,7 +223,10 @@ timestamp_str_to_time_t(char *sts)
 }
 
 /* verifie pour chaque message, si il est necessaire d'afficher les secondes, ou bien
-   si le poste peut etre identifie sans ambiguite par hh:ss */
+   si le poste peut etre identifie sans ambiguite par hh:ss 
+
+   nouveau (v2.3.2) -> gère aussi les sub_timestamp 
+*/
 static void 
 update_secondes_flag(DLFP_tribune *trib)
 {
@@ -234,6 +240,13 @@ update_secondes_flag(DLFP_tribune *trib)
     if (it->hmsf[0] == pit->hmsf[0] && it->hmsf[1] == pit->hmsf[1]) {
       it->hmsf[3] = 1; pit->hmsf[3] = 1;
     }
+    if (it->timestamp == pit->timestamp) {
+      if (pit->sub_timestamp == -1) {
+	pit->sub_timestamp = 0;
+      }
+      it->sub_timestamp = MIN(pit->sub_timestamp+1,9); /* MIN(10,.) sinon y'aura des pb dans le pinnipede */
+    }
+
     pit = it;
     it = it->next;
   }
@@ -255,6 +268,8 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   }
 
   it = (tribune_msg_info*) malloc(sizeof(tribune_msg_info)+strlen(ua)+1+strlen(message)+1+strlen(login)+1);
+  it->timestamp = timestamp_str_to_time_t(stimestamp);
+  it->sub_timestamp = -1;
   it->useragent = ((char*)it) + sizeof(tribune_msg_info);
   it->msg = ((char*)it) + sizeof(tribune_msg_info) + strlen(ua) + 1;
   it->login = it->msg + strlen(message) + 1;
@@ -268,7 +283,6 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
 
   it->id = id;
 
-  it->timestamp = timestamp_str_to_time_t(stimestamp);
 
   if (trib->last_post_id < it->id) {
     trib->last_post_timestamp = it->timestamp;

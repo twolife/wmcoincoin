@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.2 2001/12/02 18:20:58 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.3 2001/12/16 01:43:33 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.3  2001/12/16 01:43:33  pouaite
+  filtrage des posts, meilleure gestion des posts multiples
+
   Revision 1.2  2001/12/02 18:20:58  pouaite
   correction (enfin!) du bug d'affichage lorsque plusieurs posts ont le même timestamp
 
@@ -19,7 +22,7 @@
 #define PWATTR_S  8
 #define PWATTR_LNK 16
 #define PWATTR_TSTAMP 32
-#define PWATTR_UA 64
+//#define PWATTR_UA 64
 #define PWATTR_NICK 128
 #define PWATTR_REF 256 /* reference vers un autre post */
 #define PWATTR_TMP_EMPH 512
@@ -63,10 +66,21 @@ struct _PostWord {
 struct _PostVisual {
   int id; // message id 
   time_t tstamp;
+  char sub_tstamp; /* sous numerotation quand plusieurs posts ont le même timestamp */
   PostWord *first; /* la liste des mots */
   int nblig; // nombre de lignes necessaire pour afficher ce message
   int ref_cnt; // compteur de references
   struct _PostVisual *next;
+};
+
+struct _PinnipedeFilter {
+  int filter_mode;
+  char *filter_name; /* contient le 'nom' du filtre) 
+		      */
+  char *ua;
+  char *login;
+  char *word;
+  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
 };
 
 struct _Pinnipede {
@@ -87,7 +101,7 @@ struct _Pinnipede {
   int id_base, decal_base;
   int last_post_id; /* utilise pour savoir si la tribune a ete mise a jour.. */
 
-  int html_mode;
+  //  int html_mode;
   int nick_mode; /* 0 : n'affiche rien, 
 		    1:  affiche les useragent raccourcis, 
 		    2: affiche les logins, 
@@ -105,88 +119,119 @@ struct _Pinnipede {
 
   PicoHtml *ph_fortune;
   int fortune_h, fortune_w;
+
+  struct _PinnipedeFilter filter;
 };
 
 
-/* les deux fonctions suivantes permettent de se balader dans la liste des posts 
- (de maniere bourrine... c pas pour 25000 messages )
+/* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
+   son msg_info, et on rempli 'commentaire' 
+
+
+   avertissement au lecteur téméraire:
+     cette fonction est un sac de noeuds et ça ne va pas en s'arrangeant
+
+     (en gros c'est toute une serie de tests pour filtres les refs invalides tout en
+     etant le plus général possible ..)
 */
-int 
-get_next_id(DLFP_tribune *trib, int id, tribune_msg_info **nmi) 
+int
+check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int *ref_s, int *ref_num)
 {
-  tribune_msg_info *mi;
-  int nid;
+  int l, h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
+  const unsigned char *p;
+  int use_deuxpt;
+  unsigned char w[11];
 
-  mi = trib->msg;
-  nid = -1;
-  while (mi) {
-    if (mi->id > id) {
-      nid = mi->id;
-      break;
+  *ref_h = -1; *ref_m = -1; *ref_s = -1; *ref_num = -1;
+  l = strlen(ww);
+
+  if (l < 4 || l > 10) return 0; /* on enlimine les cas les plus explicites */
+  strncpy(w, ww, 10); w[10] = 0;
+
+  use_deuxpt = 0;
+  p = w; 
+  /* verifie que la chaine ne contient que des chiffres et des ':' ou des '.' (les ':' n'etant pas en premiere ou derniere position) */
+  while (*p) { 
+    if ((*p == ':' || *p == '.' || 
+	 (use_deuxpt == 0 && *p == 'h') || (use_deuxpt == 1 && *p == 'm')) 
+	&& p != w && *(p+1)) {
+      use_deuxpt++;
+    } else if (*p < '0' || *p > '9') {
+      if (*(p+1) == 0 && strchr("¹²³",*p) == NULL)
+	break;
     }
-    mi = mi->next;
+
+    p++;
   }
-  if (nmi) *nmi = mi;
-  return nid;
-}
+  if (*p) return 0;
+  
+  if (use_deuxpt == 0) {
+    if (l == 4) {
+      /* type '1630' */
+      h = (w[0]-'0')*10 + (w[1]-'0');
+      m = (w[2]-'0')*10 + (w[3]-'0');
+      s = -1;
+    } else if (l == 6) {
+      h = (w[0]-'0')*10 + (w[1]-'0');
+      m = (w[2]-'0')*10 + (w[3]-'0');
+      s = (w[4]-'0')*10 + (w[5]-'0');
+    } else return 0;
 
-int 
-get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev) 
-{
-  tribune_msg_info *mi,*pmi;
+    /* ci-dessous minipatch pour Dae qui reference les posts multiples
+       sous la forme hh:mm:ss:num -> wmc2 ne les reconnaissait pas comme des 
+       refs, maintenant si */
 
-  mi = trib->msg;
-  pmi = NULL;
-  while (mi) {
-    if (mi && pmi) {
-      if (pmi->id < id && mi->id >= id) {
-	if (prev) *prev = pmi;
-	return pmi->id;
+    //  } else if (use_deuxpt <= 2) {
+  } else if (use_deuxpt <= 3) {
+    /* il y a des separateurs entre les heure et les minutes [et les secondes] */
+    int nb_char_h, nb_char_m, nb_char_s;
+    p = w;
+    h = 0;
+    num = -1;
+    nb_char_h = nb_char_m = nb_char_s = 0;
+    while (*p != ':' && *p != '.' && *p != 'h') {
+      if (*p < '0' || *p > '9') return 0;
+      h = 10*h + (*p - '0'); p++;
+      nb_char_h++;
+    }
+    p++;
+    m = 0;
+    while (*p != ':' && *p != '.' && *p != 'm' && *p) {
+      if (*p < '0' || *p > '9') return 0;
+      m = 10*m + (*p - '0'); p++;
+      nb_char_m++;
+    }
+    if (*p == ':' || *p == '.' || *p == 'm') {
+      p++;
+      s = 0;
+      while (*p && *p != ':' && 
+	     *p != (unsigned char)'¹' && *p != (unsigned char)'²' && *p != (unsigned char)'³') {
+	if (*p < '0' || *p > '9') return 0;
+	s = 10*s + (*p - '0'); p++;
+	nb_char_s++;
       }
-    }
-    pmi = mi;
-    mi = mi->next;
-  }
-  if (prev) *prev = NULL;
-  return -1;
+      if (*p == (unsigned char)'¹') num = 0;
+      if (*p == (unsigned char)'²') num = 1;
+      if (*p == (unsigned char)'³') num = 2;
+      if (*p == ':') {
+	p++; if (*p >= '0' && *p <= '9') num = *p - '1';
+      }
+    } else s = -1;
+
+    /* le test qui tue pour arrêter de confondre la version du kernel avec une horloge .. */
+    /* ça ira jusqu'au kernel 2.10.10 */
+    if (nb_char_h > 2 || nb_char_m != 2 || nb_char_s == 1 || nb_char_s > 2) return 0;
+
+  } else return 0;
+
+  if (h > 23 || m > 59 || s > 59) return 0;
+
+  *ref_h = h; *ref_m = m; *ref_s = s; *ref_num = num;
+
+  return 1;
 }
 
-static void
-pv_destroy(PostVisual *pv)
-{
-  PostWord *pw,*pw2;
 
-  //  printf("pv_destroy(id=%d)\n", pv->id);
-  pw = pv->first;
-  while (pw) {
-    pw2 = pw->next;
-    free(pw);
-    pw = pw2;
-  }
-  free(pv);
-}
-
-static PostWord*
-pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr_s, PostVisual *parent)
-{
-  int alen; 
-  int wlen;
-  PostWord *pw;
-
-  wlen = strlen(w);
-  if (attr_s) alen=strlen(attr_s); else alen = -1;
-  pw = malloc(sizeof(PostWord)+wlen+1+alen+1);
-  pw->w = ((unsigned char*)pw)+sizeof(PostWord); strcpy(pw->w,w);
-  if (attr_s) {
-    pw->attr_s = ((unsigned char*)pw)+sizeof(PostWord)+wlen+1;
-    strcpy(pw->attr_s, attr_s);
-  } else pw->attr_s = NULL;
-  pw->next = NULL;
-  pw->xpos = -1; pw->ligne=-1; pw->xwidth = 0; 
-  pw->attr = attr;
-  pw->parent = parent;
-  return pw;
-}
 
 /* dans la famille des fonction pourries, je demande ... */
 static char *
@@ -254,7 +299,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
     /* pour aider la reconnaissance des timestamp */
     if (*end >= '0' && *end <= '9') {
       while (*end && 
-	     ((*end >= '0' && *end <= '9') || *end == ':' || *end == '.' || *end == 'h' || *end == 'm')) {
+	     ((*end >= '0' && *end <= '9') || strchr(":.hm¹²³", *end))) {
 	end++;
       }
       /* un petit coup de marche arriere si on n'a pas termine sur un chiffre */
@@ -272,88 +317,161 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
   return tok;
 }
 
-/* si 'ww' contient une reference (du type '1630', '125421', '12:45:30') vers un message existant, on renvoie 
-   son msg_info, et on rempli 'commentaire' */
+
+static int
+filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
+{
+  if (filter->filter_mode == 0) return 1;
+  if (filter->ua) {
+    return (strcmp(filter->ua, mi->useragent) == 0);
+  } else if (filter->login) {
+    return (strcmp(filter->login, mi->login) == 0);
+  } else if (filter->word && strlen(filter->word)) {
+    return (strstr(mi->msg, filter->word) != NULL);
+  } else if (filter->hms[0] != -1) { /* là c'est lourd... */
+    int has_initial_space = 0; /* inutilisé */
+    unsigned char tok[512];
+    const unsigned char *p, *np;
+
+    /* c'est du filtre qui va ramer si y'a 10000 messages en mémoire... */
+    p = mi->msg;
+    while (p) {
+      if (tribune_get_tok(&p,&np,tok,512, &has_initial_space) == NULL) { break; }
+      if (tok[0] >= '0' && tok[0] <= '9') {
+	int h,m,s,num;
+	if (check_for_horloge_ref_basic(tok, &h, &m, &s, &num)) {
+	  if (h == filter->hms[0] && m == filter->hms[1] && 
+	      (filter->hms[2] == -1 || filter->hms[2] == s)) {
+	    return 1;
+	  }
+	}
+      }
+      p=np;
+    }
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+/* les deux fonctions suivantes permettent de se balader dans la liste des posts 
+ (de maniere bourrine... c pas pour 25000 messages )
+*/
+int 
+get_next_id(DLFP_tribune *trib, int id, tribune_msg_info **nmi, struct _PinnipedeFilter *filter) 
+{
+  tribune_msg_info *mi;
+  int nid;
+
+  mi = trib->msg;
+  nid = -1;
+  while (mi) {
+    if (mi->id > id) {
+      if (filter == NULL || filter_msg_info(mi,filter)) {
+	nid = mi->id;
+	break;
+      }
+    }
+    mi = mi->next;
+  }
+  if (nmi) *nmi = mi;
+  return nid;
+}
+
+int 
+get_prev_id(DLFP_tribune *trib, int id, tribune_msg_info **prev, struct _PinnipedeFilter *filter) 
+{
+  tribune_msg_info *mi,*pmi;
+
+  mi = trib->msg;
+  pmi = NULL;
+  while (mi) {
+    if (mi && pmi) {
+      if (pmi->id < id && mi->id >= id) {
+	if (prev) *prev = pmi;
+	return pmi->id;
+      }
+    }
+    if (filter == NULL || filter_msg_info(mi,filter)) {
+      pmi = mi;
+    }
+    mi = mi->next;
+  }
+  if (prev) *prev = NULL;
+  return -1;
+}
+
+void
+pp_unset_filter(struct _PinnipedeFilter *f)
+{
+  f->filter_mode = 0;
+  if (f->filter_name) free(f->filter_name); f->filter_name = NULL;
+  if (f->ua) free(f->ua); f->ua = NULL;
+  if (f->login) free(f->login); f->login = NULL;
+  if (f->word) free(f->word); f->word = NULL;
+  f->hms[0] = -1;
+}
+
+static void
+pv_destroy(PostVisual *pv)
+{
+  PostWord *pw,*pw2;
+
+  //  printf("pv_destroy(id=%d)\n", pv->id);
+  pw = pv->first;
+  while (pw) {
+    pw2 = pw->next;
+    free(pw);
+    pw = pw2;
+  }
+  free(pv);
+}
+
+static PostWord*
+pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr_s, PostVisual *parent)
+{
+  int alen; 
+  int wlen;
+  PostWord *pw;
+
+  wlen = strlen(w);
+  if (attr_s) alen=strlen(attr_s); else alen = -1;
+  pw = malloc(sizeof(PostWord)+wlen+1+alen+1);
+  pw->w = ((unsigned char*)pw)+sizeof(PostWord); strcpy(pw->w,w);
+  if (attr_s) {
+    pw->attr_s = ((unsigned char*)pw)+sizeof(PostWord)+wlen+1;
+    strcpy(pw->attr_s, attr_s);
+  } else pw->attr_s = NULL;
+  pw->next = NULL;
+  pw->xpos = -1; pw->ligne=-1; pw->xwidth = 0; 
+  pw->attr = attr;
+  pw->parent = parent;
+  return pw;
+}
+
+
+
+
+
+
+
+
 tribune_msg_info *
 check_for_horloge_ref(DLFP_tribune *trib, int caller_id, 
-		      const unsigned char *ww, unsigned char *commentaire, int comment_sz, int *is_a_ref)
+		      const unsigned char *ww, unsigned char *commentaire, int comment_sz, int *is_a_ref, int *ref_num)
 {
-  int l, h, m, s;
-  const unsigned char *p;
-  int use_deuxpt;
+  int h, m, s, num; // num est utilise pour les posts multiples (qui on un même timestamp)
   tribune_msg_info *mi, *best_mi;
-  unsigned char w[9];
+  int best_mi_num;
 
   *is_a_ref = 0;
-  l = strlen(ww);
-
-  if (l < 4 || l > 8) return NULL; /* on enlimine les cas les plus explicites */
-  strncpy(w, ww, 8); w[8] = 0;
-
-  use_deuxpt = 0;
-  p = w; 
-  /* verifie que la chaine ne contient que des chiffres et des ':' ou des '.' (les ':' n'etant pas en premiere ou derniere position) */
-  while (*p) { 
-    if ((*p == ':' || *p == '.' || (use_deuxpt == 0 && *p == 'h') || (use_deuxpt == 1 && *p == 'm')) 
-	&& p != w && *(p+1)) {
-      use_deuxpt++;
-    } else if (*p < '0' || *p > '9') break; 
-    p++;
-  }
-  if (*p) return NULL;
-  
-  if (use_deuxpt == 0) {
-    if (l == 4) {
-      /* type '1630' */
-      h = (w[0]-'0')*10 + (w[1]-'0');
-      m = (w[2]-'0')*10 + (w[3]-'0');
-      s = -1;
-    } else if (l == 6) {
-      h = (w[0]-'0')*10 + (w[1]-'0');
-      m = (w[2]-'0')*10 + (w[3]-'0');
-      s = (w[4]-'0')*10 + (w[5]-'0');
-    } else return NULL;
-  } else if (use_deuxpt <= 2) {
-    /* il y a des separateurs entre les heure et les minutes [et les secondes] */
-    int nb_char_h, nb_char_m, nb_char_s;
-    p = w;
-    h = 0;
-    nb_char_h = nb_char_m = nb_char_s = 0;
-    while (*p != ':' && *p != '.' && *p != 'h') {
-      if (*p < '0' || *p > '9') return NULL;
-      h = 10*h + (*p - '0'); p++;
-      nb_char_h++;
-    }
-    p++;
-    m = 0;
-    while (*p != ':' && *p != '.' && *p != 'm' && *p) {
-      if (*p < '0' || *p > '9') return NULL;
-      m = 10*m + (*p - '0'); p++;
-      nb_char_m++;
-    }
-    if (*p == ':' || *p == '.' || *p == 'm') {
-      p++;
-      s = 0;
-      while (*p) {
-	if (*p < '0' || *p > '9') return NULL;
-	s = 10*s + (*p - '0'); p++;
-	nb_char_s++;
-      }
-    } else s = -1;
-
-    /* le test qui tue pour arrêter de confondre la version du kernel avec une horloge .. */
-    /* ça ira jusqu'au kernel 2.10.10 */
-    if (nb_char_h > 2 || nb_char_m != 2 || nb_char_s == 1 || nb_char_s > 2) return NULL;
-
-  } else return NULL;
-
-  if (h > 23 || m > 59 || s > 59) return NULL;
-
-
+  if (check_for_horloge_ref_basic(ww, &h, &m, &s, &num) == 0) return NULL;
   *is_a_ref = 1;
   
   mi = trib->msg;
   best_mi = NULL;
+  best_mi_num = 0;
+
   while (mi) {
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
@@ -362,14 +480,17 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
       }
     } else {
       if (mi->hmsf[0] == h && mi->hmsf[1] == m && mi->hmsf[2] == s) {
-	best_mi = mi; break;
+	if (num == -1 || num == best_mi_num) {
+	  best_mi = mi; break;
+	}
+	best_mi_num++;
       }
     }
     mi = mi->next;
   }
   
   if (commentaire) {
-    char s_ts[10];
+    char s_ts[12];
     tribune_msg_info *caller_mi;
 
     commentaire[0] = 0;
@@ -379,7 +500,16 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
       if (s == -1) {    
 	snprintf(s_ts, 10, "%02d:%02d", h,m);
       } else {
-	snprintf(s_ts, 10, "%02d:%02d:%02d", h,m,s);
+	char snum[3];
+	snum[0] = snum[1] = snum[2] = 0;
+	switch (num) {
+	case -1: break;
+	case 0: snum[0] = '¹'; break;
+	case 1: snum[0] = '²'; break;
+	case 2: snum[0] = '³'; break;
+	default: snum[0] = ':'; snum[1] = '1' + num;
+	}
+	snprintf(s_ts, 12, "%02d:%02d:%02d%s", h,m,s,snum);
       }
       if (best_mi == NULL) {
 	if (caller_mi->hmsf[0]*60+caller_mi->hmsf[1] < h*60+m) {
@@ -390,10 +520,11 @@ check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
       } else if (best_mi->id > caller_mi->id) {
 	snprintf(commentaire, comment_sz, "[IPOT(tm)]");
       } else if (best_mi->id == caller_mi->id) {
-	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");      
+	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
       }
     }
   }
+  if (ref_num) *ref_num = num;
   return best_mi;
 }
 
@@ -411,7 +542,6 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   const unsigned char *p, *np;
   unsigned short attr;
   int add_word;
-
   int has_initial_space; // indique si le prochain mot est collé au precedent
 
   ALLOC_OBJ(pv, PostVisual);
@@ -422,6 +552,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   pv->next = NULL;
   pv->id = mi->id;
   pv->tstamp = mi->timestamp;
+  pv->sub_tstamp = mi->sub_timestamp;
 
   pw = NULL;
 
@@ -523,7 +654,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
       int is_ref;
       tribune_msg_info *ref_mi;
 
-      ref_mi = check_for_horloge_ref(trib, mi->id, s,attr_s, PVTP_SZ, &is_ref);
+      ref_mi = check_for_horloge_ref(trib, mi->id, s,attr_s, PVTP_SZ, &is_ref, NULL);
       if (is_ref) {
 	attr |= PWATTR_REF;
       }
@@ -640,7 +771,8 @@ pp_pv_add(Pinnipede *pp, DLFP_tribune *trib, int id)
       with_seconds = mi->hmsf[3];
     }
 
-    pv = pv_tmsgi_parse(trib, mi, with_seconds, pp->html_mode, pp->nick_mode, pp->trollscore_mode); 
+    //pv = pv_tmsgi_parse(trib, mi, with_seconds, pp->html_mode, pp->nick_mode, pp->trollscore_mode); 
+    pv = pv_tmsgi_parse(trib, mi, with_seconds, 1, pp->nick_mode, pp->trollscore_mode); 
     pv_justif(pp, pv, 8, pp->win_width);
     assert(pv);
     pv->next = pp->pv;
@@ -753,6 +885,7 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
   //  printf("y0 = %d, y1=%d dec=%d\n", LINEY0(0), LINEY1(pp->nb_lignes-1),(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2);
   
   id = id_base;
+
   /* 'scroll down' */
   //printf("entree update_content: id_base = %d (%d), decal = %d (%d), adjust=%d\n",
   //id_base,pp->id_base, decal, pp->decal_base, adjust);
@@ -761,7 +894,7 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
 
   while (decal > 0) {
     int nid;
-    nid = get_next_id(trib, id, NULL);
+    nid = get_next_id(trib, id, NULL, &pp->filter);
     if (nid == -1) { decal = 0; break; }
     id = nid;
     pv = pp_pv_add(pp, trib, id);
@@ -784,7 +917,7 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
 	  pp_update_content(dock,trib,pp->id_base,pp->decal_base+cur_lig, 1); /* pas joli-joli */
 	  //	}
 	} else {
-	  id = get_next_id(trib, -1, NULL); /* premier id */
+	  id = get_next_id(trib, -1, NULL, &pp->filter); /* premier id */
 	  if (id >= 0) { /* sinon ça veut dire que la tribune est comptelemt vide */
 	    pp_update_content(dock,trib,id,0, 0); /* pas joli-joli */
 	  }
@@ -793,7 +926,7 @@ pp_update_content(Dock *dock, DLFP_tribune *trib, int id_base, int decal, int ad
       break;
     }
     pv->ref_cnt = 0;
-    id = get_prev_id(trib, id, NULL);
+    id = get_prev_id(trib, id, NULL, &pp->filter);
 
 
     //    if (id == -1 && pp->id_base == -1 && adjust == 0) { /* on vient de scroller beaucoup trop fort */
@@ -854,8 +987,21 @@ pp_minib_refresh(Dock *dock)
 	    0, 0, MINIB_X1, 0);
 
 
-  /* affichage de la charge du serveur de dlfp */
-  if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
+  if (pp->filter.filter_mode) {
+    char s_filtre[50];
+    
+    if (pp->filter.filter_name) {
+      snprintf(s_filtre, 60, pp->filter.filter_name);
+    } else {
+      snprintf(s_filtre, 60, "FILTRE NON DEFINI");
+    }
+    XSetFont(dock->display, dock->NormalGC, pp->fn_minib->fid);
+    XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
+    XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+2, s_filtre, strlen(s_filtre));
+  } else if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
+    
+    /* affichage de la charge du serveur de dlfp */
+
     char s_cpu[20];
     char s_xp[20], s_votes[20];
     int x, w;
@@ -910,9 +1056,9 @@ pp_minib_refresh(Dock *dock)
       rx = x + 4; ry = y + 2; rw = MINIB_BW - 8; rh = MINIB_BH - 4;
       if (i == 6) XSetForeground(dock->display, dock->NormalGC, pp->nick_pixel);
       else if (i == 7) XSetForeground(dock->display, dock->NormalGC, pp->timestamp_pixel);
-      else if (i == 8) XSetForeground(dock->display, dock->NormalGC, pp->lnk_pixel);
-      else if (i == 9) XSetForeground(dock->display, dock->NormalGC, pp->trollscore_pixel);
-      else if (i == 10) XSetForeground(dock->display, dock->NormalGC, 
+      else if (i == 10) XSetForeground(dock->display, dock->NormalGC, pp->lnk_pixel);
+      else if (i == 8) XSetForeground(dock->display, dock->NormalGC, pp->trollscore_pixel);
+      else if (i == 9) XSetForeground(dock->display, dock->NormalGC, 
 				       IRGB2PIXEL(Prefs.pp_fortune_bgcolor == Prefs.pp_bgcolor ?
 						  Prefs.pp_fortune_fgcolor : Prefs.pp_fortune_bgcolor));
       else assert(0); /* prends ça gros bug a la con */
@@ -920,9 +1066,9 @@ pp_minib_refresh(Dock *dock)
 
       if ((i ==  6 && pp->nick_mode != 3) ||
 	  (i ==  7 && pp->nosec_mode) ||
-	  (i ==  8 && pp->html_mode) ||
-	  (i ==  9 && pp->trollscore_mode) ||
-	  (i == 10 && pp->fortune_mode))
+	  (i ==  10 && pp->filter.filter_mode == 0) ||
+	  (i ==  8 && pp->trollscore_mode) ||
+	  (i == 9 && pp->fortune_mode))
       {
 	XSetForeground(dock->display, dock->NormalGC, pp->win_bgpixel);
 	if (i != 6 || pp->nick_mode == 0) {
@@ -1175,7 +1321,11 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   /* les antireferences : si on survolle un timestamp, on emphasize les commentaires qui
      lui font reference */
   int nb_anti_ref;
+  int ref_num; /* utilise pour les ref précises dans les post multiples (ie qui ont le meme timestamp) 
+		  par defaut, vaut -1 (cad désactivé)
+		*/
 
+  ref_num = -1;
   ref_comment[0] = 0;
 
   pp_refresh_fortune(dock, d);
@@ -1200,7 +1350,8 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
   /* premier cas: on survole une reference */
   if (pw_ref && (pw_ref->attr & PWATTR_REF)) {
     int bidon;
-    ref_mi = check_for_horloge_ref(trib, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon); assert(bidon);
+
+    ref_mi = check_for_horloge_ref(trib, pw_ref->parent->id, pw_ref->w, ref_comment, 200, &bidon, &ref_num); assert(bidon);
     if (ref_mi) { 
       tribune_msg_info *mi;
 
@@ -1226,7 +1377,8 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  ref_in_window = 0;
 	  break;
 	}
-	get_next_id(trib, mi->id, &mi);
+	get_next_id(trib, mi->id, &mi, NULL);
+	if (ref_num != -1) break; /* si c'est pas une ref à un multipost sans précision, break (chuis pas clair) */
       }
 	
       /* et maintenant on detecte toutes les autres references vers ce message pour les afficher
@@ -1241,7 +1393,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  while (pw && pl == pw->ligne) {
 	    if (pw->attr & PWATTR_REF) {
 	      int bidon;
-	      ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon); assert(bidon);
+	      ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
 	      if (ref2_mi && ref2_mi->timestamp == ref_mi->timestamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
 		pw->attr |= PWATTR_TMP_EMPH;
 	      }
@@ -1264,7 +1416,7 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	while (pw && pl == pw->ligne) {
 	  if (pw->attr & PWATTR_REF) {
 	    int bidon;
-	    ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon); assert(bidon);
+	    ref2_mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
 	    if (ref2_mi && ref2_mi->timestamp == pw_ref->parent->tstamp) { /* test sur timestamp pour les situation où +sieurs msg ont le même */
 	      pw->attr |= PWATTR_TMP_EMPH;
 	      /*	      if (nb_anti_ref < MAXANTIREF) {
@@ -1294,8 +1446,14 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     if (pw) {
       int i;
       if (ref_mi) {
-	if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
-	  bgpixel = pp->emph_pixel; 
+	if (ref_num == -1) {
+	  if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window) {
+	    bgpixel = pp->emph_pixel; 
+	  }
+	} else {
+	  if (pw->parent->id == ref_mi->id && ref_in_window) {
+	    bgpixel = pp->emph_pixel; 
+	  }
 	}
       }
       for (i = 0; i < nb_anti_ref; i++) {
@@ -1332,7 +1490,8 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
 	  y += pp->fn_h;
 	}
       }
-      get_next_id(trib, mi->id, &mi);
+      get_next_id(trib, mi->id, &mi, NULL);
+      if (ref_num != -1) break;
     }
 
     /* affichage du commentaire (optionnel) */
@@ -1477,10 +1636,17 @@ pp_build(Dock *dock)
   pp->win_ypos = Prefs.pp_ypos;
   pp->lignes = NULL;
   pp->nb_lignes = 0;
-  pp->html_mode = Prefs.pp_html_mode;
+  //  pp->html_mode = Prefs.pp_html_mode;
   pp->nick_mode = Prefs.pp_nick_mode;
   pp->nosec_mode = Prefs.pp_nosec_mode;
   pp->trollscore_mode = Prefs.pp_trollscore_mode;
+
+  pp->filter.filter_mode = 0;
+  pp->filter.filter_name = NULL;
+  pp->filter.ua = NULL;
+  pp->filter.login = NULL;
+  pp->filter.word = NULL;
+  pp->filter.hms[0] = -1;
 
   pp->fortune_mode = Prefs.pp_fortune_mode; 
   pp->fortune_h = 0;
@@ -1812,7 +1978,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
       } break;
     case 2:
       {
-	pp_update_content(dock, trib, get_next_id(trib, -1, NULL), 0,0);
+	pp_update_content(dock, trib, get_next_id(trib, -1, NULL, &pp->filter), 0,0);
 	pp_refresh(dock, trib, pp->win, NULL);
       } break;
     case 3:
@@ -1843,14 +2009,17 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0);
 	pp_refresh(dock, trib, pp->win, NULL);	    
       } break;
-    case 8:
+    case 10:
       {
-	pp->html_mode = (1-pp->html_mode);
+	pp->filter.filter_mode = (1-pp->filter.filter_mode);
+
+	if (pp->filter.filter_mode) pp->id_base = -1; /* reset du scroll (necessaire, faut etre que le post 'id_base' soit bien affiché par le filtre) */
+
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0);
 	pp_refresh(dock, trib, pp->win, NULL);	    	    
       } break;
-    case 9:
+    case 8:
       {
 	if (Prefs.enable_troll_detector) {
 	  pp->trollscore_mode = (1-pp->trollscore_mode);
@@ -1861,7 +2030,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	  msgbox_show(dock, "inutile de cliquer sur ce bouton, le troll_detector est désactivé (voir l'option 'tribune.enable_troll_detector')");
 	}
       } break;
-    case 10:
+    case 9:
       {
 	if (Prefs.user_cookie || Prefs.force_fortune_retrieval) {
 	  pp->fortune_mode = (1-pp->fortune_mode);
@@ -1877,6 +2046,83 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
     }
   } else pp_minib_refresh(dock);
 }
+
+
+void
+pp_set_hms_filter(Dock *dock, DLFP_tribune *trib, int h, int m, int s)
+{
+  Pinnipede *pp = dock->pinnipede;
+  char fname[200];
+
+  if (s == -1) {
+    snprintf(fname, 200, "ref: %02d:%02d", h, m);
+  } else {
+    snprintf(fname, 200, "ref: %02d:%02d:%02d", h, m, s);
+  }
+
+  pp_unset_filter(&pp->filter);
+  pp->filter.filter_mode = 1;
+  pp->filter.filter_name = strdup(fname);
+  pp->filter.hms[0] = h;
+  pp->filter.hms[1] = m;
+  pp->filter.hms[2] = s;  
+
+  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  pp_update_content(dock, trib, -1, 0, 0);
+  pp_refresh(dock, trib, pp->win, NULL);
+}
+
+void
+pp_set_login_filter(Dock *dock, DLFP_tribune *trib, char *login)
+{
+  Pinnipede *pp = dock->pinnipede;
+  char fname[200];
+
+  snprintf(fname, 200, "login: <%s>", login);
+  pp_unset_filter(&pp->filter);
+  pp->filter.filter_mode = 1;
+  pp->filter.filter_name = strdup(fname);
+  pp->filter.login = strdup(login);
+
+  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  pp_update_content(dock, trib, -1, 0, 0);
+  pp_refresh(dock, trib, pp->win, NULL);	  
+}
+
+void
+pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua)
+{
+  Pinnipede *pp = dock->pinnipede;
+  char fname[200];
+
+  snprintf(fname, 200, "ua: [%.20s]", ua);
+  pp_unset_filter(&pp->filter);
+  pp->filter.filter_mode = 1;
+  pp->filter.filter_name = strdup(fname);
+  pp->filter.ua = strdup(ua);
+
+  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  pp_update_content(dock, trib, -1, 0, 0);
+  pp_refresh(dock, trib, pp->win, NULL);	  
+}
+
+void
+pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word)
+{
+  Pinnipede *pp = dock->pinnipede;
+  char fname[200];
+
+  snprintf(fname, 200, "mot: '%s'", word);
+  pp_unset_filter(&pp->filter);
+  pp->filter.filter_mode = 1;
+  pp->filter.filter_name = strdup(fname);
+  pp->filter.word = strdup(word);
+
+  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  pp_update_content(dock, trib, -1, 0, 0);
+  pp_refresh(dock, trib, pp->win, NULL);	  
+}
+
 
 /* gestion du relachement du bouton souris (si on n'est pas en train de 'tirer' la fenetre, 
    et si on n'a pas cliqué sur la barre de petits boutons */
@@ -1917,39 +2163,94 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
 	}
       } else if (pw->attr & PWATTR_TSTAMP) {
-	if (editw_ismapped(dock->editw) == 0) {
-	  if (Prefs.user_name) {
-	    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
-		     Prefs.user_name, pw->w);
-	  } else {
-	    snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
-		     pw->w);
+	if ((event->state & ControlMask) == 0) {
+
+	  /* clic sur l'holorge -> ouverture du palmipede */
+
+	  char s_ts[11];
+	  char s_subts[3];
+	  
+	  s_subts[0] = s_subts[1] = s_subts[2] = 0;
+	  switch(pw->parent->sub_tstamp) {
+	  case -1: break;
+	  case 0: s_subts[0] = '¹'; break;
+	  case 1: s_subts[0] = '²'; break;
+	  case 2: s_subts[0] = '³'; break;
+	  default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
 	  }
-	  //	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
-	  // strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
-	  dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
-	  editw_show(dock, dock->editw, 0);
-	  editw_move_end_of_line(dock->editw, 0);
-	  editw_refresh(dock, dock->editw);
+	  
+	  snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
+	  
+	  if (editw_ismapped(dock->editw) == 0) {
+	    if (Prefs.user_name) {
+	      snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
+		       Prefs.user_name, s_ts);
+	    } else {
+	      snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
+		       s_ts);
+	    }
+	    //	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
+	    // strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
+	    dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
+	    editw_show(dock, dock->editw, 0);
+	    editw_move_end_of_line(dock->editw, 0);
+	    editw_refresh(dock, dock->editw);
+	  } else {
+	    char s[60];
+	    snprintf(s, 60, "%s ", s_ts);
+	    editw_insert_string(dock->editw, s_ts);
+	    editw_refresh(dock, dock->editw);
+	  }
 	} else {
-	  char s[60];
-	  snprintf(s, 60, "%s ", pw->w);
-	  editw_insert_string(dock->editw, s);
-	  editw_refresh(dock, dock->editw);
+	  /* control+clic sur l'horloge -> activation du filtre */
+
+	  struct tm t;
+
+	  localtime_r(&pw->parent->tstamp, &t);
+
+	  pp_set_hms_filter(dock, trib, t.tm_hour, t.tm_min, t.tm_sec);
+
 	}
       } else if (pw->attr & PWATTR_REF) {
-	/* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
-	   pinnipede */
-	tribune_msg_info *mi;
-	int bidon;
+	if ((event->state & ControlMask) == 0) {
 
-	mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon); assert(bidon);
-	if (mi) {
-	  pp_update_content(dock, trib, mi->id, 0, 0);
-	  pp_refresh(dock, trib, pp->win, NULL);
+	  /* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
+	     pinnipede */
+	  tribune_msg_info *mi;
+	  int bidon;
+	  
+	  mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
+	  if (mi) {
+	    pp_update_content(dock, trib, mi->id, 0, 0);
+	    pp_refresh(dock, trib, pp->win, NULL);
+	  }
+	} else {
+	  /* control+clic sur une reference, on filtre tous les message qui ont la meme reference */
+	  
+	  int h,m,s,num;
+
+	  check_for_horloge_ref_basic(pw->w, &h, &m, &s, &num);
+	  pp_set_hms_filter(dock, trib, h, m, s);
 	}
+      } else if ((pw->attr & PWATTR_LOGIN) && (event->state & ControlMask)) {
+      
+	/* control+clic sur un <login> -> filtre ! */
+	pp_set_login_filter(dock, trib, pw->w);
+      } else if ((pw->attr & PWATTR_NICK) && (event->state & ControlMask)) {
+	
+	/* control+clic sur un useragent raccourci -> filtre ! */
+
+	tribune_msg_info *mi;
+
+	mi = tribune_find_id(trib, pw->parent->id);
+	if (mi) {
+	  pp_set_ua_filter(dock, trib, mi->useragent);
+	}
+      } else if (strlen(pw->w) > 0 && (event->state & ControlMask)) {
+	/* control+clic sur un mot normal -> filtre ! */
+	pp_set_word_filter(dock, trib, pw->w);
       }
-    }
+    } /* if (pw) */
   } else if (event->button == Button2) {
     PostWord *pw;
 

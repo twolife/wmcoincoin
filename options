@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.1 2001/12/02 18:04:00 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.2 2001/12/16 01:43:33 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.2  2001/12/16 01:43:33  pouaite
+#%  filtrage des posts, meilleure gestion des posts multiples
+#%
 #%  Revision 1.1  2001/12/02 18:04:00  pouaite
 #%  ajout des fichiers d'options et de useragents par defaut sur le cvs
 #%
@@ -147,8 +150,8 @@
 
 ### Options relatives au spell checker
 ### Active/desactive le spellchecker
-spell.enable: True
+#spell.enable: True
 ### spell checker compatible ispell (ispell, aspell, ...)
-spell.cmd: ispell
+#spell.cmd: ispell
 ### Dictionnaire associé (french, english ....)
-spell.dict: french
+#spell.dict: french

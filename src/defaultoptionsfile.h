@@ -1,4 +1,4 @@
-fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $\n");
+fprintf(f,"###fichier d'options rcsid=$Id: defaultoptionsfile.h,v 1.3 2001/12/16 01:43:33 pouaite Exp $\n");
 fprintf(f,"\n");
 fprintf(f,"###vous pouvez décommenter des options et changer leur valeurs\n");
 fprintf(f,"\n");
@@ -140,8 +140,8 @@ fprintf(f,"#pinnipede.show_fortune: on\n");
 fprintf(f,"\n");
 fprintf(f,"### Options relatives au spell checker\n");
 fprintf(f,"### Active/desactive le spellchecker\n");
-fprintf(f,"spell.enable: True\n");
+fprintf(f,"#spell.enable: True\n");
 fprintf(f,"### spell checker compatible ispell (ispell, aspell, ...)\n");
-fprintf(f,"spell.cmd: ispell\n");
+fprintf(f,"#spell.cmd: ispell\n");
 fprintf(f,"### Dictionnaire associé (french, english ....)\n");
-fprintf(f,"spell.dict: french\n");
+fprintf(f,"#spell.dict: french\n");
