@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.3 2001/12/16 01:43:33 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.4  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.3  2001/12/16 01:43:33  pouaite
   filtrage des posts, meilleure gestion des posts multiples
 
@@ -341,7 +344,7 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
     //    printf("id=%d, %d , age=%d\n", it->id, cnt, tribune_get_msg_age(trib, it));
     if (tribune_get_msg_age(trib, it) <= trollo_log_extent*60) {
       cnt++;
-      coef = (trollo_log_extent*60 - age)/((float)(trollo_log_extent*60));
+      coef = 0.1 * (trollo_log_extent*60 - age)/((float)(trollo_log_extent*60));
       *trollo_score += (it->troll_score)*coef;
     }
     it = it->next;
@@ -470,6 +473,8 @@ dlfp_updatetribune(DLFP *dlfp)
       myfprintf(stderr, "il y a un problème dans le '%s',  j'arrive plus a le parser... erreur:%<YEL %s>\n", Prefs.path_tribune_backend, errmsg);
     }
     http_close(fd);
+  } else {
+    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>", s, http_error());
   }
 
   /* cleanup .. */

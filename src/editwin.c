@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.3 2001/12/16 16:46:12 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.4  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.3  2001/12/16 16:46:12  pouaite
   Clippouille joins C0IN C0IN
 
@@ -2071,7 +2074,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
 	   "mmmh, j'ai l'impression que vous ne savez pas quoi dire, alors si je puis me permettre, "
 	   "je vous suggère <font color=blue>%s</font>", suggestion[i]);
   if (ew->buff_num == 0) {
-    balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 150,
+    balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 15000,
 			    EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
 			    txt, ew->clippy_pixmap, ew->clippy_w+8, ew->clippy_h);
   } else {

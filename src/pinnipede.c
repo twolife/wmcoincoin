@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.4 2001/12/16 16:46:12 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.5 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.5  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.4  2001/12/16 16:46:12  pouaite
   Clippouille joins C0IN C0IN
 
@@ -146,6 +149,7 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
   unsigned char w[11];
 
   *ref_h = -1; *ref_m = -1; *ref_s = -1; *ref_num = -1;
+  num = -1; h = -1; m = -1; s = -1;
   l = strlen(ww);
 
   if (l < 4 || l > 10) return 0; /* on enlimine les cas les plus explicites */
@@ -190,7 +194,6 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
     int nb_char_h, nb_char_m, nb_char_s;
     p = w;
     h = 0;
-    num = -1;
     nb_char_h = nb_char_m = nb_char_s = 0;
     while (*p != ':' && *p != '.' && *p != 'h') {
       if (*p < '0' || *p > '9') return 0;
@@ -2161,7 +2164,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
     pw = pp_get_pw_at_xy(pp, mx, my);
     if (pw) {
       /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
-      if (pw->attr & PWATTR_LNK) {
+      if ((pw->attr & PWATTR_LNK) && ((event->state & ControlMask) == 0)) {
 	if (strlen(pw->attr_s)) {
 	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
 	}
@@ -2251,7 +2254,18 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
 	}
       } else if (strlen(pw->w) > 0 && (event->state & ControlMask)) {
 	/* control+clic sur un mot normal -> filtre ! */
-	pp_set_word_filter(dock, trib, pw->w);
+	char *s, *p;
+	s = strdup(pw->w);
+	p = s + strlen(s) -1;
+	while (p > s && !isalnum(*p)) { *p = 0; p--; }
+	p = s;
+	while (*p && !isalnum(*p)) p++;
+	if (strlen(p)) {
+	  pp_set_word_filter(dock, trib, p);
+	} else {
+	  pp_set_word_filter(dock, trib, pw->w);
+	}
+	free(s);
       }
     } /* if (pw) */
   } else if (event->button == Button2) {

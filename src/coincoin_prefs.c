@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.3 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.4  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.3  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -50,8 +53,8 @@ structPrefs Prefs;
 int options_linenum = 0;
 
 /* fgets qui vire les \n et les blancs du début */
-char *
-fget_line(char *s, int n, FILE *f)
+unsigned char *
+fget_line(unsigned char *s, int n, FILE *f)
 {
   int i;
   assert(s);

@@ -447,7 +447,7 @@ typedef struct _Dock {
 /* wmcoincoin.c */
 void open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num);
 char* http_transfert(char *URL);
-char *fget_line(char *s, int n, FILE *f);
+unsigned char *fget_line(unsigned char *s, int n, FILE *f);
 //unsigned long pixel_color(Dock *dock, unsigned char r, unsigned char g, unsigned char b);
 void dock_get_icon_pos(Dock *dock, int *iconx, int *icony);
 /* renvoie 1 si le bouton rouge a ete suffisament enfonce */

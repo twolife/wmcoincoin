@@ -19,11 +19,14 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.7 2001/12/16 01:43:33 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.8 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.8  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.7  2001/12/16 01:43:33  pouaite
-  filtrage des posts, meilleure gestion des posts multiples
+  patch de fpy (pb des clignotements)
 
   Revision 1.6  2001/12/03 08:20:59  pouaite
   remplacement du GRUIKesque vfork par un honnete fork (damned!)

@@ -3,7 +3,7 @@
 
 #include "global.h"
 
-char* fget_line(char *s, int n, FILE *f);
+unsigned char* fget_line(unsigned char *s, int n, FILE *f);
 
 void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs);
 void check_wmcoincoin_dir(void);

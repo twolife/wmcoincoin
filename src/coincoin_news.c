@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.3 2001/12/02 19:04:42 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.4 2001/12/16 20:28:45 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.4  2001/12/16 20:28:45  pouaite
+  bugfixes divers
+
   Revision 1.3  2001/12/02 19:04:42  pouaite
   suppression de messages de debug...
 
@@ -492,7 +495,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   ouups1:
     
   } else {
-    myfprintf(stderr, http_error());
+    myfprintf(stderr, "erreur pendant le d/l de '%<YEL %s>' : %<RED %s>\n", URL, http_error());
   }
   if (err) {
     myfprintf(stderr,"%<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", n->url, err);
@@ -829,7 +832,7 @@ dlfp_updatenews(DLFP *dlfp)
     http_close(fd);
     transfert_cnt++;
   } else {
-    myfprintf(stderr, "erreur lors du transfert '%s' : '%<YEL %s>'\n", Prefs.path_news_backend, http_error());
+    myfprintf(stderr, "erreur lors du transfert de '%<YEL %s>' : %<RED %s>\n", Prefs.path_news_backend, http_error());
   }
   /* elimine les eventuelles news trop vielles, et qui ne sont plus
      dans short.php3 */
