@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.41 2002/05/12 22:06:27 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.42 2002/05/13 05:52:18 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.42  2002/05/13 05:52:18  pouaite
+  bugfix anti-segfault
+
   Revision 1.41  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
 
@@ -407,7 +410,7 @@ exec_coin_coin(Dock *dock)
   snprintf(path, 2048, "%s%s/%s", strlen(Prefs.site_path) ? "/" : "", Prefs.site_path, Prefs.path_tribune_add);
 
   wmcc_init_http_request_with_cookie(&r, path);
-  if (dock->post_anonyme && r.cookie) free(r.cookie);
+  if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
   r.referer = str_printf("http://%s:%d/%s/", Prefs.site_root, Prefs.site_port, Prefs.site_path);
   r.user_agent = strdup(dock->real_coin_coin_useragent);
