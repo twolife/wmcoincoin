@@ -31,14 +31,36 @@ if test "$DIE" -eq 1; then
         exit 1
 fi
 
-rm -f ChangeLog~ ; rm -f configure.ac~; rm -f Makefile.am~
-echo "  gettextize --copy --force --intl"
-gettextize --copy --force --intl
+GETTEXT_VERSION=`gettextize --version | sed -n 's/^.*\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\).*$/\1.\2.\3/p'`
+GETTEXT_MAJOR_VERSION=`echo $GETTEXT_VERSION | sed -n 's/^\([0-9]\+\).*/\1/p'`
+GETTEXT_MINOR_VERSION=`echo $GETTEXT_VERSION | sed -n 's/^[0-9]\+\.\([0-9]\+\).*/\1/p'`
+GETTEXT_MICRO_VERSION=`echo $GETTEXT_VERSION | sed -n 's/^[0-9]\+\.[0-9]\+\.\([0-9]\+\).*/\1/p'`
 
-echo "cleaning the crap of gettextize.."
-[ -e ChangeLog~ ] && mv -f ChangeLog~ ChangeLog
-[ -e configure.ac~ ] && mv -f configure.ac~ configure.ac
-[ -e Makefile.am~ ] && mv -f Makefile.am~ Makefile.am
+if [ $GETTEXT_MINOR_VERSION -eq 11 ]; then
+    #works at least with gettext-0.11.5
+    rm -f ChangeLog~ ; rm -f configure.ac~; rm -f Makefile.am~
+    echo "  gettextize --copy --force --intl"
+    gettextize --copy --force --intl || exit
+    echo "cleaning the crap of gettextize.."
+    [ -e ChangeLog~ ] && mv -f ChangeLog~ ChangeLog
+    [ -e configure.ac~ ] && mv -f configure.ac~ configure.ac
+    [ -e Makefile.am~ ] && mv -f Makefile.am~ Makefile.am
+else
+    #works at least with gettext-0.10.40
+    # ... except the link ...
+    echo "  gettextize --copy --force"
+    gettextize --copy --force || exit;
+    mkdir -p m4
+    GTM4=`which gettext | sed -e 's%bin/gettext%share/aclocal%'`;
+    echo gtm4 $GTM4
+    for i in codeset.m4 gettext.m4 glibc21.m4 iconv.m4 isc-posix.m4 lcmessage.m4  progtest.m4; do
+      cp -f $GTM4/$i ./m4
+    done
+    cp doc/Makefile.am m4/Makefile.am
+    echo "****************************************"
+    echo " il faudra surement virer @LIBINTL@ de src/Makefile.am !!"
+    echo "****************************************"
+fi;
 
 #cp po/Makefile.in.in intl/Makefile.in.in
 echo "  aclocal -I m4 $ACLOCAL_FLAGS"
