@@ -1,3 +1,18 @@
+2002-04-10  pouaite  <c0in@altern.org>
+
+	* de nouvelles options:
+	pinnipede.use_fake_real_transparency, (qui suxe)
+	pinnipede.hilight.keyword_color0,
+	pinnipede.hilight.keyword_color1,
+	pinnipede.hilight.keyword_color2,
+	pinnipede.hilight.keyword_color3,
+	pinnipede.hilight.keyword_color4,
+	pinnipede.plop_keywords,
+	pinnipede.hilight_keywords
+	avec les modifs qui vont avec.. Un effet de bord intéressant est que
+	l'option 'pinnipede.plop_keywords' permet de profiter d'une jolie
+	boitakon (voir le fichier d'options)
+	
 2002-04-09  pouaite  <c0in@altern.org>
 
 	* ajout de l'option 'tribune.wiki_emulation', pour émuler le wiki
@@ -9,7 +24,7 @@
 	pseudo-transp pour le pinnipède, avec les options qui vont
 	bien. Pour la pseudo-transp, se reporter au RTFF, y'a des astuces.
 	Le type de backend est spécifié par l'option
-	'tribune.backend_type' (void le fichier d'options)
+	'tribune.backend_type' (voir le fichier d'options)
 	
 2002-04-01  pouaite  <c0in@altern.org>
 

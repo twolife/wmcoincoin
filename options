@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.20 2002/04/09 00:28:19 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.21 2002/04/09 23:38:29 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.21  2002/04/09 23:38:29  pouaite
+#%  boitakon et son cortège de bugfixes
+#%
 #%  Revision 1.20  2002/04/09 00:28:19  pouaite
 #%  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 #%
@@ -230,12 +233,18 @@
 ### options de transparence
 
 #pinnipede.start_in_transparency_mode: false
+
+### pour avoir aussi les fenetre d'arriere plan dans la transparence
+### (remarque: ça suce)
+#pinnipede.use_fake_real_transparency: false
+
 ### transparence, complete, utilisez
 #pinnipede.transparency: full
 ### transparence avec shading, (indiquez 2 chiffres croissants entre 0 et 100)
 #pinnipede.transparency: shading 20 70
 ### transparence avec teinte, (indiquez la couleur du noir puis celle du blanc)
 #pinnipede.transparency: tinting 404020 e0e090
+
 
 ### la plupart des options de couleur acceptent deux valeurs,
 ### qui sont la couleur en mode normal, et la couleur
@@ -253,7 +262,16 @@
 #pinnipede.popup_bgcolor: c0d0d0 c0d0d0
 #pinnipede.hilight.my_msg_color: f07000 f07000
 #pinnipede.hilight.answer_my_msg_color: e0b080 e0b080
-#pinnipede.hilight.keyword_color: 008080 008080
+
+### les couleurs pour les differentes catégories de mots clefs
+### (0 -> categorie par défaut (en cliquant sur les mots etc),
+### mais vous pouvez en définir d'autres avec l'option
+### pinnipede.hilight_keywords, voir plus bas
+#pinnipede.hilight.keyword_color0: f00080
+#pinnipede.hilight.keyword_color1: ff8080
+#pinnipede.hilight.keyword_color2: f0ff80
+#pinnipede.hilight.keyword_color3: f000ff
+#pinnipede.hilight.keyword_color4: f08000
 #pinnipede.plopify_color: a0a0a0 a0a0a0
 #pinnipede.fortune_bgcolor: b0b0b0
 #pinnipede.fortune_fgcolor: 000000
@@ -280,12 +298,27 @@
 #pinnipede.show_troll_score: on
 #pinnipede.show_fortune: on
 
+
+### liste des elements déclenchant la plopification (en plus de ceux
+### que vous pouvez ajouter en faisant shift+right clic dans le pinni)
+### la syntaxe est [LOGIN:|UA:|WORD:][numéro de catégorie:]"la phrase clef"
+### remarque: le niveau 0 correspond à une plopification normale, le
+### niveau 1 à un superplopification (le message est remplacé par 'plop'
+### et le niveau 2 correspond à une Boitakon, les messages du malotru
+### deviennent invisibles
 #pinnipede.plop_keywords: LOGIN:2:"gros boulet",  \
-###                       LOGIN:0:"NedFlanders"
+#                        "communiste", "fasciste" # etc selon le troll saoulant du moment ;)
 
-#pinnipede.hilight_keywords: UA:1:"penso"
+### liste des élément déclenchant l'affichage des crochets colorés
+### (en dehors de ceux que vous activez en faisant shift+left clic sur un mot/ua/etc)
+### on peut voir ça comme un bigornophone silencieux
+### le numéro de catégorie détermine la couleur du crochet (definie dans
+### l'option pinnipede.hilight.keyword_color0/1/2/3/4)
+#pinnipede.hilight_keywords: LOGIN:1:"penso", \
+#                            UA:2:"poolpy", \ # écoutez ce que dit poolpy !
+#                            3:"communiste", 3:"fasciste" # si vous aimez les trolls épais
 
-### mots utilisés lors de la plopification (a séparer par des VIRGULES, sans espace)
+### liste des mots de substitution pour la plopification
 #pinnipede.plop_words: "plop","grouik","prout"
 
 ### Options relatives au spell checker

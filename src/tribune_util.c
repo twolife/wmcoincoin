@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.15 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.16 2002/04/09 23:38:29 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.16  2002/04/09 23:38:29  pouaite
+  boitakon et son cortège de bugfixes
+
   Revision 1.15  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -431,6 +434,8 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 	snprintf(commentaire, comment_sz, "[IPOT(tm)]");
       } else if (best_mi->id == caller_mi->id) {
 	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
+      } else if (best_mi->in_boitakon) {
+	snprintf(commentaire, comment_sz, "kikoo depuis la boitakon !"); return NULL;
       }
     }
   }
@@ -582,7 +587,8 @@ tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type,
   if (last == NULL) {
     first = hk;
   } else {
-    while (last->next != NULL) last = last->next;
+    while (last->next != NULL && last->next->num > hk->num) last = last->next;
+    hk->next = last->next;
     last->next = hk;
   }
   return first;

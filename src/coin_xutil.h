@@ -35,5 +35,5 @@ void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int 
 void get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y);
 Pixmap get_rootwin_pixmap(const RGBAContext *rc);
 void shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *tr);
-Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr);
+Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr, int use_fake_real_transparency);
 #endif

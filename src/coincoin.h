@@ -137,6 +137,7 @@ struct _tribune_msg_info {
 
   /* utilisé par tribune_key_list_test_thread pour éviter de récurser comme un ouf */
   int bidouille_qui_pue BITFIELD(1); 
+  int in_boitakon BITFIELD(1); /* le niveau ultime de la plopification */
   short nb_refs;
   tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 };

@@ -389,7 +389,7 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
 
 
 char*
-option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst)
+option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int nummin, int nummax)
 {
   int cnt;
   char mot[1024];
@@ -416,10 +416,13 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst)
     if (strncasecmp(s, "id:", 3) == 0) { t = HK_ID; s+= 3; }
     if (strncasecmp(s, "thread:", 7) == 0) { t = HK_THREAD; s+= 7; }
 
-    num = 0;
+    num = nummin;
     if (*s >= '0' && *s <= '9') { 
       num = atoi(s); while (*s >= '0' && *s <= '9') s++; if (*s != ':') goto erreur; s++;
-      
+    }
+    if (num < nummin || num > nummax) {
+      return str_printf("argument invalide pour l'option '%s', mot %d, la valeur de l'argument numérique (%d) doit "
+			"être comprise entre %d et %d", optname, cnt, num, nummin, nummax);
     }
 
     if (*s != '"') goto erreur;
@@ -516,6 +519,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->pp_fn_size = 12;
   p->pp_bgcolor = 0xdae6e6;
   p->pp_start_in_transparency_mode = 0;
+  p->use_fake_real_transparency = 0;
   p->pp_transparency.type = SHADING;
   p->pp_transparency.shade.luminosite = 20; 
   p->pp_transparency.shade.assombrissement = 70;
@@ -532,7 +536,11 @@ wmcc_prefs_set_default(structPrefs *p) {
   BICOLOR_SET(p->pp_popup_bgcolor, 0xc0d0d0, 0xc0d0d0);
   BICOLOR_SET(p->pp_my_msg_color, 0xf07000, 0xf07000);
   BICOLOR_SET(p->pp_answer_my_msg_color, 0xe0b080, 0xe0b080);
-  BICOLOR_SET(p->pp_keyword_color, 0x008080, 0x00ffff);
+  BICOLOR_SET(p->pp_keyword_color[0], 0x008080, 0x00ffff);
+  BICOLOR_SET(p->pp_keyword_color[1], 0xff0080, 0x40a0c0);
+  BICOLOR_SET(p->pp_keyword_color[2], 0x800080, 0xffff00);
+  BICOLOR_SET(p->pp_keyword_color[3], 0x00ff80, 0x808000);
+  BICOLOR_SET(p->pp_keyword_color[4], 0x008000, 0x808080);
   BICOLOR_SET(p->pp_plopify_color,0xa0a0a0, 0x808080);
 
   tribune_key_list_destroy(p->hilight_key_list); p->hilight_key_list = NULL;
@@ -623,7 +631,7 @@ wmcc_prefs_destroy(structPrefs *p)
 
 #define CHECK_TRANSP_ARG(x) { char *err=option_get_transp_val(arg,opt_name,&x); if (err) return err; }
 
-#define CHECK_KEY_LIST(x) { char *err=option_get_key_list(arg,opt_name,&x); if (err) return err; }
+#define CHECK_KEY_LIST(x,_min,_max) { char *err=option_get_key_list(arg,opt_name,&x,_min,_max); if (err) return err; }
 
 /* assigne une option dans les preferences, renvoie un message d'erreur si y'a un pb */
 char *
@@ -783,6 +791,9 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_start_in_transparency_mode: {
     CHECK_BOOL_ARG(p->pp_start_in_transparency_mode);
   } break;
+  case OPT_pinnipede_use_fake_real_transparency: {
+    CHECK_BOOL_ARG(p->use_fake_real_transparency);
+  } break;
   case OPT_pinnipede_transparency: {
     CHECK_TRANSP_ARG(p->pp_transparency);
   } break;
@@ -825,8 +836,20 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_pinnipede_hilight_answer_my_msg_color: {
     CHECK_BICOLOR_ARG(p->pp_answer_my_msg_color);
   } break; 
-  case OPT_pinnipede_hilight_keyword_color: {
-    CHECK_BICOLOR_ARG(p->pp_keyword_color);
+  case OPT_pinnipede_hilight_keyword_color0: {
+    CHECK_BICOLOR_ARG(p->pp_keyword_color[0]);
+  } break; 
+  case OPT_pinnipede_hilight_keyword_color1: {
+    CHECK_BICOLOR_ARG(p->pp_keyword_color[1]);
+  } break; 
+  case OPT_pinnipede_hilight_keyword_color2: {
+    CHECK_BICOLOR_ARG(p->pp_keyword_color[2]);
+  } break; 
+  case OPT_pinnipede_hilight_keyword_color3: {
+    CHECK_BICOLOR_ARG(p->pp_keyword_color[3]);
+  } break; 
+  case OPT_pinnipede_hilight_keyword_color4: {
+    CHECK_BICOLOR_ARG(p->pp_keyword_color[4]);
   } break; 
   case OPT_pinnipede_plopify_color: {
     CHECK_BICOLOR_ARG(p->pp_plopify_color);
@@ -868,10 +891,10 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
     CHECK_BOOL_ARG(p->pp_fortune_mode);
   } break; 
   case OPT_pinnipede_plop_keywords: {
-    CHECK_KEY_LIST(p->plopify_key_list);
+    CHECK_KEY_LIST(p->plopify_key_list,0,2);
   } break; 
   case OPT_pinnipede_hilight_keywords: {
-    CHECK_KEY_LIST(p->hilight_key_list);
+    CHECK_KEY_LIST(p->hilight_key_list,0,4);
   } break; 
   case OPT_pinnipede_plop_words: {
     char *err = option_get_string_list(arg, opt_name,  &p->plop_words, &p->nb_plop_words);

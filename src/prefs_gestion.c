@@ -253,6 +253,8 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
     if ((hka=tribune_key_list_find(*a, hk->key, hk->type)) == NULL) {
       changed = 1;
       *a = tribune_key_list_add(*a, hk->key, hk->type, hk->num, hk->from_prefs);
+    } else if (hka->num != hk->num) {
+      changed = 1;
     }
     hk = hk->next;
   }
@@ -449,18 +451,23 @@ wmcc_prefs_relecture(Dock *dock)
         BIC_OPT_COPY_IF_CHANGED(pp_trollscore_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_my_msg_color) ||
         BIC_OPT_COPY_IF_CHANGED(pp_answer_my_msg_color) ||
-        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[0]) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[1]) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[2]) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[3]) ||
+        BIC_OPT_COPY_IF_CHANGED(pp_keyword_color[4]) ||
         BIC_OPT_COPY_IF_CHANGED(pp_plopify_color) ||
 	TRANSP_OPT_COPY_IF_CHANGED(pp_transparency) ||
+        INT_OPT_COPY_IF_CHANGED(use_fake_real_transparency) ||
 	KEY_LIST_COPY_IF_CHANGED(plopify_key_list) ||
 	KEY_LIST_COPY_IF_CHANGED(hilight_key_list) ||
 	STRING_LIST_COPY_IF_CHANGED(plop_words,nb_plop_words))
       {
-      if (pp_ismapped(dock)) {
-	pp_unmap(dock);
-	pp_set_prefs_colors(dock);
-	pp_show(dock, &dock->dlfp->tribune);
-      }
+	if (pp_ismapped(dock)) {
+	  pp_unmap(dock);
+	  pp_set_prefs_colors(dock);
+	  pp_show(dock, &dock->dlfp->tribune);
+	}
       }
   }
   wmcc_prefs_destroy(&newPrefs);

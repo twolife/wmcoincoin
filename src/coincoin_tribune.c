@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.29 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.30 2002/04/09 23:38:29 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.30  2002/04/09 23:38:29  pouaite
+  boitakon et son cortège de bugfixes
+
   Revision 1.29  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -465,6 +468,8 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
   it->useragent = ((char*)it) + sizeof(tribune_msg_info);
   it->msg = ((char*)it) + sizeof(tribune_msg_info) + strlen(ua) + 1;
   it->login = it->msg + strlen(message) + 1;
+  it->in_boitakon = 0; /* voir plus bas */
+  
 
   it->next = nit;
   if (pit) {
@@ -525,6 +530,14 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
 
   /* evalue le potentiel trollesque */
   troll_detector(it);
+
+  {
+    KeyList *hk = tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list);
+    if (hk && hk->num == 2) { /* bienvenu dans la boitakon */
+      it->in_boitakon = 1;
+      BLAHBLAH(2, myprintf("bienvenu au message de '%.20s' dans la boitakon\n", it->login ? it->login : it->useragent));
+    }
+  }
 
   free(message);
   return it;

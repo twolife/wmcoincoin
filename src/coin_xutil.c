@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.4 2002/04/02 22:29:28 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.5 2002/04/09 23:38:29 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.5  2002/04/09 23:38:29  pouaite
+  boitakon et son cortège de bugfixes
+
   Revision 1.4  2002/04/02 22:29:28  pouaite
   bugfixes transparence
 
@@ -367,16 +370,37 @@ int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
 /* obligé de gérer les erreurs de manière un peu cavalière, car le root pixmap peut être détruit
    à tout bout de champ etc.. */
 Pixmap
-extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *ti)
+extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, 
+			      TransparencyInfo *ti, int use_fake_real_transparency)
 {
   Pixmap root_pix, shade_pix;
   XImage *ximg;
+  int rw,rh,rx,ry,dx,dy,sw,sh;
   
 
   if (rc->depth < 15) return None; /* pas de pseudotransp sur les visual non truecolor */
 
   root_pix = get_rootwin_pixmap(rc);
   if (root_pix == None) return None;
+
+
+  dx = 0; dy = 0;
+  rw = w; rh = h; rx = x; ry = y;
+  sw = WidthOfScreen(XScreenOfDisplay(rc->dpy, rc->screen_number));
+  sh = HeightOfScreen(XScreenOfDisplay(rc->dpy, rc->screen_number));
+  if (rx < 0) {
+    rw += rx; dx -= rx; rx = 0;
+  }
+  if (ry < 0) {
+    rh += ry; dy -= ry; ry = 0;
+  }
+  if (rx+rw > sw) {
+    rw = sw-rx;
+  }
+  if (ry+rh > sh) {
+    rh = sh-ry;
+  }
+  if (rw < 0 || rh < 0) return None;
 
   x11_error_occured = 0;
 
@@ -385,8 +409,16 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
     shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
 			      w, h, rc->depth); assert(shade_pix != None);
     XSetErrorHandler(x_error_handler_bidon);
-    XCopyArea(rc->dpy, root_pix, shade_pix, rc->copy_gc, 
-	      x, y, w, h, 0, 0);
+
+    if (use_fake_real_transparency) {
+      ximg = XGetImage(rc->dpy, RootWindow(rc->dpy, rc->screen_number), rx, ry, rw, rh, 
+		       AllPlanes, ZPixmap); assert(ximg);
+      XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, dx, dy, rw, rh);
+      XDestroyImage(ximg);
+    } else {
+      XCopyArea(rc->dpy, root_pix, shade_pix, rc->copy_gc, 
+		rx, ry, rw, rh, dx, dy);
+    }
     XSync(rc->dpy,0);
     XSetErrorHandler(NULL); if (x11_error_occured) { XFreePixmap(rc->dpy, shade_pix); shade_pix = None; };
     return shade_pix;
@@ -395,14 +427,19 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
   /* shade/tinte, il faut retravailler l'image */
 
   x11_error_occured = 0; XSetErrorHandler(x_error_handler_bidon);
-  ximg = XGetImage(rc->dpy, root_pix, x, y, w, h, 
-		   AllPlanes, ZPixmap); 
+  if (use_fake_real_transparency) {
+    ximg = XGetImage(rc->dpy, RootWindow(rc->dpy, rc->screen_number), rx, ry, rw, rh, 
+		     AllPlanes, ZPixmap);
+  } else {
+    ximg = XGetImage(rc->dpy, root_pix, rx, ry, rw, rh, 
+		     AllPlanes, ZPixmap); 
+  }
   XSetErrorHandler(NULL); if (x11_error_occured || ximg == NULL) return None;
 
   shade_XImage(rc, ximg, ti);
   shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
 			    w, h, rc->depth); assert(shade_pix != None);
-  XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, 0, 0, w, h);
+  XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, dx, dy, rw, rh);
   XDestroyImage(ximg);
   return shade_pix;
 }

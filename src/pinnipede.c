@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.46 2002/04/09 00:28:19 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.47 2002/04/09 23:38:29 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.47  2002/04/09 23:38:29  pouaite
+  boitakon et son cortège de bugfixes
+
   Revision 1.46  2002/04/09 00:28:19  pouaite
   quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
 
@@ -178,12 +181,13 @@ struct _PostVisual {
 
   int is_my_message BITFIELD(1);
   int is_answer_to_me BITFIELD(1);
-  int is_hilight_key BITFIELD(1);
+  int is_hilight_key BITFIELD(4);
   int is_skipped_id BITFIELD(1); /* non nul si le message (id-1) n'existe pas */
   int is_plopified BITFIELD(3);
   /* non nul si le message a été plopifié
 			  =1, le message apparait en gris, tags html enleves
 			  =2, le message est plopifié (mots remplacés par plop, grouik..)
+			  =3, le message est superplopifié (message remplacé par 'plop')
 			*/
   struct _PostVisual *next;
 };
@@ -197,6 +201,7 @@ struct _PinnipedeFilter {
   char *word;
   //  int hms[3]; /* filtre sur les ref au msg posté à l'heure indiquée dans hms */
   int *id; int nid; /* liste des id des messages affichés dans le filtre de threads */
+  int filter_boitakon;
 };
 
 typedef struct _PinnipedeLignesSel {
@@ -223,7 +228,7 @@ struct _Pinnipede {
   unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
     emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
     popup_fgpixel, popup_bgpixel, minib_pixel, minib_dark_pixel, sel_bgpixel,
-    hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel,
+    hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel[NB_PP_KEYWORD_CATEG],
     plopify_pixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
@@ -297,6 +302,9 @@ pp_thread_filter_find_id(struct _PinnipedeFilter *f, int id) {
 static int
 filter_msg_info(tribune_msg_info *mi, struct _PinnipedeFilter *filter)
 {
+  /* cas particulier: la boitakon */
+  if (mi->in_boitakon && filter->filter_boitakon) return 0;
+
   if (filter->filter_mode == 0) return 1;
   if (filter->ua) {
     return (strcmp(filter->ua, mi->useragent) == 0);
@@ -688,6 +696,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   unsigned short attr;
   int add_word;
   int has_initial_space; // indique si le prochain mot est collé au precedent
+  KeyList *hk_plop, *hk_hili;
 
   ALLOC_OBJ(pv, PostVisual);
 
@@ -704,8 +713,16 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
   pv->is_answer_to_me = mi->is_answer_to_me;
 
   pv->is_skipped_id = tribune_find_id(trib, mi->id-1) ? 0 : 1;
-  pv->is_hilight_key = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list) == NULL ? 0 : 1;
-  pv->is_plopified = (tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list) == NULL) ? 0 : (disable_plopify ? 1 : 2);
+  hk_hili = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list);
+  pv->is_hilight_key = 0;
+  if (hk_hili) {
+    pv->is_hilight_key = hk_hili->num+1; assert(hk_hili->num < NB_PP_KEYWORD_CATEG);
+  }
+  pv->is_plopified = 0;
+  hk_plop = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
+  if (hk_plop) {
+    pv->is_plopified = (disable_plopify ? 1 : hk_plop->num+2);
+  }
 
   /*
   printf("pv = %p\n", pv);
@@ -774,6 +791,8 @@ pv_tmsgi_parse(DLFP_tribune *trib, tribune_msg_info *mi, int with_seconds, int h
 
   p = mi->msg;
   attr = 0;
+
+  if (pv->is_plopified == 3) p = "plop"; /* bienvenue dans le monde de la hard plopification */
 
 
   has_initial_space = 1;
@@ -1717,7 +1736,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
       } else if (pw->parent->is_answer_to_me && pp->hilight_answer_to_me_mode) { 
 	pixel = pp->hilight_answer_my_msg_pixel;
       } else if (pw->parent->is_hilight_key && pp->hilight_key_mode) { 
-	pixel = pp->hilight_keyword_pixel;
+	pixel = pp->hilight_keyword_pixel[pw->parent->is_hilight_key-1];
       } else do_hilight = 0;
       
       if (do_hilight) {
@@ -2139,6 +2158,7 @@ void
 pp_set_prefs_colors(Dock *dock) 
 {
   Pinnipede *pp = dock->pinnipede;
+  int i;
   pp->win_bgpixel = IRGB2PIXEL(Prefs.pp_bgcolor);
 
   pp->timestamp_pixel = GET_BICOLOR(Prefs.pp_tstamp_color);
@@ -2157,7 +2177,9 @@ pp_set_prefs_colors(Dock *dock)
   pp->trollscore_pixel = GET_BICOLOR(Prefs.pp_trollscore_color);
   pp->hilight_my_msg_pixel = GET_BICOLOR(Prefs.pp_my_msg_color);
   pp->hilight_answer_my_msg_pixel = GET_BICOLOR(Prefs.pp_answer_my_msg_color);
-  pp->hilight_keyword_pixel = GET_BICOLOR(Prefs.pp_keyword_color);
+  for (i=0; i < NB_PP_KEYWORD_CATEG; i++) {
+    pp->hilight_keyword_pixel[i] = GET_BICOLOR(Prefs.pp_keyword_color[i]);
+  }
   pp->plopify_pixel = GET_BICOLOR(Prefs.pp_plopify_color);
 }
 
@@ -2214,6 +2236,7 @@ pp_build(Dock *dock)
   pp->filter.login = NULL;
   pp->filter.word = NULL;
   pp->filter.nid = 0; pp->filter.id = NULL;
+  pp->filter.filter_boitakon = 1;
 
   pp->fortune_mode = Prefs.pp_fortune_mode; 
   pp->fortune_h = 0;
@@ -2275,7 +2298,8 @@ pp_update_bg_pixmap(Dock *dock)
     pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
 						  xpos, ypos, 
 						  pp->win_width, pp->win_height,
-						  &Prefs.pp_transparency);
+						  &Prefs.pp_transparency, 
+						  Prefs.use_fake_real_transparency);
     if (pp->bg_pixmap == None) {
       myprintf("%<yel impossible d'utiliser la pseudo-transp> (solution probable: relancer wmsetbg ou autre)\n");
       pp_change_transparency_mode(dock, 0);
@@ -2322,9 +2346,9 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     LeaveWindowMask;
 
   /* ça sera a changer .. pour l'instant ça ira */
-  //  if (pp->use_bg_pixmap) {
+  //  if (pp->transparency_mode) {
   //    wa.override_redirect = True ;
-  //  } else {
+  //  } else
     wa.override_redirect = False ;
 
   
@@ -2406,9 +2430,10 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     XSetWMHints(dock->display, pp->win, mwh);
     }*/
 
+  pp_update_bg_pixmap(dock);
+
   XMapRaised(dock->display, pp->win);
 
-  pp_update_bg_pixmap(dock);
 
   assert(pp->sc == NULL);
 
@@ -2842,29 +2867,6 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
   mb = pp_minib_get_button(dock, event->x, event->y);
   if (event->type == ButtonRelease  && mb && mb->clicked == 1) {
     switch (mb->type) {
-      /*
-    case 0: 
-    case 1: 
-      {
-	int q;
-	if (event->button == Button1) {
-	  q = 3;
-	} else q = 10;
-	    if (pressed == 1) q = -q;
-	    pp_update_content(dock, trib, pp->id_base, pp->decal_base-q,0,0);
-	    pp_refresh(dock, trib, pp->win, NULL);
-      } break;
-    case 2:
-      {
-	pp_update_content(dock, trib, get_next_id(trib, -1, NULL, &pp->filter), 0,0,0);
-	pp_refresh(dock, trib, pp->win, NULL);
-      } break;
-    case 3:
-      {
-	pp_update_content(dock, trib, trib->last_post_id, 0,0,0);
-	pp_refresh(dock, trib, pp->win, NULL);
-	} break;
-*/
 
     case REFRESH_TRIBUNE:
       {
@@ -2908,6 +2910,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
     case PLOPIFY:
       {
 	pp->disable_plopify = (1-pp->disable_plopify);
+	pp->filter.filter_boitakon = 1-pp->disable_plopify;
 
 	pp_pv_destroy(pp);
 	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
@@ -2945,10 +2948,19 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
       } break;
     case TRANSPARENT:
       {
-	//	pp_unmap(dock);
+	if (Prefs.use_fake_real_transparency) {
+	  pp_unmap(dock); XFlush(dock->display); 
+	  usleep(150); /* pour laisser le temps aux autres applis de se refresher
+			  on atteint des sommets de laideur
+			  pas sur que c'était une bonne idée cette option use_fake_real_transparency
+		       */
+	}
 	pp_change_transparency_mode(dock, 1-pp->transparency_mode);
-	//	pp_show(dock, trib);
-	pp_update_bg_pixmap(dock);
+	if (Prefs.use_fake_real_transparency) 
+	  pp_show(dock, trib);
+	else {
+	  pp_update_bg_pixmap(dock);
+	}
 	pp_refresh(dock, trib, pp->win, NULL);
       } break;
     default:
@@ -3906,7 +3918,11 @@ pp_dispatch_event(Dock *dock, DLFP_tribune *trib, XEvent *event)
 	XFreePixmap(dock->display, pp->lpix);
 	pp->lpix = XCreatePixmap(dock->display, pp->win, pp->win_width, MAX(MINIB_H, pp->fn_h), DefaultDepth(dock->display,dock->screennum));
 
-	pp_update_bg_pixmap(dock);
+	/* euh oui, a fixer d'une maniere ou d'une autre,
+	   mais il ne faut pas que la fenetre soit mappée quand
+	   on met à jour l'image de fond ...(en mode use_fake_real_transparency) */
+	if (Prefs.use_fake_real_transparency == 0)
+	  pp_update_bg_pixmap(dock);
 	
 	pp_minib_initialize(pp);
 	pp_pv_destroy(pp);

@@ -29,6 +29,8 @@ typedef struct {
   unsigned transp;
 } BiColor;
 
+#define NB_PP_KEYWORD_CATEG 5
+
 /* petite structure pour stocker la liste des mots-clefs qui déclenche la mise en
    valeur du post dans le pinnipede
    (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) 
@@ -142,11 +144,13 @@ typedef struct _structPrefs{
   int pp_start_in_transparency_mode;
   TransparencyInfo pp_transparency;
 
+  int use_fake_real_transparency;
+
   BiColor pp_fgcolor, pp_tstamp_color, pp_useragent_color, 
     pp_login_color, pp_url_color, pp_button_color, pp_emph_color, 
     pp_sel_bgcolor, pp_popup_fgcolor, pp_popup_bgcolor,
     pp_trollscore_color, pp_my_msg_color, pp_answer_my_msg_color, 
-    pp_keyword_color, pp_plopify_color;
+    pp_keyword_color[NB_PP_KEYWORD_CATEG], pp_plopify_color;
   int pp_xpos, pp_ypos, pp_width, pp_height, pp_minibar_on;
   int pp_nosec_mode, pp_html_mode, pp_nick_mode, pp_trollscore_mode, pp_fortune_mode;
   unsigned pp_fortune_bgcolor, pp_fortune_fgcolor;
