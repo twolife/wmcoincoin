@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2002-06-23 20:55+0200\n"
+"POT-Creation-Date: 2002-06-25 19:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -14,306 +14,304 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8858-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/balloon.c:211
-msgid "hide balloon\n"
-msgstr "cacher le ballon\n"
-
-#: src/coincoin_news.c:133
+#: src/coincoin_news.c:136
 msgid "Quack ! Missed"
 msgstr "Plop ! c'est raté"
 
-#: src/coincoin_news.c:146
+#: src/coincoin_news.c:149
 #, c-format
 msgid "%s: too big (bsize=%d!), let's cut\n"
 msgstr ""
 
-#: src/coincoin_news.c:154
+#: src/coincoin_news.c:157
 #, c-format
 msgid "problem while reading %s: %s\n"
 msgstr ""
 
-#: src/coincoin_news.c:160
+#: src/coincoin_news.c:163
 msgid "%s, read: %<mag %s>\n"
 msgstr ""
 
-#: src/coincoin_news.c:221
+#: src/coincoin_news.c:224
 #, c-format
 msgid "QUACK ! Unable to delete the news id=%d\n"
 msgstr "Coin !? impossible de détruire la news id=%d\n"
 
-#: src/coincoin_news.c:378
+#: src/coincoin_news.c:381
 #, c-format
 msgid "The date is y=%d , m=%d, d=%d\n"
 msgstr ""
 
-#: src/coincoin_news.c:384
+#: src/coincoin_news.c:387
 #, c-format
 msgid "-> converting to seconds: t=%ld , now=%ld\n"
 msgstr ""
 
-#: src/coincoin_news.c:387
+#: src/coincoin_news.c:390
 #, c-format
 msgid "age=%d seconds == %d days\n"
 msgstr ""
 
-#: src/coincoin_news.c:407
+#: src/coincoin_news.c:410
 #, c-format
 msgid "Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/coincoin_news.c:439
+#: src/coincoin_news.c:442
 msgid "Updating text of the news: '%<cya %s>' (date='%10s', id %<cya %d>)\n"
 msgstr ""
 
-#: src/coincoin_news.c:442
+#: src/coincoin_news.c:445
 #, c-format
 msgid "It's too old (date=%s, max age=%d days)\n"
 msgstr ""
 
-#: src/coincoin_news.c:455 src/coincoin_news.c:747 src/coincoin_tribune.c:893
+#: src/coincoin_news.c:458 src/coincoin_news.c:750 src/coincoin_tribune.c:896
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
-#: src/coincoin_news.c:563
+#: src/coincoin_news.c:566
 msgid "date: '%<BLU %s>' => time: %d\n"
 msgstr ""
 
-#: src/coincoin_news.c:573
+#: src/coincoin_news.c:576
 msgid "We just got the news !!\n"
 msgstr ""
 
-#: src/coincoin_news.c:584 src/coincoin_news.c:924 src/coincoin_news.c:1266
-#: src/coincoin_news.c:1519 src/coincoin_tribune.c:1033
+#: src/coincoin_news.c:587 src/coincoin_news.c:927 src/coincoin_news.c:1272
+#: src/coincoin_news.c:1525 src/coincoin_tribune.c:1036
 msgid "Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
-#: src/coincoin_news.c:588
-msgid "%<RED Error while downloading '%s' (err=%d)\n"
-msgstr ""
+#: src/coincoin_news.c:591
+#, fuzzy
+msgid "%<RED Error while downloading '%s' (err=%d)>\n"
+msgstr "Erreur d'ouverture de %s\n"
 
-#: src/coincoin_news.c:615
+#: src/coincoin_news.c:618
 msgid ""
 "Warning: unable to create file '%s' \n"
 "[error: '%<red %s>']\n"
 msgstr ""
 
-#: src/coincoin_news.c:622 src/coincoin_news.c:627
+#: src/coincoin_news.c:625 src/coincoin_news.c:630
 msgid ""
 "Warning: unable to create directory '%s'\n"
 "[error: '%<red %s>']\n"
 msgstr ""
 
-#: src/coincoin_news.c:717
+#: src/coincoin_news.c:720
 #, c-format
 msgid ""
 "Unable to open '%s' for writing\n"
 "(error: %s)\n"
 msgstr ""
 
-#: src/coincoin_news.c:773
+#: src/coincoin_news.c:776
 msgid "Download looks OK\n"
 msgstr ""
 
-#: src/coincoin_news.c:850
+#: src/coincoin_news.c:853
 #, c-format
 msgid "The '%s' backend doesn't look good...\n"
 msgstr ""
 
-#: src/coincoin_news.c:873
+#: src/coincoin_news.c:876
 #, c-format
 msgid "Probleme in the news' backend: line '%s' -> id='%s'=%d\n"
 msgstr ""
 
-#: src/coincoin_news.c:882
+#: src/coincoin_news.c:885
 #, c-format
 msgid "The news id=%d is too old (date=%s, max age=%d), let's delete it\n"
 msgstr ""
 
-#: src/coincoin_news.c:887
+#: src/coincoin_news.c:890
 msgid "** This news is already saved, no problemo.\n"
 msgstr ""
 
-#: src/coincoin_news.c:889
+#: src/coincoin_news.c:892
 msgid "** But the text hasn't been updated, let's try again.\n"
 msgstr ""
 
-#: src/coincoin_news.c:905
+#: src/coincoin_news.c:908
 #, c-format
 msgid " . title='%s'\n"
 msgstr ""
 
-#: src/coincoin_news.c:906
+#: src/coincoin_news.c:909
 #, c-format
 msgid " . author='%s', mail='%s'\n"
 msgstr ""
 
-#: src/coincoin_news.c:907
+#: src/coincoin_news.c:910
 msgid "** News ADDED\n"
 msgstr ""
 
-#: src/coincoin_news.c:919
+#: src/coincoin_news.c:922
 msgid ""
 "%<RED OOOOPS!> %<grn dlfp_updatenews> there has been an error (err=%d) when "
 "parsing the news backend.\n"
 msgstr ""
 
-#: src/coincoin_news.c:937
+#: src/coincoin_news.c:940
 msgid "Looking for the news already read on the last session.\n"
 msgstr ""
 
-#: src/coincoin_news.c:941
+#: src/coincoin_news.c:944
 msgid "Updating the file containing the numbers of the news already read\n"
 msgstr ""
 
-#: src/coincoin_news.c:958
+#: src/coincoin_news.c:961
 msgid ""
 "\n"
 "------ %<YEL list of comments> -------\n"
 "num\tnews_id\tcid\tnrep\told\tmodified\n"
 msgstr ""
 
-#: src/coincoin_news.c:985
+#: src/coincoin_news.c:988
 #, c-format
 msgid "QUACK ! Unable to destroy the comment cid=%d\n"
 msgstr ""
 
-#: src/coincoin_news.c:1077
+#: src/coincoin_news.c:1069 src/coincoin_news.c:1395
+msgid "DEBUG: opening %<RED %s>\n"
+msgstr ""
+
+#: src/coincoin_news.c:1081
 #, c-format
 msgid "The download of '%s' looks OK.\n"
 msgstr ""
 
-#: src/coincoin_news.c:1120
+#: src/coincoin_news.c:1124
 #, c-format
 msgid ""
 "Maybe the structure of '%s' has been modified, as I can't find the fortune "
 "(err=%d)\n"
 msgstr ""
 
-#: src/coincoin_news.c:1144
+#: src/coincoin_news.c:1150
 #, c-format
 msgid "Hmmm, how strange is '%s' ... there is no 'loginfo' field.\n"
 msgstr ""
 
-#: src/coincoin_news.c:1151
+#: src/coincoin_news.c:1157
 msgid "not yet a poster???"
 msgstr "Vous n'avez encore rien posté ???"
 
-#: src/coincoin_news.c:1153
+#: src/coincoin_news.c:1159
 #, c-format
 msgid ""
 "'%s': oooops, looks like either (a) the cookie isn't valid anymore, or (b) "
 "the structure of the page has changed, or (c) Obiwan Kenobi\n"
 msgstr ""
 
-#: src/coincoin_news.c:1205
+#: src/coincoin_news.c:1211
 msgid "<error>"
 msgstr ""
 
-#: src/coincoin_news.c:1213
+#: src/coincoin_news.c:1219
 #, c-format
 msgid "There has been %d/%d answers to the comment %d\n"
 msgstr ""
 
-#: src/coincoin_news.c:1230
+#. ce flag qui déclenche le flamometre
+#: src/coincoin_news.c:1236
 #, c-format
 msgid "NEW COMMENT %d, with %d answers\n"
 msgstr ""
 
-#: src/coincoin_news.c:1240
+#: src/coincoin_news.c:1246
 #, c-format
 msgid "comment %d, nid=%d, nrep=%d, modified=%d,old=%d\n"
 msgstr ""
 
-#: src/coincoin_news.c:1243
+#: src/coincoin_news.c:1249
 #, c-format
 msgid "DESTROYING COMMENT %d (too old, isn't in '%s' anymore)\n"
 msgstr ""
 
-#: src/coincoin_news.c:1256
+#: src/coincoin_news.c:1262
 #, c-format
 msgid "error in '%s', the html code must have changes... (err=%d)\n"
 msgstr ""
 
-#: src/coincoin_news.c:1263
+#: src/coincoin_news.c:1269
 msgid "dlfp_yc_update_comments: %<RED Error while downloading> '%s' (err=%d)\n"
 msgstr ""
 
-#: src/coincoin_news.c:1277
+#: src/coincoin_news.c:1283
 msgid ""
 "\n"
 "------ %<YEL list of messages> -------\n"
 "num\tmsg_id\tunread\ttoo_old\n"
 msgstr ""
 
-#: src/coincoin_news.c:1305
+#: src/coincoin_news.c:1311
 #, c-format
 msgid "QUACK ! Unable to destroy the message mid=%d\n"
 msgstr ""
 
-#: src/coincoin_news.c:1389
-msgid "DEBUG: opening %<RED %s>\n"
-msgstr ""
-
-#: src/coincoin_news.c:1401
+#: src/coincoin_news.c:1407
 #, c-format
 msgid "Download of '%s' looks OK.\n"
 msgstr ""
 
-#: src/coincoin_news.c:1446
+#: src/coincoin_news.c:1452
 msgid "Hem hem... Something's wrong with the messages\n"
 msgstr ""
 
-#: src/coincoin_news.c:1499
+#: src/coincoin_news.c:1505
 #, c-format
 msgid "Opening '%s' for writing... OK\n"
 msgstr ""
 
-#: src/coincoin_news.c:1509
+#: src/coincoin_news.c:1515
 #, c-format
 msgid "Unable to open '%s' for writing !\n"
 msgstr ""
 
-#: src/coincoin_news.c:1516
+#: src/coincoin_news.c:1522
 msgid ""
 "dlfp_msg_update_messages: %<RED Error while downloading> '%s' (err=%d)\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:219
+#: src/coincoin_tribune.c:222
 msgid "Unable to tattoo: no rules\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:229
+#: src/coincoin_tribune.c:232
 msgid "'%<RED %s>' was %<CYA recognized> in the %d regexp.\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:236
+#: src/coincoin_tribune.c:239
 msgid "'%<RED %s>' was %<CYA not recognized> in the regexps\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:335
+#: src/coincoin_tribune.c:338
 #, c-format
 msgid "tribune_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:557
+#: src/coincoin_tribune.c:560
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:641
+#: src/coincoin_tribune.c:644
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:845
+#: src/coincoin_tribune.c:848
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:846
+#: src/coincoin_tribune.c:849
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:1012
+#: src/coincoin_tribune.c:1015
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -321,13 +319,9 @@ msgid ""
 "this bugfix for coconuts.\n"
 msgstr ""
 
-#: src/coincoin_tribune.c:1029
+#: src/coincoin_tribune.c:1032
 msgid "There is a problem in '%s',  I can't parse it... error:%<YEL %s>\n"
 msgstr ""
-
-#: src/coin_util.c:96
-msgid "[empty]"
-msgstr "[vide]"
 
 #: src/coin_xutil.c:358
 #, c-format
@@ -476,6 +470,7 @@ msgstr "Insérer du texte rayé<p>raccourci: <b>Alt-S</b>"
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr "Insérer du texte souligné<p>raccourci: <b>Alt-U</b>"
 
+#.  s[BT_TT] = "Inserer les balises TeleType<p>shortcut: <b>Alt-T</b>";
 #: src/editwin.c:2216
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr "Défaire<p>raccourci: <b>Ctrl-Z</b> ou <b>Ctrl-_</b>"
@@ -578,6 +573,11 @@ msgstr "Impossible de resoudre le nom '%s'"
 msgid "Unable to create a socket ! (%s)"
 msgstr "Impossible de créer une soquette ! (%s)"
 
+#. y'a le probleme des timeout de connect ...
+#. d'ailleurs je n'ai toujours pas compris pourquoi tous les
+#. sigalrm balance par l'itimer de wmcoincoin n'interferent
+#. pas avec le connect...
+#.
 #: src/http.c:542
 msgid "connecting...\n"
 msgstr "Connexion...\n"
@@ -622,6 +622,7 @@ msgstr ""
 msgid "http_read has encountered a socket problem, pos=%d, len=%d !(%s)"
 msgstr "http_read a eu un problème de chaussette, pos=%d, len=%d !(%s)"
 
+#. || (r->content_length != -1 && (r->content_length - r->chunk_pos < 200))) {
 #: src/http.c:755
 #, c-format
 msgid "http_read: length finally requested: %d, received: %d, new pos=%ld\n"
@@ -719,6 +720,7 @@ msgstr ""
 msgid "What a fucking pipe! %s\n"
 msgstr ""
 
+#. rien a lire pour l'instant
 #: src/http_unix.c:232
 msgid "select .. awaiting\n"
 msgstr ""
@@ -830,6 +832,7 @@ msgstr "Bug ! appel de picohtml(NULL) !"
 msgid "Bug ! appel de picohtml(NULL) !"
 msgstr ""
 
+#. faudrait-il que je fasse des XFreeColor ?...
 #: src/picohtml.c:336
 #, c-format
 msgid "Allocation of '%s' OK\n"
@@ -853,6 +856,7 @@ msgstr ""
 msgid "Please choose another font.\n"
 msgstr ""
 
+#. puis la police italique
 #: src/picohtml.c:544 src/pinnipede.c:2244
 #, c-format
 msgid "Slanted font '%s' not found -> we're looking for the italic font\n"
@@ -890,6 +894,7 @@ msgstr ""
 msgid "FILTER UNDEFINED"
 msgstr "FILTRE NON DÉFINI"
 
+#. puis la police bold italique
 #: src/pinnipede.c:2270
 #, c-format
 msgid "Bold slanted font '%s' not found -> we're looking for the italic font\n"
@@ -1157,6 +1162,7 @@ msgstr "Argument invalide pour l'option '%s', mot %d : il faut spécifier une lis
 msgid "coin ! coin !"
 msgstr ""
 
+#. les macros c'est sale mais c'est j'aime ça
 #: src/prefs.c:662
 #, c-format
 msgid "Invalid value for option '%s' (must be between %d and %d)"
@@ -1491,38 +1497,41 @@ msgstr ""
 msgid "problème pendant la relecture des options [%s]<br>%s"
 msgstr ""
 
+#.    char *msg_cancelled_changes = strdup(""), *tmp;
 #: src/prefs_gestion.c:418
 msgid "relecture des options '%<YEL %s>' réussie\n"
 msgstr ""
 
+#. force le gethostbyname
 #: src/prefs_gestion.c:445
 msgid ""
 "vous avez changé l'adresse du site/proxy, gethostbyname bientot en cours (le coincoin\n"
 "va peut être se bloquer quelques secondes, voire plus\n"
 msgstr ""
 
-#: src/raster.c:124
+#. calc offsets to create a TrueColor pixel
+#: src/raster.c:146
 #, c-format
 msgid "The visual (depth=%d) is in %s, cool\n"
 msgstr ""
 
-#: src/raster.c:127
+#: src/raster.c:150
 #, c-format
 msgid "Bleh, we are in pseudocolor (depth=%d)...\n"
 msgstr ""
 
-#: src/raster.c:130
+#: src/raster.c:170
 msgid "Unbelievable, there's even no colors !\n"
 msgstr ""
 
-#: src/raster.c:299
+#: src/raster.c:350
 #, c-format
 msgid ""
 "Unknown colour in the .xpm: '%s'\n"
 "'"
 msgstr ""
 
-#: src/raster.c:348
+#: src/raster.c:399
 #, c-format
 msgid ""
 "dommage, vous avez trouvé une pouille dans le 'parseur' de .xpm\n"
@@ -1531,55 +1540,51 @@ msgid ""
 " En le réécrivant avec un autre logiciel ça devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n"
 msgstr ""
 
-#: src/raster.c:380
+#: src/raster.c:431
 #, c-format
 msgid "Unable to open '%s' : %s\n"
 msgstr ""
 
-#: src/raster.c:387
+#: src/raster.c:438
 #, c-format
 msgid "Error while reading '%s' !? [%s]\n"
 msgstr ""
 
-#: src/raster.c:401
+#: src/raster.c:452
 #, c-format
 msgid "The '%s' line looks weird\n"
 msgstr ""
 
-#: src/raster.c:409
+#: src/raster.c:460
 #, c-format
 msgid "There are too many lines in '%s' (max=%d) !! \n"
 msgstr ""
 
-#: src/regexp.c:125 src/regexp.c:138
+#: src/regexp.c:128 src/regexp.c:141
 msgid "Approved on "
 msgstr "Approuvé le "
 
-#: src/regexp.c:136
+#: src/regexp.c:139
 msgid "Posted by"
 msgstr "Posté par"
 
-#: src/regexp.c:146
+#. recherche de la section
+#: src/regexp.c:149
 msgid "Topic:"
 msgstr ""
 
-#: src/regexp.c:147
+#: src/regexp.c:150
 msgid "Theme:"
 msgstr "Thème:"
 
-#: src/regexp.c:208
+#: src/regexp.c:211
 #, c-format
 msgid "regexp error: %d\n"
 msgstr ""
 
-#: src/regexp.c:221
+#: src/regexp.c:224
 #, c-format
 msgid "The regexp [%s] doesn't match the string [%s]\n"
-msgstr ""
-
-#: src/scrollcoin.c:266
-#, c-format
-msgid "setpos out of bounds: %d min=%d, mx=%d\n"
 msgstr ""
 
 #: src/spell_coin.c:157
@@ -1592,6 +1597,7 @@ msgstr ""
 msgid "Exec failed...(%s)\n"
 msgstr ""
 
+#. envoie la chaine à ispell
 #: src/spell_coin.c:302
 #, c-format
 msgid "We send '%s' to ispell\n"
@@ -1606,6 +1612,12 @@ msgstr ""
 msgid "ISPELL answered: '%<MAG %s>' (err=%s)\n"
 msgstr ""
 
+#. Qu'est ce que je fout ici moi ?
+#. NOTE peut etre que je devrais en tenir compte au cas
+#. ou le pgm (ki n'est pas ispell) a des retours en +?
+#. (keskil renvoit aspell au fait? ... regarder son man
+#. sur une machine qui a ce truc)
+#.
 #: src/spell_coin.c:382
 #, c-format
 msgid "spellString: unknown option '0x%02x'\n"
@@ -1627,6 +1639,15 @@ msgstr ""
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
+#.
+#. {
+#. char c;
+#. c = *end; *end = 0;
+#. myprintf("tok='%<YEL %s>'\n", start);
+#. *end = c;
+#. }
+#.
+#. ça pue .. le backend ou le coincoin est sans slip
 #: src/tribune_util.c:365
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
@@ -1811,60 +1832,61 @@ msgstr "Erreur pendant la lecture de <tt>.wmcoincoin/useragents</tt>\n"
 msgid "Re-tattooing in progress...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:253
+#: src/wmcoincoin.c:256
 #, c-format
 msgid ""
 "this url STINKS ! <b>%s</b> (neither ftp://, nor http://)<br>You will have "
 "to launch it by hand (copy to the clipboard with a right click, etc.)"
 msgstr "cette url PUE ! <b>%s</b> (ni ftp://, ni http://)<br>il faudra la lancer à la main (copier dans le presse-papiers avec clic droit, etc.)"
 
-#: src/wmcoincoin.c:264
+#: src/wmcoincoin.c:267
 #, c-format
 msgid ""
 "You didn't define the external browser in ~/.wmcoincoin/options (%s), no "
 "need to click on the <b>[url]</b>..."
 msgstr "Vous n'avez pas défini le browser externe dans ~/.wmcoincoin/options (%s), inutile de cliquer comme un fou sur les <b>[url]</b>..."
 
-#: src/wmcoincoin.c:265
+#: src/wmcoincoin.c:268
 msgid "http.browser: thecommand"
 msgstr "http.browser: lacommande"
 
-#: src/wmcoincoin.c:265
+#: src/wmcoincoin.c:268
 msgid "http.browser2: thecommand"
 msgstr "http.browser2: lacommande"
 
-#: src/wmcoincoin.c:330
+#: src/wmcoincoin.c:333
 msgid "Spawning \"%<YEL %s>\"\n"
 msgstr ""
 
-#: src/wmcoincoin.c:346
+#: src/wmcoincoin.c:349
 msgid "Can't get window attributes.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:417
+#: src/wmcoincoin.c:420
 msgid "message posted: '%<YEL %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:418
+#: src/wmcoincoin.c:421
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:444
+#: src/wmcoincoin.c:447
 #, c-format
 msgid "Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr "Ouups, il y a sans doute eu un petit problème, le serveur a répondu :<p>%s"
 
-#: src/wmcoincoin.c:453
+#. si la reponse n'est pas un 302 Found
+#: src/wmcoincoin.c:456
 #, c-format
 msgid "Damned ! There has been an error<p>%s"
 msgstr "Damned ! Y'a une pouille dans le cottage<p>%s"
 
-#: src/wmcoincoin.c:487
+#: src/wmcoincoin.c:490
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr ""
 
-#: src/wmcoincoin.c:518
+#: src/wmcoincoin.c:521
 #, c-format
 msgid ""
 "<p align=center><b>Titles of the news from <font color=blue>%s</font></b></"
@@ -1874,7 +1896,7 @@ msgid ""
 "font><tab>: open/close the news window<br>"
 msgstr "<p align=center><b>Titres des news de <font color=blue>%s</font></b></p><font color=blue><tt>Clic Gauche</tt></font><tab> : afficher l'article qui défile<br><font color=blue><tt>Clic Milieu</tt></font><tab> : mise à jour immédiate de la liste des news<br><font color=blue><tt>Clic Droit</tt></font><tab> : ouvrir/fermer la fenêtre des news<br>"
 
-#: src/wmcoincoin.c:526
+#: src/wmcoincoin.c:529
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1890,7 +1912,7 @@ msgid ""
 "green blinking shows a change in the value of your XP"
 msgstr "<p align=center><b>Ceci est un <font color=#a00000><i>Trolloscope</i></font> professionel</b></p>Il affiche des symboles correspondant aux user-agents des derniers messages postés sur la tribune. Les associations useragent->(couleur,symbole) sont définies dans le fichier <tt>~/.wmcoincoin/useragents</tt><br><font color=blue><tt>Clic Gauche</tt></font><tab>: affiche un useragent<br><font color=blue><tt>Clic Milieu</tt></font><tab>: mise à jour immédiate<br>remarque: si vous avez prêté votre cookie d'authentification à wmCoinCoin et que celui-ci clignote en rouge, il vous indique qu'on a répondu à un de vos commentaires (non anonyme, bien sûr) Pour voir les réponses: <font color=blue><tt>Clic Gauche</tt></font> (à condition d'avoir configuré le browser utilisé par wmcoincoin). Pour arrêter le clignotement, un <font color=blue><tt>Clic Droit</tt></font> suffit. Le clignotement vert indique un changement de la valeur de vos XP"
 
-#: src/wmcoincoin.c:536
+#: src/wmcoincoin.c:539
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1898,7 +1920,7 @@ msgid ""
 "error message<br>"
 msgstr "Lorsque cette led est bleue, un <b>transfert http</b> est en cours.Un clignotement <b><font color=red>rouge</font></b> indique un problème au cours du dernier transfert.<br><font color=blue><tt>Click Gauche</tt></font> : affiche le dernier message d'erreur reçu.<br>"
 
-#: src/wmcoincoin.c:540
+#: src/wmcoincoin.c:543
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1910,7 +1932,7 @@ msgid ""
 "resolution"
 msgstr "Cette led clignote lorsque vous venez de poster un message sur la tribune, et que celui est en attente.<br>Elle est bleue lorsque le message est en cours d'envoi, et verte une demi-seconde après son envoi.<br>Un clic sur cette led permet de changer de la vitesse de défilement du trolloscope :<br><font color=blue><tt>Clic Gauche</tt></font><tab>: moins vite<br><font color=blue><tt>Clic Droit</tt></font><tab>: plus vite<br><font color=blue><tt>Clic Milieu</tt></font><tab>: changer la résolution du trolloscope"
 
-#: src/wmcoincoin.c:547
+#: src/wmcoincoin.c:550
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
@@ -1921,7 +1943,7 @@ msgstr ""
 "l'article<br><font color=blue><tt>Clic Droit</tt></font><tab>: marquer tous "
 "les articles comme lus"
 
-#: src/wmcoincoin.c:551
+#: src/wmcoincoin.c:554
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1935,7 +1957,7 @@ msgstr ""
 "voir le nouveau message avec le browser externe 2<br><font "
 "color=blue><tt>Click Droite</tt></font> : annuler les nouveaux messages"
 
-#: src/wmcoincoin.c:556
+#: src/wmcoincoin.c:559
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1946,7 +1968,7 @@ msgid ""
 "read the <tt>~/.wmcoincoin/options</tt> file"
 msgstr "Quand le curseur de la souris est au-dessus cette led, le niveau du <font color=#a00000><i>Trollomètre</i></font> est affiché<br><font color=blue><tt>Click Gauche</tt></font><tab>: INVOQUER <b>C01N C01N</b> !<br><font color=blue><tt>Click Droit</tt></font><tab>: voir les stats de fréquentation de la tribune, ainsi que vos XP/votes (si vous avez fourni votre cookie d'authentification)<br><font color=blue><tt>Click Milieu</tt></font>: demande de relecture de <tt>~/.wmcoincoin/options</tt>"
 
-#: src/wmcoincoin.c:561
+#: src/wmcoincoin.c:564
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1954,102 +1976,109 @@ msgid ""
 "tt></font>: show/hide the <b>pinnipede teletype</b>"
 msgstr "Heure du dernier message reçu sur la tribune, ainsi que le nombre de secondes qui se sont écoulées depuis<br><font color=blue><tt>Clic Gauche</tt></font> : montrer/cacher le <b>palmipède editor</b><br><font color=blue><tt>Clic Droit</tt></font> : montrer/cacher le <b>pinnipède teletype</b>"
 
-#: src/wmcoincoin.c:567
+#: src/wmcoincoin.c:570
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr ""
 
-#: src/wmcoincoin.c:622
+#: src/wmcoincoin.c:625
 msgid "suicide in progress...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:696
+#: src/wmcoincoin.c:699
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:703
+#: src/wmcoincoin.c:706
 msgid "Got a SIGCHLD !\n"
 msgstr ""
 
-#: src/wmcoincoin.c:709
+#: src/wmcoincoin.c:712
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1004
+#: src/wmcoincoin.c:1007
 msgid "Creating the windows icon. Just tell me if it makes your WM crash.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1113
+#: src/wmcoincoin.c:1116
 msgid "Couldn't create window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1125
+#: src/wmcoincoin.c:1128
 msgid "Couldn't create icon window\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1138
+#: src/wmcoincoin.c:1141
 #, c-format
 msgid "Bad dimensions for the pixmap skin (expected 64x320, found %dx%d)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1141
+#: src/wmcoincoin.c:1144
 msgid "Unable to load the pixmap '%<grn %s>'\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1218
+#: src/wmcoincoin.c:1221
 msgid "Couldn't create text property\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1231
+#: src/wmcoincoin.c:1234
 msgid "Couldn't create graphics context\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1334
+#: src/wmcoincoin.c:1337
 msgid "Transfer in progress..."
 msgstr "Transfert en cours..."
 
-#: src/wmcoincoin.c:1438 src/wmcoincoin.c:1443 src/wmcoincoin.c:1448
-#: src/wmcoincoin.c:1454 src/wmcoincoin.c:1460 src/wmcoincoin.c:1466
+#: src/wmcoincoin.c:1441 src/wmcoincoin.c:1446 src/wmcoincoin.c:1451
+#: src/wmcoincoin.c:1457 src/wmcoincoin.c:1463 src/wmcoincoin.c:1469
 #, c-format
 msgid ""
 "sigaction: erreur %d (%s)\n"
 " essayez de recompiler en faisant un #define SIGNAUX_A_LANCIENNE...\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1509
+#. la vilaine variable globale (pour les sighandlers)
+#: src/wmcoincoin.c:1512
 msgid "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 msgstr "%<GRN wmc2> v.%<WHT %s> [ built on %s ]\n"
 
-#: src/wmcoincoin.c:1520
+#: src/wmcoincoin.c:1523
 #, c-format
 msgid "locale used: %s\n"
 msgstr "locale utilisée: %s\n"
 
-#: src/wmcoincoin.c:1531
+#: src/wmcoincoin.c:1534
 msgid "%<yel we consider the backend is >"
 msgstr "%<yel on considère que le backend est >"
 
-#: src/wmcoincoin.c:1533
+#: src/wmcoincoin.c:1536
 msgid "%<YEL modern style>\n"
 msgstr "%<YEL de style moderne>\n"
 
-#: src/wmcoincoin.c:1534
+#: src/wmcoincoin.c:1537
 msgid "%<YEL old style>\n"
 msgstr "%<YEL à l'ancienne>\n"
 
-#: src/wmcoincoin.c:1535
+#: src/wmcoincoin.c:1538
 msgid "%<YEL without underpants>\n"
 msgstr "%<YEL sans slip>\n"
 
-#: src/wmcoincoin.c:1536
+#: src/wmcoincoin.c:1539
 msgid "%<YEL prrrrrrt>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:1631
+#: src/wmcoincoin.c:1634
 #, c-format
 msgid "Unable to load font %s\n"
 msgstr ""
+
+#~ msgid "hide balloon\n"
+#~ msgstr "cacher le ballon\n"
+
+#~ msgid "[empty]"
+#~ msgstr "[vide]"
 
 #~ msgid ""
 #~ "id=%d ua=%s\n"

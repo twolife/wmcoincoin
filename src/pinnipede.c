@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.64 2002/06/23 10:44:05 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.65 2002/06/26 22:19:49 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.65  2002/06/26 22:19:49  pouaite
+  ptit fix pour la tribune de f-cpu + patch de lordoric
+
   Revision 1.64  2002/06/23 10:44:05  pouaite
   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
@@ -2498,7 +2501,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
 
   {
     XTextProperty window_title_property;
-    char* window_title = "pinnipede teletype";
+    char* window_title = NULL; // = "pinnipede teletype";
     char* icon_title = "pinnipede";
     XSizeHints* win_size_hints;
     int rc;
@@ -2508,6 +2511,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     char s[512];
 
     /* nom de la fenetre */
+    window_title = str_printf("pinnipede teletype from %s", Prefs.site_root);
     rc = XStringListToTextProperty(&window_title,1, &window_title_property); assert(rc);
     XSetWMName(dock->display, pp->win, &window_title_property);
     XFree(window_title_property.value);
@@ -2518,6 +2522,7 @@ pp_show(Dock *dock, DLFP_tribune *trib)
     win_size_hints= XAllocSizeHints(); assert(win_size_hints);
     XFree(window_title_property.value);
 
+    free(window_title); window_title = NULL;
 
     /* au premier lancement, la pos n'est pas connue (sauf si specifee
        dans les options ) */

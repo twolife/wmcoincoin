@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.38 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.39 2002/06/26 22:19:49 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.39  2002/06/26 22:19:49  pouaite
+  ptit fix pour la tribune de f-cpu + patch de lordoric
+
   Revision 1.38  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -719,12 +722,13 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     char *qlogin;
     char *qmessage;
     char *qua;
+    char *qhost;
     char sid[20], stimestamp[20], strollscore[20], *stypemessage,  stypemessage2[4];
     int typemessage;
     char *shift_cmd;
 
-    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r", "$R", "$v"};
-    const char *subs[] = {  "",   "",   "",   "",   "",   "",   "", "", VERSION};
+    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r", "$R", "$v","$h"};
+    const char *subs[] = {  "",   "",   "",   "",   "",   "",   "", "", VERSION, ""};
 
     
     //----< Code pour passer les infos d'un post à une commande extérieure >
@@ -732,6 +736,7 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     qlogin = shell_quote(it->login);
     qmessage = shell_quote(it->msg);
     qua = shell_quote(it->useragent);
+    qhost = shell_quote(Prefs.site_root);
     snprintf(sid, 20, "%d", it->id);
     snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
@@ -760,7 +765,7 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     subs[5] = strollscore;
     subs[6] = stypemessage;
     subs[7] = stypemessage2;
-    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 9);
+    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 10);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
 
@@ -768,7 +773,7 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     free(qlogin);
     free(qmessage);
     free(qua);
-
+    free(qhost);
     //----</ Code >
     it = it->next;
 

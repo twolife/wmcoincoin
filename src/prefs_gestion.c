@@ -25,7 +25,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     The_Prefs->use_iconwin = 0;
   }
 
-  while ((optc = getopt(argc, argv, "hd:D:f:F:u:m:v:p:b:g::P:A:wBHx:r:s:C:X:c:o:W")) !=-1) {
+  while ((optc = getopt(argc, argv, "hd:D:f:F:u:m:v:p:b:g::P:A:wBHx:r:s:C:X:c:o:Wl:L:")) !=-1) {
     switch (optc) {
     case 'h':
       {
@@ -73,6 +73,8 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	myprintf(_(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
 		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n"), options_file_name);
 	myprintf(_(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)\n"));
+	myprintf(_(" %<GRN -l> %<CYA locale>\t: change the default locale (use -l fr to force wmcoincoin to speak french) (or set LC_MESSAGES properly)\n"));
+	myprintf(_(" %<GRN -L> %<CYA locale_dir>\t: change the default directory of stored translations (default: %<grn %s>)\n"), LOCALEDIR);
 	exit(0);
       } break;
     case 'd': TEST_CMDLINE_OPT(OPT_tribune_delay); break;
@@ -120,6 +122,8 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     case 'C' : TEST_CMDLINE_OPT(OPT_http_cookie); break;
 		case 'W' : The_Prefs->pinnipede_open_on_start = 1; break; /* auto ouvre le pinnipede au lancement */
     case 'o': break; /* cette option est traitée dans init_default_prefs (cad AVANT la lecture du fichier d'options) */
+    case 'l': break; /* cette option est traitée au tout début de la fontion main() */
+    case 'L': break; /* cette option est traitée au tout début de la fontion main() */
     case ':':
     case '?':
     default:

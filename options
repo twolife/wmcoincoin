@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.28 2002/06/23 22:26:01 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.29 2002/06/26 22:19:48 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.29  2002/06/26 22:19:48  pouaite
+#%  ptit fix pour la tribune de f-cpu + patch de lordoric
+#%
 #%  Revision 1.28  2002/06/23 22:26:01  pouaite
 #%  bugfixes+support à deux francs des visuals pseudocolor
 #%
@@ -127,6 +130,7 @@
 ###  $r -> obsolete message type (do not use)
 ###  $R -> message type ( bit 0: message posted by you, bit 1: answer to one of your messages, bit 2: message selected by a keyword, bit 3: plopified/boitakoned message)
 ###  $v -> wmc² version
+###  $h -> remote host
 ### for example, to hear a duck sound each time you get an answer:
 #tribune.post_cmd: (if [ $(($R & 2)) -ne 0 ]; then echo $l msg=$m; play ~/coin.wav & fi)
 

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.30 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.31 2002/06/26 22:19:49 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.31  2002/06/26 22:19:49  pouaite
+  ptit fix pour la tribune de f-cpu + patch de lordoric
+
   Revision 1.30  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -588,7 +591,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
   }
  ouups1:
   if (err) {
-    myfprintf(stderr,_("%<RED Error while downloading '%s' (err=%d)\n"), URL, err);
+    myfprintf(stderr,_("%<RED Error while downloading '%s' (err=%d)>\n"), URL, err);
   }
   
   if (texte) free(texte);

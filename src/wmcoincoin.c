@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.46 2002/06/23 22:26:01 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.47 2002/06/26 22:19:49 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.47  2002/06/26 22:19:49  pouaite
+  ptit fix pour la tribune de f-cpu + patch de lordoric
+
   Revision 1.46  2002/06/23 22:26:01  pouaite
   bugfixes+support à deux francs des visuals pseudocolor
 
@@ -1502,7 +1505,25 @@ main(int argc, char **argv)
   pthread_t timer_thread;
 #endif
   setlocale (LC_ALL, "");
-  bindtextdomain (PACKAGE, LOCALEDIR);
+
+  /* on peut forcer la locale sans faire d'export LC_MESSAGES=blahblah
+     avec l'option -l */
+  {
+    const char *locale_dir = LOCALEDIR;
+    int i;
+    for (i=1; i < argc-1; i++) {
+      if (strcmp(argv[i],"-l")==0) {
+	setlocale(LC_MESSAGES, argv[i+1]);
+	//	printf("locale changed to '%s' (%s)\n",argv[i+1],setlocale (LC_MESSAGES, NULL));
+      }
+      if (strcmp(argv[i],"-L")==0) {
+	locale_dir = argv[i+1];
+	//	printf("locale changed to '%s' (%s)\n",argv[i+1],setlocale (LC_MESSAGES, NULL));
+      }
+    }
+    bindtextdomain (PACKAGE, locale_dir);
+  }
+
   textdomain (PACKAGE);
 
   srand(time(NULL));
@@ -1520,7 +1541,7 @@ main(int argc, char **argv)
     while (app_useragent[i] < '0' || app_useragent[i] > '9') app_useragent[i--] = 0;
   }
     
-  printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, ""));
+  printf(_("locale used: %s\n"), setlocale (LC_MESSAGES, NULL));
   
   memset(&Prefs, 0, sizeof(structPrefs));
   wmcc_prefs_initialize(argc, argv, &Prefs);

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.28  2002/06/26 22:19:48  pouaite
+dnl   ptit fix pour la tribune de f-cpu + patch de lordoric
+dnl
 dnl   Revision 1.27  2002/06/23 14:01:36  pouaite
 dnl   ouups, j'avais flingué les modifs depuis la v2.3.8b
 dnl
@@ -153,7 +156,7 @@ fi
 
 case "$host" in
     *-linux-*)
-          echo -e "\n${YELLOW}you are using GNU/linux, c'est Bien(c)(tm) !${RESET}\n"
+          echo -e "\n${YELLOW}you are using GNU/linux, it's Good(c)(tm) !${RESET}\n"
           ;;
     *-solaris*)
           echo -e "\n${YELLOW}oh oh !! wmcc runs quite well on solaris, good luck !${RESET}\n"
@@ -162,17 +165,17 @@ case "$host" in
           echo -e "\nbsd detected!\n"
 	  ;;
     *-cygwin*)
-	  echo -e "\n${YELLOW}cygwin detected !, bon courage${RESET}\n"
+	  echo -e "\n${YELLOW}cygwin detected !, may the force be with you, young mussel${RESET}\n"
      	  AC_CHECK_LIB(wsock32,select)
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
 	  LIBS="${LIBS} /lib/libregex.a -lm"        
 	  ;;
     *-darwin*)
-          echo -e "\n${YELLOW}darwin detected !${RESET}\n"
+          echo -e "\n${YELLOW}darwin detected, vilain macounet !${RESET}\n"
           ;;
     *GNU*)
-	  echo -e "\n${YELLOW}GNU/Hurd ! ${RESET}\n"
+	  echo -e "\n${YELLOW}GNU/Hurd ! you need to shave yourself${RESET}\n"
 	  ;;
     *)
 	  echo -e "\n${YELLOW}you are compiling on $host , it's original${RESET}\n"

@@ -871,8 +871,14 @@ http_request_send(HttpRequest *r)
 			    r->host, r->port, r->host_path);
     }
   }
-
-  header = str_cat_printf(header, "Host: %s:%d" CRLF, r->host, r->port);
+  
+  if (r->port != 80) {
+    header = str_cat_printf(header, "Host: %s:%d" CRLF, r->host, r->port);
+  } else {
+    /* qd le port est celui par défaut, on ne le précise pas
+       pour faire plaisir à f-cpu.tuxfamily.org qui n'en veut pas sinon */
+    header = str_cat_printf(header, "Host: %s" CRLF, r->host);
+  }
 
   if (r->cookie) {
     header = str_cat_printf(header, "Cookie: %s" CRLF, r->cookie);
@@ -911,6 +917,8 @@ http_request_send(HttpRequest *r)
     header = str_cat_printf(header, "Referer: %s" CRLF,
 			  r->referer);
   }
+
+  header = str_cat_printf(header, "Accept: */*" CRLF);
 
   if (r->type == HTTP_GET) {
     header = str_cat_printf(header, CRLF);
