@@ -1,3 +1,9 @@
+--------------------------v2.4.0-c-----------------------------------------
+2002-09-08  pouaite  <c0in@altern.org>
+
+	* src/wmcoincoin.c (update_timers): la ptite croix pour desactiver
+	l'autorefresh était cassée
+
 --------------------------v2.4.0-b-----------------------------------------
 2002-09-08  pouaite  <c0in@altern.org>
 

@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-09-08 19:30+0200\n"
+"POT-Creation-Date: 2002-09-08 20:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1241,37 +1241,37 @@ msgstr ""
 msgid "    (useragent: '%<CYA %s>\n"
 msgstr ""
 
-#: src/wmcoincoin.c:522
+#: src/wmcoincoin.c:521
 #, c-format
 msgid ""
 "[%s] Ooops, there must have been a little problem, the server answered:<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:531
+#: src/wmcoincoin.c:530
 #, c-format
 msgid "[%s] Damned ! There has been an error<p>%s"
 msgstr ""
 
-#: src/wmcoincoin.c:565
+#: src/wmcoincoin.c:564
 #, c-format
 msgid ""
 "Fork failed...(%s)..\n"
 " you sux\n"
 msgstr ""
 
-#: src/wmcoincoin.c:576
+#: src/wmcoincoin.c:575
 #, c-format
 msgid ""
 "Exec of wmccc failed...(%s)..\n"
 " you sux (wmccc not in path?)\n"
 msgstr ""
 
-#: src/wmcoincoin.c:602 src/wmcoincoin.c:621
+#: src/wmcoincoin.c:601 src/wmcoincoin.c:620
 #, c-format
 msgid "Unable to open '%s' for writing to save the state of the beast\n"
 msgstr ""
 
-#: src/wmcoincoin.c:656
+#: src/wmcoincoin.c:655
 msgid ""
 "<p align=center><b>Titles of the news</b></p><font color=blue><tt>Left "
 "Click</tt></font><tab>: display the article currently scrolling<br><font "
@@ -1280,7 +1280,7 @@ msgid ""
 "news window<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:663
+#: src/wmcoincoin.c:662
 msgid ""
 "<p align=center><b>This is a professionnal <font "
 "color=#a00000><i>Trolloscope</i></font></b></p>It displays symbols "
@@ -1296,7 +1296,7 @@ msgid ""
 "green blinking shows a change in the value of your XP"
 msgstr ""
 
-#: src/wmcoincoin.c:673
+#: src/wmcoincoin.c:672
 msgid ""
 "When this led is blue, a <b>http transfer</b> is underway. A <b><font "
 "color=red>red</font></b> blinking indicates a problem during the last "
@@ -1304,7 +1304,7 @@ msgid ""
 "error message<br>"
 msgstr ""
 
-#: src/wmcoincoin.c:677
+#: src/wmcoincoin.c:676
 msgid ""
 "This led blinks when you have just sent a message on the board, and it is "
 "waiting for its delivery.<br>It is blue when the message is being sent, and "
@@ -1316,14 +1316,14 @@ msgid ""
 "resolution"
 msgstr ""
 
-#: src/wmcoincoin.c:684
+#: src/wmcoincoin.c:683
 msgid ""
 "When this led blinks green, a new article is available.<br><font "
 "color=blue><tt>Left Click</tt></font><tab>: see the article<br><font "
 "color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"
 msgstr ""
 
-#: src/wmcoincoin.c:688
+#: src/wmcoincoin.c:687
 msgid ""
 "When this led blinks green, you have just received a new message.<br><font "
 "color=blue><tt>Left Click</tt></font>: see the new message with the external "
@@ -1332,7 +1332,7 @@ msgid ""
 "tt></font>: cancel all new messages"
 msgstr ""
 
-#: src/wmcoincoin.c:693
+#: src/wmcoincoin.c:692
 msgid ""
 "When the cursor is above this led, the level of the <font "
 "color=#a00000><i>Troll-o-meter</i></font> is displayed.<br><font "
@@ -1343,7 +1343,7 @@ msgid ""
 "read the <tt>~/.wmcoincoin/options</tt> file"
 msgstr ""
 
-#: src/wmcoincoin.c:698
+#: src/wmcoincoin.c:697
 msgid ""
 "The time of the last message received on the board, and the number of "
 "seconds that have past since<br><font color=blue><tt>Left Click</tt></font>: "
@@ -1351,17 +1351,17 @@ msgid ""
 "tt></font>: show/hide the <b>pinnipede teletype</b>"
 msgstr ""
 
-#: src/wmcoincoin.c:704
+#: src/wmcoincoin.c:703
 msgid "<b><i>DON'T PANIC</i></b>"
 msgstr ""
 
-#: src/wmcoincoin.c:835
+#: src/wmcoincoin.c:834
 msgid ""
 "Got a SIGPIPE ! Either ispell crashed, or you have just killed\n"
 "violently the coincoin.\n"
 msgstr ""
 
-#: src/wmcoincoin.c:848
+#: src/wmcoincoin.c:847
 msgid "pan ! pan ! ... arg\n"
 msgstr ""
 

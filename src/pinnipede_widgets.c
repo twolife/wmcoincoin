@@ -170,7 +170,7 @@ pp_tabs_refresh(Dock *dock)
       }
 
       XSetForeground(dock->display, dock->NormalGC, bar_pixel);
-      if (board->board_refresh_delay > 0) {
+      if (board->board_refresh_delay > 0 && board->auto_refresh) {
 	int zw = ((w-7)*MIN(board->board_refresh_cnt,board->board_refresh_delay))/board->board_refresh_delay;
 	zw = (w-7 - zw);
 	//	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
