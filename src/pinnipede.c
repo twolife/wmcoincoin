@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.81 2002/10/05 18:08:14 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.82 2002/10/06 22:55:58 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2730,8 +2730,6 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
     }
   } break;
   case PUP_TOGGLE_MINIB: {
-    //    pp->use_minibar = pp->use_minibar ? 0 : 1;
-    printf("toggle mini %d\n", pp->use_minibar);
     if (pp->use_minibar == 0) {
       pp_minib_show(dock);
     } else {
@@ -3008,6 +3006,14 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       pp_boardshot_kikoooo(dock, 0, 1, use_js);
 
     }
+  } else if (event->button == Button3) {
+    if (pp->use_minibar == 0) {
+      pp_minib_show(dock);
+    } else {
+      pp_minib_hide(dock);
+    }    
+    pp_update_content(dock, pp->id_base, pp->decal_base,0,0);
+    pp_refresh(dock, pp->win, NULL);
   }
 }
 
@@ -3282,7 +3288,8 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	mouse_button_press_y = old_mouse_y = event->xbutton.y;
 	dragging = 0;
 	time_drag = event->xbutton.time;
-	if (event->xbutton.button == Button3) {
+	if (event->xbutton.button == Button3
+	    && (event->xbutton.state & (ShiftMask | ControlMask)) == 0) {
 	  pp_handle_button3_press(dock, &event->xbutton);
 	}
       }
@@ -3330,7 +3337,8 @@ pp_dispatch_event(Dock *dock, XEvent *event)
 	}
 	pp->sel_head_x = event->xmotion.x; pp->sel_head_y = event->xmotion.y;
 	pp_selection_refresh(dock);
-      } else if (event->xmotion.state & Button3Mask) {
+      } else if ((event->xmotion.state & ShiftMask) && 
+		 (event->xmotion.state & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask))==0) {
 	int decal_y;
 	decal_y = event->xmotion.y - old_mouse_y;
 	decal_y /= 8;

@@ -4075,7 +4075,7 @@ aspell
 
 		<widget>
 		  <class>GtkCheckButton</class>
-		  <name>checkbutton1</name>
+		  <name>checkbutton_pp_hungry_boitakon</name>
 		  <tooltip>If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled</tooltip>
 		  <can_focus>True</can_focus>
 		  <signal>
@@ -7757,6 +7757,18 @@ categ 4
 			  <name>clist_kplop</name>
 			  <tooltip>Hint: to temporarily disable all plopification/boitakon, use the gray button on the pinnipede button bar.</tooltip>
 			  <can_focus>True</can_focus>
+			  <signal>
+			    <name>row_move</name>
+			    <handler>on_clist_klist_row_move</handler>
+			    <data>&quot;clist_kplop&quot;</data>
+			    <last_modification_time>Sun, 01 Sep 2002 18:20:11 GMT</last_modification_time>
+			  </signal>
+			  <signal>
+			    <name>select_row</name>
+			    <handler>on_clist_klist_select_row</handler>
+			    <data>&quot;clist_kplop&quot;</data>
+			    <last_modification_time>Sun, 01 Sep 2002 18:27:05 GMT</last_modification_time>
+			  </signal>
 			  <columns>3</columns>
 			  <column_widths>112,295,17</column_widths>
 			  <selection_mode>GTK_SELECTION_SINGLE</selection_mode>

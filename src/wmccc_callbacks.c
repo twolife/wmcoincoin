@@ -71,7 +71,6 @@ on_bt_color_draw(GtkWidget *widget, GdkRectangle *area UNUSED, gpointer user_dat
     color.red   = (((*col_ptr) & 0xff0000) >> 16) * 256+ 127;
     color.green = (((*col_ptr) & 0x00ff00) >> 8) * 256 + 127;
     color.blue  = (((*col_ptr) & 0x0000ff)     ) * 256 + 127;
-    printf("color = %06x %d %d %d\n", *col_ptr, color.red , color.green, color.blue);
     
     if (gdk_colormap_alloc_color( gdk_colormap_get_system(), &color, FALSE, TRUE)) {
       GdkGC *gc = NULL;

@@ -226,7 +226,7 @@ create_main_win (void)
   GtkWidget *hbox161;
   GtkWidget *checkbutton_pp_auto_open;
   GtkWidget *checkbutton_pp_use_classical_tabs;
-  GtkWidget *checkbutton1;
+  GtkWidget *checkbutton_pp_hungry_boitakon;
   GtkWidget *frame9;
   GtkWidget *vbox13;
   GtkWidget *hbox11;
@@ -2269,13 +2269,13 @@ create_main_win (void)
   gtk_widget_show (checkbutton_pp_use_classical_tabs);
   gtk_box_pack_start (GTK_BOX (hbox161), checkbutton_pp_use_classical_tabs, FALSE, FALSE, 0);
 
-  checkbutton1 = gtk_check_button_new_with_label ("Very Hungry boitakon");
-  gtk_widget_ref (checkbutton1);
-  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton1", checkbutton1,
+  checkbutton_pp_hungry_boitakon = gtk_check_button_new_with_label ("Very Hungry boitakon");
+  gtk_widget_ref (checkbutton_pp_hungry_boitakon);
+  gtk_object_set_data_full (GTK_OBJECT (main_win), "checkbutton_pp_hungry_boitakon", checkbutton_pp_hungry_boitakon,
                             (GtkDestroyNotify) gtk_widget_unref);
-  gtk_widget_show (checkbutton1);
-  gtk_box_pack_start (GTK_BOX (hbox161), checkbutton1, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, checkbutton1, "If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled", NULL);
+  gtk_widget_show (checkbutton_pp_hungry_boitakon);
+  gtk_box_pack_start (GTK_BOX (hbox161), checkbutton_pp_hungry_boitakon, FALSE, FALSE, 0);
+  gtk_tooltips_set_tip (tooltips, checkbutton_pp_hungry_boitakon, "If a message replies to a message in the hungry boitakon and another one which is not in the boitakon, it will be put in the boitakon only if this option is toggled", NULL);
 
   frame9 = gtk_frame_new ("Transparency mode");
   gtk_widget_ref (frame9);
@@ -4738,7 +4738,7 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (checkbutton_pp_use_classical_tabs), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
-  gtk_signal_connect (GTK_OBJECT (checkbutton1), "toggled",
+  gtk_signal_connect (GTK_OBJECT (checkbutton_pp_hungry_boitakon), "toggled",
                       GTK_SIGNAL_FUNC (on_checkbutton_toggled),
                       NULL);
   gtk_signal_connect (GTK_OBJECT (checkbutton_start_in_transparency), "toggled",
@@ -4957,6 +4957,12 @@ create_main_win (void)
   gtk_signal_connect (GTK_OBJECT (bt_pp_plopified_color_trans), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_color_clicked),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (clist_kplop), "row_move",
+                      GTK_SIGNAL_FUNC (on_clist_klist_row_move),
+                      "clist_kplop");
+  gtk_signal_connect (GTK_OBJECT (clist_kplop), "select_row",
+                      GTK_SIGNAL_FUNC (on_clist_klist_select_row),
+                      "clist_kplop");
   gtk_signal_connect (GTK_OBJECT (bt_kplop_up), "clicked",
                       GTK_SIGNAL_FUNC (on_bt_klist_up_clicked),
                       "clist_kplop");
