@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.15 2002/01/20 02:17:13 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.16 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.16  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.15  2002/01/20 02:17:13  pouaite
   modifs d'ordre esthetique (!) sans grand interet
 
@@ -1000,7 +1003,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
   XSetBackground(dock->display, dock->NormalGC, bgpixel);
 
   old_pixel = pp->win_bgpixel;
-
+  pixel = 0L;
   y = pp->fn_base->ascent;
   old_pos = 0;
   if (pw) {

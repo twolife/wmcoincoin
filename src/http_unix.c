@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.4 2002/01/20 00:37:06 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.5 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
+  Revision 1.5  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.4  2002/01/20 00:37:06  pouaite
   bugfix qui permet d'utiliser l'option 'http.proxy_use_nocache:' sur les horribles proxy transparents
 
@@ -553,13 +556,14 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 
   last_modified_s[0] = 0;
   if (last_modified && last_modified[0]) {
+    int l;
+    l = strlen(last_modified); l--;
+    while (l>=0 && (unsigned char)last_modified[l] < ' ') last_modified[l--]=0;
     snprintf(last_modified_s,512,"If-Modified-Since: %s" CRLF, last_modified);
   }
 
   pnocache = Prefs.proxy_nocache ? "Pragma: no-cache" CRLF "Cache-Control: no cache" CRLF : "";
   
-  printf("Prefs.proxy_nocache=%d, '%s'\n", Prefs.proxy_nocache, pnocache);
-
   if (proxy) {
     sockfd = http_connect(proxy, proxy_port);
   } else {
@@ -603,7 +607,7 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 	     host_name, host_port, host_path, host_name, host_port, cookie_s,user_agent, last_modified_s, auth, pnocache);
     free(auth);
   }
-  BLAHBLAH(0,printf("sending:\n%s", buff));
+  BLAHBLAH(2,printf("sending:\n%s", buff));
   if (http_iwrite(sockfd, buff, strlen(buff)) == -1) {
     snprintf(http_errmsg, HTTP_ERRSZ, "http_get: %s", strerror(errno));
     goto error;

@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.12 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.13 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.13  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.12  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -1138,7 +1141,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       } else {
 	nbcom = atoi(p3+9);
       }
-      BLAHBLAH(1,myprintf("NBCOM: '%.20s'->%<YEL %d>\n",p3+9,nbcom));
+      BLAHBLAH(1,myprintf("NBCOM: '%.20s'->%<YEL %d>\n",p3 ? p3+9 : "<erreur>",nbcom));
       //      }
       p = p2;
 

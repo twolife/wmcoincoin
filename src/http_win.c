@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.4 2002/01/20 00:37:06 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.5 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.5  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.4  2002/01/20 00:37:06  pouaite
   bugfix qui permet d'utiliser l'option 'http.proxy_use_nocache:' sur les horribles proxy transparents
 
@@ -401,6 +404,7 @@ http_skip_header(SOCKET fd, char *last_modified)
           if (strncmp(buff,"Last-Modified: ",15) == 0) {
             strncpy(last_modified, buff + 15, 512);
           }
+	}
 	lnum++;
 	i=0;
       } else {
@@ -442,7 +446,7 @@ http_get_line(char *s, int sz, SOCKET fd)
   } while (got == SOCKET_ERROR && WSAGetLastError() == WSAEINPROGRESS);
 
   if (got == SOCKET_ERROR) {
-    snprintf(http_errmsg, HTTP_ERRSZ, "http_get_line: %s! %d %d", strerror(WSAGetLastError()), WSAGetLastError(), WSAEINPROGRESS);
+    snprintf(http_errmsg, HTTP_ERRSZ, "http_get_line: '%s'! %d %d cnt=%d", strerror(WSAGetLastError()), WSAGetLastError(), WSAEINPROGRESS, cnt);
     printf("http_get_line: %s\n", http_errmsg);
     goto error;
   }
@@ -485,6 +489,9 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
 
   last_modified_s[0] = 0;
   if (last_modified && last_modified[0]) {
+    int l;
+    l = strlen(last_modified); l--;
+    while (l>=0 && (unsigned char)last_modified[l] < ' ') last_modified[l--]=0;
     snprintf(last_modified_s,512,"If-Modified-Since: %s" CRLF, last_modified);
   }
 
@@ -541,7 +548,7 @@ http_get_with_cookie(const char *host_name, int host_port, const char *host_path
   //  write(sockfd, buff, strlen(buff));
   //BLAHBLAH(2,printf("ok, sent\n"));
 
-  if (http_skip_header(sockfd) != 0) {
+  if (http_skip_header(sockfd, last_modified) != 0) {
     closesocket (sockfd);
     goto error;
   }

@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.in,v $
+dnl   Revision 1.8  2002/01/20 20:53:22  pouaite
+dnl   bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+dnl
 dnl   Revision 1.7  2002/01/13 20:38:31  pouaite
 dnl   fix du configure.in qui detecte cygwin a tors et à travers avec les v. recentes de autoconf
 dnl
@@ -32,6 +35,10 @@ dnl =======================
 AC_CANONICAL_HOST
 COIN_ARCH="${host_cpu}-${host_vendor}-${host_os}"
 AC_SUBST(COIN_ARCH)
+case $host_os in
+  *cygwin* ) CYGWIN=yes;;
+         * ) CYGWIN=no;;
+esac
 
 dnl Checks for programs.
 dnl ===================

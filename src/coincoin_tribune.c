@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.16 2002/01/20 02:17:13 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.17 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.17  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.16  2002/01/20 02:17:13  pouaite
   modifs d'ordre esthetique (!) sans grand interet
 
@@ -477,11 +480,11 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     char *qlogin;
     char *qmessage;
     char *qua;
-    char sid[20], stimestamp[20], strollscore[20];
+    char sid[20], stimestamp[20], strollscore[20], *stypemessage;
     char *shift_cmd;
 
-    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s"};
-    const char *subs[] = {"", "", "", "", "", ""};
+    const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r"};
+    const char *subs[] = {  "",   "",   "",   "",   "",   "",   ""};
 
     
     //----< Code pour passer les infos d'un post à une commande extérieure >
@@ -492,7 +495,10 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     snprintf(sid, 20, "%d", it->id);
     snprintf(stimestamp, 20, "%ld", it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
-
+    if (it->is_my_message) stypemessage = "1";
+    else if (it->is_answer_to_me) stypemessage = "2";
+    else if (tribune_hilight_key_list_test_mi(it, trib->hilight_key_list)) stypemessage = "3";
+    else stypemessage = "0";
 
     subs[0] = qlogin;
     subs[1] = qmessage;
@@ -500,7 +506,8 @@ dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
     subs[3] = sid;
     subs[4] = stimestamp;
     subs[5] = strollscore;
-    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 6);
+    subs[6] = stypemessage;
+    shift_cmd = str_multi_substitute(Prefs.post_cmd, keys, subs, 7);
     BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
     system(shift_cmd);
 

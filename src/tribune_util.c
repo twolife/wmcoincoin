@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.3 2002/01/20 02:17:13 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.4 2002/01/20 20:53:22 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.4  2002/01/20 20:53:22  pouaite
+  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
+
   Revision 1.3  2002/01/20 02:17:13  pouaite
   modifs d'ordre esthetique (!) sans grand interet
 
@@ -574,6 +577,7 @@ tribune_hilight_key_list_type_name(HilightKeyType t)
   case HK_LOGIN: return "login";
   case HK_WORD: return "mot";
   case HK_ID: return "message id";
+  case HK_ALL: break;
   }
   return NULL;
 }
