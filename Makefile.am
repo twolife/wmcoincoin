@@ -1,3 +1,9 @@
+## rcsid=$Id: Makefile.am,v 1.2 2001/12/02 18:32:05 pouaite Exp $
+## ChangeLog:
+##   $Log: Makefile.am,v $
+##   Revision 1.2  2001/12/02 18:32:05  pouaite
+##   update suite à la modif sur http.c et a la generation automatique de src/default*.h
+##
 ## Process this file with automake to produce Makefile.in
 
 SUBDIRS = src doc

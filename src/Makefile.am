@@ -1,25 +1,36 @@
+## rcsid=$Id: Makefile.am,v 1.2 2001/12/02 18:32:05 pouaite Exp $
+## ChangeLog:
+##   $Log: Makefile.am,v $
+##   Revision 1.2  2001/12/02 18:32:05  pouaite
+##   update suite à la modif sur http.c et a la generation automatique de src/default*.h
+##
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = wmcoincoin
 
-EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c
+EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
 wmcoincoin_SOURCES = \
-	myprintf.c myprintf.h defaultrcfile.h defaultoptionsfile.h \
+	myprintf.c myprintf.h defaultuseragents.h defaultoptionsfile.h \
 	raster.c raster.h troll_detector.c troll_data.h \
 	pinnipede.c editwin.c newswin.c \
 	picohtml.c picohtml.h msgbox.c balloon.c \
-	wmcoincoin.c coincoin.h global.h http.h \
+	wmcoincoin.c coincoin.h global.h http.c http.h \
 	coin_util.c coin_util.h \
 	coincoin_prefs.c coincoin_prefs.h \
 	coincoin_news.c coincoin_tribune.c \
 	regexp.h regexp.c general.h \
 	spell_coin.c spell_coin.h
 
-wmcoincoin_LDADD = http.o
+defaultuseragents.h: ../useragents
+	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h
 
-http.c: @HTTP_SRC@
-	ln -sf @HTTP_SRC@ http.c
+defaultoptionsfile.h: ../options
+	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
+
+wmcoincoin.o: defaultuseragents.h
+
+coincoin_prefs.o: defaultoptionsfile.h
 
 install: install-am
 # petite update merci anvil !
