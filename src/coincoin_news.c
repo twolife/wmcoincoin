@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.8 2002/01/10 09:31:40 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.9  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.8  2002/01/10 09:31:40  pouaite
   j'avais oublie un fichier.. dernier morceau du pacth de glandium...
 
@@ -510,15 +513,15 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     err = 0; n->nb_comment = 0;
 
     free(s);
-  ouups1:
     
   } else {
     myfprintf(stderr, "erreur pendant le d/l de '%<YEL %s>' : %<RED %s>\n", URL, http_error());
   }
+ ouups1:
   if (err) {
     myfprintf(stderr,"%<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", URL, err);
   }
-
+  
   if (texte) free(texte);
   if (liens) free(liens);
   if (date) free(date);
@@ -1168,6 +1171,9 @@ dlfp_yc_update_comments(DLFP *dlfp)
   ouups1:
     free(s);
   ouups:
+    if (err) {
+      myfprintf(stderr,"dlfp_yc_update_comments: %<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", path, err);
+    }
   } else {
     myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
   }
@@ -1397,6 +1403,9 @@ dlfp_msg_update_messages(DLFP *dlfp)
     flag_updating_messagerie = 0;
     free(s);
   ouups:
+    if (err) {
+      myfprintf(stderr,"dlfp_msg_update_messages: %<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", path, err);
+    }
   } else {
     myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
   }

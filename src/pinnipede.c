@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.9 2002/01/12 19:03:54 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.10 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.10  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.9  2002/01/12 19:03:54  pouaite
   bugfix de picohtml et raccourci altgr-e pour le symbole euro (gruik)
 
@@ -193,7 +196,9 @@ check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, int *ref_m, int
       h = (w[0]-'0')*10 + (w[1]-'0');
       m = (w[2]-'0')*10 + (w[3]-'0');
       s = (w[4]-'0')*10 + (w[5]-'0');
-      if (w[6] == '¹') num = 0; else if (w[6] == '²') num = 1; else if (w[6] == '³') num = 2; else return 0;
+      if (w[6] == (unsigned char)'¹') num = 0; 
+      else if (w[6] == (unsigned char)'²') num = 1; 
+      else if (w[6] == (unsigned char)'³') num = 2; else return 0;
     } else return 0;
 
     /* ci-dessous minipatch pour Dae qui reference les posts multiples
@@ -1937,6 +1942,99 @@ int pp_ismapped(Dock *dock) {
   return dock->pinnipede->mapped;
 }
 
+
+/* --------- patch de lordOric, aka "plateau de fruits de mer" ------------*/
+/* Scrinchote d'un message */
+int 
+pp_tribuneshot_save_msg( tribune_msg_info *mi, FILE *file )
+{
+   char time[10];
+   
+   assert(file); assert(mi);
+
+   snprintf(time, 10, "%02d:%02d:%02d",mi->hmsf[0], mi->hmsf[1], mi->hmsf[2]);
+   
+   if ( mi->troll_score )
+     fprintf( file, "<tr><td><FONT color=red><b>%d</b></FONT></td>\n",mi->troll_score);
+   else
+     fprintf( file, "<tr><td></td>\n");
+   
+   fprintf(file,"<td>%s</td>\n", time);
+   if ( mi->login && strlen(mi->login))
+     fprintf(file,"<td><FONT color=red><center>%s</center></FONT></td>\n",mi->login);
+   else {
+     char *p;
+     char short_ua[15];
+     if (mi->tatouage) {
+       p = mi->tatouage->name;
+       if (strcmp(mi->tatouage->name, "?") == 0) {
+	 make_short_name_from_ua(mi->useragent, short_ua, 15);
+	 p = short_ua;
+       }
+     } else p = "[???]";
+     fprintf( file, "<td><FONT color=brown><center>%.12s</center></FONT></td>\n",p);
+   }
+   fprintf( file,"<td>%s</td></tr>\n", mi->msg);
+
+   return 0;
+}
+
+
+/* Tribuneshot : un chouette plateau de fruits de mer ;) */
+int
+pp_tribuneshot_kikoooo(Dock *dock, DLFP_tribune *tribune ) 
+{
+  char *file_name;
+  FILE *file;
+  time_t time_shot;
+  int file_exist;
+  tribune_msg_info *msg = tribune->msg;
+  
+  file_name = str_substitute(Prefs.tribune_scrinechote, "~", getenv("HOME"));
+  file = fopen( file_name, "r");
+  file_exist = (file!=NULL);
+  if ( file_exist ) fclose( file ); 
+  
+  file = fopen( file_name, "a");
+  if ( ! file ) {
+    char errmsg[512];
+    snprintf(errmsg, 512, "Erreur d'ouverture de %s\n", file_name);
+    msgbox_show(dock, errmsg);
+    free(file_name);
+    return -1;
+  }
+  
+  if ( ! file_exist ) {
+    fprintf( file, 
+	     "<html><head><title>Archive tribune</title>"
+	     "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-15\">"
+	     "</head>");
+    fprintf( file, "<body><center>");
+  }
+  
+  time( &time_shot );
+  fprintf( file, "<br><br> *** Scrinechote - %s *** <br>", ctime( &time_shot ) );
+  fprintf( file, "<table>");
+  
+  while ( msg ) {
+    pp_tribuneshot_save_msg(msg, file);
+    msg = msg->next;
+  }
+  
+  fprintf( file, "</table><br>\n");
+  fclose( file);
+  
+  {
+    char infomsg[512];
+    snprintf(infomsg,512,"Scrinechote de la tribune (%s) à %s", file_name, ctime(&time_shot));
+    msgbox_show(dock, infomsg);
+  }
+  free(file_name);
+  return 0;
+}
+
+/* ------------ fin tribuneshot ------------*/
+
 void
 pp_balloon_help(Dock *dock, int x, int y)
 {
@@ -1965,9 +2063,12 @@ pp_balloon_help(Dock *dock, int x, int y)
 	       "Quand le pointeur se trouve au-dessus d'une <b>référence à un post précédent</b>, celui-ci sera souligné. Si vous cliquez:<br>"
 	       "<font color=blue>Click Gauche</font><tab>: 'aller' au message référencé<br>"
 	       "<font color=blue>Click Droite</font><tab>: copier cette référence dans le clipboard (d'accord, c'est pas très utile...)<br><br>"
+
+	       "Un filtrage rudimentaire est disponible à l'aide de <font color=blue>Ctrl+left clic</font> sur un mot, login, useragent.. (utiliser le bouton bleu pour l'annuler)<br>"
+	       "Vous pouvez prendre un 'shot' de la tribune (aka plateau de fruits de mer), avec <font color=blue>Ctrl+Middle Clic</font><br><br>"
 	       
 	       "Pour comprendre l'affichage des <b>useragents</b> activé par le bouton rouge sombre (à quinze pixels sur votre gauche), se reporter au "
-	       "fichier <tt>~/.wmcoincoin/useragents</tt><br><br> (hint: il a 5 positions différentes)"
+	       "fichier <tt>~/.wmcoincoin/useragents</tt><br><br> (hint: il a 5 positions différentes)<br><br>"
 	       "Le pinnipède télétype vous souhaite un agréable moulage.", 500);
 }
 
@@ -2282,23 +2383,28 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
       }
     } /* if (pw) */
   } else if (event->button == Button2) {
-    PostWord *pw;
+    if ((event->state & ControlMask)==0) {    
+      PostWord *pw;
 
-    pw = pp_get_pw_at_xy(pp, mx, my);
-    /* middle clic sur une horloge, on copie le contenu du message dans le clipboard */
-    if (pw && (pw->attr & PWATTR_TSTAMP)) {
-      tribune_msg_info *mi;
-      mi = tribune_find_id(trib, pw->parent->id);
-      if (mi) {
-	if (mi->msg && strlen(mi->msg)) {
-	  editw_cb_copy(dock, pp->win, mi->msg, strlen(mi->msg));
+      pw = pp_get_pw_at_xy(pp, mx, my);
+      /* middle clic sur une horloge, on copie le contenu du message dans le clipboard */
+      if (pw && (pw->attr & PWATTR_TSTAMP)) {
+	tribune_msg_info *mi;
+	mi = tribune_find_id(trib, pw->parent->id);
+	if (mi) {
+	  if (mi->msg && strlen(mi->msg)) {
+	    editw_cb_copy(dock, pp->win, mi->msg, strlen(mi->msg));
+	  }
+	}
+      } else if (pw && pw->attr & PWATTR_LNK) {
+	/* clic gauche sur une url , on affiche le truc dans le browser externe numero 2 */
+	if (strlen(pw->attr_s)) {
+	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 2);
 	}
       }
-    } else if (pw && pw->attr & PWATTR_LNK) {
-      /* clic gauche sur une url , on affiche le truc dans le browser externe numero 2 */
-      if (strlen(pw->attr_s)) {
-	open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 2);
-      }
+    } else {
+      /* Ctrl+Middle clic: Et un scrinechote, un ! */
+      pp_tribuneshot_kikoooo(dock, trib);
     }
   } else if (event->button == Button3) {
     PostWord *pw;

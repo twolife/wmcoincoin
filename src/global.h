@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.6 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: global.h,v 1.7 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.7  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.6  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -137,6 +140,9 @@ typedef struct _structPrefs{
   int ew_do_spell;
   char* ew_spell_cmd;
   char* ew_spell_dict;
+  char *post_cmd; /* commande exécutée après chaque nouveau post lu ($m=message, $l=login, $t=timestamp, $u=ua, $i=id, $s=troll_score) */
+  /* Nom du fichier de scrinechote */
+  char* tribune_scrinechote;
 } structPrefs;
 
 /* variables communes ici: */

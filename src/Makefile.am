@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.2 2001/12/02 18:32:05 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.3 2002/01/13 15:19:00 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.3  2002/01/13 15:19:00  pouaite
+##   double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+##
 ##   Revision 1.2  2001/12/02 18:32:05  pouaite
 ##   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 ##
@@ -26,7 +29,7 @@ defaultuseragents.h: ../useragents
 	cat ../useragents | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' > ./defaultuseragents.h
 
 defaultoptionsfile.h: ../options
-	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
+	cat ../options | sed -e '/^#%.*/d' | sed -e 's/\\/\\\\/g' | sed -e 's/"/\\"/g' | sed -e 's/	/\\t/g' | sed -e 's/^/fprintf(f,"/g' | sed -e 's/$$/\\n");/g' | sed -e 's/%/%%/g' > ./defaultoptionsfile.h
 
 wmcoincoin.o: defaultuseragents.h
 

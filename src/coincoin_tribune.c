@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.9  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.8  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -362,6 +365,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
 
   /* evalue le potentiel trollesque */
   troll_detector(it);
+
   free(message);
   return it;
 }
@@ -398,6 +402,63 @@ dlfp_tribune_get_trollo_rate(const DLFP_tribune *trib, float *trollo_rate, float
 
 }
 
+
+/*
+  merci shift pour ce patch !
+*/
+void
+dlfp_tribune_call_external(const DLFP_tribune *trib, int last_id)
+{
+  tribune_msg_info *it;
+  
+
+  if (Prefs.post_cmd == NULL) {
+    return;
+  } else {
+    BLAHBLAH(1, myprintf("dlfp_tribune_call_external, id=%d - %d\n", last_id, trib->last_post_id));
+  }
+  if (last_id != -1) { /* si ce n'est pas le premier appel.. */
+    it = tribune_find_id(trib, last_id);
+  } else {
+    it = trib->msg;
+  }
+  while (it) {
+    char *qlogin;
+    char *qmessage;
+    char *qua;
+    char sid[20], stimestamp[20], strollscore[20];
+    char *shift_cmd, *s2;
+    
+    //----< Code pour passer les infos d'un post à une commande extérieure >
+
+    qlogin = shell_quote(it->login);
+    qmessage = shell_quote(it->msg);
+    qua = shell_quote(it->useragent);
+    snprintf(sid, 20, "%d", it->id);
+    snprintf(stimestamp, 20, "%ld", it->timestamp);
+    snprintf(strollscore, 20, "%d", it->troll_score);
+
+    shift_cmd = strdup(Prefs.post_cmd);
+    s2 = str_substitute(shift_cmd, "$l", qlogin); free(shift_cmd); shift_cmd = s2; 
+    s2 = str_substitute(shift_cmd, "$m", qmessage); free(shift_cmd); shift_cmd = s2; 
+    s2 = str_substitute(shift_cmd, "$u", qua); free(shift_cmd); shift_cmd = s2; 
+    s2 = str_substitute(shift_cmd, "$i", sid); free(shift_cmd); shift_cmd = s2; 
+    s2 = str_substitute(shift_cmd, "$t", stimestamp); free(shift_cmd); shift_cmd = s2; 
+    s2 = str_substitute(shift_cmd, "$s", strollscore); free(shift_cmd); shift_cmd = s2; 
+    BLAHBLAH(2, myprintf("post_cmd: /bin/sh -c %<YEL %s>\n", shift_cmd));
+    system(shift_cmd);
+
+    free(shift_cmd);
+    free(qlogin);
+    free(qmessage);
+    free(qua);
+
+    //----</ Code >
+    it = it->next;
+  }
+}
+
+
 void
 dlfp_updatetribune(DLFP *dlfp)
 {
@@ -405,6 +466,7 @@ dlfp_updatetribune(DLFP *dlfp)
   char s[8192];
   SOCKET fd;
   char *errmsg;
+  int old_last_post_id;
 
   const char *tribune_sign_posttime = "<post time=";
   const char *tribune_sign_info = "<info>";
@@ -419,6 +481,7 @@ dlfp_updatetribune(DLFP *dlfp)
   now = time(NULL);
 
   flag_updating_tribune++;
+  old_last_post_id = dlfp->tribune.last_post_id;
 
   dlfp->tribune.nbsec_since_last_msg += difftime(now, dlfp->tribune.local_time_last_check);
   /* des fois qu'une des 2 horloges soit modifie a l'arrache */
@@ -527,5 +590,8 @@ dlfp_updatetribune(DLFP *dlfp)
   flag_updating_tribune--;
 
   flag_tribune_updated = 1;  
-}
 
+  if (dlfp->tribune.last_post_id != old_last_post_id) { /* si de nouveaux messages ont été reçus */
+    dlfp_tribune_call_external(&dlfp->tribune, old_last_post_id);
+  }
+}

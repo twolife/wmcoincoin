@@ -1,14 +1,32 @@
+2002-01-13  pouaite  <c0in@altern.org>
+
+	* yé fais le ménage un peu partout
+
+2002-01-13  shift
+
+	* src/coincoin_tribune.c (dlfp_tribune_call_external): mouvelle
+	option 'tribune.post_cmd' pour appeler un prog externe à chaque
+	nouveau message. Réservé aux personnes AWARE, ceci était la plus
+	grosse faille de sécurité potentielle du canard !
+
+2002-01-13  lordOric
+
+	* src/pinnipede.c (pp_tribuneshot_kikoooo): nouvelle option
+	'tribune.archive' pour faire de jolis screenchotes de la tribune
+	en html (ctrl+middle clic dans le pinnipede pour faire un scrinechote)
+
 2002-01-12  pouaite  <c0in@altern.org>
 
 	* src/editwin.c, src/wmcoincoin.c, src/pinnipede.c, options,
 	src/coincoin_prefs.c: gestion de l'iso8859-15 (l'encoding est
-	maintenant dans les options). Par contre il faut installer les
-	fontes kivonbien.
+	maintenant dans les options: 'font.encoding'). Le symbole euro est
+	accessible avec AltGr-e dans le palmipede (ou bien la touche
+	'currency'). Par contre il faut installer les fontes kivonbien.
 
 2001-01-10 jarjarbinks 
 	* options, src/coincoin_prefs.c, src/global.h, src/wmcoincoin.c
-	patch qui ralentit progresivement les refresh de la tribune en cas de
-	totale inactivité de l'utilisateur
+	patch qui ralentit progressivement les refresh de la tribune en cas de
+	totale inactivité de l'utilisateur (option 'tribune.stop_refresh')
 	
 --------------------------v2.3.3mh4-----------------------------------------
 2001-01-08 glandium <mh@glandium.org>

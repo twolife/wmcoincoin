@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.4 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.5 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.5  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.4  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -441,3 +444,81 @@ convert_to_ascii(char *dest, const char *_src, int dest_sz, int with_bug_amp)
   return id;
 }
 
+/* renvoie une chaine (allouée correctement) contenant la substitution de toutes les occurences de 
+   'key' dans 'src' par 'substitution'
+*/
+char *
+str_substitute(const char *src, const char *key, const char *substitution)
+{
+  const char *p, *p_key;
+  char *dest, *p_dest;
+  int dest_sz, subs_len, key_len, p_len;
+
+  assert(strlen(key)); /* c trop bete */
+  if (src == NULL) return NULL;
+
+  subs_len = strlen(substitution);
+  key_len = strlen(key);
+  /* calcul de la longueur de la destination.. */
+  p = src;
+  dest_sz = strlen(src)+1;
+  while ((p_key=strstr(p, key))) {
+    dest_sz += (strlen(substitution) - strlen(key));
+    p = p_key+key_len;
+  }
+  dest = malloc(dest_sz);
+
+  /* et là PAF ! */
+  p = src;
+  p_dest = dest;
+  while ((p_key=strstr(p, key))) {
+    memcpy(p_dest, p, p_key-p);
+    p_dest += p_key-p;
+    memcpy(p_dest, substitution, subs_len);
+    p_dest += subs_len;
+    p = p_key + key_len;
+  }
+  p_len = strlen(p);
+  if (p_len) {
+    memcpy(p_dest, p, p_len); p_dest += p_len;
+  }
+  *p_dest = 0;
+  assert(p_dest - dest == dest_sz-1); /* capote à bugs */
+  return dest;
+}
+
+/* quotage pour les commandes externes.. à priori c'est comme pour open_url
+   mais bon.. je me refuse à donner la moindre garantie sur la sécurité 
+
+   be aware
+*/
+char *
+shell_quote(const char *src)
+{
+  char *quote = "&;`'\\\"|*?~<>^()[]{}$ ";
+  int i,dest_sz;
+  const char *p;
+  char *dest;
+
+  if (src == NULL || strlen(src) == 0) return "";
+
+  dest_sz = strlen(src)+1;
+  for (p=src; *p; p++) {
+    if (strchr(quote, *p)) dest_sz+=1;
+  }
+  dest = malloc(dest_sz);
+
+  for (p=src, i=0; *p; p++) {
+    if (strchr(quote, *p)) {
+      dest[i++] = '\\';
+    }
+    if (*p>=0 && *p < ' ') {
+      dest[i++] = ' ';
+    } else {
+      dest[i++] = *p;
+    }
+  }
+  dest[i] = 0;
+  assert(i == dest_sz-1); /* kapeaute à beugue */
+  return dest;
+}

@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.8 2002/01/12 17:29:08 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.9 2002/01/13 15:19:00 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.9  2002/01/13 15:19:00  pouaite
+  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
+
   Revision 1.8  2002/01/12 17:29:08  pouaite
   support de l'iso8859-15 (euro..)
 
@@ -223,47 +226,30 @@ option_news_size(const char  *_optarg,
   }
 }
 
-static void 
-perform_substitution(char *str, const char *from, const char *to)
-{
-  char *index = str;
-  int tlen = strlen(to);
-  int flen = strlen(from);
-  int offs, size;
-  
-  while ((index = strstr(index, from))) {
-    offs = index - str;
-    size = USERAGENT_MAX_LEN - offs - MAX(tlen, flen);
-    if (size > 0)
-      memmove(index + tlen, index + flen, size);
-    size = MIN(tlen, USERAGENT_MAX_LEN - offs);
-    memmove(index, to, tlen);
-    str[USERAGENT_MAX_LEN] = 0;
-  }
-}
-
-
 static void
 option_set_useragent(const char *optarg,
                      structPrefs *The_Prefs)
 {
   if (optarg == NULL) The_Prefs->user_agent[0] = 0;
   else {
-	struct utsname utsn;
-  
-	strncpy(The_Prefs->user_agent,optarg,USERAGENT_MAX_LEN); 
+    struct utsname utsn;
+    char *ua, *ua2;
 
-	perform_substitution(The_Prefs->user_agent, "$v", VERSION);
-	if (The_Prefs->user_name) {
-	  perform_substitution(The_Prefs->user_agent, "$u", The_Prefs->user_name);
- 	}
-	if (uname(&utsn) != -1) {
-	  perform_substitution(The_Prefs->user_agent, "$s", utsn.sysname);
-	  perform_substitution(The_Prefs->user_agent, "$r", utsn.release);
-	  perform_substitution(The_Prefs->user_agent, "$m", utsn.machine);
-	}
+    ua = str_substitute(optarg, "$v", VERSION);
+    if (The_Prefs->user_name) {
+      ua2 = str_substitute(ua, "$u", The_Prefs->user_name); free(ua); ua = ua2;
+    }
+    if (uname(&utsn) != -1) {
+      ua2 = str_substitute(ua, "$s", utsn.sysname); free(ua); ua = ua2;
+      ua2 = str_substitute(ua, "$r", utsn.release); free(ua); ua = ua2;
+      ua2 = str_substitute(ua, "$m", utsn.machine); free(ua); ua = ua2;
+    }
+    
+    strncpy(The_Prefs->user_agent,ua,USERAGENT_MAX_LEN);
+    The_Prefs->user_agent[USERAGENT_MAX_LEN] = 0;
+
+    free(ua);
   }
-  The_Prefs->user_agent[USERAGENT_MAX_LEN] = 0;
 }
 
 static void
@@ -1026,7 +1012,14 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("spell.dict:", 1) {
 	option_editwin_spell_lang(optarg, The_Prefs); ok++;
       }
-
+      TEST_OPTION("tribune.post_cmd:", 1) {
+	if (The_Prefs->post_cmd) free(The_Prefs->post_cmd);
+	The_Prefs->post_cmd = strdup(optarg); ok++;
+      }
+      TEST_OPTION("tribune.archive:",1) {
+	if (The_Prefs->tribune_scrinechote) free(The_Prefs->tribune_scrinechote);
+	The_Prefs->tribune_scrinechote = strdup(optarg); assert(strlen(The_Prefs->tribune_scrinechote)>0); ok++;
+      }
       if (ok == 0) {
 	printf("[~/.wmcoincoin/options, ligne %d] c'est quoi ça : '%s' -- cette option est inconnue\n", options_linenum, s);
 //	exit(1);
@@ -1182,6 +1175,8 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
 					       */
   The_Prefs->ew_spell_dict = strdup("french"); /* risque mais soyons chauvin */
 
+  The_Prefs->post_cmd = NULL;
+  The_Prefs->tribune_scrinechote = strdup("~/wmcc_tribune_shot.html");
   /* pas beau !!  préanalyse de la ligne de commande pour détecter l'option 'o' */
   {
     int i;
