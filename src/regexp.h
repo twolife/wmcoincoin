@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.2 2001/12/02 18:24:16 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.3 2001/12/03 13:49:10 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.3  2001/12/03 13:49:10  pouaite
+  fix pour la compil sous cygwin
+
   Revision 1.2  2001/12/02 18:24:16  pouaite
   modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
 
@@ -30,6 +33,7 @@
 #ifndef COINCOIN_REGEXP_H
 #define COINCOIN_REGEXP_H
 
+#include <sys/types.h>
 #include <regex.h>
 #include <stdarg.h>
 
