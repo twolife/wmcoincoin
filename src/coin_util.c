@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.25 2002/06/18 21:00:22 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.26 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
-  Revision 1.25  2002/06/18 21:00:22  pouaite
-  support ipv6 (non testé)
+  Revision 1.26  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.24  2002/06/01 17:54:04  pouaite
   nettoyage
@@ -81,13 +81,16 @@
 #include <stdarg.h>
 #include "coin_util.h"
 
+#include <libintl.h>
+#define _(String) gettext(String)
+
 
 /* construit un 'nom' à partir des premiers mots du useragent */
 void
 make_short_name_from_ua(const unsigned char *ua, unsigned char *name, int name_sz)
 {
   if (ua == NULL || strlen(ua) == 0) {
-    strncpy(name, "[vide]", name_sz); name[name_sz-1] = 0;
+    strncpy(name, _("[empty]"), name_sz); name[name_sz-1] = 0;
     return;
   }
   strncpy(name, ua, name_sz); name[name_sz-1] = 0;
@@ -405,7 +408,7 @@ str_substitute(const char *src, const char *key, const char *substitution) {
 char *
 shell_quote(const char *src)
 {
-  char *quote = "&;`'\\\"|*?~<>^()[]{}$ \t";
+  char *quote = "&;`'\\\"|*?~<>^()[]{}$ ";
   int i,dest_sz;
   const char *p;
   char *dest;

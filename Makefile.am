@@ -1,8 +1,8 @@
-## rcsid=$Id: Makefile.am,v 1.12 2002/06/09 11:42:46 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.13 2002/06/23 10:44:05 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
-##   Revision 1.12  2002/06/09 11:42:46  pouaite
-##   patch lordOric
+##   Revision 1.13  2002/06/23 10:44:05  pouaite
+##   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 ##
 ##   Revision 1.11  2002/06/01 20:21:18  pouaite
 ##   version 2.3.8a
@@ -36,12 +36,12 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
-#AUTOMAKE_OPTIONS = 1.5 dist-bzip2
+AUTOMAKE_OPTIONS = 1.5 dist-bzip2
 
 # pour faire plaisir à woof :°)
 prefix=$(DESTDIR)@prefix@
 
-SUBDIRS = src doc
+SUBDIRS = intl po src doc
 EXTRA_DIST = xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \

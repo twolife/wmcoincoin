@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: spell_coin.c,v 1.11 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: spell_coin.c,v 1.12 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: spell_coin.c,v $
+  Revision 1.12  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.11  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -59,6 +62,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include "global.h"
 #include "coin_util.h"
@@ -148,7 +154,7 @@ launch_ispell(const char *spell_cmd, const char* spell_dict)
   switch ( spell_pid = fork() ) {
   case -1: /* arrrrg */
     {
-      fprintf(stderr, "échec du fork..(%s)\n", strerror(errno));
+      fprintf(stderr, _("Fork failed...(%s)\n"), strerror(errno));
       close(tube_stdin[0]); close(tube_stdin[1]);
       close(tube_stdout[0]); close(tube_stdout[1]);	
       return -1;
@@ -169,7 +175,7 @@ launch_ispell(const char *spell_cmd, const char* spell_dict)
       retExec = execlp(spell_cmd, spell_cmd, "-d", spell_dict, "-a", NULL, 
 		       NULL);
       if( retExec==-1 ) {
-	fprintf(stderr, "échec de l'exec..(%s)\n", strerror(errno));
+	fprintf(stderr, _("Exec failed...(%s)\n"), strerror(errno));
       }
       close(tube_stdin[0]);
       close(tube_stdout[1]);
@@ -293,10 +299,10 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 
     s = current_spell_string;
     /* envoie la chaine à ispell */
-    BLAHBLAH(2,printf("on envoie '%s' à ispell\n", s));
+    BLAHBLAH(2,printf(_("We send '%s' to ispell\n"), s));
     while (*s) {
       if (write(ispell_stdin, s, 1) != 1) {
-	printf("erreur, il restait '%s' à envoyer à ispell...\n", s);
+	printf(_("Error, '%s' was still to send to ispell...\n"), s);
 	break; /* ajouter plus tard la gestion des erreurs retryables */
       }
       s++;
@@ -326,7 +332,7 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
       }
       buff[i] = 0;
 
-      BLAHBLAH(2, myprintf("reponse ISPELL: '%<MAG %s>' (err=%s)\n", buff, strerror(errno)));
+      BLAHBLAH(2, myprintf(_("ISPELL answered: '%<MAG %s>' (err=%s)\n"), buff, strerror(errno)));
       switch( buff[0] ) {
       case 0:
 	break;
@@ -373,9 +379,9 @@ ispell_run_background(const char* spellCmd, const char* spellDict)
 	   (keskil renvoit aspell au fait? ... regarder son man
 	   sur une machine qui a ce truc)
 	*/
-	fprintf(stderr, "spellString: unknown option \'0x%02x\'\n", buff[0]); fflush(stderr);
-	fprintf(stderr, "la réponse complete était: '%.512s'\n", buff);
-	fprintf(stderr, "Dans son immense mansuétude, wmcoincoin va laisser ispell en vie, pour voir ce qui se passe. Le suicide du coincoin n'est même pas envisagé: THE SHOW MUST GO ON\n");
+	fprintf(stderr, _("spellString: unknown option \'0x%02x\'\n"), buff[0]); fflush(stderr);
+	fprintf(stderr, _("The complete answer was: '%.512s'\n"), buff);
+	fprintf(stderr, _("With great leniency, wmcoincoin will let ispell alive, just to see what happens. Don't even think of suiciding the coincoin : THE SHOW MUST GO ON\n"));
 	//	kill_ispell(); /* je veux pas d'un ispell tout patraque */
 
 

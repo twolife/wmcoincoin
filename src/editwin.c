@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.20 2002/05/20 16:01:25 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.21 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.21  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.20  2002/05/20 16:01:25  pouaite
   nouveau raccourci alt-F du palmipede
 
@@ -83,6 +86,9 @@
   ceci est le palmipede editor
 */
 
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -240,7 +246,7 @@ editw_xy2strpos(EditW *ew, int x, int y)
   int i;
 
   if (x < 0 || x >= EW_NCOL) {
-    myprintf("%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%d,sel_head=%d\n",
+    myprintf(_("%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%d,sel_head=%d\n"),
 	     x,y,ew->curs_x,ew->curs_y,ew->y_scroll,ew->sel_anchor,ew->sel_head);
   }
     //  assert(x >= 0 && x < EW_NCOL);
@@ -457,7 +463,7 @@ editw_erase(EditW *ew)
   }
   { int x = ew->curs_x, y = ew->curs_y;
   if (x < 0 || x >= EW_NCOL) {
-    myprintf("%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%d,sel_head=%d\n",
+    myprintf(_("%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%d,sel_head=%d\n"),
 	     x,y,ew->curs_x,ew->curs_y,ew->y_scroll,ew->sel_anchor,ew->sel_head);
   }}
 }
@@ -556,7 +562,7 @@ editw_cb_copy(Dock *dock, Window win, const char *text, int len)
 
   XSetSelectionOwner(dock->display, XA_PRIMARY, win, CurrentTime);
   if (XGetSelectionOwner(dock->display, XA_PRIMARY) != win) {
-    fprintf(stderr, "wmcoincoin: Failed to set XA_PRIMARY ownership.");
+    fprintf(stderr, _("wmcoincoin: Failed to set XA_PRIMARY ownership."));
     XChangeProperty(dock->display, dock->rootwin, XA_CUT_BUFFER0,
 		    XA_STRING, 8, PropModeReplace, cb_buffer, l);
   }
@@ -1059,12 +1065,12 @@ editw_select_buff(Dock *dock, EditW *ew, int user_agent_mode)
 
   if (user_agent_mode == 1) {
     ew->buff_num = 1;
-    ew->title = "palmipède editor: USERAGENT";
+    ew->title = _("palmipede editor: USERAGENT");
     ew->buff_sz = USERAGENT_MAX_LEN+1;
     ew->buff = dock->coin_coin_useragent;
   } else if (user_agent_mode == 0) {
     ew->buff_num = 0;
-    ew->title = "palmipède editor: MESSAGE";
+    ew->title = _("palmipede editor: MESSAGE");
     ew->buff_sz = MESSAGE_MAX_LEN+1;
     ew->buff = dock->coin_coin_message;
   } else {
@@ -1182,7 +1188,7 @@ editw_show(Dock *dock, EditW *ew, int user_agent_mode)
 	      XNClientWindow, ew->win, XNFocusWindow, ew->win, 0);
 
   if(ew->input_context == NULL){
-    fprintf(stderr, "Warning : erreur dans XCreateIC() !\n");
+    fprintf(stderr, _("Warning : errot in XCreateIC() !\n"));
   }
 #endif
 
@@ -1403,7 +1409,7 @@ editw_build(Dock *dock)
     snprintf(fn, 512, "%s-%s", EW_FONT, Prefs.font_encoding);
     ew->fn = XLoadQueryFont(dock->display, fn);
     if (!ew->fn) {
-      myfprintf(stderr, "Impossible de charger la fonte %s \n", fn);
+      myfprintf(stderr, _("Unable to load font %s \n"), fn);
       exit(-1);
     }
   }
@@ -1700,7 +1706,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     case 'S':
     case 's': editw_balise(ew, "<s>", "</s>"); break;
     case 'M':
-    case 'm': editw_balise(ew, "====> <b>Moment ", "</b> <===="); break;
+    case 'm': editw_balise(ew, _("====> <b>Moment "), "</b> <===="); break;
     case 'F':
     case 'f': editw_set_pinnipede_filter(dock); break;
       /*
@@ -2187,9 +2193,9 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
   }
 
   i = rand() % nb_suggest;
-  snprintf(txt, 512, "<p align=center><b>wmCoinCoin Agent</b></p>"
-	   "mmmh, j'ai l'impression que vous ne savez pas quoi dire, alors si je puis me permettre, "
-	   "je vous suggère <font color=blue>%s</font>", suggestion[i]);
+  snprintf(txt, 512, _("<p align=center><b>wmCoinCoin Agent</b></p>"
+	   "Hmmm, it seems that you don't know what to say, so, if you don't mind,"
+	   "I suggest <font color=blue>%s</font>"), suggestion[i]);
   if (ew->buff_num == 0) {
     balloon_test_with_image(dock, x, y, ew->win_xpos, ew->win_ypos, 8000,
 			    EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
@@ -2197,19 +2203,19 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
   } else {
     balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 10000,
 		 EW_TXT_X0, EW_TXT_Y0, EW_TXT_WIDTH-1, EW_TXT_HEIGHT-1,
-		 "Entrez le useragent");
+		 _("Put here the user-agent"));
   }
 
-  s[BT_CLOSE] = "Replier le palmipede<p>raccourci: <b>escape</b>";
-  s[BT_CHANGE] = (ew->buff_num == 0 ? "Editer le useragent" : "Editer le message<p>raccourci: <b>Tab</b>");
-  s[BT_ITAL] = "Inserer les balises Italiques<p>raccourci: <b>Alt-I</b>";
-  s[BT_BOLD] = "Inserer les balises Bold<p>raccourci: <b>Alt-B</b>";
-  s[BT_STRIKE] = "Inserer les balises Strike<p>raccourci: <b>Alt-S</b>";
-  s[BT_UNDERLINE] = "Inserer les balises Underline<p>raccourci: <b>Alt-U</b>";
-  //  s[BT_TT] = "Inserer les balises TeleType<p>raccourci: <b>Alt-T</b>";
-  s[BT_UNDO] = "Undo<p>raccourci: <b>Ctrl-Z</b> ou <b>Ctrl-_</b>";
-  s[BT_CLEAR] = "Effacer";
-  s[BT_DEFAULTUA] = "Restaurer le user-agent par defaut";
+  s[BT_CLOSE] = _("Fold back the palmipede<p>shortcut: <b>escape</b>");
+  s[BT_CHANGE] = (ew->buff_num == 0 ? _("Edit the user-agent") : _("Edit the message<p>shortcut: <b>Tab</b>"));
+  s[BT_ITAL] = _("Insert italic<p>shortcut: <b>Alt-I</b>");
+  s[BT_BOLD] = _("Insert bold<p>shortcut: <b>Alt-B</b>");
+  s[BT_STRIKE] = _("Overstrike text<p>shortcut: <b>Alt-S</b>");
+  s[BT_UNDERLINE] = _("Underline text<p>shortcut: <b>Alt-U</b>");
+  //  s[BT_TT] = "Inserer les balises TeleType<p>shortcut: <b>Alt-T</b>";
+  s[BT_UNDO] = _("Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>");
+  s[BT_CLEAR] = _("Clear");
+  s[BT_DEFAULTUA] = _("Restore the default user-agent");
   for (i = 0; i < NB_MINIBT; i++) {
     if (ew->mini[i].visible) {
       balloon_test(dock, x, y, ew->win_xpos, ew->win_ypos, 0, 

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.9 2002/05/29 22:38:12 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.10 2002/06/23 10:44:05 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.10  2002/06/23 10:44:05  pouaite
+##   i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+##
 ##   Revision 1.9  2002/05/29 22:38:12  pouaite
 ##   bidouilles dans configure.in et cie
 ##
@@ -27,12 +30,15 @@
 ##
 ## Process this file with automake to produce Makefile.in
 
+localedir = $(datadir)/locale
+LIBS = @INTLLIBS@ @LIBS@
+
 bin_PROGRAMS = wmcoincoin
 
 EXTRA_wmcoincoin_SOURCES = http_win.c http_unix.c  # include dans http.c
 
 #salete d'autoconf j'y comprends rien
-CFLAGS = @CFLAGS@ -DWMCCDATADIR="\"$(pkgdatadir)\""
+DEFS = @DEFS@ -DWMCCDATADIR="\"$(pkgdatadir)\"" -DLOCALEDIR="\"$(localedir)\"" -I$(top_srcdir)/intl -I$(top_srcdir)
 
 wmcoincoin_SOURCES = \
 	myprintf.c myprintf.h \

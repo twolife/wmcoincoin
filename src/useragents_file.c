@@ -24,9 +24,12 @@
   c'est des choses qui ne sont plus très utiles maintenant ( à part pour les couleurs du trolloscope..)
   Ce fichier a été crée pour désengorger wmcoincoin.c
 
-  rcsid=$Id: useragents_file.c,v 1.6 2002/05/29 22:38:12 pouaite Exp $
+  rcsid=$Id: useragents_file.c,v 1.7 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: useragents_file.c,v $
+  Revision 1.7  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.6  2002/05/29 22:38:12  pouaite
   bidouilles dans configure.in et cie
 
@@ -50,6 +53,10 @@
 #include <sys/types.h>
 #include <regex.h>
 #include "coincoin.h"
+
+#include <libintl.h>
+#define _(String) gettext (String)
+
 
 /*
   destruction de la chaine de regles -- utile en cas d'erreur
@@ -88,7 +95,7 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
   _filename = check_install_data_file("useragents", "useragents");
   strncpy(filename, _filename, 1024); filename[1023]=0;
 
-  BLAHBLAH(1, printf("lecture useragents_file '%s'\n", _filename));
+  BLAHBLAH(1, printf(_("reading useragents_file '%s'\n"), _filename));
   f = fopen(_filename, "rt"); free(_filename);
   linenum = 0;
   ruleprev = NULL;
@@ -104,17 +111,17 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
       
       s_coul = strtok(NULL,delim);
       if (str_is_empty(s_coul)) {
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d',\nunexpected end of line, color expected\n", filename, linenum);
+	snprintf(err_buff, err_buff_sz, _("error in '%s', line '%d',\nunexpected end of line, color expected\n"), filename, linenum);
 	return 1;
       }
       s_regex = strtok(NULL, delim);
       if (str_is_empty(s_regex)) {
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d',\nunexpected end of line, regex expected\n", filename, linenum);
+	snprintf(err_buff, err_buff_sz, _("error in '%s', line '%d',\nunexpected end of line, regex expected\n"), filename, linenum);
 	return 1;
       }
       s_name = strtok(NULL, delim);
       if (str_is_empty(s_name)) {
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d',\nunexpected end of line, rule name expected\n", filename, linenum);
+	snprintf(err_buff, err_buff_sz, _("error in '%s', line '%d',\nunexpected end of line, rule name expected\n"), filename, linenum);
 	return 1;
       }
       
@@ -123,12 +130,12 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
 	if (strcasecmp(s_shape, symboles[symb].name) == 0) break;
       }
       if (symb == NB_SYMBOLES) {
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d',\nje ne connais pas le symbole '%s'\n", filename, linenum, s_shape);
+	snprintf(err_buff, err_buff_sz, _("error in '%s', line '%d',\nI don't know the symbol '%s'\n"), filename, linenum, s_shape);
 	return 1;
       }
       
       if (sscanf(s_coul, "%02x%02x%02x", &coulr, &coulg, &coulb) != 3) {
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d',\nles couleurs doivent etre des nombre hexadecimaux sur 6\ncaracteres et je trouve ca:'%s'\n. c'est un nombre héxadecimal ca ? hein ?\n", filename, linenum, s_coul);
+	snprintf(err_buff, err_buff_sz, _("error in '%s', line '%d',\nthe colours must be hexadecimal numbers on 6\ncharacters, and I find this: '%s'\n Is it really a hexadecimal number ? Tell me ?\n"), filename, linenum, s_coul);
 	return 1;
       }
       
@@ -149,20 +156,20 @@ useragents_file_read_nocleanup(DLFP_tribune *trib, char *err_buff, int err_buff_
       if ((err = regcomp(&rule->rule, s_regex, REG_EXTENDED | REG_NOSUB)) != 0) {
 	int regex_errbuffsz;
 	char *regex_errbuf;
-	snprintf(err_buff, err_buff_sz, "erreur dans '%s', ligne '%d', dans la regex '%s'\n", filename, linenum, s_regex);
+	snprintf(err_buff, err_buff_sz, _("Error in '%s', line '%d', in the regexp '%s'\n"), filename, linenum, s_regex);
 	/* cf man regex */
 	regex_errbuffsz = regerror(err, &rule->rule, 0, 0);
 	regex_errbuf = calloc(regex_errbuffsz+1, sizeof(char));
 	regerror(err, &rule->rule, regex_errbuf, regex_errbuffsz);
-	snprintf(err_buff, err_buff_sz, "%sregerror nous dit: '%s'\n", err_buff, regex_errbuf);
+	snprintf(err_buff, err_buff_sz, _("%sregerror tells us: '%s'\n"), err_buff, regex_errbuf);
 	free(regex_errbuf);
 	return 1;
       }
-      BLAHBLAH(3, myprintf("un tatouage de plus: shape = '%<MAG %s>', coul[r=%<RED %02x>, g=%<GRN %02x>, b=%<BLU %02x>], regex='%<MAG %s>'\n", s_shape, coulr, coulg, coulb, s_regex));
+      BLAHBLAH(3, myprintf(_("One more tattoo: shape = '%<MAG %s>', coul[r=%<RED %02x>, g=%<GRN %02x>, b=%<BLU %02x>], regex='%<MAG %s>'\n"), s_shape, coulr, coulg, coulb, s_regex));
     } while (!feof(f));
     fclose(f);
   } else {
-    snprintf(err_buff, 1024, "Le fichier <tt>%s/.wmcoincoin/useragents</tt> n'existe pas ou n'est pas lisible..\n", getenv("HOME"));
+    snprintf(err_buff, 1024, _("The <tt>%s/.wmcoincoin/useragents</tt> file doesn't exist or is not readable.\n"), getenv("HOME"));
     return 2;
   }
   return 0;
@@ -191,7 +198,7 @@ useragents_file_reread(Dock *dock, DLFP *dlfp) {
   DLFP_trib_load_rule *old_rules;
   int err;
   
-  strcpy(errbuff, "Erreur pendant la lecture de <tt>.wmcoincoin/useragents</tt>\n");
+  strcpy(errbuff, _("Error while reading <tt>.wmcoincoin/useragents</tt>\n"));
   old_rules = dlfp->tribune.rules; dlfp->tribune.rules = NULL;
   err = useragents_file_read(&dlfp->tribune, errbuff, 1024);
   if (err) {
@@ -207,7 +214,7 @@ useragents_file_reread(Dock *dock, DLFP *dlfp) {
     DLFP_trib_load_rule_destroy(old_rules);
 
     it = dlfp->tribune.msg;
-    BLAHBLAH(2, printf("retatouage en cours..\n"));
+    BLAHBLAH(2, printf(_("Re-tattooing in progress...\n")));
     while (it) {
       it->tatouage = NULL;
       tribune_tatouage(&dlfp->tribune, it);

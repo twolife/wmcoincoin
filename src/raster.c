@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.14 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.15 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.15  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.14  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -48,6 +51,10 @@
 #include "global.h"
 #include "raster.h"
 #include "coin_util.h"
+
+#include <libintl.h>
+#define _(String) gettext (String)
+
 /* 
    ces fonctions toutes nazes remplacent dorévanant la libwraster 
 
@@ -114,13 +121,13 @@ RGBACreateContext(Display *dpy, int screen_number)
 			       |GCGraphicsExposures, &gcv);
   if (context->vclass == TrueColor || context->vclass == DirectColor) {
     /* calc offsets to create a TrueColor pixel */
-    BLAHBLAH(1,printf("le visual (depth=%d) est en %s, cool\n", context->depth, 
+    BLAHBLAH(1,printf(_("The visual (depth=%d) is in %s, cool\n"), context->depth, 
 		      context->vclass == TrueColor ? "TrueColor" : "DirectColor"));
   } else if (context->vclass == PseudoColor || context->vclass == StaticColor) {
-    printf("waou, on est en pseudocolor (depth=%d)...\n", context->depth);
+    printf(_("Bleh, we are in pseudocolor (depth=%d)...\n"), context->depth);
     free(context); return NULL;
   } else if (context->vclass == GrayScale || context->vclass == StaticGray) {
-    printf("incoryable, y'a même po de couleurs !\n");
+    printf(_("Unbelievable, there's even no colors !\n"));
     free(context); return NULL;
   } else return NULL;
   
@@ -289,7 +296,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
       if (*s != '#') {
 	XColor xc;
 	if (XParseColor(rc->dpy, DefaultColormap(rc->dpy, rc->screen_number), s, &xc)) {
-	  fprintf(stderr, "couleur inconnue dans le .xpm : '%s'\n'", s);
+	  fprintf(stderr, _("Unknown colour in the .xpm: '%s'\n'"), s);
 	  exit(0);
 	}
 	rgb = ((xc.red>>8) << 16) + ((xc.green>>8) << 8) + (xc.blue>>8);
@@ -338,7 +345,7 @@ RGBACreateRImgFromXpmData(RGBAContext *rc, char **xpm)
   free(col_tab);  
   return rimg;
  ralala:
-  fprintf(stderr, "dommage, vous avez trouvé une pouille dans le 'parseur' de .xpm\n VOTRE fichier .xpm n'est pas conforme à MON standard xpm\nerr=%d, la ligne qui pose problème est: '%s'\n En le réécrivant avec un autre logiciel ça devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n", err, xpm[i+1]);
+  fprintf(stderr, _("dommage, vous avez trouvé une pouille dans le 'parseur' de .xpm\n VOTRE fichier .xpm n'est pas conforme à MON standard xpm\nerr=%d, la ligne qui pose problème est: '%s'\n En le réécrivant avec un autre logiciel ça devrait mieux marcher, mais le mieux c'est sans doute d'envoyer un bug report [ c0in@altern.org ]\n"), err, xpm[i+1]);
   exit(1);
   return NULL;
 }
@@ -370,14 +377,14 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
 
   *w = 0; *h = 0;
   f = fopen(xpm_file, "r"); if (f == NULL) {
-    fprintf(stderr, "impossible d'ouvrir '%s' : %s\n", xpm_file, strerror(errno));
+    fprintf(stderr, _("Unable to open '%s' : %s\n"), xpm_file, strerror(errno));
     return None;
   }
   
   lcnt = 0;
   do {
     if (ferror(f)) {
-      fprintf(stderr, "erreur pendant la lecture de '%s' !? [%s]\n", xpm_file, strerror(errno));
+      fprintf(stderr, _("Error while reading '%s' !? [%s]\n"), xpm_file, strerror(errno));
     }
 
     l[0] = 0; fgets(l, LEN_MAX, f);
@@ -391,7 +398,7 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
       i--;
       while (l[i] != '"') i--; /* oui, j'ai pas envie de finasser */
       if (i == 0) {
-	fprintf(stderr, "la ligne '%s' est bizarre\n", l); return None;
+	fprintf(stderr, _("The '%s' line looks weird\n"), l); return None;
       }
       l[i] = 0;
 
@@ -399,7 +406,7 @@ RGBACreatePixmapFromXpmFile(RGBAContext *ctx, char *xpm_file, int *w, int *h)
       l_tab[lcnt] = strdup(l+1);
       lcnt++;
       if (lcnt == NLIG_MAX) {
-	fprintf(stderr, "il y a trop de lignes dans '%s' (max=%d) !! \n", xpm_file, NLIG_MAX);
+	fprintf(stderr, _("There are too many lines in '%s' (max=%d) !! \n"), xpm_file, NLIG_MAX);
 	exit(1);
       }
     }

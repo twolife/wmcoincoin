@@ -19,9 +19,12 @@
 
  */
 /*
-  rcsid=$Id: regexp.c,v 1.7 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: regexp.c,v 1.8 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: regexp.c,v $
+  Revision 1.8  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.7  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -47,6 +50,9 @@
 #include "general.h"
 #include "regexp.h"
 #include "coincoin.h"
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 patterns_t patterns[] =
   { 
@@ -116,7 +122,7 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
 
   
   p = after_substr(s, "class=\"newsinfo\"");
-  p = after_substr(s, "Approuvé le ");
+  p = after_substr(s, _("Approved on "));
   if (p) {
     p2 = strchr(p, '<');
     if (p2) {
@@ -127,9 +133,9 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   //  printf("p_date = '%s'\n", *p_date);
 
   p = after_substr(s, "class=\"newsinfo\"");
-  p = after_substr(s, "Posté par");
+  p = after_substr(s, _("Posted by"));
   if (p) {
-    p2 = strstr(p, "Approuvé le ");
+    p2 = strstr(p, _("Approved on "));
     if (p2) {
       *p_auteur = mystrndup(p, p2-p);
     }
@@ -137,8 +143,8 @@ extract_news_txt(const char *s, char **p_date, char **p_auteur, char **p_section
   if (*p_auteur == NULL) { *p_auteur = strdup("???"); }
 
   /* recherche de la section */
-  p = after_substr(s, "Topic:");
-  if (p == NULL) p = after_substr(s, "Thème:"); /* actuellement (16/12/2001) c'est cette chaine qui est utilisee */
+  p = after_substr(s, _("Topic:"));
+  if (p == NULL) p = after_substr(s, _("Theme:")); /* actuellement (16/12/2001) c'est cette chaine qui est utilisee */
   if (p) {
     p = strchr(p, '>');
     if (p) {
@@ -199,7 +205,7 @@ regexp_extract(const char *str, pat_type_t pattern, ...)
     res = regcomp(patterns[pattern].regexp, patterns[pattern].pattern,
 		  REG_EXTENDED | REG_ICASE);
     if (res) {
-      printf("erreur regex: %d\n", res);
+      printf(_("regexp error: %d\n"), res);
       exit(1);
     }
     g_return_val_if_fail(res == 0, FALSE);    
@@ -212,7 +218,7 @@ regexp_extract(const char *str, pat_type_t pattern, ...)
   res = regexec(patterns[pattern].regexp, str, nb + 1, match, 0);
   if (res != 0) {
     BLAHBLAH(1,fprintf(stderr, 
-		       "La regexp [%s] ne matche pas avec la chaine [%s]\n",
+		       _("The regexp [%s] doesn't match the string [%s]\n"),
 		       patterns[pattern].pattern, str));
     free(match);
     return FALSE;

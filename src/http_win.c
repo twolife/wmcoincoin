@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http_win.c,v 1.10 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: http_win.c,v 1.11 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: http_win.c,v $
+  Revision 1.11  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.10  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -78,7 +81,7 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_s
       }
       
     } else {
-      printf ("Connected succesfully!\n");
+      printf (_("Connected succesfully!\n"));
       return 0;
     }
 
@@ -98,7 +101,7 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_s
       }
     }
     if (res == 0) {
-      printf("Connection timed out (timeout=%d sec)!\n", timeout_secs);
+      printf(_("Connection timed out (timeout=%d sec)!\n"), timeout_secs);
       return -1;
     }
     if (res > 0) {
@@ -108,7 +111,7 @@ net_tcp_connect_with_timeout (SOCKET fd, struct sockaddr_in *sock, int timeout_s
   // set socket to blocking
   argp=0;
   if (ioctlsocket (fd, FIONBIO, &argp) == SOCKET_ERROR) {
-    printf ("could not set socket to blocking\n");
+    printf (_("could not set socket to blocking\n"));
     return -1;
   }
   return 0;

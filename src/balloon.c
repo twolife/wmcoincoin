@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: balloon.c,v 1.6 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: balloon.c,v 1.7 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: balloon.c,v $
+  Revision 1.7  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.6  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -44,6 +47,9 @@
 #include <X11/extensions/shape.h>
 #include "coincoin.h"
 #include "coin_xutil.h"
+
+#include <libintl.h>
+#define _(String) gettext(String)
 
 /* TRES largement inspire de balloon.c de Windowmaker ... */
 
@@ -202,7 +208,7 @@ balloon_hide(Dock *dock)
 {
   Balloon *b = dock->balloon;
 
-  BLAHBLAH(3, printf("hide balloon\n"));
+  BLAHBLAH(3, printf(_("hide balloon\n")));
   if (b->mapped) {
     b->mapped = 0;
     

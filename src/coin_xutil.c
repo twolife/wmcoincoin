@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.5 2002/04/09 23:38:29 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.6 2002/06/23 10:44:05 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.6  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.5  2002/04/09 23:38:29  pouaite
   boitakon et son cortège de bugfixes
 
@@ -21,6 +24,9 @@
   grosse grosse commition (cf changelog)
 
 */
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>
@@ -349,7 +355,7 @@ shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *ti)
 			 }
 			 );
   } else {
-    printf("shade_ximage non supporté (bitsperpix=%d) !! bizarre\n",ximg->bits_per_pixel);
+    printf(_("shade_ximage unsupported (bitsperpix=%d) !! Strange...\n"),ximg->bits_per_pixel);
   }
 }
 
@@ -359,10 +365,10 @@ int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
 {
   char errmsg[80]; 
   XGetErrorText(dpy, err->error_code, errmsg, 80);
-  fprintf(stderr, "X11 error detectee dans une zone à risque:\n  %s\n", errmsg);
-  fprintf(stderr, "  Protocol request: %d\n", err->request_code);
-  fprintf(stderr, "  Resource ID:      0x%lx\n", err->resourceid);
-  fprintf(stderr, " --> THE SHOW MUST GO ON!\n");
+  fprintf(stderr, _("X11 error detected in a hazardous area:\n  %s\n"), errmsg);
+  fprintf(stderr, _("  Protocol request: %d\n"), err->request_code);
+  fprintf(stderr, _("  Resource ID:      0x%lx\n"), err->resourceid);
+  fprintf(stderr, _(" --> THE SHOW MUST GO ON!\n"));
   x11_error_occured = 1;
   return 0;
 }

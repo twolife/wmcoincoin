@@ -21,11 +21,11 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.24 2002/06/09 17:16:48 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.25 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
-  Revision 1.24  2002/06/09 17:16:48  pouaite
-  microfix pour les ref-horloges sans secondes sur plusieurs jours
+  Revision 1.25  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.23  2002/05/28 23:22:58  pouaite
   ptit fix
@@ -100,6 +100,8 @@
 
 #include "coincoin.h"
 
+#include <libintl.h>
+#define _(String) gettext (String)
 
 tribune_msg_info *
 tribune_find_id(const DLFP_tribune *trib, int id)
@@ -343,7 +345,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
 	start++;
 	end=start+1;
 	p = start;
-	printf("get_tok pas reconnu: (len=%d)'", (int)strlen(p));
+	printf(_("get_tok not recognized: (len=%d)'"), (int)strlen(p));
 	while (*p) { printf("%c", *p); p++;}
 	printf("\n");
       }
@@ -357,7 +359,7 @@ tribune_get_tok(const unsigned char **p, const unsigned char **np,
     }
     */
   } else if (*start == '\t') { /* ça pue .. le backend ou le coincoin est sans slip */
-    printf("roooh problème de slip ici: %s\n", start);
+    printf(_("Hmmm, looks like there's an underpants problem here: %s\n"), start);
     start++;
     if (*start) end = start+1;
   } else {
@@ -456,7 +458,7 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
     if (mi->id > caller_id && best_mi ) break; /* on ne tente ipot que dans les cas desesperes ! */
     if (s == -1) {
       if ((mi->hmsf[0] == h || (Prefs.pp_use_AM_PM && (mi->hmsf[0] % 12 == h) && mi->hmsf[0] > 12))
-	   && mi->hmsf[1] == m && !previous_mi_was_a_match) {
+	   && mi->hmsf[1] == m && best_mi == NULL && !previous_mi_was_a_match) {
 	match = 1;
       }
     } else {
@@ -509,14 +511,14 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
       }
       if (best_mi == NULL) {
 	if (caller_mi->hmsf[0]*60+caller_mi->hmsf[1] < h*60+m) {
-	  snprintf(commentaire, comment_sz, "IPOT(tm) detected");
+	  snprintf(commentaire, comment_sz, _("IPOT(tm) detected"));
 	} else {
-	  snprintf(commentaire, comment_sz, "où qu'il est '%s' ?", s_ts);
+	  snprintf(commentaire, comment_sz, _("but where is '%s' ?"), s_ts);
 	}
       } else if (best_mi->id > caller_mi->id) {
-	snprintf(commentaire, comment_sz, "[IPOT(tm)]");
+	snprintf(commentaire, comment_sz, _("[IPOT(tm)]"));
       } else if (best_mi->id == caller_mi->id) {
-	snprintf(commentaire, comment_sz, "merde on tourne en rond merde on tourne en rond merde...");
+	snprintf(commentaire, comment_sz, _("Awww, we turn around and around and around and around..."));
       } else if (best_mi->in_boitakon) {
 	KeyList *hk;
 	char *nom;
@@ -524,12 +526,12 @@ tribune_find_horloge_ref(DLFP_tribune *trib, int caller_id,
 	nom = (best_mi->login && best_mi->login[0]) ? best_mi->login : best_mi->useragent;
 	hk = tribune_key_list_test_mi(trib, best_mi, Prefs.plopify_key_list);
 	if (hk) {
-	  snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon ! "
-		   "(car %s=%.20s)", nom,
+	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon ! "
+		   "(because %s=%.20s)"), nom,
 		   tribune_key_list_type_name(hk->type), hk->key);
 	} else {
-	  snprintf(commentaire, comment_sz, "kikoo de %.30s depuis la boitakon, "
-		   "MAIS VOUS VENEZ DE TROUVER UN BUG DANS LA BOITAKON :-(", nom);
+	  snprintf(commentaire, comment_sz, _("Hello from %.30s in the boitakon, "
+		   "BUT YOU HAVE JUST FOUND A BUG IN THE BOITAKON :-("), nom);
 	}
       }
     }
@@ -677,7 +679,7 @@ tribune_key_list_add(KeyList *first, const unsigned char *key, KeyListType type,
   hk->from_prefs = from_prefs;
   hk->next = NULL;
   
-  BLAHBLAH(1, myprintf("ajout du motclef: '%<CYA %s>'\n", key));
+  BLAHBLAH(1, myprintf(_("Adding keyword: '%<CYA %s>'\n"), key));
   last = first;
   if (last == NULL) {
     first = hk;
@@ -698,7 +700,7 @@ tribune_key_list_remove(KeyList *first, const unsigned char *key, KeyListType ty
   hk = first;
   while (hk) {
     if (strcasecmp(key, hk->key)==0 && (hk->type == type || type == HK_ALL)) {
-      BLAHBLAH(1, myprintf("suppression de la clef: '%<CYA %s>'\n", key));
+      BLAHBLAH(1, myprintf(_("Deleting key: '%<CYA %s>'\n"), key));
       if (prev) {
 	/* supprime les refs des postvisuals vers cette clef.. */
 	prev->next = hk->next;
@@ -720,7 +722,7 @@ tribune_key_list_test_thread(DLFP_tribune *trib, tribune_msg_info *mi, int threa
 {
   int i;
   (*antibug)++;
-  if (*antibug > 10000) { printf("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n"); return 0; }
+  if (*antibug > 10000) { printf(_("sniff? sniff ? soit vous vous amusez à faire de threads de folie, soit ça sent le BEUGGUE!\n")); return 0; }
 
   if (mi == NULL) return 0;
 

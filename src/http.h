@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: http.h,v 1.8 2002/06/18 21:00:23 pouaite Exp $
+  rcsid=$Id: http.h,v 1.9 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: http.h,v $
-  Revision 1.8  2002/06/18 21:00:23  pouaite
-  support ipv6 (non testé)
+  Revision 1.9  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.7  2002/05/12 22:06:27  pouaite
   grosses modifs dans http.c
@@ -43,15 +43,6 @@
 #   define INVALID_SOCKET 0
 #   define SOCKET unsigned int
 # endif
-#endif
-
-
-#ifdef USE_IPV6
-#define SOCKADDR_IN struct sockaddr_in6
-#define GETHOSTBYNAME(x) gethostbyname2(x,AF_INET6)
-#else
-#define SOCKADDR_IN struct sockaddr_in
-#define GETHOSTBYNAME(x) gethostbyname(x)
 #endif
 
 typedef struct {

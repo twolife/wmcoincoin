@@ -55,6 +55,8 @@
 #  define LASTERR_EAGAIN (errno==EAGAIN)
 #endif
 
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #define HTTP_ERR_MSG_SZ 512
 #define HTTP_LAST_ERR_URL_SZ 128
@@ -125,33 +127,33 @@ http_complete_error_info()
 
   if (flag_http_transfert == 0) {
     if (http_err_time == 0) {
-      snprintf(s_heure, 80, "<i>il n'y a pas encore eu d'erreurs http</i>");
+      snprintf(s_heure, 80, _("<i>There hasn't been any http error yet</i>"));
     } else {
       struct tm *t;
       t = localtime(&http_err_time);
       
-      snprintf(s_heure, 80, "dernière erreur à: <b>%02d:%02d:%02d</b>",
+      snprintf(s_heure, 80, _("Last error occured at: <b>%02d:%02d:%02d</b>"),
 	       t->tm_hour, t->tm_min, t->tm_sec);
     }
 
     if (flag_http_error) {
-      snprintf(s_err, 1024, "erreur: <b><font color=#800000>%s</font></b><br>", http_last_err_msg);
+      snprintf(s_err, 1024, _("Error: <b><font color=#800000>%s</font></b><br>"), http_last_err_msg);
     } else {
       if (http_err_time) {
-	snprintf(s_err, 1024, "<br>la dernière erreur a été: %s<br>pour l'url:<tt>%s</tt><br>",
+	snprintf(s_err, 1024, _("<br>The last error was: %s<br>for the URL:<tt>%s</tt><br>"),
 		 http_last_err_msg, http_last_err_url);
       } else {
 	s_err[0] = 0;
       }
     }
-    snprintf(s, 2048, "%s<br>%s<br>%s: <tt>%s</tt><br>ip de l'hôte: <font color=#0000ff>%s</font><br>%s",
-	     flag_http_error ? "<b>il vient d'y avoir une erreur !!</b>" : "le dernier transfert s'est bien passé",
-	     s_heure, flag_http_error ? "url fautive" : "on vient de récuperer", http_last_url, http_used_ip, s_err);
+    snprintf(s, 2048, _("%s<br>%s<br>%s: <tt>%s</tt><br>Host IP: <font color=#0000ff>%s</font><br>%s"),
+	     flag_http_error ? _("<b>There has just been an error !!</b>") : _("The last transfer went fine."),
+	     s_heure, flag_http_error ? _("faulty URL") : _("We have just downloaded"), http_last_url, http_used_ip, s_err);
   } else {
     if (flag_gethostbyname == 0) {
-      snprintf(s, 2048, "un transfert est en cours...<br>url: <tt>%s</tt><br>ip: <font color=#0000ff>%s</font><br>", http_last_url, http_used_ip);
+      snprintf(s, 2048, _("Download going on...<br>URL: <tt>%s</tt><br>IP: <font color=#0000ff>%s</font><br>"), http_last_url, http_used_ip);
     } else {
-      snprintf(s, 2048, "résolution du nom '%s' en cours..<br>", http_last_url);
+      snprintf(s, 2048, _("Resolving name '%s'...<br>"), http_last_url);
     }
   }
   return strdup(s);
@@ -267,7 +269,7 @@ http_iread (SOCKET fd, char *buf, int len)
 	      ALLOW_X_LOOP; ALLOW_ISPELL; 
 	      if ((wmcc_tic_cnt - tic0) > Prefs.http_timeout*(1000/WMCC_TIMER_DELAY_MS)) {
 		SETERR_TIMEOUT;
-		printf("timeout (t=%d millisecondes)..\n", (wmcc_tic_cnt - tic0)*WMCC_TIMER_DELAY_MS);
+		printf(_("timeout (t=%d milliseconds)..\n"), (wmcc_tic_cnt - tic0)*WMCC_TIMER_DELAY_MS);
 	      }
 	    }
 	  while (res == SOCKET_ERROR && LASTERR_EINTR);
@@ -281,11 +283,11 @@ http_iread (SOCKET fd, char *buf, int len)
 	  }
 #else
 	  if (res == SOCKET_ERROR) {
-	    printf("http_iread: socket error, res=%d (%s)\n", res, STR_LAST_ERROR);
+	    printf(_("http_iread: socket error, res=%d (%s)\n"), res, STR_LAST_ERROR);
             goto error;
 	  }
 	  if (res == 0) {
-	    printf ("http_iread: Timeout...\n");
+	    printf (_("http_iread: Timeout...\n"));
 	    goto error;
 	  }
 #endif
@@ -351,7 +353,7 @@ http_iwrite (SOCKET fd, char *buf, int len)
 	if (res == SOCKET_ERROR)
 	  goto error;
 	if (res == 0) {
-	  printf ("http_iwrite:Timeout...\n");
+	  printf (_("http_iwrite: Timeout...\n"));
 	  goto error;
 	}
 #endif /* ifndef __CYGWIN__ */
@@ -395,12 +397,12 @@ gethostbyname_bloq(const char *hostname, unsigned char addr[65]) {
   struct hostent *phost;
 
   memset(addr, 0, 65);
-  BLAHBLAH(1, printf("gethostbyname('%s') -> si le reseau rame, on risque de bloquer le coincoin ici\n", hostname));
+  BLAHBLAH(1, printf(_("gethostbyname('%s') -> if the network lags, the coincoin can be blocked here\n"), hostname));
 
   ALLOW_X_LOOP; usleep(30000); /* juste pour laisser le temps à l'affichage de mettre à
 				  jour la led indiquant 'gethostbyname' */
   ALLOW_X_LOOP_MSG("gethostbyname(1)"); ALLOW_ISPELL;
-  phost = GETHOSTBYNAME(hostname); /* rahhh comme c'est lent :-( */
+  phost = gethostbyname(hostname); /* rahhh comme c'est lent :-( */
   ALLOW_X_LOOP_MSG("gethostbyname(2)"); ALLOW_ISPELL;
   if (phost) {
     addr[0] = (unsigned char)phost->h_length;
@@ -429,8 +431,7 @@ static SOCKET
 http_connect(const char *host_name, int port)
 {
   SOCKET sockfd = INVALID_SOCKET;
-
-  SOCKADDR_IN dest_addr;   /* Contiendra l'adresse de destination */
+  struct sockaddr_in dest_addr;   /* Contiendra l'adresse de destination */
   int num_try;
 
   static unsigned char addr[65]; /* premier char = nombre d'octets utilisés pour reprensenter l'adresse 
@@ -480,7 +481,7 @@ http_connect(const char *host_name, int port)
 	if (num_try == 0) continue; /* on a droit a un deuxième essai */
 	else {
 	  set_http_err();
-	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "Impossible de resoudre le nom '%s'", host_name);
+	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to resolve '%s'"), host_name);
 	  return INVALID_SOCKET;
 	}
       }
@@ -491,30 +492,24 @@ http_connect(const char *host_name, int port)
       ALLOW_X_LOOP; ALLOW_ISPELL;
       if (sockfd == INVALID_SOCKET) {
 	set_http_err();
-	snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "Impossible de creer un socket ! (%s)", STR_LAST_ERROR);
+	snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("Unable to create a socket ! (%s)"), STR_LAST_ERROR);
 	return INVALID_SOCKET;
       }
   
-#ifndef USE_IPV6
-      dest_addr.sin_family = AF_INET;
+      dest_addr.sin_family = AF_INET;       
       dest_addr.sin_port = htons(port);
+
       /* pris dans wget, donc ca doit etre du robuste */
       memcpy(&dest_addr.sin_addr, addr+1, addr[0]);
-      memset(&(dest_addr.sin_zero), 0, 8);
-#else
-      //      dest_addr.sin6_len = sizeof(dest_addr);
-      dest_addr.sin6_family = AF_INET6;
-      dest_addr.sin6_port = htons(port);
-      memcpy(&dest_addr.sin6_addr, addr+1, addr[0]);
-#endif
 
+      memset(&(dest_addr.sin_zero), 0, 8);
   
       /* y'a le probleme des timeout de connect ...
 	 d'ailleurs je n'ai toujours pas compris pourquoi tous les
 	 sigalrm balance par l'itimer de wmcoincoin n'interferent
 	 pas avec le connect...
       */
-      BLAHBLAH(VERBOSE_LVL, printf("connecting..\n"));
+      BLAHBLAH(VERBOSE_LVL, printf(_("connecting...\n")));
       //      if (connect(sockfd, (struct sockaddr *)&dest_addr, sizeof(dest_addr))) {
 
 #ifdef CONNECT_WITHOUT_TIMEOUT // a definir pour les os chiants
@@ -527,13 +522,13 @@ http_connect(const char *host_name, int port)
 	  snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "connect(): %s", STR_LAST_ERROR);
 	  http_close(sockfd);
 	  ALLOW_X_LOOP; ALLOW_ISPELL;
-	  BLAHBLAH(VERBOSE_LVL, printf("connection failed: %s..\n", http_last_err_msg));
+	  BLAHBLAH(VERBOSE_LVL, printf(_("connection failed: %s..\n"), http_last_err_msg));
 	  addr[0] = 0;
 	  if (num_try == 1) {
 	    return INVALID_SOCKET;
 	}
       } else {
-	BLAHBLAH(VERBOSE_LVL, printf("connected..\n"));
+	BLAHBLAH(VERBOSE_LVL, printf(_("connected..\n")));
 	break;
       }
     }
@@ -616,7 +611,7 @@ http_skip_header(HttpRequest *r)
 		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {
 	      set_http_err();
 	      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "%s",buff+j+1); 
-	      printf("http_skip_header[%s]: erreur detectee: '%s'", http_last_url, buff+j+1);
+	      printf(_("http_skip_header[%s]: error detected: '%s'"), http_last_url, buff+j+1);
 	      r->error = 1;
 	    }
 	  }
@@ -645,7 +640,7 @@ http_skip_header(HttpRequest *r)
   } while (got==SOCKET_ERROR && LASTERR_EAGAIN); 
   if (got == SOCKET_ERROR || ok == 0) {
     set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_skip_header a un problème de chaussette !(%s)", STR_LAST_ERROR);
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_skip_header has a socket issue ! (%s)"), STR_LAST_ERROR);
     r->error = 2;
     return;
   }
@@ -666,12 +661,12 @@ http_read(HttpRequest *r, char *buff, int len)
   assert(r->error == 0);
 
   if (len>1) {
-    BLAHBLAH(2, printf("http_read: requete de longueur %d, pos = %ld, chunk=%d (size %ld)\n", len, r->chunk_pos, r->chunk_num, r->chunk_size));
+    BLAHBLAH(2, printf(_("http_read: request of length %d, pos = %ld, chunk=%d (size %ld)\n"), len, r->chunk_pos, r->chunk_num, r->chunk_size));
   }
 
   if (r->is_chunk_encoded == 1) {
     if (r->chunk_pos > r->chunk_size) {
-      printf("damned, ça part en torche pour le chunk_encoding sur la requete suivante:\n");
+      printf(_("Damned, the chunk_encoding has gone down the tubes on the following request:\n"));
       http_print_request(r);
     }
     if (r->chunk_num == -1 || r->chunk_pos == r->chunk_size) {
@@ -694,7 +689,7 @@ http_read(HttpRequest *r, char *buff, int len)
       s_chunk_size[i] = 0;
       if (sscanf(s_chunk_size, "%lx", &r->chunk_size) != 1) {
 	r->error = 1; 
-	printf("error in chunk '%s'\n", s_chunk_size);
+	printf(_("error in chunk '%s'\n"), s_chunk_size);
 	return 0;
       }
       BLAHBLAH(VERBOSE_LVL, printf("http_read: CHUNK %d, size = %ld ['0x%s']\n", r->chunk_num, r->chunk_size, s_chunk_size));
@@ -719,7 +714,7 @@ http_read(HttpRequest *r, char *buff, int len)
     if (!LASTERR_EAGAIN) {
       /* erreur non récupérable */
       set_http_err();
-      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_read a eu un problème de chaussette, pos=%d, len=%d !(%s)", (int)r->chunk_pos, (int)len, STR_LAST_ERROR);
+      snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_read has encountered a socket problem, pos=%d, len=%d !(%s)"), (int)r->chunk_pos, (int)len, STR_LAST_ERROR);
       r->error = 1;
     } else {
       got = 0; /* on n'a rien lu ce coup-ci, mais ça viendra */
@@ -727,7 +722,7 @@ http_read(HttpRequest *r, char *buff, int len)
   }
 
   if (len>1) { // || (r->content_length != -1 && (r->content_length - r->chunk_pos < 200))) {
-    BLAHBLAH(2,printf("http_read: longueur finalement demandee: %d, reçue: %d, nouvelle pos=%ld\n",
+    BLAHBLAH(2,printf(_("http_read: length finally requested: %d, received: %d, new pos=%ld\n"),
 	   len, got, r->chunk_pos));
   }
 
@@ -765,17 +760,17 @@ http_get_line(HttpRequest *r, char *s, int sz)
     }
 
     if (got == 0 && r->chunk_pos != r->content_length && !LASTERR_EAGAIN) {
-      printf("http_get_line: bizarre, got=0 lors de la lecture de %d/%d [r->error=%d, errmsg='%s']\n", (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
+      printf(_("http_get_line: weird, got=0 while reading %d/%d [r->error=%d, errmsg='%s']\n"), (int)r->chunk_pos, (int)r->content_length, r->error, STR_LAST_ERROR);
     }
   } while (got == 0 && LASTERR_EAGAIN && r->error == 0 && r->chunk_pos != r->content_length);
 
   if (r->error) {
     set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_get_line s'est vautré (got=%d): %s!", got, STR_LAST_ERROR);
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_get_line messed up (got=%d): %s!"), got, STR_LAST_ERROR);
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
     goto error;
   }
-  BLAHBLAH(VERBOSE_LVL,myprintf("http_get_line renvoie (cnt=%d): '%<yel %s>'\n", cnt, s));
+  BLAHBLAH(VERBOSE_LVL,myprintf(_("http_get_line sent (cnt=%d): '%<yel %s>'\n"), cnt, s));
   flag_http_transfert--;
 
   flag_http_error = 0;
@@ -808,7 +803,7 @@ http_request_send(HttpRequest *r)
   if (Prefs.debug & 2) {
     r->fd = open(r->host_path, O_RDONLY);
     if (r->fd < 0) {
-      fprintf(stderr, "http_send_request/debug, impossible d'ouvrir '%s':%s\n", 
+      fprintf(stderr, _("http_send_request/debug, unable to open '%s':%s\n"), 
 	      r->host_path, STR_LAST_ERROR);
       r->error = 1;
     }
@@ -907,11 +902,11 @@ http_request_send(HttpRequest *r)
 
   if (http_iwrite(r->fd, header, strlen(header)) == SOCKET_ERROR) {
     set_http_err();
-    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, "http_get n'a pas pu envoyer sa requête: %s", STR_LAST_ERROR);
+    snprintf(http_last_err_msg, HTTP_ERR_MSG_SZ, _("http_get couldn't send its request: %s"), STR_LAST_ERROR);
     goto error_close;
   }
 
-  BLAHBLAH(VERBOSE_LVL,printf("ok, sent\n"));
+  BLAHBLAH(VERBOSE_LVL,printf(_("ok, sent\n")));
   
   http_skip_header(r);
   if (r->error) {
@@ -924,7 +919,7 @@ http_request_send(HttpRequest *r)
   return;
 
  error_close:
-  printf("erreur dans la réponse..\n");
+  printf(_("error in the answer...\n"));
   http_request_close(r); r->fd = SOCKET_ERROR;
   if (header) free(header);
   r->error = 1;

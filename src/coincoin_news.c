@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.28 2002/05/27 18:39:14 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.29 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.29  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.28  2002/05/27 18:39:14  pouaite
   trucs du week-end + patch de binny
 
@@ -106,6 +109,9 @@
 
 */
 
+#include <libintl.h>
+#define _(String) gettext (String)
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -124,7 +130,7 @@ gros_read(HttpRequest *r, char *what)
 
   /* on lit tout en un coup */
   bsize = bchunk;
-  s = malloc(bsize+1); strcpy(s,"plop! c'est raté");
+  s = malloc(bsize+1); strcpy(s,_("Quack ! Missed"));
   if (s) {
     int got;
     int bi;
@@ -137,7 +143,7 @@ gros_read(HttpRequest *r, char *what)
       s[bi] = 0;
       bsize += bchunk;
       if (bsize > 300000) {
-	  BLAHBLAH(0, myprintf("%s: c'est trop gros (bsize=%d!) on coupe\n",
+	  BLAHBLAH(0, myprintf(_("%s: too big (bsize=%d!), let's cut\n"),
 			       what, bsize));
 	  break;
       }
@@ -145,13 +151,13 @@ gros_read(HttpRequest *r, char *what)
       if (!s) break;
     }
     if (got == -1) {
-      fprintf(stderr, "probleme pendant la lecture de %s: %s\n", what, http_error());
+      fprintf(stderr, _("problem while reading %s: %s\n"), what, http_error());
       if (s) free(s);
       s = NULL;
     } else {
       s[bi] = 0;
     }
-    BLAHBLAH(4, myprintf("%s, lu: %<mag %s>\n", what, s));
+    BLAHBLAH(4, myprintf(_("%s, read: %<mag %s>\n"), what, s));
   }
   return s;
 }
@@ -212,7 +218,7 @@ dlfp_delete_news(DLFP *dlfp, int id) {
     n = n->next;
   }
   if (n == NULL) {
-    fprintf(stderr, "COIN ! impossible de detruire la news id=%d\n", id);
+    fprintf(stderr, _("QUACK ! Unable to delete the news id=%d\n"), id);
     return 1;
   }
   if (p) {
@@ -369,16 +375,16 @@ dlfp_is_news_too_old(char date[11])
   assert(d.tm_year >= 2001); 
   assert(d.tm_mon >= 1 && d.tm_mon <= 12); 
   assert(d.tm_mday >= 1 && d.tm_mday <= 31);
-  BLAHBLAH(3,myprintf("la date est y=%d , m=%d, d=%d\n", d.tm_year, d.tm_mon, d.tm_mday));
+  BLAHBLAH(3,myprintf(_("The date is y=%d , m=%d, d=%d\n"), d.tm_year, d.tm_mon, d.tm_mday));
   d.tm_mon--; /* pour mktime , janvier = 0, decembre = 11 ... c'est debile */
   d.tm_year -= 1900; /* ca aussi c'est debile */
   t = mktime(&d);
   t2 = time(NULL);
 
-  BLAHBLAH(3,myprintf("-> conversion en nb de secondes: t=%ld , maintenant=%ld\n", t, t2));
+  BLAHBLAH(3,myprintf(_("-> converting to seconds: t=%ld , now=%ld\n"), t, t2));
   t = difftime(t2, t);
   ndays = (t / 3600 / 24);
-  BLAHBLAH(3,myprintf("age=%d secondes == %d jours\n", t, ndays));
+  BLAHBLAH(3,myprintf(_("age=%d seconds == %d days\n"), t, ndays));
   return (ndays > Prefs.news_max_nb_days);
 }
 
@@ -398,7 +404,7 @@ dlfp_remove_old_news(DLFP *dlfp)
     /* on sauve le suivant au cas ou n est detruite */
     nn = n->next; 
     if (dlfp_is_news_too_old(n->date)) {
-      BLAHBLAH(2, printf("Destruction de la news id=%d (tres vielle, date=%s, n'etait plus dans %s)\n",n->id, n->date, Prefs.path_news_backend));
+      BLAHBLAH(2, printf(_("Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"),n->id, n->date, Prefs.path_news_backend));
       dlfp_delete_news(dlfp, n->id);
     }
     n = nn;
@@ -430,10 +436,10 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
 
 
 
-  BLAHBLAH(1,myprintf("Update du texte de la news: '%<cya %s>' (date='%10s', id %<cya %d>)\n", n->titre, n->date, n->id));
+  BLAHBLAH(1,myprintf(_("Updating text of the news: '%<cya %s>' (date='%10s', id %<cya %d>)\n"), n->titre, n->date, n->id));
 
   if (dlfp_is_news_too_old(n->date)) {
-    BLAHBLAH(1, myprintf("Elle est trop vieille (date=%s, age max=%d jours)\n", n->date, Prefs.news_max_nb_days));
+    BLAHBLAH(1, myprintf(_("It's too old (date=%s, max age=%d days)\n"), n->date, Prefs.news_max_nb_days));
     return 0;
   }
 
@@ -446,7 +452,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     BLAHBLAH(1,printf("get %s\n",URL));
   } else {
     snprintf(URL, 512, "%s/wmcoincoin/test/%d,0,-1,6.html", getenv("HOME"), n->id);
-    myprintf("DEBUG: ouverture de '%<RED %s>'\n", URL);
+    myprintf(_("DEBUG: opening '%<RED %s>'\n"), URL);
   }
   wmcc_init_http_request(&r, URL);
   http_request_send(&r);
@@ -554,7 +560,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
 	while (!isdigit((unsigned)*p) && *p) p++;      
 	n->heure += atoi(p);     
       }
-      BLAHBLAH(2,myprintf("date: '%<BLU %s>' => heure: %d\n", date, n->heure));
+      BLAHBLAH(2,myprintf(_("date: '%<BLU %s>' => time: %d\n"), date, n->heure));
     }
     
     n->auteur = strdup(auteur);
@@ -564,7 +570,7 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     while (*p) { if (((unsigned char)*p) <= ' ') *p = ' '; p++; }
     
     n->nb_comment = 0;
-    BLAHBLAH(2,myprintf("on vient de chopper la news !!\n"));
+    BLAHBLAH(2,myprintf(_("We just got the news !!\n")));
     BLAHBLAH(3,myprintf(" --> %<YEL %s>\n", n->txt));
     p2++;
 	    
@@ -575,11 +581,11 @@ dlfp_updatenews_txt(DLFP *dlfp, int id)
     free(s);
     
   } else {
-    myfprintf(stderr, "erreur pendant le d/l de '%<YEL %s>' : %<RED %s>\n", URL, http_error());
+    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), URL, http_error());
   }
  ouups1:
   if (err) {
-    myfprintf(stderr,"%<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", URL, err);
+    myfprintf(stderr,_("%<RED Error while downloading '%s' (err=%d)\n"), URL, err);
   }
   
   if (texte) free(texte);
@@ -606,22 +612,19 @@ open_site_file(char *base_name)
     for (tantpis = 0, retry = 0; retry < 3; retry++) {
       if ((fsave = fopen(fname, "wt")) == NULL) {
 	if (retry == 2) {
-	  myprintf("impossible de creer le fichier '%s' \n[erreur: '%<red %s>']\n,"
-		   "c'est pas grave mais c'est dommage\n", fname,strerror(errno));
+	  myprintf(_("Warning: unable to create file '%s' \n[error: '%<red %s>']\n"), fname,strerror(errno));
 	  tantpis = 1; break;
 	}
       } else { fclose(fsave); break; }
       snprintf(rname,2048,"%s/.wmcoincoin/%s", getenv("HOME"), Prefs.site_root);
       if (mkdir(rname, -1)) {
 	if (retry == 1) {
-	  myprintf("impossible de creer le repertoire '%s'\n[erreur: '%<red %s>']\n,"
-		   "c'est pas grave mais c'est dommage\n", rname,strerror(errno));
+	  myprintf(_("Warning: unable to create directory '%s'\n[error: '%<red %s>']\n"), rname,strerror(errno));
 	  tantpis = 1; break;
 	}
 	snprintf(rname,2048,"%s/.wmcoincoin", getenv("HOME"));
 	if (mkdir(rname,-1)) {
-	  myprintf("impossible de creer le repertoire '%s'\n[erreur: '%<red %s>']\n,"
-		   "c'est pas grave mais c'est dommage\n", rname, strerror(errno));
+	  myprintf(_("Warning: unable to create directory '%s'\n[error: '%<red %s>']\n"), rname, strerror(errno));
 	  tantpis = 1; break;
 	}
       }
@@ -711,7 +714,7 @@ dlfp_update_newslues(DLFP *dlfp)
     }
     fclose(fsave);
   } else {
-    BLAHBLAH(1,myprintf("impossible d'ouvrir '%s' en ecriture\n(erreur: %s)\n",
+    BLAHBLAH(1,myprintf(_("Unable to open '%s' for writing\n(error: %s)\n"),
 			fname, strerror(errno)));
   }
 }
@@ -741,7 +744,7 @@ dlfp_updatenews(DLFP *dlfp)
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_news_backend); 
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/short.php3", getenv("HOME")); 
-    myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
+    myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
 
   wmcc_init_http_request(&r, path);
@@ -767,7 +770,7 @@ dlfp_updatenews(DLFP *dlfp)
     ALLOW_X_LOOP;
     news_err = 0;
 
-    BLAHBLAH(2,printf("le transfert semble ok\n"));
+    BLAHBLAH(2,printf(_("Download looks OK\n")));
     l_cnt = -1;
     s[0] = 0;
     while (http_get_line(&r, s, 512)>0) {
@@ -844,7 +847,7 @@ dlfp_updatenews(DLFP *dlfp)
 	if (p && p != base_url) {
 	  *p = 0;
 	} else {
-	  BLAHBLAH(1,myprintf("le backend '%s' n'a pas l'air tres orthodoxe...\n", Prefs.path_news_backend));
+	  BLAHBLAH(1,myprintf(_("The '%s' backend doesn't look good...\n"), Prefs.path_news_backend));
 	  news_err = 7; break;
 	}
 
@@ -867,7 +870,7 @@ dlfp_updatenews(DLFP *dlfp)
 
 	id = atoi(s_id);
 	if (id <= 0) {
-	  fprintf(stderr, "probleme dans le backend des news -> ligne url news: '%s' -> id='%s'=%d\n",url, s_id, id);
+	  fprintf(stderr, _("Probleme in the news' backend: line '%s' -> id='%s'=%d\n"),url, s_id, id);
 	  news_err = 11; break;
 	}
 
@@ -876,14 +879,14 @@ dlfp_updatenews(DLFP *dlfp)
 	ALLOW_X_LOOP;
 
 	if (dlfp_is_news_too_old(date)) {
-	  BLAHBLAH(1, printf("La news id=%d est trop vieille (date=%s, age max=%d), on la vire\n",id,date,Prefs.news_max_nb_days));
+	  BLAHBLAH(1, printf(_("The news id=%d is too old (date=%s, max age=%d), let's delete it\n"),id,date,Prefs.news_max_nb_days));
 	  if (dlfp_find_news_id(dlfp,id)) {
 	    dlfp_delete_news(dlfp, id);
 	  }
 	} else if ((n=dlfp_find_news_id(dlfp,id))) {
-	  BLAHBLAH(1,printf("** Cette news est deja enregistree, pas de probleme\n"));
+	  BLAHBLAH(1,printf(_("** This news is already saved, no problemo.\n")));
 	  if (n->txt == NULL) {
-	    BLAHBLAH(1,printf("** Par contre, son texte n'a pas encore ete mis a jour on va reessayer... problème?\n"));
+	    BLAHBLAH(1,printf(_("** But the text hasn't been updated, let's try again.\n")));
 	    dlfp_updatenews_txt(dlfp, id);
 	  }
 	} else {
@@ -899,9 +902,9 @@ dlfp_updatenews(DLFP *dlfp)
 	  n->id = id;
 	  n->flag_unreaded = 1-first_run;
 	  dlfp->updated = 1;
-	  BLAHBLAH(2,printf(" . titre='%s'\n", title));
-	  BLAHBLAH(2,printf(" . auteur='%s', mail='%s'\n", n->auteur, n->mail));
-	  BLAHBLAH(2,printf("** News AJOUTEE\n"));
+	  BLAHBLAH(2,printf(_(" . title='%s'\n"), title));
+	  BLAHBLAH(2,printf(_(" . author='%s', mail='%s'\n"), n->auteur, n->mail));
+	  BLAHBLAH(2,printf(_("** News ADDED\n")));
 	  dlfp_updatenews_txt(dlfp, id);
 	  flag_news_updated = 1;
 	    //if (dlfp_updatenews_txt(dlfp, id) != 0) return;
@@ -913,12 +916,12 @@ dlfp_updatenews(DLFP *dlfp)
       } /* nouvelle news ajoutée */
     } /* while http_get_line */
     if (news_err != 0) {
-      myfprintf(stderr,"%<RED OUUUPS!> %<grn dlfp_updatenews> il y a eu une erreur (err=%d) dans le parsage du backend des news\n", news_err);
+      myfprintf(stderr,_("%<RED OOOOPS!> %<grn dlfp_updatenews> there has been an error (err=%d) when parsing the news backend.\n"), news_err);
     }
     http_request_close(&r);
     transfert_cnt++;
   } else {
-    myfprintf(stderr, "erreur lors du transfert de '%<YEL %s>' : %<RED %s>\n", Prefs.path_news_backend, http_error());
+    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), Prefs.path_news_backend, http_error());
   }
   /* elimine les eventuelles news trop vielles, et qui ne sont plus
      dans short.php3 */
@@ -931,11 +934,11 @@ dlfp_updatenews(DLFP *dlfp)
   }
 
   if (first_run && transfert_cnt) {
-    BLAHBLAH(2,myprintf("recherche des news lues lors de la derniere session de wmcoincoin\n"));
+    BLAHBLAH(2,myprintf(_("Looking for the news already read on the last session.\n")));
     dlfp_get_newslues(dlfp);
     first_run = 0;
   } else if (first_run == 0) {
-    BLAHBLAH(2,myprintf("maj du fichier de sauvegarde des numeros de news deja lues\n"));
+    BLAHBLAH(2,myprintf(_("Updating the file containing the numbers of the news already read\n")));
     if (transfert_cnt >= 1) {
       dlfp_update_newslues(dlfp);
     }
@@ -952,8 +955,8 @@ dlfp_yc_printf_comments(DLFP *dlfp) {
   DLFP_comment *n;
   int cnt;
 
-  myprintf("\n------ %<YEL liste des commentaires> -------\n"
-	   "num\tnews_id\tcid\tnrep\told\tmodified\n");
+  myprintf(_("\n------ %<YEL list of comments> -------\n"
+	   "num\tnews_id\tcid\tnrep\told\tmodified\n"));
   
   n = dlfp->com;
   cnt = 1;
@@ -979,7 +982,7 @@ dlfp_yc_delete_comment(DLFP *dlfp, int cid) {
     n = n->next;
   }
   if (n == NULL) {
-    fprintf(stderr, "COIN ! impossible de detruire le commentaire cid=%d\n", cid);
+    fprintf(stderr, _("QUACK ! Unable to destroy the comment cid=%d\n"), cid);
     return 1;
   }
   if (p) {
@@ -1071,7 +1074,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
     char *s, *p, *p2, *p3;
     int err;
 
-    BLAHBLAH(2,printf("le transfert de '%s' semble ok\n", Prefs.path_myposts));
+    BLAHBLAH(2,printf(_("The download of '%s' looks OK.\n"), Prefs.path_myposts));
     err = 0;
 
     /* on lit tout en un coup */
@@ -1114,7 +1117,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       BLAHBLAH(1, myprintf("fortune: \"%<yel %s>\"\n", dlfp->fortune));
     } else {
     fortune_erreur:
-      BLAHBLAH(0,myprintf("la structure de '%s' a été modifiée ?... je ne trouve pas la fortune (err=%d)\n", Prefs.path_myposts, err));
+      BLAHBLAH(0,myprintf(_("Maybe the structure of '%s' has been modified, as I can't find the fortune (err=%d)\n"), Prefs.path_myposts, err));
     }
 
     /* si on est dans un cas de 'force_fortune_retrieval', on se barre maintenant */
@@ -1138,16 +1141,16 @@ dlfp_yc_update_comments(DLFP *dlfp)
       if (p != NULL)
 	regexp_extract(p, pat_votes, &(dlfp->votes_max), &(dlfp->votes_cur));
     } else {
-      printf("mmmh, bizarre la page '%s' ... pas de champ 'loginfo' ..\n", Prefs.path_myposts);
+      printf(_("Hmmm, how strange is '%s' ... there is no 'loginfo' field.\n"), Prefs.path_myposts);
     }
 
     //modif DACODE 1.4
     //p = strstr(s,"?order=news_id"); // on se positionne bien...
     p = strstr(s,"/comments/thread.php"); // on se positionne bien...
     if (p == NULL) {
-      if (strstr(s, "Vous n'avez encore rien posté ???") != NULL)
+      if (strstr(s, _("not yet a poster???")) != NULL)
 	goto ouups1;
-      myprintf("'%s': ouuups, soit (a) le cookie n'est plus valide, soit (b) la structure de la page a changé, soit (c) obiwan kenobi\n", Prefs.path_myposts);
+      myprintf(_("'%s': oooops, looks like either (a) the cookie isn't valid anymore, or (b) the structure of the page has changed, or (c) Obiwan Kenobi\n"), Prefs.path_myposts);
       err = 2; goto ouups1;
     }
     
@@ -1199,7 +1202,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       } else {
 	nbcom = atoi(p3+9);
       }
-      BLAHBLAH(1,myprintf("NBCOM: '%.20s'->%<YEL %d>\n",p3 ? p3+9 : "<erreur>",nbcom));
+      BLAHBLAH(1,myprintf("NBCOM: '%.20s'->%<YEL %d>\n",p3 ? p3+9 : _("<error>"),nbcom));
       //      }
       p = p2;
 
@@ -1207,7 +1210,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
       c = dlfp_yc_find_cid(dlfp, cid);
       if (c) {
 	if (c->nb_answers != nbcom) {
-	  BLAHBLAH(1,myprintf("il y a eu %d/%d reponses au commentaire %d\n", 
+	  BLAHBLAH(1,myprintf(_("There has been %d/%d answers to the comment %d\n"), 
 			      nbcom-c->nb_answers,c->nb_answers,cid));
 	  c->modified = 1;                /* on signale que ce commentaire a été modifié */
 	  dlfp->comment_change_flag = 1;  /* mais c'est CE flag qui déclenche le flamometre 
@@ -1224,7 +1227,7 @@ dlfp_yc_update_comments(DLFP *dlfp)
 	c->old = 0;
 	c->modified = (nbcom == 0 || first_run ==1) ? 0 : 1;
 	dlfp->comment_change_flag = c->modified;  /* ce flag qui déclenche le flamometre */
-	BLAHBLAH(1,myprintf("NOUVEAU COMMENTAIRE %d, avec %d reponses\n",
+	BLAHBLAH(1,myprintf(_("NEW COMMENT %d, with %d answers\n"),
 			    cid, nbcom));
       }
     } while (p);
@@ -1234,10 +1237,10 @@ dlfp_yc_update_comments(DLFP *dlfp)
       DLFP_comment *c,*n;
       c = dlfp->com;
       while (c) {
-	BLAHBLAH(1,printf("commentaire %d, nid=%d, nrep=%d, modified=%d,old=%d\n",
+	BLAHBLAH(1,printf(_("comment %d, nid=%d, nrep=%d, modified=%d,old=%d\n"),
 	       c->com_id, c->news_id, c->nb_answers, c->modified, c->old));
 	if (c->old) {
-	  BLAHBLAH(1,myprintf("DESTRUCTION DU COMMENTAIRE %d (trop vieux, n'est plus liste dans '%s')\n",
+	  BLAHBLAH(1,myprintf(_("DESTROYING COMMENT %d (too old, isn't in '%s' anymore)\n"),
 			      c->com_id, Prefs.path_myposts));
 	  n = c->next;
 	  dlfp_yc_delete_comment(dlfp,c->com_id);
@@ -1250,17 +1253,17 @@ dlfp_yc_update_comments(DLFP *dlfp)
     first_run = 0;
     goto caroule;
   ouups2:
-    myprintf("erreur dans '%s', le code html a du changer... (err=%d)\n",Prefs.path_myposts, err);
+    myprintf(_("error in '%s', the html code must have changes... (err=%d)\n"),Prefs.path_myposts, err);
   caroule:
     flag_updating_comments = 0;
   ouups1:
     free(s);
   ouups:
     if (err) {
-      myfprintf(stderr,"dlfp_yc_update_comments: %<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", path, err);
+      myfprintf(stderr,_("dlfp_yc_update_comments: %<RED Error while downloading> '%s' (err=%d)\n"), path, err);
     }
   } else {
-    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
+    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
   }
 }
 
@@ -1271,8 +1274,8 @@ dlfp_msg_printf_messages(DLFP *dlfp) {
   DLFP_message *n;
   int cnt;
 
-  myprintf("\n------ %<YEL liste des messages> -------\n"
-	   "num\tmsg_id\tunread\ttoo_old\n");
+  myprintf(_("\n------ %<YEL list of messages> -------\n"
+	   "num\tmsg_id\tunread\ttoo_old\n"));
   
   n = dlfp->msg;
   cnt = 1;
@@ -1299,7 +1302,7 @@ dlfp_msg_delete_message(DLFP *dlfp, int mid) {
     m = m->next;
   }
   if (m == NULL) {
-    fprintf(stderr, "COIN ! impossible de detruire le message mid=%d\n", mid);
+    fprintf(stderr, _("QUACK ! Unable to destroy the message mid=%d\n"), mid);
     return 1;
   }
   if (p) {
@@ -1383,7 +1386,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_messages);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/messages.html", getenv("HOME"));
-    myprintf("DEBUG: ouverture de %<RED %s>\n", path);
+    myprintf(_("DEBUG: opening %<RED %s>\n"), path);
   }
 
   wmcc_init_http_request_with_cookie(&r, path);
@@ -1395,7 +1398,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
     int msgcnt;
     int err;
 
-    BLAHBLAH(2,printf("le transfert de '%s' semble ok\n", Prefs.path_messages));
+    BLAHBLAH(2,printf(_("Download of '%s' looks OK.\n"), Prefs.path_messages));
     err = 0;
 
     s = gros_read(&r, Prefs.path_messages);
@@ -1440,7 +1443,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
 	    m->tooold = 0;
 	  }
 	} else {
-	  fprintf(stderr,"heum heum... y'a une pouille dans les messages\n");
+	  fprintf(stderr,_("Hem hem... Something's wrong with the messages\n"));
 	}
       }
     } while (p);
@@ -1493,7 +1496,7 @@ dlfp_msg_update_messages(DLFP *dlfp)
       if ((f = fopen(fname, "wt"))) {
 	DLFP_message *m;
 
-	BLAHBLAH(2, printf("ouverture en ecriture de '%s' ok..\n", fname));
+	BLAHBLAH(2, printf(_("Opening '%s' for writing... OK\n"), fname));
 	m = dlfp->msg; 
 	while (m) {
 	  if (m->unreaded == 0) {
@@ -1503,17 +1506,17 @@ dlfp_msg_update_messages(DLFP *dlfp)
 	}
 	fclose(f);
       } else {
-	BLAHBLAH(1, printf("impossible d'ouvrir en ecriture '%s' arg..\n", fname));
+	BLAHBLAH(1, printf(_("Unable to open '%s' for writing !\n"), fname));
       }
     }
     flag_updating_messagerie = 0;
     free(s);
   ouups:
     if (err) {
-      myfprintf(stderr,"dlfp_msg_update_messages: %<RED Erreur lors du rapatriement> de '%s' (err=%d)\n", path, err);
+      myfprintf(stderr,_("dlfp_msg_update_messages: %<RED Error while downloading> '%s' (err=%d)\n"), path, err);
     }
   } else {
-    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
+    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
   }
 }
 

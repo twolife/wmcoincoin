@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: troll_detector.c,v 1.12 2002/04/13 11:55:19 pouaite Exp $
+  rcsid=$Id: troll_detector.c,v 1.13 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: troll_detector.c,v $
+  Revision 1.13  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.12  2002/04/13 11:55:19  pouaite
   fix kde3 + deux trois conneries
 
@@ -39,6 +42,9 @@
 
 #include "config.h"
 #include "coincoin.h"
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #define MI_MAX_LEN 512  /* lg max du message prise en compte */
 #define MI_MAX_WORD 200 /* nb max de mots pris en compte */
@@ -422,7 +428,7 @@ troll_detector(tribune_msg_info *mi) {
     if (i == MI_MAX_LEN-1) break;
   }
   txt_simple[i] = 0;
-  BLAHBLAH(2,myprintf("troll_detector, message initial: %<YEL %s>\n", mi->msg));
+  BLAHBLAH(2,myprintf(_("troll_detector, initial message : %<YEL %s>\n"), mi->msg));
   /*  myprintf("message filtré : %<GRN %s>\n", txt_simple); */
   /*
     passe deux: construction de la liste de mots avec identification des tags, 
@@ -614,18 +620,18 @@ troll_detector(tribune_msg_info *mi) {
       /* recherche du plus gros troll dans la liste de mots */
       sub_score = eval_best_troll(wlst, nb_mots, 0, 1, 0, selection, &trouve);
       if (cnt_anti_blocage > MAX_CNT_ANTI_BLOCAGE) {
-	BLAHBLAH(2,myprintf("%<RED celui-ci était un troll trop complexe> ! (nb_mots = %d)\n txt='%s'\n", nb_mots, mi->msg));
+	BLAHBLAH(2,myprintf(_("%<RED this one was too hard> ! (nb_words = %d)\n txt='%s'\n"), nb_mots, mi->msg));
       }
 
       if (trouve == 0) {
-	BLAHBLAH(2,printf(" -> impossible d'utiliser les mots restant dans un troll, c'est fini\n"));
+	BLAHBLAH(2,printf(_(" -> unable to use the words left in a troll, this is the end\n")));
 	free(selection);
 	break;
       }
       
       score += sub_score;
 
-      BLAHBLAH(2,myprintf("score = %<YEL %d> (sub_score=%<YEL %d>), les mots suivants ont été utilisés: ", score, sub_score));
+      BLAHBLAH(2,myprintf(_("score = %<YEL %d> (sub_score=%<YEL %d>), the following words were used: "), score, sub_score));
       /* on marque les mots selectionnés pour la suppression à la prochaine étape */
       w = wlst;
       while (w) {
@@ -660,14 +666,14 @@ troll_detector(tribune_msg_info *mi) {
       if (majuscule_cnt > msglen*4/5 && msglen > 10) {
 	bonus += 1;
       }
-      BLAHBLAH(2,myprintf("bonus pour majuscules: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf(_("bonus for using capitals: %<YEL %d>\n"), bonus));
       score += bonus;
     }
     
     if (exclamation_cnt > 4 && msglen > 6) {
       bonus = 1;
       if (exclamation_cnt > 8) bonus += 3;
-      BLAHBLAH(2,myprintf("bonus pour usage abusif des points d'exclamation: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf(_("bonus for exclamation marks: %<YEL %d>\n"), bonus));
       score += bonus;
     }
     if (bizarre_cnt > 2 && msglen > 2) {
@@ -675,25 +681,25 @@ troll_detector(tribune_msg_info *mi) {
       if (bizarre_cnt > msglen/4) {
 	bonus += 3;
       }
-      BLAHBLAH(2,myprintf("bonus pour usage abusif de caractères bizarres: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf(_("bonus for abusive use of weird characters: %<YEL %d>\n"), bonus));
       score += bonus;
     }
     if (tag_cnt>1) {
       bonus = MIN(tag_cnt/2, 6);
-      BLAHBLAH(2,myprintf("bonus pour usage abusif de tags html: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf(_("bonus for abusive use of html tags: %<YEL %d>\n"), bonus));
       score += bonus;
     }
     if (boldwords_cnt > 1) {
       bonus = MIN(boldwords_cnt/2, 6);
-      BLAHBLAH(2,myprintf("bonus pour usage abusif du BOLD: %<YEL %d>\n", bonus));
+      BLAHBLAH(2,myprintf(_("bonus for abusive usage of BOLD: %<YEL %d>\n"), bonus));
       score += bonus;
     }
     if (smiley_flag) { /* attenuateur de troll */
       score /= 2;
-      BLAHBLAH(2,myprintf("%<bld attenuation pour usage de smiley>\n"));
+      BLAHBLAH(2,myprintf(_("%<bld attenuation for using a smiley>\n")));
     }
     
-    BLAHBLAH(2,myprintf("%<WHT score final: >%<YEL %d>\n\n", score));
+    BLAHBLAH(2,myprintf(_("%<WHT final score: >%<YEL %d>\n\n"), score));
   }
 
 

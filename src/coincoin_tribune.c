@@ -20,11 +20,11 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.36 2002/06/23 10:02:53 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.37 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
-  Revision 1.36  2002/06/23 10:02:53  pouaite
-  petit changement pour le type de message envoyé à wmcc_new_msg
+  Revision 1.37  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.35  2002/06/01 17:54:04  pouaite
   nettoyage
@@ -130,6 +130,9 @@
 
 */
 
+#include <libintl.h>
+#define _(String) gettext (String)
+
 #include "coincoin.h"
 #include "http.h"
 #include <sys/types.h>
@@ -213,7 +216,7 @@ tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
   it->tatouage = NULL; /* ceux qui sont tatoues a NULL sont purement et simplement ignores */
   r = trib->rules;
   if (r == NULL) {
-    BLAHBLAH(1, printf("impossible de tatouer->pas de regles\n"));
+    BLAHBLAH(1, printf(_("Unable to tattoo: no rules\n")));
     return;
   }
   rcnt = 0;
@@ -223,14 +226,14 @@ tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it)
     ca_colle = regexec(&r->rule, it->useragent, (size_t)0, (regmatch_t*)NULL, 0);
     if (ca_colle == 0) {
       it->tatouage = r; 
-      BLAHBLAH(2, myprintf("'%<RED %s>' est %<CYA reconnu> dans regex %d\n",it->useragent, rcnt));
+      BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA recognized> in the %d regexp.\n"),it->useragent, rcnt));
       break;
     }
     rcnt++;	       
     r = r->next;
   }
   if (it->tatouage == NULL) {
-    BLAHBLAH(2, myprintf("'%<RED %s>' n'est %<CYA pas reconnu> dans regex\n", it->useragent));
+    BLAHBLAH(2, myprintf(_("'%<RED %s>' was %<CYA not recognized> in the regexps\n"), it->useragent));
   }
 
 }
@@ -329,7 +332,7 @@ tribune_remove_old_msg(DLFP_tribune *trib)
     it = it->next;
   }
   while (cnt > Prefs.tribune_max_msg && trib->msg) {
-    BLAHBLAH(4, printf("tribune_remove_old_msg: destruction de id=%d (date=%s)\n", trib->msg->id, ctime(&trib->msg->timestamp)));
+    BLAHBLAH(4, printf(_("tribune_remove_old_msg: destroying id=%d (date=%s)\n"), trib->msg->id, ctime(&trib->msg->timestamp)));
     it = trib->msg->next;
 
     /* nettoyage des references à trib->msg */
@@ -551,7 +554,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
     free(tmp);
   }
 
-  BLAHBLAH(4, printf("message logué: '%s'\n", message));
+  BLAHBLAH(4, printf(_("message logged: '%s'\n"), message));
   nit = trib->msg;
   pit = NULL;
   while (nit) {
@@ -635,7 +638,7 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
     KeyList *hk = tribune_key_list_test_mi_num(trib, it, Prefs.plopify_key_list, 2);
     if (hk) { /* bienvenu dans la boitakon */
       it->in_boitakon = 1;
-      BLAHBLAH(2, myprintf("bienvenu au message de '%.20s' dans la boitakon\n", it->login ? it->login : it->useragent));
+      BLAHBLAH(2, myprintf(_("Welcome to the message from '%.20s' in the boitakon\n"), it->login ? it->login : it->useragent));
     }
   }
 
@@ -713,8 +716,7 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     char *qlogin;
     char *qmessage;
     char *qua;
-    char sid[20], stimestamp[20], strollscore[20], stypemessage[4];
-    int typemessage;
+    char sid[20], stimestamp[20], strollscore[20], *stypemessage;
     char *shift_cmd;
 
     const char *keys[] = {"$l", "$m", "$u", "$i", "$t", "$s", "$r"};
@@ -729,15 +731,11 @@ dlfp_tribune_call_external(DLFP_tribune *trib, int last_id)
     snprintf(sid, 20, "%d", it->id);
     snprintf(stimestamp, 20, "%lu", (unsigned long)it->timestamp);
     snprintf(strollscore, 20, "%d", it->troll_score);
-
-    typemessage = 0;
-
-    if (it->is_my_message) typemessage |= 1;
-    else if (it->is_answer_to_me) typemessage |= 2;
-    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) typemessage |= 4;
-    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) typemessage |= 8;
-
-    snprintf(stypemessage, 4, "%d", typemessage);
+    if (it->is_my_message) stypemessage = "1";
+    else if (it->is_answer_to_me) stypemessage = "2";
+    else if (tribune_key_list_test_mi(trib, it, Prefs.hilight_key_list)) stypemessage = "3";
+    else if (tribune_key_list_test_mi(trib, it, Prefs.plopify_key_list)) stypemessage = "4";
+    else stypemessage = "0";
 
     subs[0] = qlogin;
     subs[1] = qmessage;
@@ -831,8 +829,8 @@ tribune_decode_message(char *dest, const char *src) {
     strncpy(dest, s, TRIBUNE_MSG_MAX_LEN); dest[TRIBUNE_MSG_MAX_LEN-1] = 0; free(s);
     convert_to_ascii(dest, dest, TRIBUNE_MSG_MAX_LEN); /* deuxième passe, à tout hasard */
   }
-  BLAHBLAH(4,myprintf("message original: '%<CYA %s>'\n", src));
-  BLAHBLAH(4,myprintf("message décodé: '%<MAG %s>'\n", dest));
+  BLAHBLAH(4,myprintf(_("Original message: '%<CYA %s>'\n"), src));
+  BLAHBLAH(4,myprintf(_("Decoded message: '%<MAG %s>'\n"), dest));
 }
 
 /*
@@ -879,7 +877,7 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     snprintf(path, 2048, "%s%s/%s", (strlen(Prefs.site_path) ? "/" : ""), Prefs.site_path, Prefs.path_tribune_backend);
   } else {
     snprintf(path, 2048, "%s/wmcoincoin/test/remote.xml", getenv("HOME"));
-    myprintf("DEBUG: ouverture de '%<RED %s>'\n", path);
+    myprintf(_("DEBUG: opening '%<RED %s>'\n"), path);
   }
 
   wmcc_init_http_request(&r, path);
@@ -998,9 +996,9 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
 
 	if (roll_back_cnt == 0 || tribune_find_id(&dlfp->tribune,id) == NULL) {
 	  if (roll_back_cnt) {
-	    myprintf("%<YEL \\o/ il vient peut être d'y avoir une race condition dans le backend de tribune !> (id=%d).\n"
-		     "DON'T PANIC, le coincoin gère tout ça calmement, ça prouve au moins que je\n"
-		     "ne me suis pas fait chier à faire ce bugfix pour rien\n", id);
+	    myprintf(_("%<YEL \\o/ Maybe there just has been a race condition in the board backend !> (id=%d).\n"
+		     "DON'T PANIC, the coincoin handles this well, it only proves I didn't write\n"
+		     "this bugfix for coconuts.\n"), id);
 	  }
 	  flag_updating_tribune++;
 	  tribune_log_msg(&dlfp->tribune, ua, login, stimestamp, msg, id, my_useragent);
@@ -1015,11 +1013,11 @@ dlfp_tribune_update(DLFP *dlfp, const unsigned char *my_useragent)
     }
   err:
     if (errmsg) {
-      myfprintf(stderr, "il y a un problème dans le '%s',  j'arrive plus a le parser... erreur:%<YEL %s>\n", Prefs.path_tribune_backend, errmsg);
+      myfprintf(stderr, _("There is a problem in '%s',  I can't parse it... error:%<YEL %s>\n"), Prefs.path_tribune_backend, errmsg);
     }
     http_request_close(&r);
   } else {
-    myfprintf(stderr, "erreur pendant la récupération de '%<YEL %s>' : %<RED %s>\n", path, http_error());
+    myfprintf(stderr, _("Error while downloading '%<YEL %s>' : %<RED %s>\n"), path, http_error());
   }
 
   assert(r.host == NULL); /* juste pour vérif qu'on a bien fait le close */

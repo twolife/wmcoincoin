@@ -5,9 +5,12 @@
 #include "coincoin.h"
 #include "spell_coin.h"
 
+#include <libintl.h>
+#define _(String) gettext (String)
+
 #define TEST_CMDLINE_OPT(optid) { \
   char *errmsg = wmcc_prefs_validate_option(&Prefs,optid,optarg); \
-  if (errmsg) { myprintf("Erreur pour l'option de la ligne de commande '%<GRN -%c>'\n: %s\n",optc,errmsg); \
+  if (errmsg) { myprintf(_("Erreur pour l'option de la ligne de commande '%<GRN -%c>'\n: %s\n"),optc,errmsg); \
   exit(1); } }
 
 static void
@@ -18,7 +21,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
   /* tant que le 'kicker' de KDE ne sera pas capable de sauvegarder
      les options de ligne de commande d'une session a l'autre... */
   if (strstr(argv[0], "wmcoincoin-kde")) {
-    myprintf("vous avec invoqué wmcoincoin-kde : %<YEL Mode KDE activé>\n");
+    myprintf(_("vous avec invoqué wmcoincoin-kde : %<YEL Mode KDE activé>\n"));
     The_Prefs->use_iconwin = 0;
   }
 
@@ -26,50 +29,50 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
     switch (optc) {
     case 'h':
       {
-	myprintf("Home page: %<BLU http:/hules.free.fr/wmcoincoin>\n");
+	myprintf(_("Home page: %<BLU http:/hules.free.fr/wmcoincoin>\n"));
 
-	myprintf("Dock applet pour WindowMaker -- affiche les news de %<GRN D>%<CYA a>%<GRN L>%<CYA inux>%<GRN F>%<CYA rench>%<GRN P>%<CYA age> (%<BLU http://linuxfr.org>)\n");
-	myprintf("OPTIONS (la plupart de ces options peuvent être activées dans le\n"
-		 " fichier '%<YEL ~/.wmcoincoin/options>'):\n");
-	myprintf(" %<GRN -h>\t\t: mouaif...\n");
-	myprintf(" %<GRN -d> %<CYA n>\t\t: fixe le delai entre deux checks de la tribune a %<CYA n> secondes (defaut %<grn %d>)\n", The_Prefs->dlfp_tribune_check_delay);
-	myprintf(" %<GRN -D> %<CYA n>\t\t: fixe le delai entre deux checks des news a %<CYA n> secondes (default %<grn %d>)\n", The_Prefs->dlfp_news_check_delay);
-	myprintf(" %<GRN -f> %<CYA fn>\t\t: utiliser la fonte de famille %<CYA fn> pour l'affiche des news\n"
-		 "\t\t  (ex: fn = %<grn %s> (defaut), ou fn = clean)\n", The_Prefs->news_fn_family);
-	myprintf(" %<GRN -F> %<CYA n>\t\t: utiliser une taille de fonte de %<CYA n> pixels pour l'affiche des news\n\t\t"
-		 " (defaut = %<grn %d>)\n", The_Prefs->news_fn_size);
-	myprintf(" %<GRN -u> %<CYA ua>\t\t: change le user-agent (defaut: %<grn %s>)\n", The_Prefs->user_agent);
-	myprintf(" %<GRN -P> %<CYA proxy:port>\t: utilise un proxy\n");
-	myprintf(" %<GRN -A> %<CYA username:password>: authentification pour le proxy, si necessaire\n");
-	myprintf(" %<GRN -m> %<CYA msg>\t\t: change le message posté sur la tribune (defaut: '%<grn %s>')\n", The_Prefs->coin_coin_message);
-	myprintf(" %<GRN -v> %<CYA n>\t\t: verbosité (defaut %<grn %d>) ,%<CYA n>=0,1,2,3\n", The_Prefs->verbosity);
-	myprintf(" %<GRN -p> %<CYA n>\t\t: ne s'interesse qu'aux news postees il y a moins de %<CYA n> jours\n"
-		 "\t\t (defaut: %<grn %d> jours)\n", The_Prefs->news_max_nb_days);
-	myprintf(" %<GRN -b> %<CYA hexcoul>\t: couleur de fond, en RGB hexa (par defaut: %<grn %06x>, un magnifique(!) jaune)\n", The_Prefs->dock_bgcolor);
-	myprintf(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n", The_Prefs->dock_fgcolor);
-	myprintf(" %<GRN -X> %<CYA file.xpm>\t: Fichier pixmap à mettre en fond du dock (fichier.xpm de 64x64)\n");
-	myprintf(" %<GRN -w> \t\t: utilise le mode windowed plutot que le mode icone\n");
-	myprintf("\t\tcette option est nécessaire pour utiliser wmcoincoin avec le kicker de KDE\n");
-	myprintf("\t\tmais comme le kicker de KDE 2.1 a un bug qui l'empeche de sauver les options\n");
-	myprintf("\t\tde la ligne de commande d'une session a l'autre, le mieux est d'invoquer\n");
-	myprintf("\t\twmcoincoin sous le nom %<YEL wmcoincoin-kde> (c'est un bete lien symbolique)\n");
-	myprintf("\t\tet l'option -w sera automatiquement activée...\n");
-	myprintf(" %<GRN -B> \t\t: ajoute la bordure de wmcoincoin (pour windowmanager sans dock)\n");
-	myprintf(" %<GRN -x> %<CYA x:y>\t\t: essaye de positionner wmcoincoin en (x,y), cette option\n"
+	myprintf(_("Dock applet pour WindowMaker -- affiche les news de %<GRN D>%<CYA a>%<GRN L>%<CYA inux>%<GRN F>%<CYA rench>%<GRN P>%<CYA age> (%<BLU http://linuxfr.org>)\n"));
+	myprintf(_("OPTIONS (la plupart de ces options peuvent être activées dans le\n"
+		 " fichier '%<YEL ~/.wmcoincoin/options>'):\n"));
+	myprintf(_(" %<GRN -h>\t\t: mouaif...\n"));
+	myprintf(_(" %<GRN -d> %<CYA n>\t\t: fixe le delai entre deux checks de la tribune a %<CYA n> secondes (defaut %<grn %d>)\n"), The_Prefs->dlfp_tribune_check_delay);
+	myprintf(_(" %<GRN -D> %<CYA n>\t\t: fixe le delai entre deux checks des news a %<CYA n> secondes (default %<grn %d>)\n"), The_Prefs->dlfp_news_check_delay);
+	myprintf(_(" %<GRN -f> %<CYA fn>\t\t: utiliser la fonte de famille %<CYA fn> pour l'affiche des news\n"
+		 "\t\t  (ex: fn = %<grn %s> (defaut), ou fn = clean)\n"), The_Prefs->news_fn_family);
+	myprintf(_(" %<GRN -F> %<CYA n>\t\t: utiliser une taille de fonte de %<CYA n> pixels pour l'affiche des news\n\t\t"
+		 " (defaut = %<grn %d>)\n"), The_Prefs->news_fn_size);
+	myprintf(_(" %<GRN -u> %<CYA ua>\t\t: change le user-agent (defaut: %<grn %s>)\n"), The_Prefs->user_agent);
+	myprintf(_(" %<GRN -P> %<CYA proxy:port>\t: utilise un proxy\n"));
+	myprintf(_(" %<GRN -A> %<CYA username:password>: authentification pour le proxy, si necessaire\n"));
+	myprintf(_(" %<GRN -m> %<CYA msg>\t\t: change le message posté sur la tribune (defaut: '%<grn %s>')\n"), The_Prefs->coin_coin_message);
+	myprintf(_(" %<GRN -v> %<CYA n>\t\t: verbosité (defaut %<grn %d>) ,%<CYA n>=0,1,2,3\n"), The_Prefs->verbosity);
+	myprintf(_(" %<GRN -p> %<CYA n>\t\t: ne s'interesse qu'aux news postees il y a moins de %<CYA n> jours\n"
+		 "\t\t (defaut: %<grn %d> jours)\n"), The_Prefs->news_max_nb_days);
+	myprintf(_(" %<GRN -b> %<CYA hexcoul>\t: couleur de fond, en RGB hexa (par defaut: %<grn %06x>, un magnifique(!) jaune)\n"), The_Prefs->dock_bgcolor);
+	myprintf(_(" %<GRN -c> %<CYA hexcoul>\t: couleur du texte de l'applet, en RGB hexa (par defaut: %<grn %06x>)\n"), The_Prefs->dock_fgcolor);
+	myprintf(_(" %<GRN -X> %<CYA file.xpm>\t: Fichier pixmap à mettre en fond du dock (fichier.xpm de 64x64)\n"));
+	myprintf(_(" %<GRN -w> \t\t: utilise le mode windowed plutot que le mode icone\n"));
+	myprintf(_("\t\tcette option est nécessaire pour utiliser wmcoincoin avec le kicker de KDE\n"));
+	myprintf(_("\t\tmais comme le kicker de KDE 2.1 a un bug qui l'empeche de sauver les options\n"));
+	myprintf(_("\t\tde la ligne de commande d'une session a l'autre, le mieux est d'invoquer\n"));
+	myprintf(_("\t\twmcoincoin sous le nom %<YEL wmcoincoin-kde> (c'est un bete lien symbolique)\n"));
+	myprintf(_("\t\tet l'option -w sera automatiquement activée...\n"));
+	myprintf(_(" %<GRN -B> \t\t: ajoute la bordure de wmcoincoin (pour windowmanager sans dock)\n"));
+	myprintf(_(" %<GRN -x> %<CYA x:y>\t\t: essaye de positionner wmcoincoin en (x,y), cette option\n"
 		 "\t\tn'est utile que si le windowmanager n'a pas de dock \n"
-		 "\t\t(utiliser avec l'option %<GRN -B>)\n");
+		 "\t\t(utiliser avec l'option %<GRN -B>)\n"));
 #ifndef DISABLE_BALLOONS
-	myprintf(" %<GRN -H> \t\t: desactive les ballons d'aide\n");	
+	myprintf(_(" %<GRN -H> \t\t: desactive les ballons d'aide\n"));	
 #endif
-	myprintf(" %<GRN -r> %<CYA url>\t\t: se connecte sur un autre site dacode que linuxfr (defaut %<grn http://linuxfr.org:80>)\n");
-	myprintf(" %<GRN -s> %<CYA v>\t\t: vitesse de défilement du trolloscope (1 = rapide, 100 = 1 tres lent)\n(defaut %<grn %d>)\n", The_Prefs->default_trollo_speed);
-	myprintf(" %<GRN -C> %<CYA cookie>\t: indique la valeur de votre cookie 'session_id' (il faut\n"
+	myprintf(_(" %<GRN -r> %<CYA url>\t\t: se connecte sur un autre site dacode que linuxfr (defaut %<grn http://linuxfr.org:80>)\n"));
+	myprintf(_(" %<GRN -s> %<CYA v>\t\t: vitesse de défilement du trolloscope (1 = rapide, 100 = 1 tres lent)\n(defaut %<grn %d>)\n"), The_Prefs->default_trollo_speed);
+	myprintf(_(" %<GRN -C> %<CYA cookie>\t: indique la valeur de votre cookie 'session_id' (il faut\n"
 		 "\t\têtre authentifié). Cela permet à wmCoinCoin de détecter quand il y a une\n"
 		 "\t\tnouvelle réponse à un de vos commentaires -- cette option est\n"
-		 "\t\t tout à fait facultative\n");
-	myprintf(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
-		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n", options_file_name);
-	myprintf(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)\n");
+		 "\t\t tout à fait facultative\n"));
+	myprintf(_(" %<GRN -o> %<CYA fichier>\t: indique le nom du fichier d'options à utiliser dans le\n"
+		 "\t\t rep ~/.wmcoincoin (defaut '%<grn %s>')\n"), options_file_name);
+	myprintf(_(" %<GRN -W>\t\t: ouvre le pinnipede des le lancement de wmcoincoin)\n"));
 	exit(0);
       } break;
     case 'd': TEST_CMDLINE_OPT(OPT_tribune_delay); break;
@@ -96,7 +99,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	  The_Prefs->debug = 1;
 	} else The_Prefs->debug = atoi(optarg);
 	
-	myprintf("Activation du mode %<YEL debug> secret (dbg=%d)!\n", The_Prefs->debug);
+	myprintf(_("Activation du mode %<YEL debug> secret (dbg=%d)!\n"), The_Prefs->debug);
       } break;
     case 'P': TEST_CMDLINE_OPT(OPT_http_proxy); break;
     case 'A': TEST_CMDLINE_OPT(OPT_http_proxy_auth); break;
@@ -110,7 +113,7 @@ wmcc_prefs_from_cmdline(int argc, char **argv, structPrefs *The_Prefs)
 	The_Prefs->default_trollo_speed = 1 << (atoi(optarg)-1);
 	//	printf("%s -> %d\n",optarg, The_Prefs->default_trollo_speed);
 	if (The_Prefs->default_trollo_speed < 1 || The_Prefs->default_trollo_speed > 128) {
-	  myprintf("option '-s' : la vitesse doit se situer en 1 et 8\n");
+	  myprintf(_("option '-s' : la vitesse doit se situer en 1 et 8\n"));
 	  exit(1);
 	}
       } break;
@@ -137,19 +140,19 @@ check_wmcoincoin_prefs_dir()
   is_ok = 1;
   if (stat(rpath, &stbuf) == 0) {
     if (!S_ISDIR(stbuf.st_mode)) {
-      fprintf(stderr, "le fichier '%s' n'est pas un répertoire !!! supprimez le, svp\n", rpath);
+      fprintf(stderr, _("le fichier '%s' n'est pas un répertoire !!! supprimez le, svp\n"), rpath);
       is_ok = 0;
     }
   } else {
     if (errno == ENOENT) {
-      myfprintf(stderr, "création de '%<YEL %s>'..\n", rpath);
+      myfprintf(stderr, _("création de '%<YEL %s>'..\n"), rpath);
       if (mkdir(rpath,-1)) {
-	myfprintf(stderr, "impossible de creer le repertoire '%s'\n[erreur: '%<red %s>']\n",
+	myfprintf(stderr, _("impossible de creer le repertoire '%s'\n[erreur: '%<red %s>']\n"),
 		 rpath, strerror(errno));
 	is_ok = 0;
       }
     } else {
-      fprintf(stderr, "Il y a quelque chose de bizarre avec le répertoire '%s' [err=%s]\n", rpath, strerror(errno));
+      fprintf(stderr, _("Il y a quelque chose de bizarre avec le répertoire '%s' [err=%s]\n"), rpath, strerror(errno));
       is_ok = 0;
     }
   }
@@ -166,11 +169,11 @@ copy_file(char *dest, char *src) {
   
   in = fopen(src, "r");
   if (!in) {
-    fprintf(stderr, "impossible de lire '%s' : %s\n", src, strerror(errno)); return -1;
+    fprintf(stderr, _("impossible de lire '%s' : %s\n"), src, strerror(errno)); return -1;
   }
   out = fopen(dest, "w");
   if (!out) {
-    fprintf(stderr, "impossible d'écrire dans '%s' : %s\n", dest, strerror(errno)); return -1;
+    fprintf(stderr, _("impossible d'écrire dans '%s' : %s\n"), dest, strerror(errno)); return -1;
   }
 
   while ((c=fgetc(in)) != EOF) {
@@ -195,25 +198,25 @@ check_install_data_file(char *data_file_name, char *dot_wmcc_file_name)
   data_name = str_printf(WMCCDATADIR "/%s", data_file_name);
 
   if (stat(dot_name, &stbuf)) {
-    fprintf(stderr, "ah ben y'a pas le fichier '%s', on va le créer\n", dot_name);
+    fprintf(stderr, _("ah ben y'a pas le fichier '%s', on va le créer\n"), dot_name);
     copy_file(dot_name, data_name);
   }
 
   if (stat(dot_name, &stbuf)) {
-    fprintf(stderr, "\ndésolé, demerdez-vous pour copier '%s' dans votre ~/.wmcoincoin ..\n", data_file_name);
+    fprintf(stderr, _("\ndésolé, demerdez-vous pour copier '%s' dans votre ~/.wmcoincoin ..\n"), data_file_name);
     use_data = 1;
   } else if (!S_ISREG(stbuf.st_mode)) {
-    fprintf(stderr, "\narrêtez de faire n'importe quoi dans votre ~/.wmcoincoin..\n\n");
+    fprintf(stderr, _("\narrêtez de faire n'importe quoi dans votre ~/.wmcoincoin..\n\n"));
     use_data = 1;
   }
 
   if (use_data) {
     if (stat(data_name, &stbuf)) {
-      fprintf(stderr, "wmcoincoin a du être mal installé, je ne trouve pas le fichier '%s' par défaut dans le rép '" WMCCDATADIR "'..\n",
-	      data_name);
+      fprintf(stderr, _("wmcoincoin a du être mal installé, je ne trouve pas le fichier '%s' par défaut dans le rép '%s'...\n"),
+	      data_name,WMCCDATADIR);
       exit(1);
     } else {
-      fprintf(stderr, "utilisation du fichier se trouvant dans '%s'\n", data_name);
+      fprintf(stderr, _("utilisation du fichier se trouvant dans '%s'\n"), data_name);
     }
     free(dot_name); return data_name;
   } else {
@@ -235,7 +238,7 @@ wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
     if (strcmp(argv[i], "-o") == 0) {
       assert(argv[i+1]);
       ASSIGN_STRING_VAL(options_file_name, argv[i+1]);
-      myprintf("utilisation du fichier d'options '%<yel %s>'\n", argv[i+1]);
+      myprintf(_("utilisation du fichier d'options '%<yel %s>'\n"), argv[i+1]);
       break;
     }
   }
@@ -247,7 +250,7 @@ wmcc_prefs_initialize(int argc, char **argv, structPrefs *p)
   assert(options_full_file_name);
   errmsg = wmcc_prefs_read_options(p, options_full_file_name); /* lecture de '.wmcoincoin/options' */
   if (errmsg) {
-    myprintf("Erreur pendant la lecture de '%s':\n%<YEL %s>\n" , options_full_file_name, errmsg);
+    myprintf(_("Erreur pendant la lecture de '%s':\n%<YEL %s>\n") , options_full_file_name, errmsg);
     free(errmsg); exit(1);
   }
   free(options_full_file_name);
@@ -342,7 +345,7 @@ key_list_copy_if_changed(KeyList **a, KeyList *b)
     }
     hk = hk->next;
   }
-  printf("key_list changed: %d\n", changed);
+  printf(_("key_list changed: %d\n"), changed);
   return changed;
 }
 
@@ -405,14 +408,14 @@ wmcc_prefs_relecture(Dock *dock)
 
   errmsg = wmcc_prefs_read_options(&newPrefs, options_full_file_name);
   if (errmsg) {
-    char *s = str_printf("problème pendant la relecture des options [%s]<br>%s",
+    char *s = str_printf(_("problème pendant la relecture des options [%s]<br>%s"),
 			 options_full_file_name, errmsg); free(errmsg);
     msgbox_show(dock, s); free(s);
   } else {
     int pp_need_refresh = 0;
 
     //    char *msg_cancelled_changes = strdup(""), *tmp;
-    myprintf("relecture des options '%<YEL %s>' réussie\n", options_full_file_name);
+    myprintf(_("relecture des options '%<YEL %s>' réussie\n"), options_full_file_name);
 
     /* on dresse la liste des options non modifiable à chaud */
     /*    if (STR_OPT_CHANGED(font_encoding)) {
@@ -439,8 +442,8 @@ wmcc_prefs_relecture(Dock *dock)
     if (STR_OPT_COPY_IF_CHANGED(proxy_name) ||
 	STR_OPT_COPY_IF_CHANGED(site_root)) {
       flag_changed_http_params = 1; /* force le gethostbyname */
-      myprintf("vous avez changé l'adresse du site/proxy, gethostbyname bientot en cours (le coincoin\n"
-	       "va peut être se bloquer quelques secondes, voire plus\n");
+      myprintf(_("vous avez changé l'adresse du site/proxy, gethostbyname bientot en cours (le coincoin\n"
+	       "va peut être se bloquer quelques secondes, voire plus\n"));
     }
     INT_OPT_COPY(proxy_port);
     STR_OPT_COPY(user_name);

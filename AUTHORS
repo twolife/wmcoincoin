@@ -4,7 +4,7 @@ mais aussi:
 * Laurent Mazet (patch)
 * kadreg (pixmap de fond)
 * Mike Hommey (mode horloge, if-encoded-since, aide précieuse pour les pb de chunk encoding)
-* Josselin Mouette (ralentissement du coincoin)
+* Josselin Mouette (ralentissement du coincoin, i18n)
 * Gael le Mignot (regexp.c)
 * Frederic Py (ispell)
 * Shift (commande externe)

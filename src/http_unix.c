@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: http_unix.c,v 1.13 2002/06/18 21:00:24 pouaite Exp $
+  rcsid=$Id: http_unix.c,v 1.14 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: http_unix.c,v $
-  Revision 1.13  2002/06/18 21:00:24  pouaite
-  support ipv6 (non testé)
+  Revision 1.14  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.12  2002/06/02 12:37:36  pouaite
   fix gethostbyname --> version 2.3.8b
@@ -42,20 +42,21 @@
 
 
 
+
 /* 
    connection sans gestion de timeout ... pour les OS à moelle ? 
 */
 int
-net_tcp_connect(int fd, SOCKADDR_IN *sock)
+net_tcp_connect(int fd, struct sockaddr_in *sock)
 {
   int ret;
   assert(fd >= 0);
-  printf("connect basique (susceptible de BLOQUER LE COINCOIN)..\n");
+  printf(_("Basic connect (can BLOCK THE COINCOIN)...\n"));
 
   do {
     ALLOW_X_LOOP; ALLOW_ISPELL;
   block_sigalrm(1);
-    ret = connect (fd, (struct sockaddr *) sock, sizeof (SOCKADDR_IN));
+    ret = connect (fd, (struct sockaddr *) sock, sizeof (struct sockaddr_in));
   block_sigalrm(0);
   ALLOW_X_LOOP; ALLOW_ISPELL;
 //    printf("connect: ret=%d, errno=%d (%s)\n", ret, errno, strerror(errno));
@@ -65,7 +66,7 @@ net_tcp_connect(int fd, SOCKADDR_IN *sock)
 
 /* vole dans une mailing liste (je sais plus laquelle) , ça n'a pas l'air ultra-portable */
 static int
-net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
+net_tcp_connect_with_timeout (int fd, struct sockaddr_in *sock, int timeout_secs)
 {
   struct timeval timeout;
   fd_set write_fds;
@@ -92,7 +93,7 @@ net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
      * Try to connect.
      */
     if (connect (fd, (struct sockaddr *) sock,
-		 sizeof (SOCKADDR_IN)) < 0) {
+		 sizeof (struct sockaddr_in)) < 0) {
       ALLOW_X_LOOP; ALLOW_ISPELL;
       /* le test sur EISCONN special BSD -> bsd connecte plus vite que l'éclair? */
       if (errno == EISCONN) goto cassos;
@@ -123,7 +124,7 @@ net_tcp_connect_with_timeout (int fd, SOCKADDR_IN *sock, int timeout_secs)
       }
     }
     if (timeout.tv_sec == 0 && timeout.tv_usec == 0) {
-      printf("Connection timed out (timeout=%d sec)!\n", timeout_secs);
+      printf(_("Connection timed out (timeout=%d sec)!\n"), timeout_secs);
       return -1;
     }
     ALLOW_X_LOOP; ALLOW_ISPELL;
@@ -156,27 +157,27 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
   struct hostent *phost;
   int tube[2];
 
-  BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "bienvenu dans le gethostbyname forké, tout ceci est expérimental, gare aux zombies\n"));
+  BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("Welcome to the forked gethostbyname, everything is experimental, beware the zombies\n")));
   memset(addr, 0, 65);
 
   if (pipe(tube) == -1) {
-    fprintf(stderr, "tuyau percé !: %s\n", strerror(errno)); return -1;
+    fprintf(stderr, _("Broken pipe: %s\n"), strerror(errno)); return -1;
   }
   switch ((pid = fork())) {
   case -1:
-    fprintf(stderr, "ouuups, à mon avis y'a une armée de zombies dans le coin\nle fork() est parti en torche: %s", strerror(errno));
+    fprintf(stderr, _("Ooooops, it looks like there is a throng of zombies out there\nthe fork failed: %s"), strerror(errno));
     return -1;
     break;
 
   case 0: { /* fiston */
     int n;
     if (close(tube[0]) == -1) {
-      fprintf(stderr, "fiston: tube bouché (%s)\n", strerror(errno)); close(tube[1]); exit(-1);
+      fprintf(stderr, _("son: pipe full (%s)\n"), strerror(errno)); close(tube[1]); exit(-1);
     }
 
-    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname en cours..\n"));
-    phost=GETHOSTBYNAME(hostname);
-    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, "fiston: gethostbyname terminé..\n"));
+    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("son: gethostbyname going on...\n")));
+    phost=gethostbyname(hostname);
+    BLAHBLAH(VERBOSE_LVL,fprintf(stderr, _("son: gethostbyname finished.\n")));
     if( phost != NULL ) {
       unsigned char l;
       assert(phost->h_length < 128); /* faut pas pousser grand mère */
@@ -185,7 +186,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
       n = write( tube[1], &l, 1); BLAHBLAH(VERBOSE_LVL,printf("write len %d [%s]\n", n, strerror(errno)));
       n = write( tube[1], phost->h_addr_list[0] , phost->h_length); BLAHBLAH(VERBOSE_LVL,printf("write adr %d [%s]\n", n, strerror(errno)));
     } else {
-      fprintf(stderr, "fiston: échec de gethostbyname sur '%s'\n", hostname);
+      fprintf(stderr, _("son: gethostbyname on '%s' failed.\n"), hostname);
     }
     exit(phost == NULL );
     break;
@@ -194,7 +195,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     int cnt, got, len, cstat;
     time_t time_debut;
     if (close(tube[1]) == -1) {
-      fprintf(stderr, "pôpa: tube bouché (%s), que va devenir fiston ?\n", strerror(errno)); close(tube[0]);
+      fprintf(stderr, _("daddy: pipe full (%s), what will do now ?\n"), strerror(errno)); close(tube[0]);
     }
     
     //fcntl( tube[0] , F_SETFD , fcntl( tube[0] , F_GETFD ) | O_NONBLOCK );
@@ -203,7 +204,7 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
     while (1) {
       int retval;
 
-      ALLOW_X_LOOP_MSG("pôpa écoute fiston"); ALLOW_ISPELL;
+      ALLOW_X_LOOP_MSG("daddy listens to his son"); ALLOW_ISPELL;
 
       retval = http_select_fd(tube[0], 0, 10000, 0);
       BLAHBLAH(4,fprintf(stderr, "select : retval = %d %s\n", retval, (retval == -1) ? strerror(errno) : "ok"));
@@ -218,19 +219,19 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
 	*/
 
 	if (got == 0) {
-	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,"fiston a rebouché le tube!\n"));
+	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,_("The son got the pipe full again!\n")));
 	  break;
 	} else if (got == -1) {
-	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,"c'est quoi ce tube pourri! %s\n", strerror(errno))); break;
+	  BLAHBLAH(VERBOSE_LVL, fprintf(stderr,_("What a fucking pipe! %s\n"), strerror(errno))); break;
 	}
 	cnt += got;
 	if (cnt >= 1) len = addr[0];
       } else if (retval == 0) { /* rien a lire pour l'instant */
-	BLAHBLAH(4,fprintf(stderr, "select .. on attend\n"));
+	BLAHBLAH(4,fprintf(stderr, _("select .. awaiting\n")));
       } else if (errno == EINTR) {
-	BLAHBLAH(4,fprintf(stderr, "select .. interrompu\n"));
+	BLAHBLAH(4,fprintf(stderr, _("select .. interrupted\n")));
       } else {
-	BLAHBLAH(4,fprintf(stderr, "select .. probleme : %s\n", strerror(errno)));
+	BLAHBLAH(4,fprintf(stderr, _("select .. problem : %s\n"), strerror(errno)));
       }
       /*
       if (difftime(time(NULL),time_debut) > 4) {
@@ -245,12 +246,12 @@ gethostbyname_nonbloq(const char *hostname, unsigned char addr[65]) {
 
     while (waitpid(pid,&cstat,WNOHANG) == 0) {
       usleep(10000);
-      ALLOW_X_LOOP_MSG("retour du gethostbyname forké"); ALLOW_ISPELL;
-      printf("on attend fiston... gamin ? viens là gamin !\n");
+      ALLOW_X_LOOP_MSG("return from the forked gethostbyname"); ALLOW_ISPELL;
+      printf(_("We're waiting for the son... Come here boy !\n"));
     }
 
     if (len == -1 || cnt < len+1) {
-      fprintf(stderr, "pôpa: j'ai pas réussi à lire fiston :-/ (len=%d, cnt=%d) (lasterr=%s)\n", len, cnt, strerror(errno));
+      fprintf(stderr, _("Daddy: I couldn't read from my son :-/ (len=%d, cnt=%d) (lasterr=%s)\n"), len, cnt, strerror(errno));
       return -1;
     }
     break;

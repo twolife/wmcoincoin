@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: newswin.c,v 1.12 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: newswin.c,v 1.13 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: newswin.c,v $
+  Revision 1.13  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.12  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -36,6 +39,9 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include "coincoin.h"
 #include "picohtml.h"
@@ -103,12 +109,12 @@ newswin_parsetxt(Dock *dock, DLFP_news *n)
 
   //BLAHBLAH(2,printf("newswin_parsetxt\n"));
   if (n->txt == NULL) {
-    buff = strdup("Le <b>texte de la news</b> n'a pas encore ete mis a jour...");
+    buff = strdup(_("The <b>text of the news</b> hasn't been updated yet..."));
   } else {
     char p1[512];
     
-    snprintf(p1, 512, "<B><a href=\"http://%s:%d%s%s\"><font color=#000080>%s</font></a></B><br>posté par "
-	     "<b><font color=#800000>%s</font></b> le %s, section <b>%s</b><p>",
+    snprintf(p1, 512, _("<B><a href=\"http://%s:%d%s%s\"><font color=#000080>%s</font></a></B><br>posted by "
+	     "<b><font color=#800000>%s</font></b> on the %s, section <b>%s</b><p>"),
 	     Prefs.site_root, Prefs.site_port, Prefs.site_path, 
 	     n->url,
 	     n->titre, n->auteur, n->date, n->topic);
@@ -253,7 +259,7 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
   
   /* création de la liste des titres des news */
   if (flag_updating_news) {
-    printf("maj des news en cours...\n");
+    printf(_("Updating the news...\n"));
     return;
   }
 
@@ -317,11 +323,11 @@ newswin_update_content(Dock *dock, DLFP *dlfp, int reset_decal)
 
   nw->phv_news.ph_h = 0;
   if (nw->news_id <= 0) {
-    printf("pas de news...\n");
+    printf(_("No news...\n"));
   } else {
     n = dlfp_find_news_id(dlfp, nw->news_id);
     if (n == NULL) {
-      printf("cette news a été détruite (id=%d)!?...\n",nw->news_id);
+      printf(_("This news was destroyed (id=%d)!?...\n"),nw->news_id);
     } else {
       newswin_parsetxt(dock, n);
       picohtml_gettxtextent(nw->phv_news.ph, &bidon, &nw->phv_news.ph_h);
@@ -375,7 +381,7 @@ newswin_createXWindow(Dock *dock)
   int xpos, ypos;
 
   assert(nw->win_width>0 && nw->win_height>0);
-  BLAHBLAH(2, printf("newswin_createXWindow: creation d'une fenetre de dimensions %d %d\n",  
+  BLAHBLAH(2, printf(_("newswin_createXWindow: creating a window of dimensions %dx%d\n"),
 		     nw->win_width, nw->win_height));
 
   if (nw->win_xpos == -10000 && nw->win_ypos == -10000) {
@@ -393,7 +399,7 @@ newswin_createXWindow(Dock *dock)
 	       ButtonPressMask | ExposureMask | ButtonReleaseMask | PointerMotionMask | 
 	       EnterWindowMask | LeaveWindowMask | StructureNotifyMask);
 
-  snprintf(s, 512, "news de %s", Prefs.site_root);
+  snprintf(s, 512, _("news from %s"), Prefs.site_root);
   window_title = s;
 
   /* nom de la fenetre (et de la fenetre iconifiée) */
@@ -554,7 +560,7 @@ newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
 
   survol[0] = 0; 
   if (flag_updating_news) {
-    strcpy(survol, "mise à jour des news en cours...");
+    strcpy(survol, _("Updating the news..."));
   } 
   if (survol[0] == 0) {
     pi = get_phi_survol(dock, mx, my);
@@ -572,12 +578,12 @@ newswin_update_info(Dock *dock, DLFP *dlfp, int mx, int my) {
     if (znum != -1) {
       n = dlfp_find_news_id(dlfp, nw->ztitle[znum].nid);
       if (n) {
-	snprintf(survol, 1024, "id=<b>%d</b>, date : %s, approuvée à %02d:%02d, %s", n->id, n->date, n->heure / 60, n->heure % 60,
+	snprintf(survol, 1024, _("id=<b>%d</b>, date: %s, approved on %02d:%02d, %s"), n->id, n->date, n->heure / 60, n->heure % 60,
 		 (n->flag_unreaded <= 0) ? 
-		 "(déjà lue)":
-		 "<b><font color=#8f0000>(nouvelle!)</font></b>");
+		 _("(already read)"):
+		 _("<b><font color=#8f0000>(new!)</font></b>"));
       } else {
-	snprintf(survol, 1024, "id=<b>%d</b>, contenu de la news non disponible (trop vieille ? download en cours ?)", nw->ztitle[znum].nid);
+	snprintf(survol, 1024, _("id=<b>%d</b>, contents of the news unavailable (too old ? download in progress ?)"), nw->ztitle[znum].nid);
       }
     }
   }
@@ -747,7 +753,7 @@ newswin_dispatch_event(Dock *dock, DLFP *dlfp, XEvent *event)
   if (nw->window != None) {
     switch (event->type) {
     case DestroyNotify:
-      BLAHBLAH(2,printf("newswin destroy !\n"));
+      BLAHBLAH(2,printf(_("newswin destroy !\n")));
       break;
     case ButtonPress:
       {

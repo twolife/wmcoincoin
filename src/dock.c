@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.16 2002/06/02 13:31:37 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.17 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.17  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.16  2002/06/02 13:31:37  pouaite
   bon, _maintenant_ c'est parti pour la 2.3.8b
 
@@ -74,6 +77,9 @@
   gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
 
 */
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -374,7 +380,7 @@ dock_checkout_newstitles(Dock *dock, DLFP *dlfp)
       dlfp->updated = 0;
 
       if (dlfp_count_news(dlfp) == 0) {
-	sprintf(dock->newstitles, "..NO NEWS");
+	sprintf(dock->newstitles, _("..NO NEWS"));
 	memset(dock->newstitles_id, 0, sizeof(dock->newstitles_id[0]) * MAX_NEWSTITLES_LEN);
 	dock->newstitles_pos = 0; 
 	dock->newstitles_char_dec = 4;
@@ -624,7 +630,7 @@ dock_refresh_normal(Dock *dock)
     } break;
   default:
     {
-      fprintf(stderr, "coin ?.... COIN ?? couic !\n"); assert(0);
+      fprintf(stderr, _("coin ?.... COIN ?? couic !\n")); assert(0);
     }
   }
 }
@@ -717,7 +723,7 @@ dock_leds_set_state(Dock *dock)
   if (trollo_hrate < 10) {
     /* moins de 10 message / heure -> trollo OFF */
     if (dock->leds.led[4].delay[2] != 0) {
-      BLAHBLAH(1, myprintf("%<YEL Troll-o-metre -> passage au niveau> %<GRN 0.00> (max=1.) !!!\n"));
+      BLAHBLAH(1, myprintf(_("%<YEL Troll-o-meter -> going to level> %<GRN 0.00> (max=1.) !!!\n")));
       BLAHBLAH(1, myprintf("%<YEL> trollo_hrate = %d\n", trollo_hrate));
     }
     dock->leds.led[4].delay[1] = 0;
@@ -835,7 +841,7 @@ dock_red_button_check(Dock *dock) {
   if (dock->red_button_press_flag) {
     /* si on a appuye assez fort ... */
     if (dock->red_button_press_state == 5) {
-      BLAHBLAH(1,printf("Coin !\n"));
+      BLAHBLAH(1,printf(_("Coin !\n")));
 
       if (flag_sending_coin_coin == 0) { /* petite precaution */
 	/* On utilise real_coin_coin_message pour éviter un bug si on modifier
@@ -874,26 +880,26 @@ dock_show_tribune_frequentation(Dock *dock)
       snprintf(sv_xp,10,"%d", dock->dlfp->xp);
     } else snprintf(sv_xp, 10, "???");
     if (dock->dlfp->xp_old > -1000) {
-      snprintf(sv_xp_old,50,"(ancienne valeur: %d)",dock->dlfp->xp_old);
+      snprintf(sv_xp_old,50,_("(previous value: %d)"),dock->dlfp->xp_old);
     } else sv_xp_old[0] = 0;
 
-    snprintf(s_xp, 512, "Vous avez <b><font color=blue>%s</font></b>"
-	     " XP %s  [votes:%d/%d]<br><br>", 
+    snprintf(s_xp, 512, _("You have <b><font color=blue>%s</font></b>"
+	     " XP %s  [votes:%d/%d]<br><br>"), 
 	     sv_xp, sv_xp_old, dock->dlfp->votes_cur, dock->dlfp->votes_max);
   } else {
     s_xp[0] = 0;
   }
   
   snprintf(s, 2048, 
-	   "vous utilisez wmc² v.<font color=blue>" VERSION "</font> [ compilé le " __DATE__ " ]<p>"
+	   _("You are using wmc² v.<font color=blue>%s</font> [ built on %s ]<p>"
 	   "%s"
-	   "<p align=center><b>Fréquentation de la Tribune</b><br>"
-	   "<i>(estimation basée sur les useragents et les logins)</i></p><br>"
-	   "depuis:<br>"
-	   ".<tab><i>10 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
-	   ".<tab><i>30 minutes</i>: <tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
-	   ".<tab><i> 2 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>"
-	   ".<tab><i> 8 heures </i>: <tab><tab><font color=blue>%d</font><tab> personnes ont posté <tab><font color=blue>%d</font> messages (vous:%d)<br>",
+	   "<p align=center><b>People on the board</b><br>"
+	   "<i>(estimation based on the useragents and logins)</i></p><br>"
+	   "since:<br>"
+	   ".<tab><i>10 minutes</i>: <tab><font color=blue>%d</font><tab> people have posted <tab><font color=blue>%d</font> messages (you:%d)<br>"
+	   ".<tab><i>30 minutes</i>: <tab><font color=blue>%d</font><tab> people have posted <tab><font color=blue>%d</font> messages (you:%d)<br>"
+	   ".<tab><i> 2 hours </i>: <tab><tab><font color=blue>%d</font><tab> people have posted <tab><font color=blue>%d</font> messages (you:%d)<br>"
+	   ".<tab><i> 8 hours </i>: <tab><tab><font color=blue>%d</font><tab> people have posted <tab><font color=blue>%d</font> messages (you:%d)<br>"), VERSION, __DATE__,
 	   s_xp, ua_cnt1, msg_cnt1, my_msg_cnt1, 
 	   ua_cnt2, msg_cnt2, my_msg_cnt2, 
 	   ua_cnt3, msg_cnt3, my_msg_cnt3,
@@ -917,7 +923,7 @@ dock_build_pixmap_porte(Dock *dock)
     int w, h;
     bg_pixmap = RGBACreatePixmapFromXpmFile(dock->rgba_context, Prefs.dock_bgpixmap, &w, &h);
     if ((bg_pixmap == None) || (w != 64) || (h != 64)) {
-      return str_printf("Erreur en chargeant le fichier : '%s' [xpm de 64x64 pixels svp]", Prefs.dock_bgpixmap);
+      return str_printf(_("Error while loading file : '%s' [64x64 pixels XPM, please]"), Prefs.dock_bgpixmap);
     } else {
       RGBAImage *rgba_porte;
       XImage *XiPixPixmap;
@@ -1105,7 +1111,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	open_url(url, x, y, 1);
 	m->unreaded = 0;
       } else {
-	msgbox_show(dock, "pas de nouveaux messages");
+	msgbox_show(dock, _("No new messages."));
       }
     } else if (IS_INSIDE(x,y,TROLLOSCOPE_X, TROLLOSCOPE_Y,
 			 TROLLOSCOPE_X+TROLLOSCOPE_WIDTH-1,TROLLOSCOPE_Y+TROLLOSCOPE_HEIGHT-1) &&
@@ -1264,7 +1270,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	open_url(url, x, y, 2);
 	m->unreaded = 0;
       } else {
-	msgbox_show(dock, "pas de nouveaux messages");
+	msgbox_show(dock, _("No new messages."));
       }
     } else if (IS_INSIDE(x,y,50,18,60,22) && 
 	       (dock->door_state == CLOSED)) {
@@ -1281,7 +1287,7 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
 	int err;
 
 	err = useragents_file_reread(dock, dock->dlfp);
-	BLAHBLAH(2, printf("relecture RCfile -> code d'erreur renvoye: %d\n", err));
+	BLAHBLAH(2, printf(_("Re-reading of RC file return an error code %d\n"), err));
       }
     }
   }

@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.4 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.5 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.5  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.4  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -32,6 +35,10 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
+
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 
 #include <X11/Xlib.h>
@@ -59,8 +66,10 @@ static void
 msgbox_refresh(Dock *dock, Drawable d)
 {
   MsgBox *m = dock->msgbox;
-  const char *title = "MESSAGE DE WMCOINCOIN";
+  const char *title;
   int tw;
+
+  title = _("MESSAGE FROM WMCOINCOIN");
 
   if (m->mapped == 0) return;
   //printf("refresh!\n");
@@ -176,7 +185,7 @@ msgbox_hide(Dock *dock)
 {
   MsgBox *m = dock->msgbox;
 
-  BLAHBLAH(3, printf("close msgbox\n"));
+  BLAHBLAH(3, printf(_("close msgbox\n")));
   if (m->mapped) {
     m->mapped = 0;
     

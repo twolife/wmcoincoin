@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.63 2002/06/01 17:54:04 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.64 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.64  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
+
   Revision 1.63  2002/06/01 17:54:04  pouaite
   nettoyage
 
@@ -183,6 +186,9 @@
   correction (enfin!) du bug d'affichage lorsque plusieurs posts ont le même timestamp
 
 */
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include "coincoin.h"
 #include "time.h"
@@ -1410,7 +1416,7 @@ pp_minib_refresh(Dock *dock)
       snprintf(s_filtre, 60, "%.40s [match:%d msg]", 
 	       pp->filter.filter_name, count_all_id(&dock->dlfp->tribune, &pp->filter));
     } else {
-      snprintf(s_filtre, 60, "FILTRE NON DEFINI");
+      snprintf(s_filtre, 60, _("FILTER UNDEFINED"));
     }
     XSetForeground(dock->display, dock->NormalGC, pp->minib_dark_pixel);
     XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_minib->ascent+1, s_filtre, strlen(s_filtre));
@@ -2225,8 +2231,8 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_base = XLoadQueryFont(display, base_name);
   if (!pp->fn_base) {
-    fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
-    fprintf(stderr, "Choisissez une autre police\n");
+    fprintf(stderr, _("XLoadQueryFont: failed loading font '%s'\n"), base_name);
+    fprintf(stderr, _("Please choose another font.\n"));
     return -1;
   }
 
@@ -2235,12 +2241,12 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   pp->fn_it = XLoadQueryFont(display, ital_name);
   if (!pp->fn_it) {
     /* puis la police italique */
-    BLAHBLAH(1, fprintf(stderr, "police oblique '%s' non trouvee -> on cherche la police italique\n", ital_name));
+    BLAHBLAH(1, fprintf(stderr, _("Slanted font '%s' not found -> we're looking for the italic font\n"), ital_name));
     snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     pp->fn_it = XLoadQueryFont(display, ital_name);
     if (!pp->fn_it) {
-      myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", ital_name);
-      myfprintf(stderr, "on va utiliser la fonte de base\n");
+      myfprintf(stderr, _("%<RED WARNING>: error while looking for the italic font: '%s'\n"), ital_name);
+      myfprintf(stderr, _("We'll use the base font.\n"));
 
       /* pas de copie de pointer pour pas poser de pbs dans picohtml_destroy */
       pp->fn_it = XLoadQueryFont(display, base_name); assert(pp->fn_it);
@@ -2251,8 +2257,8 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   pp->fn_bd = XLoadQueryFont(display, bold_name);
   if (!pp->fn_bd) {
-    myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte bold: '%s'\n", bold_name);
-    myfprintf(stderr, "on va utiliser la fonte de base\n");
+    myfprintf(stderr, _("%<RED WARNING>: error while looking for the bold font: '%s'\n"), bold_name);
+    myfprintf(stderr, _("We'll use the base font.\n"));
     pp->fn_bd = XLoadQueryFont(display, base_name); assert(pp->fn_bd);
   }
 
@@ -2261,12 +2267,12 @@ pp_load_fonts(Pinnipede *pp, Display *display, char *fn_family, int fn_size)
   pp->fn_itbd = XLoadQueryFont(display, itbd_name);
   if (!pp->fn_itbd) {
     /* puis la police bold italique */
-    BLAHBLAH(1, fprintf(stderr, "police bold oblique '%s' non trouvee -> on cherche la police bold italique\n", itbd_name));
+    BLAHBLAH(1, fprintf(stderr, _("Bold slanted font '%s' not found -> we're looking for the italic font\n"), itbd_name));
     snprintf(itbd_name, 512, "-*-%s-bold-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     pp->fn_itbd = XLoadQueryFont(display, itbd_name);
     if (!pp->fn_itbd) {
-      myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", itbd_name);
-      myfprintf(stderr, "on va utiliser la fonte de base\n");
+      myfprintf(stderr, _("%<RED WARNING>: error while looking for the italic font: '%s'\n"), itbd_name);
+      myfprintf(stderr, _("We'll use the base font.\n"));
 
       /* pas de copie de pointer pour pas poser de pbs dans picohtml_destroy */
       pp->fn_itbd = XLoadQueryFont(display, base_name); assert(pp->fn_itbd);
@@ -2383,9 +2389,9 @@ pp_build(Dock *dock)
   pp->survol_hash = 0;
   assert(Prefs.pp_fn_family);
   if (pp_load_fonts(pp, dock->display, Prefs.pp_fn_family, Prefs.pp_fn_size)) {
-    myprintf("echec du chargement des fontes '%s' en taille '%d'\non prend de l'helvetica en 12 pour assurer\n",Prefs.pp_fn_family, Prefs.pp_fn_size);
+    myprintf(_("Failed to load the '%s' fonts with size '%d'\nLet's try with helvetica/12.\n"),Prefs.pp_fn_family, Prefs.pp_fn_size);
     if (pp_load_fonts(pp, dock->display, "helvetica", 12)==-1) {
-      myprintf("gruiiiiik !! pas d'helvetica je me tire une balle dans le nez\n"); exit(-1);
+      myprintf(_("Uuuurg !! No helvetica, I shoot my nose.\n")); exit(-1);
     }
   }
 
@@ -2433,7 +2439,7 @@ pp_update_bg_pixmap(Dock *dock)
 						  &Prefs.pp_transparency, 
 						  Prefs.use_fake_real_transparency);
     if (pp->bg_pixmap == None) {
-      myprintf("%<yel impossible d'utiliser la pseudo-transp> (solution probable: relancer wmsetbg ou autre)\n");
+      myprintf(_("%<yel impossible to use the pseudo-transparency> (probable solution: relaunch wmsetbg or its equivalent)\n"));
       pp_change_transparency_mode(dock, 0);
     }
   }
@@ -2714,14 +2720,14 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
 
       s = blah; s[0] = 0;
       if (mi->is_my_message) {
-	snprintf(s, blah_sz, "\n[vous avez posté ce message]"); blah_sz -= strlen(s); s += strlen(s);
+	snprintf(s, blah_sz, _("\n[you posted this message]")); blah_sz -= strlen(s); s += strlen(s);
       }
       if (mi->is_answer_to_me && blah_sz>30) {
-	snprintf(s, blah_sz, "\n[ce message répond à l'un des votres]"); blah_sz -= strlen(s); s += strlen(s);
+	snprintf(s, blah_sz, _("\n[this message answers to one of yours]")); blah_sz -= strlen(s); s += strlen(s);
       }
       hk = tribune_key_list_test_mi(trib, mi, Prefs.hilight_key_list);
       if (hk && blah_sz > 60) {
-	snprintf(s, blah_sz, "\nmessage 'encadré' car: "); blah_sz -= strlen(s); s += strlen(s);
+	snprintf(s, blah_sz, _("\nmessage 'boxed' because: ")); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
 	  snprintf(s, blah_sz, " {%s='%.20s'}", 
 		   tribune_key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
@@ -2730,7 +2736,7 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       }
       hk = tribune_key_list_test_mi(trib, mi, Prefs.plopify_key_list);
       if (hk && blah_sz > 60) {
-	snprintf(s, blah_sz, "\nmessage plopifié (niveau %d) car: ", hk->num); blah_sz -= strlen(s); s += strlen(s);
+	snprintf(s, blah_sz, _("\nmessage plopified (level %d) because: "), hk->num); blah_sz -= strlen(s); s += strlen(s);
 	while (hk && blah_sz > 30) {
 	  snprintf(s, blah_sz, " {%s='%.20s'}", 
 		   tribune_key_list_type_name(hk->type), hk->key); blah_sz -= strlen(s); s += strlen(s);
@@ -2739,8 +2745,8 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       }
       nrep = pp_count_backrefs(mi);
 
-      snprintf(survol, 1024, "id=%d ua=%s\n%d réponse%s%s", pw->parent->id, (mi ? mi->useragent : ""), 
-	       nrep, (nrep > 1) ? "s" : "", blah);
+      snprintf(survol, 1024, "id=%d ua=%s\n%d %s%s", pw->parent->id, (mi ? mi->useragent : ""), 
+	       nrep, (nrep > 1) ? _("answers") : _("answer"), blah);
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
       is_a_ref = 1;
@@ -2895,7 +2901,7 @@ pp_tribuneshot_kikoooo(Dock *dock, DLFP_tribune *tribune )
   file = fopen( file_name, "a");
   if ( ! file ) {
     char errmsg[512];
-    snprintf(errmsg, 512, "Erreur d'ouverture de %s\n", file_name);
+    snprintf(errmsg, 512, _("Error while opening %s\n"), file_name);
     msgbox_show(dock, errmsg);
     free(file_name);
     return -1;
@@ -2941,41 +2947,36 @@ pp_balloon_help(Dock *dock, int x, int y)
   //  balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos, 15000,
   //	       0, 0, pp->win_width, pp->win_height,
   balloon_show(dock, pp->win_xpos + x, pp->win_ypos + y, 40, 40, 
-	       "<p align=center>bienvenue dans le <b><font color=#008000>Pinnipède Télétype</font></b></p>"
-	       "Cette fenêtre à été spécialement conçue par les plus grands experts pour offrir "
-	       "des conditions de moulage optimales.<br>"
-	       "Voici donc un rappel des fonctionnalités:<br><br>"
-	       "<b>Pour scroller</b>, utiliser la roulette de la souris, ou 'tirer' "
-	       "en cliquant avec le bouton de droite. "
-	       "Le scroll est automatique lors de l'apparition d'un nouveau message.<br><br>"
-	       "Pour faire apparaitre/disparaitre <b>la barre de boutons</b>, utilisez le clic droite. "
-	       "Les deux premiers boutons permettent "
-	       "de scroller, plus ou moins vite selon que vous cliquez "
-	       "avec le bouton de gauche ou de droite<br><br>"
-	       "Les actions disponibles sur l'<b>horloge</b> identifiant un message sont:<br>"
-	       "<font color=blue>Click Gauche</font><tab>: ouvre le palmipède editor, et insère une référence au message<br>"
-	       "<font color=blue>Click Milieu</font><tab>: copie le contenu du message dans le clipboard<br>"
-	       "<font color=blue>Click Droite</font><tab>: copie le contenu du useragent dans le clipboard<br><br>"
-	       "En cliquant sur une <b>[url]</b>, le résultat sera:<br>"
-	       "<font color=blue>Click Gauche</font><tab>: ouverture de l'url dans le browser externe (si il a été "
-	       "défini dans le fichier ~/.wmcoincoin/options). <b>Attention</b>, même si des précautions ont été prises "
-	       "depuis l'ignominieux wmcoincoin 2.0, ce genre de chose reste généralement considèré comme une faiblesse dans la sécurité...<br>"
-	       "<font color=blue>Click Milieu</font><tab>: ouverture de l'url avec le second browser (option http.browser2)<br>"
-	       "<font color=blue>Click Droite</font><tab>: copie l'url dans le clipboard<br><br>"
-	       "Quand le pointeur se trouve au-dessus d'une <b>référence à un post précédent</b>, celui-ci sera souligné. Si vous cliquez:<br>"
-	       "<font color=blue>Click Gauche</font><tab>: 'aller' au message référencé<br>"
-	       "<font color=blue>Click Droite</font><tab>: copier cette référence dans le clipboard (d'accord, c'est pas très utile...)<br><br>"
-
-	       "Un filtrage rudimentaire est disponible à l'aide de <font color=blue>Ctrl+left clic</font> "
-	       "sur un mot, login, useragent.. (utiliser le bouton bleu pour l'annuler)<br> Si vous voulez au contraire mettre en relief les post d'une personne ou bien ceux contenant un certain mot, le <font color=blue>Shift+Click Gauche</font> sera votre ami<br>"
-	       
-	       "<b>Nouveau:</b> quelqu'un vous saoule méchamment ? vous avez lancé un troll qui vous échappe ? Alors plopifiez les malfaisants avec un <font color=blue>Shift+Click Droite</font> sur son login/useragent<br><br>"
-
-	       "Vous pouvez prendre un 'shot' de la tribune (aka plateau de fruits de mer), avec <font color=blue>Ctrl+Middle Clic</font><br><br>"
-
-	       "Pour comprendre l'affichage des <b>useragents</b> activé par le bouton rouge sombre (à quinze pixels sur votre gauche), se reporter au "
-	       "fichier <tt>~/.wmcoincoin/useragents</tt><br> (hint: il a 5 positions différentes)<br><br>"
-	       "Le pinnipède télétype vous souhaite un agréable moulage.", 500);
+	       _("<p align=center> Welcome to the <b><font color=#008000>Pinnipede Teletype</font></b></p>"
+	       "This window was specially designed by the greatest experts to offer you "
+	       "optimal mouling conditions.<br>"
+	       "Here is a summary of its functionalities:<br><br>"
+	       "<b>To scroll</b>, use the mouse wheel, or 'drag' "
+	       "while clicking with the right button. "
+	       "Scrolling is automatic when a new message appears.<br><br>"
+	       "To bring the <b>button bar</b> or make it disappear, use the right clic. "
+	       "The two first buttons allow "
+	       "to scroll, faster or slower.<br><br>"
+	       "The available actions on the <b>clock</b> near each message are:<br>"
+	       "<font color=blue>Left Click</font><tab>: opens the palmipede editor, and inserts a reference to the message<br>"
+	       "<font color=blue>Middle Click</font><tab>: copies the contents of the message to the clipboard<br>"
+	       "<font color=blue>Right Click</font><tab>: copies the useragent to the clipboard<br><br>"
+	       "If you click on an <b>[url]</b>, the result will be:<br>"
+	       "<font color=blue>Left Click</font><tab>: opens the url in the external browser (if it has been "
+	       "defined in the ~/.wmcoincoin/options file). <b>Warning</b>, even if precautions have been taken"
+	       "since the inominious wmcoincoin 2.0, this kind of things is generally considered as a security weakness...<br>"
+	       "<font color=blue>Middle Click</font><tab>: opens the url with the second browser (the http.browser2 option)<br>"
+	       "<font color=blue>Right Click</font><tab>: copies the url to the clipboard<br><br>"
+	       "When the pointer is over a <b>reference to a previous post</b>, it will be underlined. If you click:<br>"
+	       "<font color=blue>Left Click</font><tab>: brings the referenced message<br>"
+	       "<font color=blue>Right Click</font><tab>: copies the reference to the clipboard (okay, it's not very useful...)<br><br>"
+	       "Some basic filtering is available with the help of <font color=blue>Ctrl+Left Click</font> "
+	       "on a word, login, useragent... Use the blue button to cancel.<br> If you want to emphasize the messages of a personne, or those containing a word, <font color=blue>Shift+Left Click</font> will be your friend<br>"
+	       "<b>New:</b> someone is annoying you ? You have launched a troll that you don't control ? Then plopify the evil with a <font color=blue>Shift+Right Click</font> on his login/useragent<br><br>"
+	       "You can take a 'shot' of the board (the so-called seafood tray), with <font color=blue>Ctrl+Middle Click</font><br><br>"
+	       "To understand the display of the <b>useragents</b> activated by the dark red button (about fifteen pixels on your left), you can see "
+	       "the <tt>~/.wmcoincoin/useragents</tt><br> file (hint: the button has 5 different positions)<br><br>"
+	       "The pinnipede teletype wishes you a nice mouling."), 500);
 }
 
 
@@ -3060,7 +3061,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
 	  pp_refresh(dock, trib, pp->win, NULL);	    	    
 	} else {
-	  msgbox_show(dock, "inutile de cliquer sur ce bouton, le troll_detector est désactivé (voir l'option 'tribune.enable_troll_detector')");
+	  msgbox_show(dock, _("Don't click on this button, the troll_detector is deactivated (see the option 'tribune.enable_troll_detector')."));
 	}
       } break;
     case FORTUNE:
@@ -3071,7 +3072,7 @@ pp_minib_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *eve
 	  pp_update_content(dock, trib, pp->id_base, pp->decal_base,0,1);
 	  pp_refresh(dock, trib, pp->win, NULL);	    	    	
 	} else {
-	  msgbox_show(dock, "inutile de cliquer sur ce bouton si vous n'avez ni donné le cookie à wmcoincoin, ni utilise l'option 'http.force_fortune_retrieval'");
+	  msgbox_show(dock, _("Don't click on this button if you don't have given a cookie to wmcoincoin, nor activated the 'http.force_fortune_retrieval' option."));
 	}
       } break;
     case SCROLLBAR:
@@ -3218,7 +3219,7 @@ pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
   pp_thread_filter_add_backrefs(trib, &pp->filter, mi);
 
 
-  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
   pp_update_content(dock, trib, -1, 0, 0, 1);
   pp_refresh(dock, trib, pp->win, NULL);
 }
@@ -3236,7 +3237,7 @@ pp_set_login_filter(Dock *dock, DLFP_tribune *trib, char *login)
   pp->filter.filter_name = strdup(fname);
   pp->filter.login = strdup(login);
 
-  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
   pp_update_content(dock, trib, -1, 0, 0, 1);
   pp_refresh(dock, trib, pp->win, NULL);	  
 }
@@ -3253,9 +3254,9 @@ pp_set_ua_filter(Dock *dock, DLFP_tribune *trib, char *ua)
   pp->filter.filter_name = strdup(fname);
   pp->filter.ua = strdup(ua);
 
-  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
   pp_update_content(dock, trib, -1, 0, 0, 1);
-  pp_refresh(dock, trib, pp->win, NULL);	  
+  pp_refresh(dock, trib, pp->win, NULL);
 }
 
 void
@@ -3270,7 +3271,7 @@ pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word)
   pp->filter.filter_name = strdup(fname);
   pp->filter.word = strdup(word);
 
-  BLAHBLAH(2,printf("activation du filtre [%s]\n", pp->filter.filter_name));
+  BLAHBLAH(2,printf(_("Activating the filter [%s]\n"), pp->filter.filter_name));
   pp_update_content(dock, trib, -1, 0, 0, 1);
   pp_refresh(dock, trib, pp->win, NULL);	  
 }
@@ -3985,17 +3986,17 @@ pp_check_balloons(Dock *dock, int x, int y)
     for (i=0; i < NB_MINIB; i++) {
       char *msg = NULL;
       switch (pp->mb[i].type) {
-      case HELP: msg = "affiche un peu d'aide"; break;
-      case SCROLLBAR: msg = "affichage/cache la scrollcoin"; break;
-      case TRANSPARENT: msg = "active/désactive la pseudo-transparence"; break;
-      case UA: msg = "change le mode d'affichage des logins/useragents (5 modes différents)"; break;
-      case SECOND: msg = "affiche/masque les secondes (quand il y a moins de deux messages dans la même minute)"; break;
-      case TSCORE: msg = "affiche/cache le score troll (les chiffres à gauche de certains messages)"; break;
-      case FORTUNE: msg = "affiche/cache la fortune (pour qu'elle soit téléchargée, il faut soit que vous soyez identifié, soit que vous utilisiez l'option <tt>http.force_fortune_retrieval</tt>"; break;
-      case FILTER: msg = "active/désactive le <b>filtre</b>. Pour filtrer des messages, faites <font color=#0000ff>ctrl+left clic</font> sur un mot/login/useragent ou une horloge (pour afficher un thread). Pour virer le filtre, il suffit de cliquer sur ce bouton"; break;
-      case PLOPIFY: msg = "change le type de plopification (attention, vous allez aussi voir les messages de la boitakon!). <p> Pour plopifier un message, <font color=#0000ff>shift+right clic</font> sur un mot/login/useragent/horloge (ou bien la zone à gauche d'un horloge pour plopifier un thread). Pour déplopifier (ou sortir quelqu'un de la boitakon), il suffit de recliquer au même endroit.<br> Pour accèder à la plopification de niveau 1, faire <font color=#0000ff>Mod1+shift+right clic</font><br> Pour mettre un login/ua/etc dans la <b>boitakon</b>, il faut utiliser la méga combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right clic</font>."; break;
-      case REFRESH_NEWS: msg = "cliquer ici pour forcer le rafraichissement immédiat des news, messages, fortune et XP"; break;
-      case REFRESH_TRIBUNE: msg = "cliquer ici pour forcer le rafraichissement immédiat de la tribune"; break;
+      case HELP: msg = _("Bring some help"); break;
+      case SCROLLBAR: msg = _("Bring/hide the scrollcoin"); break;
+      case TRANSPARENT: msg = _("Activate/deactivate the pseudo-transparency"); break;
+      case UA: msg = _("Change the display mode of the logins/useragents (5 different modes)"); break;
+      case SECOND: msg = _("Bring/hide the seconds (when there are less than two messages in the same minute)"); break;
+      case TSCORE: msg = _("Bring/hide the troll score (the numbers on the left of some messages)"); break;
+      case FORTUNE: msg = _("Bring/hide the fortune (if appropriate)"); break;
+      case FILTER: msg = _("Activate/deactivate the <b>filter</b>. To filter the messages, do a <font color=#0000ff>ctrl+left clic</font> on a word/login/useragent or a clock (to display a thread). To remove the filter, just click here"); break;
+      case PLOPIFY: msg = _("Change the plopification type (beware, you will also see the messages in the boitakon!). <p> To plopify a message, <font color=#0000ff>shift+right click</font> on a word/login/useragent/clock (or the zone on the left of the clock to plopify a thread). To unplopify (or let someone out of the boitakon), just click on the same place.<br> To access to the superplopification, do a <font color=#0000ff>Mod1+shift+right click</font><br> To put a login/ua/etc. in the <b>boitakon</b>(tm), you have to use the mega combo <font color=#0000ff>Ctrl+Mod4+Mod1+shift+right click</font>."); break;
+      case REFRESH_NEWS: msg = _("Click here to force the refresh of the news, messages, fortune and XP"); break;
+      case REFRESH_TRIBUNE: msg = _("Click here to force the refresh of the board"); break;
       default: assert(0);
       }
       balloon_test(dock, x, y, pp->win_xpos, pp->win_ypos-15, 0, 

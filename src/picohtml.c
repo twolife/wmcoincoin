@@ -1,9 +1,9 @@
 /*
-  rcsid=$Id: picohtml.c,v 1.8 2002/06/09 11:42:46 pouaite Exp $
+  rcsid=$Id: picohtml.c,v 1.9 2002/06/23 10:44:05 pouaite Exp $
   ChangeLog:
   $Log: picohtml.c,v $
-  Revision 1.8  2002/06/09 11:42:46  pouaite
-  patch lordOric
+  Revision 1.9  2002/06/23 10:44:05  pouaite
+  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
 
   Revision 1.7  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
@@ -24,6 +24,9 @@
   ajout de tags cvs Id et Log un peu partout...
 
 */
+
+#include <libintl.h>
+#define _(String) gettext (String)
 
 #include "coincoin.h"
 #include "coin_xutil.h"
@@ -194,19 +197,16 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
   int htext, space_width, parag_skip, line_skip, parag_align, next_parag_align;
   int flag_debut_ligne, flag_item_to_add;
   int x,y,w;
-  XFontStruct *cur_fn=NULL;
+  XFontStruct *cur_fn;
 
   unsigned long cur_pixel_color;
 
-	int isListe = 0;
-	int isOrderedListe = 0;
-	int indexListe = 0;
-	int isBlockquote = 0;
+
 
   BLAHBLAH(2,printf("picohtml_parse\n"));
   if (buff == NULL) {
-    fprintf(stderr, "Bug! appel de picohtml(NULL)!...");
-    buff = "Bug! appel de picohtml(NULL)!...";
+    fprintf(stderr, _("Bug! calling picohtml(NULL)!"));
+    buff = _("Bug ! appel de picohtml(NULL) !");
   } 
 
   p = buff;
@@ -244,33 +244,14 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
      /* il est pas beau le parser d'html ? */
     if (strncasecmp(tok, "<br", 3) == 0) {
       new_parag = 1;
- /* Patch lordOric */			
-    } else if (strcasecmp(tok, "<ol>") == 0) {
-			y+=4; isOrderedListe = 1; indexListe = 0;
-    } else if (strcasecmp(tok, "</ol>") == 0) {
-      new_parag = 1; y+=4; isOrderedListe = 0;
-    } else if (strcasecmp(tok, "<ul>") == 0) {
-			y+=4; 
-    } else if (strcasecmp(tok, "</ul>") == 0) {
-      new_parag = 1; y+=4;
-		} else if (strcasecmp(tok, "<li>") == 0 ) {
-			new_parag = 1; isListe = 1;	indexListe++;
-		} else if (strcasecmp(tok, "</li>") == 0 ) {
-			isListe = 0;  
-    } else if (strcasecmp(tok, "<blockquote>") == 0) {
-      new_parag = 1; next_parag_align = NORMAL; isBlockquote = 1;
-    } else if (strcasecmp(tok, "</blockquote>") == 0) {
-      new_parag = 1; next_parag_align = NORMAL; y += 10; isBlockquote = 0;
-/* Patch lordOric */
-   } else if (strcasecmp(tok, "<p>") == 0) {
+    } else if (strcasecmp(tok, "<p>") == 0) {
       new_parag = 1; next_parag_align = NORMAL; y += 10; 
     } else if (strcasecmp(tok, "</p>") == 0) {
       new_parag = 1; next_parag_align = NORMAL; y += 4;
     } else if (strcasecmp(tok, "<p align=center>") == 0) {
       new_parag = 1; next_parag_align = CENTER; 
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
-
-		} else if (strcasecmp(tok, "<p align=right>") == 0) {
+    } else if (strcasecmp(tok, "<p align=right>") == 0) {
       new_parag = 1; next_parag_align = RIGHT;
       ph->required_width = width; // presence d'alignement => interdiction de renoyer la largeur minimale
     } else if (strcasecmp(tok, "<tab>") == 0) { /* extension proprietaire ;-) */
@@ -305,13 +286,13 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
     } else if (strncasecmp(tok, "</a", 3) == 0) {
       attrib &= ~CATTR_LNK;
       cur_link = NULL;
-    } else if (strcasecmp(tok, "<b>") == 0 || strcasecmp(tok,"<strong>") == 0) {
+    } else if (strcasecmp(tok, "<b>") == 0) {
       attrib |= CATTR_BOLD;
-    } else if (strcasecmp(tok, "</b>") == 0 || strcasecmp(tok,"</strong>") == 0 ) {
+    } else if (strcasecmp(tok, "</b>") == 0) {
       attrib &= ~CATTR_BOLD;
-    } else if (strcasecmp(tok, "<i>") == 0 || strcasecmp(tok,"<em>") == 0) {
+    } else if (strcasecmp(tok, "<i>") == 0) {
       attrib |= CATTR_ITAL;
-    } else if (strcasecmp(tok, "</i>") == 0 || strcasecmp(tok,"</em>") == 0 ) {
+    } else if (strcasecmp(tok, "</i>") == 0) {
       attrib &= ~CATTR_ITAL;
     } else if (strcasecmp(tok, "<tt>") == 0) {
       attrib |= CATTR_TT;
@@ -327,17 +308,17 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
 	if (XAllocNamedColor(dock->display, DefaultColormap(dock->display, dock->screennum), 
 			     col, &screen_col, &exact_col)) {
 	  /* faudrait-il que je fasse des XFreeColor ?... */
-	  BLAHBLAH(2,myprintf("Allocation de '%s' reussie\n", col));
+	  BLAHBLAH(2,myprintf(_("Allocation of '%s' OK\n"), col));
 	  cur_pixel_color = screen_col.pixel;
 	} else {
-	  BLAHBLAH(2,myprintf("Allocation de '%s' ratee\n", col));
+	  BLAHBLAH(2,myprintf(_("Allocation of '%s' failed\n"), col));
 	  cur_pixel_color = ph->default_pixel_color;
 	}
       }
     } else if (strcasecmp(tok, "</font>") == 0) {
       cur_pixel_color = ph->default_pixel_color;
     } else if (strncasecmp(tok, "<img",4) == 0) {
-      BLAHBLAH(1, myprintf("on oublie '%<YEL %s>'\n", tok));
+      BLAHBLAH(1, myprintf(_("we forget '%<YEL %s>'\n"), tok));
       /*} else if (tok[0] == '<') {
       
       BLAHBLAH(1,myprintf("tag html non reconnu: '%<YEL %s>'\n", tok));
@@ -357,20 +338,6 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       parag_align = next_parag_align;
       new_parag = 0;
       flag_debut_ligne = 1;
-			if ( isListe )
-			{
-				char str[5];
-
-				if ( isOrderedListe )
-					/* je défie quiconque de poster une news avec une liste de plus de 99 éléments */
-					snprintf(str,5,"%2d.", indexListe); 
-				else
-					strcpy(str,"-");
-				
-				it_debut_ligne = picohtml_additem(ph,str, strlen( str ), attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
-				flag_debut_ligne = 0;
-				x+=ph->parag_indent;
-			}
     }
 
     if (flag_item_to_add) {
@@ -395,10 +362,7 @@ picohtml_parse(Dock *dock, PicoHtml *ph, const char *buff, int width)
       if (x + w + (space_width)*(1-new_parag) >= width) {
 	//justif_ligne(ph, it_debut_ligne, xpos_debut_ligne, width, parag_align);
 	justif_ligne(it_debut_ligne, width, parag_align);
-	if ( isBlockquote )
-		x = ph->parag_indent;
-	else
-		x = 0;
+	x = 0;
 	y += line_skip; 
 	xpos_debut_ligne = x;
 	it_debut_ligne = picohtml_additem(ph, tok, len, attrib, x, y, cur_fn, cur_pixel_color, cur_link, special_attr);
@@ -525,8 +489,8 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   snprintf(base_name, 512, "-*-%s-medium-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   ph->fn_base = XLoadQueryFont(display, base_name);
   if (!ph->fn_base) {
-    fprintf(stderr, "XLoadQueryFont: failed loading font '%s'\n", base_name);
-    fprintf(stderr, "Choisissez une autre police\n");
+    fprintf(stderr, _("XLoadQueryFont: failed loading font '%s'\n"), base_name);
+    fprintf(stderr, _("Please choose another font.\n"));
     return -1;
   }
 
@@ -535,12 +499,12 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   ph->fn_ital = XLoadQueryFont(display, ital_name);
   if (!ph->fn_ital) {
     /* puis la police italique */
-    BLAHBLAH(1, fprintf(stderr, "police oblique '%s' non trouvee -> on cherche la police italique\n", ital_name));
+    BLAHBLAH(1, fprintf(stderr, _("Slanted font '%s' not found -> we're looking for the italic font\n"), ital_name));
     snprintf(ital_name, 512, "-*-%s-medium-i-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
     ph->fn_ital = XLoadQueryFont(display, ital_name);
     if (!ph->fn_ital) {
-      myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte italique: '%s'\n", ital_name);
-      myfprintf(stderr, "on va utiliser la fonte de base\n");
+      myfprintf(stderr, _("%<RED WARNING>: error while looking for the italic font: '%s'\n"), ital_name);
+      myfprintf(stderr, _("We'll use the base font.\n"));
 
       /* pas de copie de pointer pour pas poser de pbs dans picohtml_destroy */
       ph->fn_ital = XLoadQueryFont(display, base_name); assert(ph->fn_ital);
@@ -551,8 +515,8 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   snprintf(bold_name, 512, "-*-%s-bold-r-*-*-%d-*-*-*-*-*-%s", fn_family, fn_size, Prefs.font_encoding);
   ph->fn_bold = XLoadQueryFont(display, bold_name);
   if (!ph->fn_bold) {
-    myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte bold: '%s'\n", bold_name);
-    myfprintf(stderr, "on va utiliser la fonte de base\n");
+    myfprintf(stderr, _("%<RED WARNING>: error while looking for the bold font: '%s'\n"), bold_name);
+    myfprintf(stderr, _("We'll use the base font.\n"));
     ph->fn_bold = XLoadQueryFont(display, base_name); assert(ph->fn_bold);
   }
 
@@ -560,8 +524,8 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
   snprintf(tt_name, 512, "-*-courier-medium-r-*-*-%d-*-*-*-*-*-%s", fn_size, Prefs.font_encoding);
   ph->fn_tt = XLoadQueryFont(display, tt_name);
   if (!ph->fn_tt) {
-    myfprintf(stderr, "%<RED WARNING>: erreur lors de la recherche de la fonte courier: '%s'\n", tt_name);
-    myfprintf(stderr, "on va utiliser la fonte de base\n");
+    myfprintf(stderr, _("%<RED WARNING>: error while looking for the courier font: '%s'\n"), tt_name);
+    myfprintf(stderr, _("We'll use the base font.\n"));
     ph->fn_tt = XLoadQueryFont(display, base_name); assert(ph->fn_tt);
   }
   return 0;
@@ -570,9 +534,9 @@ picohtml_try_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_s
 static void
 picohtml_loadfonts(PicoHtml *ph, Display *display, char *fn_family, int fn_size) {
   if (picohtml_try_loadfonts(ph,display,fn_family,fn_size)==-1) {
-    myfprintf(stderr, "echec du chargement de la fonte '%s' en taille '%d'\non tente helvetica en 12\n");
+    myfprintf(stderr, _("Loading font '%s' with size '%d' failed\nNow we try helvetica/12\n"));
     if (picohtml_try_loadfonts(ph,display,"helvetica",12)==-1) {
-      myfprintf(stderr, "gaaargl pas d'helvetica/12 , je préfère mourir\n");
+      myfprintf(stderr, _("Uuuurg, no helvetica/12 , I prefer to die.\n"));
       exit(-1);
     }
   }

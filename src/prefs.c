@@ -6,6 +6,9 @@
 #include "myprintf.h"
 #include <sys/utsname.h> /* pour la fonction uname */
 
+#include <libintl.h>
+#define _(String) gettext (String)
+
 #define BICOLOR_SET(x,a,b) { x.opaque = a; x.transp = b; }
 
 static void
@@ -51,7 +54,7 @@ read_option_line(FILE *f, int *lcnt, char **opt_name, char **opt_arg)
   p = strchr(s, ':');
   if (p == NULL || p == s) { 
     FREE_STRING(s); 
-    return str_printf("[ligne %d] impossible de trouver un nom d'option", *lcnt); 
+    return str_printf(_("[line %d] unable to find an option name"), *lcnt); 
   }
   *p = 0; p++;
   *opt_name = strdup(s);
@@ -59,7 +62,7 @@ read_option_line(FILE *f, int *lcnt, char **opt_name, char **opt_arg)
     str_trim(p); 
   } else {
     FREE_STRING(s); 
-    return str_printf("[ligne %d] la valeur de l'option '%s' manque", *lcnt, *opt_name); 
+    return str_printf(_("[line %d] missing value for option '%s'"), *lcnt, *opt_name); 
   }
   
   /* a ce p pointe vers la valeur de l'option */
@@ -116,7 +119,7 @@ option_get_xypos_val(const char  *_optarg,
     return NULL;
   } else {
     free(optarg);
-    return str_printf("option '%s' invalide, on attendait deux nombre x et y au format x:y", optname);
+    return str_printf(_("Invalid option '%s', we were waiting for 2 numbers x and y with a x:y format"), optname);
   }
 }
 
@@ -129,20 +132,19 @@ option_get_transp_val(const char *arg, const char * opt_name,TransparencyInfo *t
     if (sscanf(arg+7, "%d %d", &ti->shade.luminosite, &ti->shade.assombrissement) != 2 || 
 	ti->shade.luminosite < 0 || ti->shade.luminosite > ti->shade.assombrissement ||
 	ti->shade.assombrissement > 100) {
-      return str_printf("option '%s' invalide, le shading est défini par deux valeur x et y comprises "
-			"entre 0 et 100, telles que x < y (plus x est grand, plus l'image finale sera "
-			"lumineuse, plus y est petit plus les couleurs de l'image initiale sont "
-			"attenuées", opt_name);
+      return str_printf(_("Invalid option '%s': the shading is defined with 2 values x and y comprised "
+			"between 0 and 100, with x < y (the greater x, the lighter will be the display, "
+			"the smaller y, the more attenuated will be the colours."), opt_name);
     }
   } else if (strncasecmp(arg, "tinting",7)==0) {
     ti->type = TINTING;
     if (sscanf(arg+7, "%lx %lx", &ti->tint.black, &ti->tint.white) != 2) {
       if (ti->tint.white > 0xffffff || ti->tint.black > 0xffffff) {
-	return str_printf("option '%s' invalide, il faut spécifier deux couleurs RGB correspondant aux teintes du noir, et du blanc", opt_name);
+	return str_printf(_("Invalid option '%s': you have to specify two RGB colours corresponding the white and the black"), opt_name);
       }
     }
   } else {
-    return str_printf("option '%s' invalide, commencer par préciser le type de transparence: FULL, SHADING ou TINTING", opt_name);
+    return str_printf(_("Invalid option '%s': you have to first specify the type of transparency: FULL, SHADING or TINTING"), opt_name);
   }
   return NULL;
 }
@@ -222,7 +224,7 @@ option_site_root (const char  *optarg,
     while (p2 > p && *p2 == '/') { *p2 = 0; p2--;}
   }
   prefs->site_path = strdup(p);
-  myprintf("le site principal est : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n", 
+  myprintf(_("The main site is : %<YEL http://%s>:%<GRN %d>/%<YEL %s>%s\n"), 
 	   prefs->site_root, prefs->site_port, prefs->site_path,strlen(prefs->site_path) ? "/" : "");
   free(s);
 }
@@ -235,7 +237,7 @@ option_set_proxy(const char  *optarg,
   
   if (p->proxy_name) free(p->proxy_name); 
   if (optarg == NULL || strlen(optarg) == 0) {
-    fprintf(stderr, "désactivation du proxy");
+    fprintf(stderr, _("Deactivating the proxy"));
     p->proxy_name = NULL;
   } else {
     S = strdup(optarg);
@@ -277,12 +279,12 @@ option_browser(const char *optarg,const char *optname,
     pc = s[i]; i++;
   }
   if (ok != 1) {
-    return str_printf("[option %s] il doit y avoir une et une seule "
-		      "occurence du charactère '%%', et il doit être suivi d'un 's' (c'est ce qui "
-		      "sera remplacé par l'url)", optname);
+    return str_printf(_("[%s option] there must be one and only one "
+		      "'%%' character, and it must be followed by an 's' (it will be "
+		      "replaced by the URL)"), optname);
   }
   if (strstr(s, "'%s'")) {
-    myfprintf(stderr, "%s (ligne %d) : %<YEL warning>: '%%s' == Mal, %%s == Bien (toutes les urls sont généreusement escapées)\n");
+    myfprintf(stderr, _("%s (linne %d) : %<YEL warning>: '%%s' == Bad, %%s == Good (all the URLs are escaped)\n"));
   }
   return NULL;
 }
@@ -388,7 +390,7 @@ option_get_string_list(unsigned char *optarg, char *optname, char ***list, int *
   return NULL;
  erreur:
   if (*list) { for (i=0; i < *nb_elt; i++) free((*list)[i]); free(*list); *list = NULL; }
-  return str_printf("erreur pour l'option '%s', on attend une liste de mots entre guillements, séparés par des virgules", optname);
+  return str_printf(_("Error for option '%s': a list of word between guillemots, separated by commas, is expected."), optname);
 }
 
 
@@ -426,8 +428,8 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
       num = atoi(s); while (*s >= '0' && *s <= '9') s++; if (*s != ':') goto erreur; s++;
     }
     if (num < nummin || num > nummax) {
-      return str_printf("argument invalide pour l'option '%s', mot %d, la valeur de l'argument numérique (%d) doit "
-			"être comprise entre %d et %d", optname, cnt, num, nummin, nummax);
+      return str_printf(_("Invalid argument for option '%s', word %d, the value of the numerical argument (%d) must "
+			"be chosen between %d and %d"), optname, cnt, num, nummin, nummax);
     }
 
     if (*s != '"') goto erreur;
@@ -454,7 +456,7 @@ option_get_key_list(unsigned char *optarg, char *optname, KeyList **pfirst, int 
   return NULL;
   
  erreur:
-  return str_printf("argument invalide pour l'option '%s', mot %d, (rappel: il faut spécifier une liste de [UA|LOGIN|ID|etc]:[NUM:]\"unmot\" séparés par des virgules, cf le fichier d'options)\n", optname, cnt);
+  return str_printf(_("Invalid argument for option '%s', word %d: you have to specify a list of [UA|LOGIN|ID|etc]:[NUM:]\"a word\" separated with commas\n"), optname, cnt);
 }
 
 
@@ -489,7 +491,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   if (p->user_agent) free(p->user_agent); 
   p->user_agent = malloc(USERAGENT_MAX_LEN+1);
   coincoin_default_useragent(p->user_agent, USERAGENT_MAX_LEN+1);
-  ASSIGN_STRING_VAL(p->coin_coin_message, "coin ! coin !");
+  ASSIGN_STRING_VAL(p->coin_coin_message, _("coin ! coin !"));
   p->user_name = NULL;
   p->dock_bgcolor = (255L<<16) + (193L<<8) + 44; /* un joli jaune (je trouve) (NDKad : y'a que toi)*/
   p->dock_fgcolor = 0x000000;
@@ -657,16 +659,16 @@ option_get_filename(char *arg, char **fname) {
 }
 
 /* les macros c'est sale mais c'est j'aime ça */
-#define CHECK_INTEGER_ARG(bmin,bmax,i) { i=atoi(arg); if (i<(bmin) || ((bmax)>(bmin) && i > (bmax))) { return str_printf("valeur invalide pour l'option '%s' (doit être dans l'intervalle %d-%d", opt_name, (bmin), (bmax)==0 ? 10000000 : (bmax)); } }
+#define CHECK_INTEGER_ARG(bmin,bmax,i) { i=atoi(arg); if (i<(bmin) || ((bmax)>(bmin) && i > (bmax))) { return str_printf(_("Invalid value for option '%s' (must be between %d and %d)"), opt_name, (bmin), (bmax)==0 ? 10000000 : (bmax)); } }
 
-#define CHECK_BOOL_ARG(x) { x = option_get_bool_val(arg); if (x < 0) return str_printf("valeur invalide pour l'option '%s' : doit être une valeur du type on/off, 1/0, true/false ou yes/no", opt_name); }
+#define CHECK_BOOL_ARG(x) { x = option_get_bool_val(arg); if (x < 0) return str_printf(_("Invalid value for option '%s': must be a value of type on/off, 1/0, true/false or yes/no"), opt_name); }
 #define CHECK_BOOLNOT_ARG(x) { CHECK_BOOL_ARG(x); x = !x ; }
 
-#define CHECK_COLOR_ARG(x) { if (sscanf(arg, "%x", &x)!=1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB", opt_name); if (strchr(arg, ' ')) return str_printf("erreur, l'option '%s' n'accepte qu'une seule valeur de couleur", opt_name); }
+#define CHECK_COLOR_ARG(x) { if (sscanf(arg, "%x", &x)!=1) return str_printf(_("Invalid value for option '%s': must be a hexadecimal RGB color, with the RRGGBB format"), opt_name); if (strchr(arg, ' ')) return str_printf(_("Error, the '%s' option only accepts one colour value"), opt_name); }
 
 #define CHECK_XYPOS_ARG(xpos,ypos) { char *err=option_get_xypos_val(arg,opt_name,&xpos,&ypos); if (err) return err; }
 
-#define CHECK_BICOLOR_ARG(x) { if (sscanf(arg, "%x %x", &x.opaque, &x.transp)<1) return str_printf("valeur invalide pour l'option '%s' : doit être une couleur RGB en héxadécimal, au format RRGGBB (suivie optionnellement d'une deuxième couleur utilisée pour le mode transparent)", opt_name); }
+#define CHECK_BICOLOR_ARG(x) { if (sscanf(arg, "%x %x", &x.opaque, &x.transp)<1) return str_printf(_("Invalid value for option '%s': must be a hexadecimal RGB colour, with the RRGGBB format (optionally followed by a second colour for the transparency mode)"), opt_name); }
 
 #define CHECK_TRANSP_ARG(x) { char *err=option_get_transp_val(arg,opt_name,&x); if (err) return err; }
 
@@ -1013,7 +1015,7 @@ wmcc_prefs_validate_option(structPrefs *p, wmcc_options_id opt_num, unsigned cha
   case OPT_spell_dict: {
     ASSIGN_STRING_VAL(p->ew_spell_dict, arg); 
   } break;   
-  default: printf("attention chérie, ça va couper\n"); assert(0);
+  default: printf(_("Attention chérie, ça va trancher\n")); assert(0);
   }
   return NULL;
 }
@@ -1030,13 +1032,13 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
 
 
   if (lvl > 10) {
-    *err_str = str_printf("je crois que vous faites n'importe quoi avec les include de fichier d'option (sniff !? récursion infinie ?)\n");
+    *err_str = str_printf(_("I think you're totally dumb with the includes of option files (infinite recursion ?)\n"));
     return 1;
   }
 
   /* verif du nom de fichier */
   if (_filename == NULL) {
-    *err_str = str_printf("vous n'avez pas précisé de nom de fichier\n");
+    *err_str = str_printf(_("You didn't tell me of any filename\n"));
     return 1;
   } else if (_filename[0] != '/') {
     filename = str_printf("%s/.wmcoincoin/%s", getenv("HOME"), _filename);
@@ -1047,9 +1049,9 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
   f = fopen(filename, "rt");
   if (f == NULL) {
     if (lvl != 1) {
-      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture [%s]\n", filename, strerror(errno));
+      *err_str = str_printf(_("Unable to open file '%s' for reading [%s]\n"), filename, strerror(errno));
     } else {
-      *err_str = str_printf("impossible d'ouvrir le fichier '%s' en lecture\n", filename);
+      *err_str = str_printf(_("Unable to open file '%s' for reading\n"), filename);
     }
     free(filename);
     return 1;
@@ -1071,12 +1073,12 @@ wmcc_prefs_read_options_recurs(structPrefs *p, const char *_filename,
       if (i == NB_WMCC_OPTIONS) {
 	if (strcasecmp(opt_name, "include") == 0) {
 	  if (wmcc_prefs_read_options_recurs(p, opt_arg, lvl+1, err_str)) {
-	    error = str_printf(" [ligne %d] %s\n", lcnt, *err_str);
+	    error = str_printf(_(" [line %d] %s\n"), lcnt, *err_str);
 	    free(*err_str); *err_str = NULL;
 	    goto ouille;
 	  }
 	} else {
-	  error = str_printf("[ligne %d] l'option '%s' est inconnue", lcnt, opt_name);
+	  error = str_printf(_("[line %d] unknown option '%s'"), lcnt, opt_name);
 	  goto ouille;
 	}
       }

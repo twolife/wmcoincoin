@@ -1,8 +1,6 @@
-2002-06-09  lordOric (lordoric@free.fr)
+2002-06-23  josselin mouette  <joss@debian.org>
 
-	* src/picohtml.c (picohtml_parse): patch pour le support des
-	balises autorisées par défaut dans daCode (ajout de <ul>, <ol>,
-	<blockquopte>, <em>)
+	* i18nisation of the coincoin !!
 
 --------------------------v2.3.8-b-----------------------------------------
 2002-06-02  pouaite  <c0in@altern.org>
