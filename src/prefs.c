@@ -121,23 +121,29 @@ option_get_xypos_val(const char  *_optarg,
 
 static char *
 option_get_transp_val(const char *arg, const char * opt_name,TransparencyInfo *ti) {
-  int a,b;
-
-  if (sscanf(arg, "%x %x", &a, &b) != 2) {
-    if (sscanf(arg, "%d", &a) != 1) {
-      goto err;
+  if (strcasecmp(arg, "full")==0) {
+    ti->type = FULL_TRANSPARENCY;
+  } else if (strncasecmp(arg, "shading",7)==0) {
+    ti->type = SHADING;
+    if (sscanf(arg+7, "%d %d", &ti->shade.luminosite, &ti->shade.assombrissement) != 2 || 
+	ti->shade.luminosite < 0 || ti->shade.luminosite > ti->shade.assombrissement ||
+	ti->shade.assombrissement > 100) {
+      return str_printf("option '%s' invalide, le shading est défini par deux valeur x et y comprises "
+			"entre 0 et 100, telles que x < y (plus x est grand, plus l'image finale sera "
+			"lumineuse, plus y est petit plus les couleurs de l'image initiale sont "
+			"attenuées", opt_name);
     }
-    if (a < 0 || a > 100) goto err;
-    ti->shading = a;
-    ti->tint_black = ti->tint_white = 0;
+  } else if (strncasecmp(arg, "tinting",7)==0) {
+    ti->type = TINTING;
+    if (sscanf(arg+7, "%lx %lx", &ti->tint.black, &ti->tint.white) != 2) {
+      if (ti->tint.white > 0xffffff || ti->tint.black > 0xffffff) {
+	return str_printf("option '%s' invalide, il faut spécifier deux couleurs RGB correspondant aux teintes du noir, et du blanc", opt_name);
+      }
+    }
   } else {
-    if (a < 0 || b < 0 || a > 0xffffff || b > 0xffffff) goto err;
-    ti->shading = -1;
-    ti->tint_black = a; ti->tint_white = b;
+    return str_printf("option '%s' invalide, commencer par préciser le type de transparence: FULL, SHADING ou TINTING", opt_name);
   }
   return NULL;
- err:
-  return str_printf("option '%s' invalide, il faut spécifier {une valeur de shading entre 0 et 100} ou {deux couleurs RGB correspondant aux teintes du noir, et du blanc}", opt_name);
 }
 
 static void
@@ -391,8 +397,9 @@ wmcc_prefs_set_default(structPrefs *p) {
   p->pp_fn_size = 12;
   p->pp_bgcolor = 0xdae6e6;
   p->pp_start_in_transparency_mode = 0;
-  p->pp_transparency.shading = -1; 
-  p->pp_transparency.tint_black = 0x808080; p->pp_transparency.tint_white = 0xd0d0d0; 
+  p->pp_transparency.type = SHADING;
+  p->pp_transparency.shade.luminosite = 20; 
+  p->pp_transparency.shade.assombrissement = 70;
   BICOLOR_SET(p->pp_fgcolor,0x303030,0xd0d0d0);
   BICOLOR_SET(p->pp_tstamp_color,0x004000, 0xffff80);
   BICOLOR_SET(p->pp_useragent_color, 0x800000, 0xa0ffa0);
@@ -400,7 +407,7 @@ wmcc_prefs_set_default(structPrefs *p) {
   BICOLOR_SET(p->pp_url_color, 0x0000ff, 0x80f0ff);
   BICOLOR_SET(p->pp_trollscore_color, 0xff0000, 0xffff00);
   BICOLOR_SET(p->pp_button_color, 0xdae6e6, 0x404040);
-  BICOLOR_SET(p->pp_emph_color, 0xffffff, 0x505050);
+  BICOLOR_SET(p->pp_emph_color, 0xffffff, 0x00a080);
   BICOLOR_SET(p->pp_sel_bgcolor, 0xffd700, 0x008080);
   BICOLOR_SET(p->pp_popup_fgcolor, 0x000050, 0x000050);
   BICOLOR_SET(p->pp_popup_bgcolor, 0xc0d0d0, 0xc0d0d0);

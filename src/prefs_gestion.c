@@ -218,11 +218,26 @@ bic_copy_if_changed(BiColor *a, BiColor b) {
 
 static int
 transp_copy_if_changed(TransparencyInfo *a, TransparencyInfo b) {
-  if (a->shading != b.shading || 
-      a->tint_black != b.tint_black ||
-      a->tint_white != b.tint_white) {
-    *a = b; return 1;
-  } else return 0;
+  int different = 0;
+  
+  if (a->type != b.type) different = 1;
+  else {
+    switch (b.type) {
+    case FULL_TRANSPARENCY:
+      break;
+    case SHADING:
+      if (a->shade.luminosite != b.shade.luminosite ||
+	  a->shade.assombrissement != b.shade.assombrissement) different = 1;
+      break;
+    case TINTING:
+      if (a->tint.white != b.tint.white ||
+	  a->tint.black != b.tint.black) different = 1;
+      break;
+    default: assert(0);
+    }
+  }
+  if (different) { *a = b; }
+  return different;
 }
 
 #define INT_OPT_CHANGED(_x) (Prefs._x != (int)newPrefs._x)

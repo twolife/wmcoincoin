@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.43 2002/04/01 22:56:03 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.44 2002/04/02 22:29:29 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.44  2002/04/02 22:29:29  pouaite
+  bugfixes transparence
+
   Revision 1.43  2002/04/01 22:56:03  pouaite
   la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 
@@ -2171,7 +2174,9 @@ pp_build(Dock *dock)
 
 
   pp->mapped = 0;
-  pp_set_prefs_colors(dock);
+
+  pp->bg_pixmap = None;
+  pp_change_transparency_mode(dock, Prefs.pp_start_in_transparency_mode);
 
   pp->id_base = -1; pp->decal_base = 0;
 
@@ -2212,8 +2217,6 @@ pp_build(Dock *dock)
   picohtml_set_parag_skip(pp->ph_fortune, 1.0);
   picohtml_set_line_skip(pp->ph_fortune, 1.0);
 
-  pp->bg_pixmap = None;
-  pp->transparency_mode = Prefs.pp_start_in_transparency_mode;
 
   pp->pv = NULL;
   pp->survol_hash = 0;
@@ -2266,9 +2269,7 @@ pp_update_bg_pixmap(Dock *dock)
     pp->bg_pixmap = extract_root_pixmap_and_shade(dock->rgba_context,
 						  xpos, ypos, 
 						  pp->win_width, pp->win_height,
-						  Prefs.pp_transparency.shading,
-						  Prefs.pp_transparency.tint_black,
-						  Prefs.pp_transparency.tint_white);
+						  &Prefs.pp_transparency);
     if (pp->bg_pixmap == None) {
       myprintf("%<yel impossible d'utiliser la pseudo-transp> (solution probable: relancer wmsetbg ou autre)\n");
       pp_change_transparency_mode(dock, 0);

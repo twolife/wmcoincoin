@@ -3,6 +3,7 @@
 
 #include "raster.h"
 #include "coin_util.h"
+#include "prefs.h"
 
 /* deux macros fort pratiques !! */
 #define RGB2PIXEL(r,g,b) (dock->rgba_context->rtable[r] + \
@@ -19,6 +20,10 @@
                             c->gtable[(rgb>> 8) & 0xff] + \
                             c->btable[(rgb    ) & 0xff])
 
+#define PIXEL2R(rc, pixel) (((pixel>>rc->r_shift_left)<<rc->r_shift_right)&0xff)
+#define PIXEL2G(rc, pixel) (((pixel>>rc->g_shift_left)<<rc->g_shift_right)&0xff)
+#define PIXEL2B(rc, pixel) (((pixel>>rc->b_shift_left)<<rc->b_shift_right)&0xff)
+
 RGBAImage * rimage_create_from_raw(int w, int h, int bpp, const unsigned char *data);
 Pixmap pixmap_create_from_raw(RGBAContext *rc, int w, int h, int bpp, const unsigned char *data);
 RGBAImage * rimage_create_from_raw_with_tint(int w, int h, int bpp, const unsigned char *data, int rgb);
@@ -29,6 +34,6 @@ void colorize_black_pixmap(char **pixtxt, int tint);
 void get_window_pos_with_decor(Display *display, Window win, int *screen_x, int *screen_y);
 void get_window_pos_without_decor(Display *display, Window root_win, Window win, int *screen_x, int *screen_y);
 Pixmap get_rootwin_pixmap(const RGBAContext *rc);
-void shade_XImage(const RGBAContext *rc, XImage *ximg, int shade, unsigned tw, unsigned tb);
-Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, int shade, unsigned tint_black, unsigned tint_white);
+void shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *tr);
+Pixmap extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *tr);
 #endif

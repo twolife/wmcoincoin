@@ -1,7 +1,10 @@
-###fichier d'options rcsid=$Id: options,v 1.18 2002/04/01 22:56:03 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.19 2002/04/02 22:29:28 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.19  2002/04/02 22:29:28  pouaite
+#%  bugfixes transparence
+#%
 #%  Revision 1.18  2002/04/01 22:56:03  pouaite
 #%  la pseudo-transparence du pinni, bugfixes divers, option tribune.backend_type
 #%
@@ -218,11 +221,16 @@
 #pinnipede.font_size: 11
 #pinnipede.bg_color: dae6e6
 
-### transparence, si vous spécifiez un seul chiffre (entre 0 et 100),
-### alors le mode 'shading' est utilisé, si vous donnez deux couleurs RGB
-### alors c'est le mode 'teinte'
+
+### options de transparence
+
 #pinnipede.start_in_transparency_mode: false
-#pinnipede.transparency: 303030 f0f060
+### transparence, complete, utilisez
+#pinnipede.transparency: full
+### transparence avec shading, (indiquez 2 chiffres croissants entre 0 et 100)
+#pinnipede.transparency: shading 20 70
+### transparence avec teinte, (indiquez la couleur du noir puis celle du blanc)
+#pinnipede.transparency: tinting 404020 e0e090
 
 ### la plupart des options de couleur acceptent deux valeurs,
 ### qui sont la couleur en mode normal, et la couleur

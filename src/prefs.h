@@ -12,8 +12,15 @@
              et les couleurs d'intensité intermédiaires sont interpolées entre ces deux valeurs (activé si shade == -1)
 */
 typedef struct {
-  int shading;
-  unsigned long tint_white, tint_black;
+  enum {FULL_TRANSPARENCY, SHADING, TINTING} type;
+  union {
+    struct {
+      unsigned long white, black;
+    } tint;
+    struct {
+      int luminosite, assombrissement;
+    } shade;
+  };
 } TransparencyInfo;
 
 /*

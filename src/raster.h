@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.5 2002/03/21 22:53:07 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.6 2002/04/02 22:29:29 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.6  2002/04/02 22:29:29  pouaite
+  bugfixes transparence
+
   Revision 1.5  2002/03/21 22:53:07  pouaite
   ajout d'une icone pour la fenetre du pinnipede et des news
 
@@ -41,8 +44,11 @@ typedef struct RGBAContext {
 
   unsigned long rtable[256], gtable[256], btable[256];
 
-  /* decalage à appliquer sur un pixel (apres l'avoir masque avec visual->red_mask etc) pour se retrouver avec une valeur entre 0 et 255 */
-  int rdecal, gdecal, bdecal;
+  /* decalages à appliquer sur un pixel (apres l'avoir masque avec visual->red_mask etc) pour se retrouver avec une valeur entre 0 et 255 
+     ex: composante rouge: (pixel >> r_shift_left) << r_shift_right;
+  */
+  unsigned char r_shift_left , g_shift_left,  b_shift_left;
+  unsigned char r_shift_right, g_shift_right, b_shift_right;
   int rmask, gmask, bmask;
 } RGBAContext;
 

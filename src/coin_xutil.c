@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.3 2002/04/01 23:04:11 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.4 2002/04/02 22:29:28 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.4  2002/04/02 22:29:28  pouaite
+  bugfixes transparence
+
   Revision 1.3  2002/04/01 23:04:11  pouaite
   fix compilation avec gcc 2.9x
 
@@ -268,40 +271,45 @@ get_rootwin_pixmap(const RGBAContext *rc)
 }
 
 /* une de mes macros les plus laides :) */
-#define SELECT_SHADE_OR_TINT(_c1,_c2) { if (shade != -1) { _c1; \
-          r = (r*cshade)/256; \
-          g = (g*cshade)/256; \
-          b = (b*cshade)/256; \
+#define SELECT_SHADE_OR_TINT(_c1,_c2) { if (ti->type == SHADING) { _c1; \
+          r = (r*shade_coef)/256 + shade_inc; \
+          g = (g*shade_coef)/256 + shade_inc; \
+          b = (b*shade_coef)/256 + shade_inc; \
           _c2; } else { int l; _c1; \
           l = (r*76)/256 + (g*150)/256 + (b*30)/256; \
           r = (l*wr + (256-l)*br)/256; \
 	  g = (l*wg + (256-l)*bg)/256; \
 	  b = (l*wb + (256-l)*bb)/256; _c2; } }
 
-#define TRANSFO(x,m,d) ((d) > 0 ? (((x)&(m))>>(unsigned)(d)) : (((x)&(m))<<(unsigned)(-(d))))
+//#define TRANSFO(x,m,d) ((d) > 0 ? (((x)&(m))>>(unsigned)(d)) : (((x)&(m))<<(unsigned)(-(d))))
 
 void
-shade_XImage(const RGBAContext *rc, XImage *ximg, int shade, unsigned tb, unsigned tw)
+shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *ti)
 {
-  int wr,wg,wb,br,bg,bb; 
+  int wr=0,wg=0,wb=0,br=0,bg=0,bb=0; 
   int x, y;
-  int cshade;
+  int shade_coef=0, shade_inc=0;
 
-  wr = (tw & 0xff0000)>>16; wg = (tw & 0x00ff00)>>8; wb = (tw & 0x0000ff);
-  br = (tb & 0xff0000)>>16; bg = (tb & 0x00ff00)>>8; bb = (tb & 0x0000ff);
-
+  if (ti->type == TINTING) {
+    wr = (ti->tint.white & 0xff0000)>>16; 
+    wg = (ti->tint.white & 0x00ff00)>>8; 
+    wb = (ti->tint.white & 0x0000ff);
+    br = (ti->tint.black & 0xff0000)>>16; 
+    bg = (ti->tint.black & 0x00ff00)>>8; 
+    bb = (ti->tint.black & 0x0000ff);
+  } else if (ti->type == SHADING) {
   //  int l_tint = (tr*76)/256 + (tg*150)/256 + (tb*30)/256;
-  
-  cshade = ((100-shade)*256)/100;
-
+    shade_inc = ((ti->shade.luminosite)*256)/100;
+    shade_coef = ((ti->shade.assombrissement-ti->shade.luminosite)*256)/100;
+  }
   if (ximg->bits_per_pixel == 16 || ximg->bits_per_pixel == 15) {
     CARD16 *p = (CARD16*)ximg->data;
     SELECT_SHADE_OR_TINT(
 			 for (y=0; y < ximg->height; y++) {
 			   for (x=0; x < ximg->width; x++) {
-			     int r = TRANSFO(p[x], rc->visual->red_mask, rc->rdecal);
-			     int g = TRANSFO(p[x], rc->visual->green_mask, rc->gdecal);
-			     int b = TRANSFO(p[x], rc->visual->blue_mask, rc->bdecal);
+			     int r = PIXEL2R(rc,p[x]);
+			     int g = PIXEL2G(rc,p[x]);
+			     int b = PIXEL2B(rc,p[x]);
 				,;
 				p[x] = rc->rtable[r] + rc->gtable[g] + rc->btable[b];
 			   }
@@ -359,7 +367,7 @@ int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
 /* obligé de gérer les erreurs de manière un peu cavalière, car le root pixmap peut être détruit
    à tout bout de champ etc.. */
 Pixmap
-extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, int shade, unsigned tint_black, unsigned tint_white)
+extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h, TransparencyInfo *ti)
 {
   Pixmap root_pix, shade_pix;
   XImage *ximg;
@@ -373,7 +381,7 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
   x11_error_occured = 0;
 
   /* transparence pure, ça va vite */
-  if (shade == 100 && tint_white == tint_black) {
+  if (ti->type == FULL_TRANSPARENCY) {
     shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
 			      w, h, rc->depth); assert(shade_pix != None);
     XSetErrorHandler(x_error_handler_bidon);
@@ -391,7 +399,7 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
 		   AllPlanes, ZPixmap); 
   XSetErrorHandler(NULL); if (x11_error_occured || ximg == NULL) return None;
 
-  shade_XImage(rc, ximg, shade,  tint_black, tint_white);
+  shade_XImage(rc, ximg, ti);
   shade_pix = XCreatePixmap(rc->dpy, rc->drawable, 
 			    w, h, rc->depth); assert(shade_pix != None);
   XPutImage(rc->dpy, shade_pix, rc->copy_gc, ximg, 0, 0, 0, 0, w, h);

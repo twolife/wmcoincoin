@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.c,v 1.7 2002/04/01 01:39:38 pouaite Exp $
+  rcsid=$Id: raster.c,v 1.8 2002/04/02 22:29:29 pouaite Exp $
   ChangeLog:
   $Log: raster.c,v $
+  Revision 1.8  2002/04/02 22:29:29  pouaite
+  bugfixes transparence
+
   Revision 1.7  2002/04/01 01:39:38  pouaite
   grosse grosse commition (cf changelog)
 
@@ -111,29 +114,43 @@ RGBACreateContext(Display *dpy, int screen_number)
 
   {
     unsigned long mask;
-    int nbits;
+    int nbits, decal;
 
-    context->rdecal = context->gdecal = context->bdecal = 0;
-    mask = context->visual->red_mask; nbits = 0;
-    while ((mask & 1) == 0) { context->rdecal++; mask >>= 1; }
+    context->r_shift_left = context->g_shift_left = context->b_shift_left = 0;
+    context->r_shift_right = context->g_shift_right = context->b_shift_right = 0;
+
+    mask = context->visual->red_mask; nbits = 0; decal = 0;
+    while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
     printf("rmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->red_mask, context->rdecal, nbits);
-    context->rdecal += (nbits-8);
+	   context->visual->red_mask, decal, nbits);
+    context->r_shift_left = decal + (nbits-8);
+    if (decal + nbits - 8 < 0) { 
+      context->r_shift_right = -context->r_shift_left;
+      context->r_shift_left  = 0;
+    }
 
-    mask = context->visual->green_mask; nbits = 0;
-    while ((mask & 1) == 0) { context->gdecal++; mask >>= 1; }
+    mask = context->visual->green_mask; nbits = 0; decal = 0;
+    while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
     printf("gmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->green_mask, context->gdecal, nbits);
-    context->gdecal += (nbits-8);
+	   context->visual->green_mask, decal, nbits);
+    context->g_shift_left = decal + (nbits-8);
+    if (decal + nbits - 8 < 0) { 
+      context->g_shift_right = -context->g_shift_left;
+      context->g_shift_left  = 0;
+    }
 
-    mask = context->visual->blue_mask; nbits = 0;
-    while ((mask & 1) == 0) { context->bdecal++; mask >>= 1; }
+    mask = context->visual->blue_mask; nbits = 0; decal = 0;
+    while ((mask & 1) == 0) { decal++; mask >>= 1; }
     while ((mask & 1) == 1) { nbits++; mask >>= 1; }
     printf("bmask=%08lx, decal=%d, nbits=%d\n", 
-	   context->visual->blue_mask, context->bdecal, nbits);
-    context->bdecal += (nbits-8);
+	   context->visual->blue_mask, decal, nbits);
+    context->b_shift_left = decal + (nbits-8);
+    if (decal + nbits - 8 < 0) { 
+      context->b_shift_right = -context->b_shift_left;
+      context->b_shift_left  = 0;
+    }
   }
   return context;
 }
