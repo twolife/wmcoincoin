@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: editwin.c,v 1.8 2002/01/13 18:19:20 pouaite Exp $
+  rcsid=$Id: editwin.c,v 1.9 2002/01/19 19:56:09 pouaite Exp $
   ChangeLog:
   $Log: editwin.c,v $
+  Revision 1.9  2002/01/19 19:56:09  pouaite
+  petits crochets pour la mise en valeur de certains messages (cf changelog)
+
   Revision 1.8  2002/01/13 18:19:20  pouaite
   nouvelles suggestions pour clipouille (merci jjb!)
 
@@ -2049,7 +2052,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "un <i>Moment Nuttela</i>",
     "de faire une blague en base 13",
     "de parler de vos problèmes de digestion",
-    "d'aller faire un tour sur bbspot et de poster une news bidon",
+    "d'aller faire un tour sur bbspot et de poster une news bidon sur la tribune",
     "d'expliquer pourquoi votre iguane des sables n'utilise que bsd",
     "de vous faire passer pour un utilisateur de MacOS/X",
     "de lancer un troll orteaugrafique",
@@ -2092,6 +2095,8 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de poster un lien vers une news sur Britney Spears",
     "de demander combien Poolpy a de ventouses",
     "de poster un script permettant de voter en continu pour un sondage en ligne à la con",
+    "\\o/ Nartaaaaaaa !",
+    "un moment Village People: \\o/ ^o^ o[ /o\\",
     NULL
   };
   char txt[512];

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.13 2002/01/18 00:28:42 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.14 2002/01/19 19:56:09 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.14  2002/01/19 19:56:09  pouaite
+  petits crochets pour la mise en valeur de certains messages (cf changelog)
+
   Revision 1.13  2002/01/18 00:28:42  pouaite
   le ménage continue + grosses modifs (experimentales pour l'instant)
 
@@ -95,6 +98,7 @@ struct _PostVisual {
   int ref_cnt:10; // compteur de references
   int is_my_message:1;
   int is_answer_to_me:1;
+  int is_hilight_key:1;
   struct _PostVisual *next;
 };
 
@@ -109,11 +113,13 @@ struct _PinnipedeFilter {
   int *id; int nid; /* liste des id des messages affichés dans le filtre de threads */
 };
 
+
 struct _Pinnipede {
   Window win;
   unsigned long win_bgpixel, timestamp_pixel, nick_pixel, login_pixel, 
     emph_pixel, trollscore_pixel, lnk_pixel, txt_pixel, strike_pixel, 
-    popup_fgpixel, popup_bgpixel, minib_pixel, my_msg_bgpixel, answer_my_msg_bgpixel;
+    popup_fgpixel, popup_bgpixel, minib_pixel, 
+    hilight_my_msg_pixel,hilight_answer_my_msg_pixel,hilight_keyword_pixel;
   int mapped;
   int win_width, win_height, win_xpos, win_ypos;
 
@@ -140,6 +146,9 @@ struct _Pinnipede {
   int use_minibar; /* les miniboutons sont-ils affichés ? */
   int minib_pressed; /* numero du minibouton enfonce, -1 si aucun */
   int fortune_mode;
+  int hilight_my_message_mode;
+  int hilight_answer_to_me_mode;
+  int hilight_key_mode;
   
   volatile int flag_tribune_updated;
   Pixmap lpix;
@@ -278,10 +287,6 @@ pw_create(const unsigned char *w, unsigned short attr, const unsigned char *attr
 }
 
 
-
-
-
-
 /* construction d'un postvisual à partir du message 'mi' */
 static PostVisual *
 pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds, int html_mode, int nick_mode, int troll_mode) {
@@ -309,6 +314,7 @@ pv_tmsgi_parse(DLFP_tribune *trib, const tribune_msg_info *mi, int with_seconds,
   pv->sub_tstamp = mi->sub_timestamp;
   pv->is_my_message = mi->is_my_message;
   pv->is_answer_to_me = mi->is_answer_to_me;
+  pv->is_hilight_key = tribune_hilight_key_list_test_mi(mi, trib->hilight_key_list) == NULL ? 0 : 1;
 
   pw = NULL;
 
@@ -585,6 +591,8 @@ pp_pv_destroy(Pinnipede *pp) {
   if (pp->lignes) { free(pp->lignes); pp->lignes = NULL; }
 }
 
+
+
 /* a appeler quand la fortune est changée */
 static void
 pp_update_fortune(Dock *dock)
@@ -610,6 +618,8 @@ pp_update_fortune(Dock *dock)
     }
   }
 }
+
+
 
 /* macros pour le calcul des differentes positions d'affichage des lignes */
 #define LINEY0(l) (pp->win_height-(pp->use_minibar ? MINIB_H:0)-(pp->nb_lignes-l)*pp->fn_h-(pp->zmsg_h - pp->nb_lignes*pp->fn_h)/2) //(pp->zmsg_y + (l)*pp->fn_h)
@@ -996,10 +1006,42 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
     
     prev_font = NULL;
     pl = pw->ligne;
+    
+    /* affichage du petit crochet sur la gauche de certains messages */
+    if (pw->parent->is_my_message || pw->parent->is_answer_to_me || pw->parent->is_hilight_key) {
+      PostWord *pw2;
+      int first_line, last_line;
+      int do_hilight = 1;
+      if (pw == pw->parent->first) { first_line = 1; } else first_line = 0;
+      pw2 = pw;
+      while (pw2 && pw2->ligne == pl) pw2 = pw2->next;
+      if (pw2 == NULL) last_line = 1; else last_line = 0;
+
+      
+      if (pw->parent->is_my_message && pp->hilight_my_message_mode) { 
+	pixel = pp->hilight_my_msg_pixel; 
+      } else if (pw->parent->is_answer_to_me && pp->hilight_answer_to_me_mode) { 
+	pixel = pp->hilight_answer_my_msg_pixel;
+      } else if (pw->parent->is_hilight_key && pp->hilight_key_mode) { 
+	pixel = pp->hilight_keyword_pixel;
+      } else do_hilight = 0;
+      
+      if (do_hilight) {
+	XSetForeground(dock->display, dock->NormalGC, pixel);
+	XFillRectangle(dock->display, lpix, dock->NormalGC, 0, 0, 3, pp->fn_h);
+	XDrawLine(dock->display, lpix, dock->NormalGC, 2,first_line,  2, pp->fn_h-1-last_line);
+	if (first_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,0,5, 0);
+	if (last_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,pp->fn_h-1,5, pp->fn_h-1);
+	old_pixel = pixel;
+      }
+    }
+
+    /* la boucle sur tous les mots */
     while (pw && pw->ligne == pl) {
 	
       if (pw->attr & PWATTR_TSTAMP) {
 	pixel = pp->timestamp_pixel;
+//	if (pw->parent->is_my_message) { pixel = IRGB2PIXEL(0x000080); }
       } else if (pw->attr & (PWATTR_LNK|PWATTR_REF)) {
 	pixel = pp->lnk_pixel;
       } else if (pw->attr & PWATTR_NICK) {
@@ -1011,19 +1053,10 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
       } else {
 	pixel = pp->txt_pixel;
       }
-
-      /*      if (pw->attr & PWATTR_TMP_EMPH) {
-	XSetForeground(dock->display, dock->NormalGC, pp->emph_pixel);
-	XFillRectangle(dock->display, lpix, dock->NormalGC, 
-		       pw->xpos, y - fn->ascent, pw->xwidth, y+fn->descent);
-	XSetForeground(dock->display, dock->NormalGC, pixel); old_pixel = pixel;
-	}*/
-
       if (pixel != old_pixel) {
 	XSetForeground(dock->display, dock->NormalGC, pixel);
 	old_pixel = pixel;
       }
-      
       fn = pv_get_font(pp, pw->attr);
       if (fn != prev_font) {
 	XSetFont(dock->display, dock->NormalGC, fn->fid);
@@ -1051,6 +1084,8 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
       pw = pw->next;
     }
   }
+
+
   return pw;
 }
 
@@ -1201,8 +1236,8 @@ pp_refresh(Dock *dock, DLFP_tribune *trib, Drawable d, PostWord *pw_ref)
     if (pw) {
       int i;
 
-      if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel;
-      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;
+      /* if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel; */
+      /*      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;*/
 
       if (ref_mi) {
 	if (ref_num == -1) {
@@ -1386,8 +1421,9 @@ pp_build(Dock *dock)
   pp->minib_pixel = IRGB2PIXEL(Prefs.pp_button_color);
   pp->emph_pixel = IRGB2PIXEL(Prefs.pp_emph_color);
   pp->trollscore_pixel = IRGB2PIXEL(Prefs.pp_trollscore_color);
-  pp->my_msg_bgpixel = IRGB2PIXEL(Prefs.pp_my_msg_bgcolor);
-  pp->answer_my_msg_bgpixel = IRGB2PIXEL(Prefs.pp_answer_my_msg_bgcolor);
+  pp->hilight_my_msg_pixel = IRGB2PIXEL(Prefs.pp_my_msg_color);
+  pp->hilight_answer_my_msg_pixel = IRGB2PIXEL(Prefs.pp_answer_my_msg_color);
+  pp->hilight_keyword_pixel = IRGB2PIXEL(Prefs.pp_keyword_color);
 
   pp->id_base = -1; pp->decal_base = 0;
 
@@ -1401,6 +1437,9 @@ pp_build(Dock *dock)
   pp->nick_mode = Prefs.pp_nick_mode;
   pp->nosec_mode = Prefs.pp_nosec_mode;
   pp->trollscore_mode = Prefs.pp_trollscore_mode;
+  pp->hilight_my_message_mode = 1;
+  pp->hilight_answer_to_me_mode = 1;
+  pp->hilight_key_mode = 1;
 
   pp->filter.filter_mode = 0;
   pp->filter.filter_name = NULL;
@@ -1568,6 +1607,7 @@ pp_get_pw_at_xy(Pinnipede *pp,int x, int y)
   return pw;
 }
 
+/* affiche le texte en haut du pinnipede (dans le style très dépouillé des useragents) */
 static void
 pp_popup_show_txt(Dock *dock, unsigned char *txt)
 {
@@ -1611,6 +1651,41 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
   }
 }
 
+/* renvoie le nombre de references vers le message base_mi (sauf ipot) */
+static int
+pp_count_backrefs(tribune_msg_info *base_mi)
+{
+  int nb_backrefs = 0;
+  tribune_msg_info *mi;
+  
+  if (base_mi == NULL) return 0;
+
+  /* on parcourt tous les message postérieurs à base_mi */
+  mi = base_mi->next;
+  while (mi) {
+    int i;
+    /* on regarde toutes ses references */
+    for (i = 0; i < mi->nb_refs; i++) {
+      tribune_msg_info *ref_mi;
+      int j;
+
+      /* pour chaque ref, on regarde la liste (generalement de taille 1 ou 0) des messages pointés */
+      for (j = 0, ref_mi = mi->refs[i].mi; j < mi->refs[i].nbmi; j++, ref_mi=ref_mi->next) {
+	assert(ref_mi);
+
+	/* si on pointe vers le bon */
+	if (ref_mi == base_mi) {
+	  nb_backrefs++;
+	  break; /* si le message contient deux refs vers base_mi, on ne le compte qu'une fois */
+	}
+      }
+    }
+    mi = mi->next;
+  }
+  return nb_backrefs;
+}
+
+
 /* celle la est tordue ...
    il s'agit de verifier si on survole (avec la souris) une info interessante, 
    et d'agir le cas echeant (de maniere un peu désordonnée)
@@ -1632,8 +1707,23 @@ pp_check_survol(Dock *dock, DLFP_tribune *trib, int x, int y)
       strncpy(survol, pw->attr_s, 1024); survol[1023] = 0;
     } else if (pw->attr & PWATTR_TSTAMP) {
       tribune_msg_info *mi;
+      char hilight_cause[512];
+      int nrep;
+      HilightKey *hk;
       mi = tribune_find_id(trib, pw->parent->id);
-      snprintf(survol, 1024, "id=%d ua=%s", pw->parent->id, (mi ? mi->useragent : ""));
+
+      hilight_cause[0] = 0;
+      if (mi->is_my_message) {
+	snprintf(hilight_cause, 512, " [vous avez posté ce message]");
+      } else if (mi->is_answer_to_me) {
+	snprintf(hilight_cause, 512, " [ce message répond à l'un des votres]");
+      } else if ((hk = tribune_hilight_key_list_test_mi(mi, trib->hilight_key_list))) {
+	snprintf(hilight_cause, 512, " [contient le %s-clef: '%s']", 
+		 tribune_hilight_key_list_type_name(hk->type), hk->key);
+      }
+      nrep = pp_count_backrefs(mi);
+      snprintf(survol, 1024, "id=%d ua=%s\n%d réponse%s%s", pw->parent->id, (mi ? mi->useragent : ""), 
+	       nrep, (nrep > 1) ? "s" : "", hilight_cause);
       is_a_ref = 1;
     } else if (pw->attr & PWATTR_REF) {
       is_a_ref = 1;
@@ -2014,6 +2104,7 @@ pp_set_thread_filter(Dock *dock, DLFP_tribune *trib, int base_id)
   pp_refresh(dock, trib, pp->win, NULL);
 }
 
+
 void
 pp_set_login_filter(Dock *dock, DLFP_tribune *trib, char *login)
 {
@@ -2065,6 +2156,180 @@ pp_set_word_filter(Dock *dock, DLFP_tribune *trib, char *word)
   pp_refresh(dock, trib, pp->win, NULL);	  
 }
 
+/* gestion des ctrl+left click sur un mot du pinnipede
+   --> permet l'activation du filtre sur le mot */
+static void
+pp_handle_control_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
+{
+  Pinnipede *pp = dock->pinnipede;
+  PostWord *pw;
+  pw = pp_get_pw_at_xy(pp, mx, my);
+  if (pw) {
+    if (pw->attr & PWATTR_TSTAMP) {
+      /* control+clic sur l'horloge -> activation du filtre */
+      pp_set_thread_filter(dock, trib, pw->parent->id); 
+    } else if (pw->attr & PWATTR_LOGIN) {
+      /* control+clic sur un <login> -> filtre ! */
+      pp_set_login_filter(dock, trib, pw->w);
+    } else if (pw->attr & PWATTR_NICK) {
+      /* control+clic sur un useragent raccourci -> filtre ! */
+      
+      tribune_msg_info *mi;
+
+      mi = tribune_find_id(trib, pw->parent->id);
+      if (mi) {
+	pp_set_ua_filter(dock, trib, mi->useragent);
+      }
+    } else if (strlen(pw->w) > 0) {
+      /* control+clic sur un mot normal -> filtre ! */
+      char *s, *p;
+      s = strdup(pw->w);
+      p = s + strlen(s) -1;
+      while (p > s && !isalnum(*p)) { *p = 0; p--; }
+      p = s;
+      while (*p && !isalnum(*p)) p++;
+      if (strlen(p)) {
+	pp_set_word_filter(dock, trib, p);
+      } else {
+	pp_set_word_filter(dock, trib, pw->w);
+      }
+      free(s);
+    }
+  }
+}
+
+
+/* gestion des shift+left click sur un mot du pinnipede
+   --> permet l'ajout/enlevement de mots clefs de mise en valeur de post */
+static void
+pp_handle_shift_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
+{
+  Pinnipede *pp = dock->pinnipede;
+  PostWord *pw;
+  pw = pp_get_pw_at_xy(pp, mx, my);
+  if (pw) {
+    tribune_msg_info *mi;
+    mi = tribune_find_id(trib, pw->parent->id);
+
+
+    if (mi && pw->attr & PWATTR_NICK) {
+      tribune_hilight_key_list_swap(trib, mi->useragent, HK_UA);
+    } else if (pw->attr & PWATTR_LOGIN) {
+      tribune_hilight_key_list_swap(trib, mi->login, HK_LOGIN);
+    } else if (pw->attr & PWATTR_TSTAMP) {
+      char sid[10];
+      snprintf(sid,10,"%d", pw->parent->id);
+      tribune_hilight_key_list_swap(trib, sid, HK_ID);
+    } else {
+      char *s, *p;
+      
+      /* simplification du mot */
+      s = strdup(pw->w);
+      p = s + strlen(s) -1;
+      while (p > s && !isalnum(*p)) { *p = 0; p--; }
+      p = s;
+      while (*p && !isalnum(*p)) p++;
+
+      if (strlen(p) == 0) p = pw->w;
+
+      tribune_hilight_key_list_swap(trib, p, HK_WORD);
+      free(s);
+    }
+    pp_pv_destroy(pp); /* force le rafraichissement complet */
+    pp_update_content(dock, trib, pp->id_base, pp->decal_base,0);
+    pp_refresh(dock, trib, pp->win, NULL);
+  }
+}
+
+static void
+pp_handle_left_clic(Dock *dock, DLFP_tribune *trib, int mx, int my)
+{
+  Pinnipede *pp = dock->pinnipede;
+  PostWord *pw;
+
+  /* affichage/masquage du 'crochet' à gauche des messages mis en valeur */
+  if (mx < 5) {
+    pw = pp_get_pw_at_xy(pp, 20, my); /* le 20 est une ruse de chacal puant */
+    if (pw) {
+      int changed = 1;
+      if (pw->parent->is_my_message) {
+	pp->hilight_my_message_mode = 1-pp->hilight_my_message_mode;
+      } else if (pw->parent->is_answer_to_me) {
+	pp->hilight_answer_to_me_mode = 1-pp->hilight_answer_to_me_mode;
+      } else if (pw->parent->is_hilight_key) {
+	tribune_msg_info *mi;
+	HilightKey *hk;
+	mi = tribune_find_id(trib, pw->parent->id);
+	if (mi && (hk = tribune_hilight_key_list_test_mi(mi, trib->hilight_key_list))) {
+	  tribune_hilight_key_list_remove(trib, hk->key, hk->type);
+	}
+      } else changed = 0;
+      if (changed) {
+	pp_pv_destroy(pp); /* force le rafraichissement complet */
+	pp_update_content(dock, trib, pp->id_base, pp->decal_base,0);
+	pp_refresh(dock, trib, pp->win, NULL);
+      }
+    }
+  }
+  
+  pw = pp_get_pw_at_xy(pp, mx, my);
+  if (pw) {
+    /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
+    if (pw->attr & PWATTR_LNK) {
+      if (strlen(pw->attr_s)) {
+	open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
+      }
+    } else if (pw->attr & PWATTR_TSTAMP) {
+      /* clic sur l'holorge -> ouverture du palmipede */
+      
+      char s_ts[11];
+      char s_subts[3];
+      
+      s_subts[0] = s_subts[1] = s_subts[2] = 0;
+      switch(pw->parent->sub_tstamp) {
+      case -1: break;
+      case 0: s_subts[0] = '¹'; break;
+      case 1: s_subts[0] = '²'; break;
+      case 2: s_subts[0] = '³'; break;
+      default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
+      }
+	
+      snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
+	
+      if (editw_ismapped(dock->editw) == 0) {
+	if (Prefs.user_name) {
+	  snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
+		   Prefs.user_name, s_ts);
+	} else {
+	  snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
+		   s_ts);
+	}
+	//	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
+	// strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
+	dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
+	editw_show(dock, dock->editw, 0);
+	editw_move_end_of_line(dock->editw, 0);
+	editw_refresh(dock, dock->editw);
+      } else {
+	char s[60];
+	snprintf(s, 60, "%s ", s_ts);
+	editw_insert_string(dock->editw, s);
+	editw_refresh(dock, dock->editw);
+      }
+    } else if (pw->attr & PWATTR_REF) {
+      /* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
+	 pinnipede */
+      tribune_msg_info *mi;
+      int bidon;
+      
+      mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
+      if (mi) {
+	pp_update_content(dock, trib, mi->id, 0, 0);
+	pp_refresh(dock, trib, pp->win, NULL);
+      }
+    } 
+  } /* if (pw) */  
+}
 
 /* gestion du relachement du bouton souris (si on n'est pas en train de 'tirer' la fenetre, 
    et si on n'a pas cliqué sur la barre de petits boutons */
@@ -2088,6 +2353,7 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
   previous_clic = event->time;
   
   if (event->button == Button4) {
+    /* un coup de roulette */
     pp_update_content(dock, trib, pp->id_base, pp->decal_base-q,0);
     pp_refresh(dock, trib, pp->win, NULL);
     //    printf("scroll up  : id=%d %d\n",pp->id_base, pp->decal_base);
@@ -2096,114 +2362,13 @@ pp_handle_button_release(Dock *dock, DLFP_tribune *trib, XButtonEvent *event)
     pp_refresh(dock, trib, pp->win, NULL);
     //printf("scroll down: id=%d %d\n",pp->id_base, pp->decal_base);
   } else if (event->button == Button1) {
-    PostWord *pw;
-    pw = pp_get_pw_at_xy(pp, mx, my);
-    if (pw) {
-      /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
-      if ((pw->attr & PWATTR_LNK) && ((event->state & ControlMask) == 0)) {
-	if (strlen(pw->attr_s)) {
-	  open_url(pw->attr_s, pp->win_xpos + mx-5, pp->win_ypos+my-25, 1);
-	}
-      } else if (pw->attr & PWATTR_TSTAMP) {
-	if ((event->state & ControlMask) == 0) {
-
-	  /* clic sur l'holorge -> ouverture du palmipede */
-
-	  char s_ts[11];
-	  char s_subts[3];
-	  
-	  s_subts[0] = s_subts[1] = s_subts[2] = 0;
-	  switch(pw->parent->sub_tstamp) {
-	  case -1: break;
-	  case 0: s_subts[0] = '¹'; break;
-	  case 1: s_subts[0] = '²'; break;
-	  case 2: s_subts[0] = '³'; break;
-	  default: s_subts[0] = ':'; s_subts[1] = '1' + pw->parent->sub_tstamp;
-	  }
-	  
-	  snprintf(s_ts, 11, "%s%s", pw->w, s_subts);
-	  
-	  if (editw_ismapped(dock->editw) == 0) {
-	    if (Prefs.user_name) {
-	      snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s %s ",
-		       Prefs.user_name, s_ts);
-	    } else {
-	      snprintf(dock->coin_coin_message, MESSAGE_MAX_LEN, "%s ",
-		       s_ts);
-	    }
-	    //	  strncpy(dock->coin_coin_message, pw->w, MESSAGE_MAX_LEN);
-	    // strncat(dock->coin_coin_message, " ", MESSAGE_MAX_LEN);
-	    dock->coin_coin_message[MESSAGE_MAX_LEN-1] = 0;
-	    editw_show(dock, dock->editw, 0);
-	    editw_move_end_of_line(dock->editw, 0);
-	    editw_refresh(dock, dock->editw);
-	  } else {
-	    char s[60];
-	    snprintf(s, 60, "%s ", s_ts);
-	    editw_insert_string(dock->editw, s);
-	    editw_refresh(dock, dock->editw);
-	  }
-	} else {
-	  /* control+clic sur l'horloge -> activation du filtre */
-
-	  //	  struct tm t;
-
-	  //	  localtime_r(&pw->parent->tstamp, &t);
-
-	  pp_set_thread_filter(dock, trib, pw->parent->id); 
-
-	}
-      } else if (pw->attr & PWATTR_REF) {
-	if ((event->state & ControlMask) == 0) {
-
-	  /* clic sur une reference, on va essayer de se déplacer pour afficher la ref en bas du
-	     pinnipede */
-	  tribune_msg_info *mi;
-	  int bidon;
-	  
-	  mi = check_for_horloge_ref(trib, pw->parent->id, pw->w, NULL, 0, &bidon, NULL); assert(bidon);
-	  if (mi) {
-	    pp_update_content(dock, trib, mi->id, 0, 0);
-	    pp_refresh(dock, trib, pp->win, NULL);
-	  }
-	} else {
-	  /* control+clic sur une reference, on filtre tous les message qui ont la meme reference */
-	  /*	  
-	  int h,m,s,num;
-
-	  check_for_horloge_ref_basic(pw->w, &h, &m, &s, &num);
-	  pp_set_thread_filter(dock, trib, pw->parent->id);*/
-	}
-      } else if ((pw->attr & PWATTR_LOGIN) && (event->state & ControlMask)) {
-      
-	/* control+clic sur un <login> -> filtre ! */
-	pp_set_login_filter(dock, trib, pw->w);
-      } else if ((pw->attr & PWATTR_NICK) && (event->state & ControlMask)) {
-	
-	/* control+clic sur un useragent raccourci -> filtre ! */
-
-	tribune_msg_info *mi;
-
-	mi = tribune_find_id(trib, pw->parent->id);
-	if (mi) {
-	  pp_set_ua_filter(dock, trib, mi->useragent);
-	}
-      } else if (strlen(pw->w) > 0 && (event->state & ControlMask)) {
-	/* control+clic sur un mot normal -> filtre ! */
-	char *s, *p;
-	s = strdup(pw->w);
-	p = s + strlen(s) -1;
-	while (p > s && !isalnum(*p)) { *p = 0; p--; }
-	p = s;
-	while (*p && !isalnum(*p)) p++;
-	if (strlen(p)) {
-	  pp_set_word_filter(dock, trib, p);
-	} else {
-	  pp_set_word_filter(dock, trib, pw->w);
-	}
-	free(s);
-      }
-    } /* if (pw) */
+    if (event->state & ShiftMask) {
+      pp_handle_shift_left_clic(dock, trib, mx, my);
+    } else if (event->state & ControlMask) {
+      pp_handle_control_left_clic(dock, trib, mx, my);
+    } else {
+      pp_handle_left_clic(dock, trib, mx, my);
+    }
   } else if (event->button == Button2) {
     if ((event->state & ControlMask)==0) {    
       PostWord *pw;

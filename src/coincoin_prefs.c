@@ -21,9 +21,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_prefs.c,v 1.13 2002/01/18 19:45:58 pouaite Exp $
+  rcsid=$Id: coincoin_prefs.c,v 1.14 2002/01/19 19:56:09 pouaite Exp $
   ChangeLog:
   $Log: coincoin_prefs.c,v $
+  Revision 1.14  2002/01/19 19:56:09  pouaite
+  petits crochets pour la mise en valeur de certains messages (cf changelog)
+
   Revision 1.13  2002/01/18 19:45:58  pouaite
   petit oubli d'un fichier..
 
@@ -988,8 +991,14 @@ read_coincoin_options (structPrefs *The_Prefs)
       TEST_OPTION("pinnipede.emph_color:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_emph_color); ok++;
       }
-      TEST_OPTION("pinnipede.my_msg_bgcolor:", 1) {
-	sscanf(optarg, "%x", &The_Prefs->pp_my_msg_bgcolor); ok++;
+      TEST_OPTION("pinnipede.hilight.my_msg_color:", 1) {
+	sscanf(optarg, "%x", &The_Prefs->pp_my_msg_color); ok++;
+      }
+      TEST_OPTION("pinnipede.hilight.answer_my_msg_color:", 1) {
+	sscanf(optarg, "%x", &The_Prefs->pp_answer_my_msg_color); ok++;
+      }
+      TEST_OPTION("pinnipede.hilight.keyword_color:", 1) {
+	sscanf(optarg, "%x", &The_Prefs->pp_keyword_color); ok++;
       }
       TEST_OPTION("pinnipede.fortune_bgcolor:", 1) {
 	sscanf(optarg, "%x", &The_Prefs->pp_fortune_bgcolor); ok++;
@@ -1049,7 +1058,7 @@ read_coincoin_options (structPrefs *The_Prefs)
       }
       if (ok == 0) {
 	printf("[~/.wmcoincoin/options, ligne %d] c'est quoi ça : '%s' -- cette option est inconnue\n", options_linenum, s);
-//	exit(1);
+	exit(1);
       }
     } while (!feof(f));
     fclose(f);
@@ -1180,8 +1189,10 @@ void init_default_prefs (int argc, char **argv, structPrefs *The_Prefs)
   The_Prefs->pp_trollscore_color = 0xff0000;
   The_Prefs->pp_button_color = 0xdae6e6;
   The_Prefs->pp_emph_color = 0xffffff;
-  The_Prefs->pp_my_msg_bgcolor = 0xdae6ff;
-  The_Prefs->pp_answer_my_msg_bgcolor = 0xc0c080;
+  The_Prefs->pp_my_msg_color = 0xf07000;
+  The_Prefs->pp_answer_my_msg_color = 0xe0b080;
+  The_Prefs->pp_keyword_color = 0x008080;
+
   The_Prefs->pp_xpos = -10000;
   The_Prefs->pp_ypos = -10000;
   The_Prefs->pp_width = 300;

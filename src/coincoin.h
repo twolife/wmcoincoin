@@ -139,6 +139,16 @@ struct _tribune_msg_info {
   tribune_msg_ref *refs; /* pointeur mallocé, indique la liste des messages pointés par celui ci */
 };
 
+/* petite structure pour stockés la liste des mots-clefs qui déclenche la mise en
+   valeur du post dans le pinnipede
+   (la mise en valeur des messages de l'utilisateur && leurs reponses fonctionne différement) */
+typedef struct _HilightKey HilightKey;
+typedef enum {HK_UA, HK_LOGIN, HK_WORD, HK_ID, HK_ALL} HilightKeyType;
+struct _HilightKey {
+  unsigned char *key;
+  HilightKeyType type;
+  HilightKey *next;
+};
 
 
 typedef struct _DLFP_tribune {
@@ -165,6 +175,10 @@ typedef struct _DLFP_tribune {
 
   int just_posted_anonymous; /* positionné si on vient juste d'envoyer un message en anonyme
 				(pour aider la reconnaissance de nos messages) */
+
+  HilightKey *hilight_key_list; /* liste des mots clef declenchant la mise en valeur du post dans le pinnipede 
+					  attention c'est Mal, mais c'est le pinnipede qui ecrit dans cette liste..
+					*/
 } DLFP_tribune;
 
 typedef struct _DLFP_comment {
@@ -539,6 +553,12 @@ tribune_msg_info *check_for_horloge_ref(DLFP_tribune *trib, int caller_id,
 int check_for_horloge_ref_basic(const unsigned char *ww, int *ref_h, 
 				int *ref_m, int *ref_s, int *ref_num);
 void tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi);
+void tribune_hilight_key_list_add(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type);
+void tribune_hilight_key_list_remove(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type);
+HilightKey *tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist);
+HilightKey *tribune_hilight_key_list_find(HilightKey *hk, const char *s, HilightKeyType t);
+const char* tribune_hilight_key_list_type_name(HilightKeyType t);
+void tribune_hilight_key_list_swap(DLFP_tribune *trib, const char *s, HilightKeyType t);
 
 /* coincoin_tribune.c */
 void tribune_tatouage(DLFP_tribune *trib, tribune_msg_info *it);

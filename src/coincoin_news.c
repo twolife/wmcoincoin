@@ -20,9 +20,12 @@
 */
 
 /*
-  rcsid=$Id: coincoin_news.c,v 1.11 2002/01/14 23:54:06 pouaite Exp $
+  rcsid=$Id: coincoin_news.c,v 1.12 2002/01/19 19:56:09 pouaite Exp $
   ChangeLog:
   $Log: coincoin_news.c,v $
+  Revision 1.12  2002/01/19 19:56:09  pouaite
+  petits crochets pour la mise en valeur de certains messages (cf changelog)
+
   Revision 1.11  2002/01/14 23:54:06  pouaite
   reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
 
@@ -109,6 +112,9 @@ gros_read(SOCKET fd, char *what)
 
 /*
   traitement DLFP
+
+  initialisation des news et de la tribune (oui pas propre, l'init de la tribune aurait sa place
+  dans coincoin_tribune.c ..)
 */
 
 DLFP *
@@ -128,6 +134,7 @@ dlfp_create()
   dlfp->tribune.local_time_last_check = time(NULL);
 
   dlfp->tribune.just_posted_anonymous = 0;
+  dlfp->tribune.hilight_key_list = NULL;
 
   dlfp->com = NULL;
   dlfp->xp_old = -1000;

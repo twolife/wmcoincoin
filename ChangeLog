@@ -1,3 +1,18 @@
+2002-01-19  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c src/tribune_util.c src/coincoin.h src/global.h
+	src/coincoin_prefs.c la mise en valeur des posts de l'utilisateur
+	ainsi que leurs reponses se fait par un petit crochet affiché à
+	gauche du pinnipede. En fait Shift+Clic gauche sur un mot, login,
+	useragent, tous les messages correspondant seront mis en valeur
+	par un petit crochet. Les trois couleurs possibles du crochet sont
+	fixées dans les options par: 
+		pinnipede.hilight.my_msg_color:
+	        pinnipede.hilight.answer_my_msg_color:
+		pinnipede.hilight.keyword_color:
+	Ils peuvent être affichés/masqués avec un clic gauche sur le crochet 
+	(ou un clic sur le mot clef).
+
 2002-01-18  pouaite  <c0in@altern.org>
 
 	* src/pinnipede.c src/coincoin_tribune.c src/tribune_util.c le

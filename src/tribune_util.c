@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.1 2002/01/18 19:45:58 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.2 2002/01/19 19:56:09 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.2  2002/01/19 19:56:09  pouaite
+  petits crochets pour la mise en valeur de certains messages (cf changelog)
+
   Revision 1.1  2002/01/18 19:45:58  pouaite
   petit oubli d'un fichier..
 
@@ -454,4 +457,120 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
     }
     myprintf("\n");
   }
+}
+
+
+void
+tribune_hilight_key_list_add(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type)
+{
+  HilightKey *hk, *last;
+
+  ALLOC_OBJ(hk, HilightKey);
+  hk->key = strdup(key);
+  hk->type = type;
+  hk->next = NULL;
+  
+  BLAHBLAH(1, myprintf("ajout du motclef: '%<CYA %s>'\n", key));
+  last = trib->hilight_key_list;
+  if (last == NULL) {
+    trib->hilight_key_list = hk;
+  } else {
+    while (last->next != NULL) last = last->next;
+    last->next = hk;
+  }
+}
+
+void
+tribune_hilight_key_list_remove(DLFP_tribune *trib, const unsigned char *key, HilightKeyType type)
+{
+  HilightKey *hk, *prev;
+  prev = NULL;
+  hk = trib->hilight_key_list;
+  while (hk) {
+    if (strcasecmp(key, hk->key)==0 && (hk->type == type || type == HK_ALL)) {
+      BLAHBLAH(1, myprintf("suppression du motclef: '%<CYA %s>'\n", key));
+      if (prev) {
+	/* supprime les refs des postvisuals vers cette clef.. */
+	prev->next = hk->next;
+      } else {
+	trib->hilight_key_list = hk->next;
+      }
+      free(hk->key);
+      free(hk);
+      break;
+    }
+    prev = hk;
+    hk = hk->next;
+  }
+}
+
+HilightKey *
+tribune_hilight_key_list_test_mi(const tribune_msg_info *mi, HilightKey *klist)
+{
+  HilightKey *hk;
+  char sid[10];
+
+  snprintf(sid,10, "%d", mi->id);
+  
+  hk = klist;
+  while (hk) {
+    if (hk->type == HK_UA) {
+      if (strcmp(hk->key, mi->useragent) == 0) {
+	return hk;
+      }
+    } else if (hk->type == HK_LOGIN) {
+      if (strcmp(hk->key, mi->login) == 0) {
+	return hk;
+      }
+    } else if (hk->type == HK_WORD) {
+      if (strstr(mi->msg, hk->key)) {
+//	printf("mot clef %s trouvé dans le msg id=%d\n", hk->key, mi->id);
+	return hk;
+      } 
+    } else if (hk->type == HK_ID) {
+      if (strcmp(sid, hk->key) == 0) {
+	return hk;
+      }
+    }
+    hk = hk->next;
+  }
+  return NULL;
+}
+
+HilightKey *
+tribune_hilight_key_list_find(HilightKey *hk, const char *s, HilightKeyType t)
+{
+  while (hk) {
+    if ((hk->type != HK_WORD && strcmp(hk->key, s)==0) ||
+	(hk->type == HK_WORD && strcasecmp(hk->key, s)==0)) {
+      if (t == HK_ALL || t == hk->type) {
+	return hk;
+      }
+    }
+    hk = hk->next;
+  }
+  return NULL;
+}
+
+void
+tribune_hilight_key_list_swap(DLFP_tribune *trib, const char *s, HilightKeyType t)
+{
+  /* verifie si le mot est déjà dans la liste */
+  if (tribune_hilight_key_list_find(trib->hilight_key_list, s, t) == NULL) {
+    tribune_hilight_key_list_add(trib, s, t);
+  } else {
+    tribune_hilight_key_list_remove(trib, s, t);
+  }
+}
+
+const char*
+tribune_hilight_key_list_type_name(HilightKeyType t)
+{
+  switch (t) {
+  case HK_UA: return "useragent"; 
+  case HK_LOGIN: return "login";
+  case HK_WORD: return "mot";
+  case HK_ID: return "message id";
+  }
+  return NULL;
 }
