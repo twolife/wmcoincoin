@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.13 2002/01/16 21:27:35 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.14 2002/01/20 02:17:13 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.14  2002/01/20 02:17:13  pouaite
+  modifs d'ordre esthetique (!) sans grand interet
+
   Revision 1.13  2002/01/16 21:27:35  pouaite
   gros coup de balai dans wmcoincoin.c qui s'est du coup splitté en trois: wmcoincoin.c, dock.c et useragents_file.c
 
@@ -614,10 +617,10 @@ void X_loop()
     /* clignotement qui signale l'ajout de nouveaux commentaires */
     if (flag_updating_comments == 0) {
       int xp_chg, cmt_chg;
-      
+      /* ce qui suit est incompréhensible */
       xp_chg = (dock->dlfp->xp_clign_cnt>=0);
       cmt_chg = (dlfp_yc_find_modified(dock->dlfp,NULL) != NULL);
-      if (cmt_chg || xp_chg)
+      if (cmt_chg || xp_chg || flag_tribune_answer_to_me)
 	{
 	  dock->trolloscope_clign_step++;
 	  if (dock->trolloscope_clign_step > 50) {
@@ -627,7 +630,18 @@ void X_loop()
 	    dock->trolloscope_bgr = (25 - ABS(dock->trolloscope_clign_step-25))*9;
 	  }
 	  if (xp_chg) {
-	    dock->trolloscope_bgg = (25 - ABS(dock->trolloscope_clign_step-25))*9;
+	    dock->trolloscope_bgg = (25 - ABS(((dock->trolloscope_clign_step+16)%50)-25))*9;
+	  }
+	  if (flag_tribune_answer_to_me) {
+	    dock->trolloscope_bgb = (25 - ABS(((dock->trolloscope_clign_step+32)%50)-25))*9;
+	    if (dock->trolloscope_clign_step == 18) {
+	      static unsigned cnt = 0;
+	      cnt++;
+	      if (cnt % 8 == 0) {
+		dock->trolloscope_bgb = 0;
+		flag_tribune_answer_to_me = 0;
+	      }
+	    }
 	  }
 	  dock_update_pix_trolloscope(dock, &dock->dlfp->tribune);
 
@@ -1020,7 +1034,7 @@ void initx(Dock *dock, int argc, char **argv) {
 }
 
 
-
+/* patch jjb */
 static int faut_il_rafraichir(int count,int delay, int offset)
 {
   if(count<25*delay) // On a déjà rafraîchi récemment

@@ -1,8 +1,11 @@
 
 /*
-  rcsid=$Id: global.h,v 1.10 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: global.h,v 1.11 2002/01/20 02:17:13 pouaite Exp $
   ChangeLog:
   $Log: global.h,v $
+  Revision 1.11  2002/01/20 02:17:13  pouaite
+  modifs d'ordre esthetique (!) sans grand interet
+
   Revision 1.10  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -192,6 +195,7 @@ DECL_GLOB_INIT(volatile int flag_updating_messagerie, 0);
 DECL_GLOB_INIT(volatile int flag_news_updated, 0);
 DECL_GLOB_INIT(volatile int flag_updating_comments, 0); /* utilisé aussi pour la maj de la fortune et du CPU */
 DECL_GLOB_INIT(volatile int flag_updating_tribune, 0);
+DECL_GLOB_INIT(volatile int flag_tribune_answer_to_me, 0); /* clignotement bleu du flamometre quand une reponse à un de nos posts sur la tribune vient d'arriver */
 DECL_GLOB_INIT(volatile int flag_sending_coin_coin, 0); /* utilisé pour savoir si on est en train de poster un message */
 DECL_GLOB_INIT(volatile int flag_troll_braining,0); /* pour indiquer sur la led si on est dans 'troll_detector' */
 DECL_GLOB_INIT(volatile int flag_tribune_updated, 0);

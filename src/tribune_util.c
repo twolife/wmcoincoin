@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: tribune_util.c,v 1.2 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: tribune_util.c,v 1.3 2002/01/20 02:17:13 pouaite Exp $
   ChangeLog:
   $Log: tribune_util.c,v $
+  Revision 1.3  2002/01/20 02:17:13  pouaite
+  modifs d'ordre esthetique (!) sans grand interet
+
   Revision 1.2  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -279,7 +282,7 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 
   mi = trib->msg;
   
-  printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);
+  //printf("test de %02d:%02d:%2d(%d)..\n", ref_mi->hmsf[0], ref_mi->hmsf[1], ref_mi->hmsf[2], ref_mi->hmsf[3]);
   while (mi) {
     const unsigned char *p, *np;
 
@@ -297,7 +300,7 @@ tribune_msg_is_ref_to_me(DLFP_tribune *trib, const tribune_msg_info *ref_mi) {
 	    //	  printf(" id%05d -> contient ref '%s'\n", mi->id, tok);
 	    if (h == mi->hmsf[0] && m == mi->hmsf[1] && 
 		(mi->hmsf[3] == 0 || mi->hmsf[2] == s)) {
-	      printf("ref au message trouvée !\n");
+//	      printf("ref au message trouvée !\n");
 	      return 1;
 	    }
 	  }
@@ -448,7 +451,7 @@ tribune_msg_find_refs(DLFP_tribune *trib, tribune_msg_info *mi)
   }
   if (mi->refs) mi->refs = realloc(mi->refs, mi->nb_refs*sizeof(tribune_msg_ref));
 
-  { 
+  if (Prefs.verbosity > 3) { 
     int i;
     myprintf("msg[%<YEL %04d>]: REFS=", mi->id);
     for (i=0; i < mi->nb_refs; i++) {

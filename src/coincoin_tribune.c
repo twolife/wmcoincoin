@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: coincoin_tribune.c,v 1.15 2002/01/18 00:28:42 pouaite Exp $
+  rcsid=$Id: coincoin_tribune.c,v 1.16 2002/01/20 02:17:13 pouaite Exp $
   ChangeLog:
   $Log: coincoin_tribune.c,v $
+  Revision 1.16  2002/01/20 02:17:13  pouaite
+  modifs d'ordre esthetique (!) sans grand interet
+
   Revision 1.15  2002/01/18 00:28:42  pouaite
   le ménage continue + grosses modifs (experimentales pour l'instant)
 
@@ -396,9 +399,9 @@ tribune_log_msg(DLFP_tribune *trib, char *ua, char *login, char *stimestamp, cha
     it->is_my_message = !strcmp(Prefs.user_login, it->login);
   } else {
     it->is_my_message = !strcmp(it->useragent, my_useragent);
-    if (it->is_my_message) {
+/*    if (it->is_my_message) {
       myprintf("my_message: '%<yel %s>' == '%<grn %s>'\n", it->useragent, my_useragent);
-    }
+    }*/
   }
   trib->just_posted_anonymous = 0;
 
@@ -538,6 +541,7 @@ tribune_check_my_messages(DLFP_tribune *trib, int old_last_post_id) {
 	flag_updating_tribune++;
 	it->is_answer_to_me = 1;
 	flag_updating_tribune--;
+	if (old_last_post_id != -1) flag_tribune_answer_to_me = 1;
       }
       flag_updating_tribune++;
       tribune_msg_find_refs(trib, it);

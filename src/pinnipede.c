@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.14 2002/01/19 19:56:09 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.15 2002/01/20 02:17:13 pouaite Exp $
   ChangeLog:
   $Log: pinnipede.c,v $
+  Revision 1.15  2002/01/20 02:17:13  pouaite
+  modifs d'ordre esthetique (!) sans grand interet
+
   Revision 1.14  2002/01/19 19:56:09  pouaite
   petits crochets pour la mise en valeur de certains messages (cf changelog)
 
@@ -1032,6 +1035,18 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw, unsigned long bgpixel)
 	XDrawLine(dock->display, lpix, dock->NormalGC, 2,first_line,  2, pp->fn_h-1-last_line);
 	if (first_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,0,5, 0);
 	if (last_line) XDrawLine(dock->display, lpix, dock->NormalGC, 3,pp->fn_h-1,5, pp->fn_h-1);
+
+	if (first_line) {
+	  pw2 = pw;
+	  while (pw2 && (pw2->attr & PWATTR_TSTAMP) == 0) pw2 = pw2->next;
+	  if (pw2) {
+	    int x0,width;
+	    x0 = pw2->xpos-2; width = pw2->xwidth+3;
+	    XDrawLine(dock->display, lpix, dock->NormalGC, 6, 0, x0, 0);
+	    XDrawRectangle(dock->display, lpix, dock->NormalGC, x0,0,width,pp->fn_h-1);
+	  }
+	}
+
 	old_pixel = pixel;
       }
     }
