@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.71 2002/12/20 15:49:53 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.72 2003/01/11 14:10:07 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.72  2003/01/11 14:10:07  pouaite
+  fix du palmi pour xf 4.3
+
   Revision 1.71  2002/12/20 15:49:53  pouaite
   prout 2.4.2b ?
 
@@ -1371,6 +1374,31 @@ void initx(Dock *dock, int argc, char **argv) {
   if (!dock->input_method) {
     printf("Erreur ! echec de XOpenIM(), ca pue !\n");
   }
+
+#ifdef XINERAMA
+  {
+    int event_base, error_base;
+    if (XineramaQueryExtension(dock->display, &event_base, &error_base)) {
+      int xv1=0, xv2=0,i;
+      XineramaQueryVersion(dock->display,&xv1, &xv2);
+      myprintf("Xinerama extension %<YEL supported> by X server (version %d.%d)\n", xv1, xv2);
+      dock->xine_scr = XineramaQueryScreens(dock->display, &dock->nb_xine_scr);
+      assert(dock->nb_xine_scr>0);
+
+      for (i = 0; i < dock->nb_xine_scr; ++i) {
+	myprintf("screen %d: [%<yel %d>-%<yel %d>]x[%<yel %d>-%<yel 4d>]\n", 
+		 dock->xine_scr[i].screen_number,
+		 dock->xine_scr[i].x_org,
+		 dock->xine_scr[i].y_org,
+		 dock->xine_scr[i].x_org+dock->xine_scr[i].width-1,
+		 dock->xine_scr[i].y_org+dock->xine_scr[i].height-1);
+      }
+    } else myprintf("no Xinerama for this server\n");
+  }
+#else 
+  myprintf("Xinerama support disabled\n");
+#endif
+  
 
   /* get screen and root window */
   dock->screennum = DefaultScreen(dock->display);

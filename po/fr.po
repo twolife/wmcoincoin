@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: wmcoincoin 2.3.8b\n"
-"POT-Creation-Date: 2002-12-20 17:57+0100\n"
+"POT-Creation-Date: 2002-12-20 19:12+0100\n"
 "PO-Revision-Date: 2002-08-18 21:31+0200\n"
 "Last-Translator: Josselin Mouette <josselin.mouette@ens-lyon.org>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -628,7 +628,7 @@ msgid ""
 "s' (err=%d)\n"
 msgstr "Erreur d'ouverture de %s\n"
 
-#: src/comments.c:408 src/news.c:719 src/board.c:1498
+#: src/comments.c:408 src/news.c:719 src/board.c:1529
 #, fuzzy
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr "Erreur d'ouverture de %s\n"
@@ -700,7 +700,7 @@ msgid ""
 "[%s] Destruction of news id=%d (very old, date=%s, wasn't in %s anymore)\n"
 msgstr ""
 
-#: src/news.c:278 src/news.c:535 src/board.c:1355
+#: src/news.c:278 src/news.c:535 src/board.c:1358
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
@@ -2019,30 +2019,30 @@ msgstr ""
 msgid "No new messages."
 msgstr "Pas de nouveaux messages."
 
-#: src/board.c:548
+#: src/board.c:551
 #, c-format
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:888
+#: src/board.c:891
 #, c-format
 msgid "message logged: '%s'\n"
 msgstr "message loggué: '%s'\n"
 
-#: src/board.c:1006
+#: src/board.c:1009
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1303
+#: src/board.c:1306
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1304
+#: src/board.c:1307
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1473
+#: src/board.c:1476
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -2054,7 +2054,7 @@ msgstr ""
 "PAS DE PANIQUE, le coincoin s'en charge bien, ça prouve seulement que je\n"
 "n'ai pas écrit ce correctif pour des cacahouette.\n"
 
-#: src/board.c:1491
+#: src/board.c:1522
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"

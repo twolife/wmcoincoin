@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.15  2003/01/11 14:10:06  pouaite
+dnl   fix du palmi pour xf 4.3
+dnl
 dnl   Revision 1.14  2002/12/20 17:40:48  pouaite
 dnl   ornythorinque en gelée
 dnl
@@ -180,6 +183,19 @@ echo x_cflags=$X_CFLAGS libs=$LIBS pre_lib=$X_PRE_LIBS x_libs=$X_LIBS x_extra=$X
 dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
 dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)
+
+
+dnl XINERAMA support (stolen from wmaker)
+dnl ================
+xinerama=no
+AC_ARG_ENABLE(xinerama, 
+[  --disable-xinerama	  disable XInerama extension support],
+		xinerama=$enableval, xinerama=yes)
+if test "$xinerama" = yes; then
+	AC_CHECK_LIB(Xinerama, XineramaQueryScreens, [XLIBS="-lXinerama $XLIBS"
+                AC_DEFINE(XINERAMA)], xinerama=no, $XLFLAGS $XLIBS)
+fi
+
 
 LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"

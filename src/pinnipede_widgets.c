@@ -351,7 +351,10 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
       ccqueue_push_board_update(pt->site->site_id);
       pt->site->board->board_refresh_cnt = 0;
     } else if (event->button == Button3) {
-      if (pt->selected == 0) pt->selected = 1;
+      //if (pt->selected == 0) pt->selected = 1;
+      if (editw_ismapped(dock->editw) == 0) {
+	editw_show(dock, pt->site->prefs, 0);
+      } else editw_change_current_site(dock, pt->site->site_id);
     }
 
     pp_tabs_set_visible_sites(pp);

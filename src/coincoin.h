@@ -261,8 +261,8 @@ struct _Site {
   int messages_dl_cnt;
   char *comments_last_modified;
   int comments_dl_cnt;
-
-#define MAX_NEWS_LUES 100
+  
+#define MAX_NEWS_LUES 100 /* "ought to be enough for anybody" */
   int newslues[MAX_NEWS_LUES];
   int nb_newslues;
   int newslues_uptodate;
@@ -488,6 +488,11 @@ typedef struct _Dock {
 
   Pixmap wm_icon_pix, wm_icon_mask; /* icone utilisée par le windowmanager (pour le pinnipede et la fenetre des news) */
   pid_t wmccc_pid;
+
+#ifdef XINERAMA
+  XineramaScreenInfo *xine_scr;
+  int nb_xine_scr;
+#endif
 } Dock;
 
 /* c'est classé par ordre de priorité décroissante */
@@ -592,6 +597,7 @@ void editw_set_kbfocus(Dock *dock, EditW *ew, int get_it);
 void editw_dispatch_event(Dock *dock, EditW *ew, XEvent *event);
 Window editw_get_win(EditW *ew);
 int editw_get_site_id(Dock *dock);
+void editw_change_current_site(Dock *dock, int sid);
 void editw_action(Dock *dock, EditW *ew);
 int editw_ismapped(EditW *ew);
 void editw_balloon_test(Dock *dock, EditW *ew, int x, int y);

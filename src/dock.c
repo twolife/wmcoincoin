@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.28 2002/09/08 14:28:45 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.29 2003/01/11 14:10:07 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.29  2003/01/11 14:10:07  pouaite
+  fix du palmi pour xf 4.3
+
   Revision 1.28  2002/09/08 14:28:45  pouaite
   bugfixes salutaires
 
@@ -1272,9 +1275,11 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
     } else if (IS_INSIDE(x,y,3,49,3+57,49+12) && 
 	       (dock->door_state_step <= TROLLOSCOPE_HEIGHT)) {
       if (!editw_ismapped(dock->editw)) {
-	Site *s = pp_tabs_get_main_site(dock);
-	//printf("prout %p\n",s);
-	editw_show(dock, s ? s->prefs : NULL, 0);
+	//Site *s = pp_tabs_get_main_site(dock);
+	//editw_show(dock, s ? s->prefs : NULL, 0);
+	/* on ne change plus le site du palmi, c'était vraiment de la perversité
+	   anti-productive */
+	editw_show(dock, NULL, 0);
       } else {
 	editw_hide(dock, dock->editw);
       }

@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: raster.h,v 1.9 2002/08/31 21:26:46 pouaite Exp $
+  rcsid=$Id: raster.h,v 1.10 2003/01/11 14:10:07 pouaite Exp $
   ChangeLog:
   $Log: raster.h,v $
+  Revision 1.10  2003/01/11 14:10:07  pouaite
+  fix du palmi pour xf 4.3
+
   Revision 1.9  2002/08/31 21:26:46  pouaite
   ajout du wmccc
 
@@ -34,7 +37,9 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
+#ifdef XINERAMA
+# include <X11/extensions/Xinerama.h>
+#endif
 #define PSEUDOCOL_NCOLORS 6
 
 #define _RGB2PIXEL(c,r,g,b) ((c->truecolor) ? c->rtable[r] + \

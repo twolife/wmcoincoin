@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.6 2002/12/20 11:26:35 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.7 2003/01/11 14:10:07 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.7  2003/01/11 14:10:07  pouaite
+  fix du palmi pour xf 4.3
+
   Revision 1.6  2002/12/20 11:26:35  pouaite
   deux trois conneries
 
@@ -1188,6 +1191,16 @@ editw_select_site(Dock *dock, int site_id) {
   dock->editw->prefs = s->prefs;
 }
 
+static void
+editw_select_default_site(Dock *dock) {
+  Site *s;
+  dock->editw->prefs = NULL;
+  for (s = dock->sites->list; s; s = s->next) {
+    if (s->prefs->check_board) {
+      dock->editw->prefs = s->prefs; break;
+    }
+  }
+}
 
 /* declenche l'affichage de la fenetre */
 void
@@ -1200,12 +1213,7 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
 
   if (sp) ew->prefs = sp;
   if (ew->prefs == NULL) {
-    Site *s;
-    for (s = dock->sites->list; s; s = s->next) {
-      if (s->prefs->check_board) {
-	ew->prefs = s->prefs;
-      }
-    }
+    editw_select_default_site(dock);
   }
   if (ew->prefs == NULL) { /* raaaah y'a aucune tribune */
     msgbox_show(dock, _("looks like you fucked your options file, no board "
@@ -1213,7 +1221,9 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
     return;
   } else {
     Site *s = sl_find_site_by_name(dock->sites, ew->prefs->site_name);
-    editw_select_site(dock, s->site_id);
+    if (s->prefs->check_board) {
+      editw_select_site(dock, s->site_id);
+    } else editw_select_default_site(dock);
   }
 
   assert(ew->mapped == 0);
@@ -1812,7 +1822,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 
   //printf("keypress: keycode=%d, state=%x\n", event->xkey.keycode, event->xkey.state);
 
-  if ((event->xkey.state & 0xdfe0) || 
+  if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
       (ew->input_context && XFilterEvent(event, None))) {
     //printf("forward key: \n");
     FORWARD_KEY;
@@ -1820,7 +1830,9 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   }
 
   klen = XLookupString(&event->xkey, (char*)buff, sizeof(buff), &ksym, &compose_status);
+
   //printf("klen=%2d %08x %c state=%08x\n", klen, ksym, ksym, event->xkey.state);
+
   if (ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
     editw_insert_char(ew, (unsigned char)'¤');
   } else if (event->xkey.state & Mod1Mask) {
@@ -1932,7 +1944,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       klen = XLookupString(&event->xkey, (char*) buff, sizeof(buff), &ksym,
       			   0);
     }
-    //    printf("(BIS) klen=%2d %08x %c\n", klen, ksym, ksym);
+    //printf("(BIS) klen=%2d %08x %c\n", klen, ksym, ksym);
 
     switch (ksym) {
     case XK_KP_Left:
@@ -2021,8 +2033,8 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     */
   }
   editw_refresh(dock, ew);
-  //  printf("ksym=%04x klen=%d buff=%02x(%c) %02x %02x %02x\n",(unsigned)ksym,klen, buff[0], buff[0], buff[1],buff[2],buff[3]);
-  
+  //printf("ksym=%04x klen=%d buff=%02x(%c) %02x %02x %02x\n",(unsigned)ksym,klen, buff[0], buff[0], buff[1],buff[2],buff[3]);
+  //printf("cassos\n");
 }
 
 void
@@ -2089,11 +2101,18 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
 	}
       }
       i = plopup_show_modal(dock, event->x_root, event->y_root);
-      if (i>=0) editw_select_site(dock, i);
-      editw_select_buff(dock, ew, ew->buff_num);
-      editw_refresh(dock, ew);
+      if (i>=0) {
+	editw_change_current_site(dock,i);
+      }
     }
   }
+}
+
+void editw_change_current_site(Dock *dock, int sid) {  
+  assert(editw_ismapped(dock->editw));
+  editw_select_site(dock, sid);
+  editw_select_buff(dock, dock->editw, dock->editw->buff_num);
+  editw_refresh(dock, dock->editw);
 }
 
 static void

@@ -1495,7 +1495,7 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
   default: {
     printf(_("Watch out darling, it's gonnah cut\n")); 
     printf(_("the option '%s' is valid but not handled, WHAT A SHAME"), opt_name);
-    assert(0);
+    assert(2+2==5); /* trop gros, passera pas */
   }
   }
   return NULL;
