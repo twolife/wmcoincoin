@@ -331,6 +331,56 @@ option_plop_words(const char *optarg, structPrefs *p)
   free(s);
 }
 
+/*
+char*
+option_get_string_list(char *optarg, char ***list, int *nb_elt)
+{
+  int pass, cnt;
+  char mot[1024];
+
+  for (pass = 0; pass < 2; pass++) {
+    unsigned char *s;
+
+    s = optarg;
+    cnt = 0;
+    do {
+      if (s != optarg) {
+	if (*s != ',') goto erreur;
+	s++;
+      }
+      while (*s && *s <= ' ') s++;
+      if (*s != '"') goto erreur;
+      s++;
+      i = 0;
+      while (*s && i < 1023) {
+	if (*s != '\\' && *(s+1) != '"') {
+	  s++;
+	} else if (*s == '"') {
+	  break;
+	}
+	mot[i++] = *s; s++;
+      }
+      mot[i++] = 0;
+      if (*s != '"') goto erreur;
+      while (*s && *s <= ' ') s++;
+
+      if (pass == 0) {
+	(*list)[cnt] = strdup(mot);
+      }
+      cnt++;
+    } while (*s);
+    if (pass == 0) {
+      *nb_elt = cnt;
+      if (cnt == 0) {
+	*list = NULL;
+      } else {
+	*list = calloc(cnt, sizeof(char*));
+      }
+    }
+  }
+}
+*/
+
 /* remplit la structure avec les valeurs par défaut des preferences */
 void
 wmcc_prefs_set_default(structPrefs *p) {

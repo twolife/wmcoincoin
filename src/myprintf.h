@@ -1,8 +1,11 @@
 /*
-  rcsid=$Id: myprintf.h,v 1.2 2001/12/02 18:34:54 pouaite Exp $
+  rcsid=$Id: myprintf.h,v 1.3 2002/04/04 20:38:10 pouaite Exp $
 
   ChangeLog:
   $Log: myprintf.h,v $
+  Revision 1.3  2002/04/04 20:38:10  pouaite
+  plop
+
   Revision 1.2  2001/12/02 18:34:54  pouaite
   ajout de tags cvs Id et Log un peu partout...
 
@@ -23,8 +26,8 @@ void myprintf_disable_ansi_codes();
 void myprintf_disable_color();
 void myprintf_enable_ansi_codes();
 void myprintf_enable_color();
-int  myfprintf(FILE *f, const char *fmt, ...); //__attribute__((format(printf,1,2)));
-int  myprintf(const char *fmt, ...); //__attribute__((format(printf,1,2)));
-int  mysprintf(char *s, const char *fmt, ...); //__attribute__((format(printf,1,2)));
+int  myfprintf(FILE *f, const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/
+int  myprintf(const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/
+int  mysprintf(char *s, const char *fmt, ...); /*__attribute__((format(printf,1,2)));*/
 
 #endif

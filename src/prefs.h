@@ -13,14 +13,12 @@
 */
 typedef struct {
   enum {FULL_TRANSPARENCY, SHADING, TINTING} type;
-  union {
-    struct {
-      unsigned long white, black;
-    } tint;
-    struct {
-      int luminosite, assombrissement;
-    } shade;
-  };
+  struct {
+    unsigned long white, black;
+  } tint;
+  struct {
+    int luminosite, assombrissement;
+  } shade;
 } TransparencyInfo;
 
 /*
