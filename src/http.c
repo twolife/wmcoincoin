@@ -853,7 +853,7 @@ http_get_line(HttpRequest *r, char *s, int sz)
     printf("[%s] %s\n", http_last_url, http_last_err_msg);
     goto error;
   }
-  BLAHBLAH(VERBOSE_LVL,myprintf(_("http_get_line sent (cnt=%d): '%<yel %s>'\n"), cnt, s));
+  BLAHBLAH(VERBOSE_LVL+1,myprintf(_("http_get_line sent (cnt=%d): '%<yel %s>'\n"), cnt, s));
   flag_http_transfert--;
 
   flag_http_error = 0;
@@ -997,7 +997,7 @@ http_request_send(HttpRequest *r)
     goto error_close;
   }
 
-  BLAHBLAH(VERBOSE_LVL,printf(_("ok, sent\n")));
+  BLAHBLAH(VERBOSE_LVL,printf(_("ok, request sent\n")));
   
   http_skip_header(r);
   if (r->error) {

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.83 2002/11/11 15:26:40 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.84 2002/11/20 23:34:40 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2780,12 +2780,23 @@ pp_open_login_home_in_browser(Dock *dock, int sid, int mx, int my, char *w, int 
   char *s;
   assert(w);
   assert(Prefs.site[sid]);
-  s = str_printf("http://%s:%d/%s~%s", 
+  s = str_printf("http://%s:%d/%s~%s/", 
 		 Prefs.site[sid]->site_root, 
 		 Prefs.site[sid]->site_port, 
 		 Prefs.site[sid]->site_path, w);
   open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, bnum);
   free(s);
+}
+
+
+static void 
+pp_open_url(Dock *dock, char *url, int mx, int my) {
+  Pinnipede *pp = dock->pinnipede;
+  open_url(url, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 2);
+  pp_visited_links_add(pp, url);
+  pp_pv_destroy(pp);
+  pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
+  pp_refresh(dock, pp->win, NULL);
 }
 
 static void
@@ -2827,11 +2838,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
     /* clic gauche sur une url , on affiche le truc dans le browser externe numero 1 */
     if (pw->attr & PWATTR_LNK) {
       if (strlen(pw->attr_s)) {
-	open_url(pw->attr_s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 1);
-	pp_visited_links_add(pp, pw->attr_s);
-	pp_pv_destroy(pp);
-	pp_update_content(dock, pp->id_base, pp->decal_base,0,1);
-	pp_refresh(dock, pp->win, NULL);
+	pp_open_url(dock, pw->attr_s, mx, my);
       }
     } else if (pw->attr & PWATTR_TSTAMP) {
       /* clic sur l'holorge -> ouverture du palmipede */
@@ -2997,7 +3004,7 @@ pp_handle_button_release(Dock *dock, XButtonEvent *event)
       } else if (pw && pw->attr & PWATTR_LNK) {
 	/* clic gauche sur une url , on affiche le truc dans le browser externe numero 2 */
 	if (strlen(pw->attr_s)) {
-	  open_url(pw->attr_s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, 2);
+	  pp_open_url(dock, pw->attr_s, mx, my);
 	}
       } else if (pw && pw->attr & PWATTR_LOGIN) {
 	pp_open_login_home_in_browser(dock, id_type_sid(pw->parent->id), mx, my, pw->w,2);

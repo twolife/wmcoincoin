@@ -1,8 +1,11 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.46 2002/11/11 15:26:37 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.47 2002/11/20 23:34:40 pouaite Exp $
 #%/*
 #%  ChangeLog:
 #%  $Log: options,v $
+#%  Revision 1.47  2002/11/20 23:34:40  pouaite
+#%  paf le patch, par lordOric
+#%
 #%  Revision 1.46  2002/11/11 15:26:37  pouaite
 #%  fix soulignement et strike avec les span
 #%
@@ -330,17 +333,23 @@
 # ## L'option 'http.browser' permet d'utiliser un navigateur externe, pour
 # ## lire les commentaires détecté par le flamophone, et pour afficher les [url] du
 # ## pinnipede teletype.
+
 # ## ATTENTION, ce genre de commande externe peut etre une source de vulnerabilité,
 # ## les caractères bizarres dans les urls sont escapés avant d'etre envoyés
 # ## au browser externe, mais si le browser est lui-même buggé...
 # ## Par défaut, aucun browser n'est sélectionné (ça peut rassurer les plus paranoiaques)
 # ## Le %s est remplacé par l'url escapée, et la ligne de commande résultante est passée au shell
 
+# ## ATTENTION AUSSI: si vous lancez le browser par l'intermédiaire d'un programme
+# ## du genre "kstart" (pour ouvrir dans un certain desktop sous kde) faites bien
+# ## attention: kstart interprête les caractères comme un goret il faut donc mettre
+# ## '%s' à la place de %s
 #http.browser: opera %s &
 #http.browser: galeon -n %s &
 #http.browser: konqueror %s &
 #http.browser: netscape %s &
 #http.browser: mozilla %s &
+#http.browser: mozilla -remote openurl\(%s,new-tab\) &
 
 ### nouveau (v2.2beta) -> un deuxième browser, activable en cliquant avec le bouton
 ### du milieu au lieu du bouton de gauche

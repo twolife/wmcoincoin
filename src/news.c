@@ -20,128 +20,10 @@
 */
 
 /*
-  rcsid=$Id: news.c,v 1.10 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: news.c,v 1.11 2002/11/20 23:34:40 pouaite Exp $
   ChangeLog:
-  $Log: news.c,v $
-  Revision 1.10  2002/10/15 23:17:28  pouaite
-  rustinage à la truelle
-
-  Revision 1.9  2002/10/13 23:30:49  pouaite
-  plop
-
-  Revision 1.8  2002/09/07 16:21:15  pouaite
-  ça va releaser en douce
-
-  Revision 1.7  2002/09/05 23:11:57  pouaite
-  <blog>ce soir g mangé une omelette</blog>
-
-  Revision 1.6  2002/08/29 00:15:53  pouaite
-  cosmétique et capillotraction
-
-  Revision 1.5  2002/08/21 23:20:57  pouaite
-  coin
-
-  Revision 1.4  2002/08/21 01:11:49  pouaite
-  commit du soir, espoir
-
-  Revision 1.3  2002/08/18 20:52:15  pouaite
-  les locales des sites fonctionnent (c bon pour les news)
-
-  Revision 1.2  2002/08/18 00:29:30  pouaite
-  en travaux .. prière de porter le casque
-
-  Revision 1.1  2002/08/17 18:33:39  pouaite
-  grosse commition
-
-  Revision 1.31  2002/06/26 22:19:49  pouaite
-  ptit fix pour la tribune de f-cpu + patch de lordoric
-
-  Revision 1.30  2002/06/23 22:26:01  pouaite
-  bugfixes+support à deux francs des visuals pseudocolor
-
-  Revision 1.29  2002/06/23 10:44:05  pouaite
-  i18n-isation of the coincoin(kwakkwak), thanks to the incredible jjb !
-
-  Revision 1.28  2002/05/27 18:39:14  pouaite
-  trucs du week-end + patch de binny
-
-  Revision 1.27  2002/05/20 22:24:36  pouaite
-  10000ème bugfix de http.c.. quand je nettoie le code je rajoute des bugs, quand je bugfixe je cradouille le code
-
-  Revision 1.26  2002/05/19 01:14:57  pouaite
-  bugfix du dernier bugfix.. ou pas.. chuis un peu trop fatigué pour faire des bugfix
-
-  Revision 1.25  2002/05/18 21:29:41  pouaite
-  PAN PAN le vilain bug
-
-  Revision 1.24  2002/05/15 09:55:13  pouaite
-  fix http.c
-
-  Revision 1.23  2002/05/12 22:06:27  pouaite
-  grosses modifs dans http.c
-
-  Revision 1.22  2002/04/09 00:28:19  pouaite
-  quelques modifs faites dans un état d'hébétude avancé /!\ travaux en cours /!\
-
-  Revision 1.21  2002/04/01 01:39:38  pouaite
-  grosse grosse commition (cf changelog)
-
-  Revision 1.20  2002/03/28 11:21:57  pouaite
-  bugfix crash messagerie (si l'utilisateur ne l'a jamais utilisee) -> merci bplessis
-
-  Revision 1.19  2002/03/27 23:27:10  pouaite
-  tjs des bugfixes (pour gerer des posts qui peuvent atteindre 10ko !), en parallele de la v2.3.6-5
-
-  Revision 1.18  2002/03/03 10:10:04  pouaite
-  bugfixes divers et variés
-
-  Revision 1.17  2002/02/27 00:32:19  pouaite
-  modifs velues
-
-  Revision 1.16  2002/02/24 22:13:56  pouaite
-  modifs pour la v2.3.5 (selection, scrollcoin, plopification, bugfixes)
-
-  Revision 1.15  2002/02/02 23:49:17  pouaite
-  plop
-
-  Revision 1.14  2002/01/31 23:45:00  pouaite
-  plop
-
-  Revision 1.13  2002/01/20 20:53:22  pouaite
-  bugfix configure.in && http_win.c pour cygwin + 2-3 petis trucs
-
-  Revision 1.12  2002/01/19 19:56:09  pouaite
-  petits crochets pour la mise en valeur de certains messages (cf changelog)
-
-  Revision 1.11  2002/01/14 23:54:06  pouaite
-  reconnaissance des posts effectué par l'utilisateur du canard (à suivre...)
-
-  Revision 1.10  2002/01/13 17:14:34  pouaite
-  préparation pour dacode 1.4
-
-  Revision 1.9  2002/01/13 15:19:00  pouaite
-  double patch: shift -> tribune.post_cmd et lordOric -> tribune.archive
-
-  Revision 1.8  2002/01/10 09:31:40  pouaite
-  j'avais oublie un fichier.. dernier morceau du pacth de glandium...
-
-  Revision 1.7  2001/12/17 16:01:33  pouaite
-  fix suite à un petit changement dans le /backend.rdf
-
-  Revision 1.6  2001/12/17 00:18:04  pouaite
-  changement du format du backend -> on utilise desormais le /backend.rdf
-
-  Revision 1.5  2001/12/16 21:51:22  pouaite
-  *** empty log message ***
-
-  Revision 1.4  2001/12/16 20:28:45  pouaite
-  bugfixes divers
-
-  Revision 1.3  2001/12/02 19:04:42  pouaite
-  suppression de messages de debug...
-
-  Revision 1.2  2001/12/02 18:24:16  pouaite
-  modif (virage) des regexp pour le texte des news, trop chiant à maintenir, du coup ça devrait marcher à nouveau sous bsd
+  Revision 1.11  2002/11/20 23:30  pouaite
+  virage du log qui bave
 
 */
 
@@ -162,8 +44,7 @@
   fonctions générales de gestion des news 
 */
 
-
-
+/* arf il est bizarre ce commentaire */
 
 /*
   efface une news (auqnd elle est trop vieille)
@@ -250,6 +131,7 @@ site_news_find_prev(Site *site, id_type id)
   return NULL;
 }
 
+/* des fonctions comme ça, ça se fait au kilomètre */
 News *
 site_news_find_next(Site *site, id_type id) {
   News *n;
@@ -299,7 +181,8 @@ site_news_unset_unreaded(Site *site)
 
 
 /*
-  verifie si la news a dépassé la date de peremption */
+  verifie si la news a dépassé la date de peremption 
+*/
 static int
 site_news_is_news_too_old(Site *site, char date[11])
 {
@@ -360,7 +243,7 @@ site_news_remove_old(Site *site)
   }
 }
 
-
+/* explicite le nom est, superflu tout commentaire devient */
 static int
 site_news_update_txt_dacode(Site *site, News *n, int silent_error)
 {
@@ -383,7 +266,7 @@ site_news_update_txt_dacode(Site *site, News *n, int silent_error)
   */
 
   if ((Prefs.debug & 2) == 0) {
-    if (n->type == NEWS_DACODE14) {
+    if (site->type == DACODE14) {
       snprintf(URL, 512, "%s%s",n->url, site->prefs->path_end_news_url);
     } else {
       snprintf(URL, 512, "%s",n->url);      
@@ -408,9 +291,9 @@ site_news_update_txt_dacode(Site *site, News *n, int silent_error)
     http_request_close(&r);
     n->heure = 0;
     
-    switch (n->type) {
-    case NEWS_DACODE14: extract_news_txt_dacode14(site->prefs, s, &extr); break;
-    case NEWS_DACODE2: extract_news_txt_dacode2(site->prefs, s, &extr); break;
+    switch (site->type) {
+    case DACODE14: extract_news_txt_dacode14(site->prefs, s, &extr); break;
+    case DACODE2: extract_news_txt_dacode2(site->prefs, s, &extr); break;
     default: assert(0);
     }
 
@@ -671,7 +554,6 @@ site_news_dl_and_update(Site *site)
     char s[512], url[512], base_url[512];
     int l_cnt;
     int news_err;
-    int news_type = 0;
       
     ALLOW_X_LOOP;
     news_err = 0;
@@ -757,9 +639,11 @@ site_news_dl_and_update(Site *site)
 	p = strstr(base_url, ",");
 	if (p && p != base_url) {
 	  *p = 0;
-	  news_type = NEWS_DACODE14;
+	  /* c'est peut être pas tout à fait l'endroit pour ce genre de choses
+	     mais bon */
+	  if (site->type == SITE_UNKNOWN) site->type = DACODE14; 
 	} else {
-	  news_type = NEWS_DACODE2;
+	  if (site->type == SITE_UNKNOWN) site->type = DACODE2;
 	  p = base_url + strlen(base_url) - 1;
 	}
 
@@ -817,7 +701,6 @@ site_news_dl_and_update(Site *site)
 	  strncpy(n->date, date, 11); date[10] = 0;
 	  n->id = id;
 	  n->dl_nb_tries = 0;
-	  n->type = news_type;
 	  site->news_updated = 1;
 	  BLAHBLAH(2,printf(_(" . title='%s'\n"), title));
 	  BLAHBLAH(2,printf(_(" . author='%s', mail='%s'\n"), n->auteur, n->mail));

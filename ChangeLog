@@ -1,3 +1,12 @@
+2002-11-21  Plop  <c0in@altern.org>
+
+	* src/comments.c (site_yc_parse_dacode2): collection d'hiver pour
+	les patch de lo< : xp pour templeet, ajout du '/' manquant pour les
+	~login , marquage des urls ouvertes par middle clic
+
+	prise en compte des grouiqueries du nouveau backend (tags du
+	soulignement et du strike).
+
 --------------------------v2.4.1-a-----------------------------------------
 2002-10-16  pouaite  <c0in@altern.org>
 

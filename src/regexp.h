@@ -19,9 +19,12 @@
 
 */
 /*
-  rcsid=$Id: regexp.h,v 1.7 2002/10/15 23:17:28 pouaite Exp $
+  rcsid=$Id: regexp.h,v 1.8 2002/11/20 23:34:40 pouaite Exp $
   ChangeLog:
   $Log: regexp.h,v $
+  Revision 1.8  2002/11/20 23:34:40  pouaite
+  paf le patch, par lordOric
+
   Revision 1.7  2002/10/15 23:17:28  pouaite
   rustinage à la truelle
 
@@ -49,7 +52,7 @@
 #include <regex.h>
 #include <stdarg.h>
 #include "prefs.h"
-typedef enum { pat_xp, pat_votes, pat_news, pat_news_no_sec } pat_type_t;
+typedef enum { pat_xp, pat_votes, pat_xp_votes, pat_news, pat_news_no_sec } pat_type_t;
 
 typedef struct _patterns_t
 {

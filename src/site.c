@@ -98,7 +98,8 @@ sl_insert_new_site(SiteList *sl, SitePrefs *sp)
 
   ALLOC_OBJ(site, Site);
   site->prefs = sp;
-  
+
+  site->type = SITE_UNKNOWN;
   site->news_updated = 0;
   site->news = NULL;
   if (sp->check_board) site->board = board_create(site, sl->boards);

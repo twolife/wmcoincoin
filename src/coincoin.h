@@ -60,7 +60,6 @@ unsigned char *url_path; /* pour pouvoir résoudre les urls relatives */
   int heure; /* en nombre de minutes depuis minuit */
   id_type id;
   int nb_comment; /* pas très utile... */
-  enum {NEWS_DACODE14, NEWS_DACODE2} type;
   int dl_nb_tries; /* nombre d'essais de d/l du texte de la news */
   struct _News *next;  
   Site *site;
@@ -245,6 +244,7 @@ struct _Boards {
   SiteNameHash *aliases;
 };
 
+
 struct _Site {
   int news_updated;
 
@@ -253,6 +253,8 @@ struct _Site {
   Comment *com;
   Message *msg;
 
+  enum { DACODE14, DACODE2, SITE_UNKNOWN } type;
+  
   char *news_backend_last_modified; /* a init en NULL */
   int news_backend_dl_cnt; 
   char *messages_last_modified; /* a init en NULL */
@@ -488,8 +490,11 @@ typedef struct _Dock {
   pid_t wmccc_pid;
 } Dock;
 
-typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, Q_COMMENTS_UPDATE, Q_MESSAGES_UPDATE, 
-	       Q_NEWSLST_UPDATE, Q_NEWSTXT_UPDATE } ccqueue_elt_type;
+/* c'est classé par ordre de priorité décroissante */
+typedef enum { Q_PREFS_UPDATE, Q_BOARD_POST, Q_BOARD_UPDATE, 
+	       Q_NEWSLST_UPDATE, Q_COMMENTS_UPDATE, Q_MESSAGES_UPDATE, 
+	       Q_NEWSTXT_UPDATE } ccqueue_elt_type;
+
 typedef struct _ccqueue_elt {
   ccqueue_elt_type what;
   int  sid;
