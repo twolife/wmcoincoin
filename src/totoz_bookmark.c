@@ -13,7 +13,7 @@ const char *totoz_bookmark_filename() {
 const char *totoz_bookmark_filename_html() {
   static char *fname = NULL;
   if (fname == NULL) {
-    fname = str_printf("%s/.wmcoincoin/totoz/bookmarks.html", getenv("HOME"));
+    fname = str_printf("file://%s/.wmcoincoin/totoz/bookmarks.html", getenv("HOME"));
   }
   return fname;
 }

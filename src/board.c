@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.29 2004/05/16 12:54:29 pouaite Exp $
+  rcsid=$Id: board.c,v 1.30 2005/02/22 18:45:26 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.30  2005/02/22 18:45:26  pouaite
+  *** empty log message ***
+
   Revision 1.29  2004/05/16 12:54:29  pouaite
   250c
 
@@ -1601,7 +1604,7 @@ http_get_line_and_convert(HttpRequest *r, char *s, size_t sz, const char *encodi
 }
 
 int 
-regular_board_update(Board *board, char *path) {
+regular_board_update_old(Board *board, char *path) {
   HttpRequest r;
   int http_err_flag = 0;
   char *errmsg = NULL;
@@ -1811,6 +1814,152 @@ regular_board_update(Board *board, char *path) {
   http_request_close(&r);
   return http_err_flag;
 }
+
+int 
+regular_board_update(Board *board, char *path) {
+  HttpRequest r;
+  int http_err_flag = 0;
+  char *errmsg = NULL;
+  char s[16384]; /* must be large enough to handle very long lines
+		    (especially with broken backends, yes it happens sometimes) */
+  const char *my_useragent = board->coin_coin_useragent;
+  wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
+  if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
+  http_request_send(&r);
+  wmcc_log_http_request(board->site, &r);
+
+  /* 
+     première ligne : on essaye de chopper l'encoding -- du coup, ça devrait assurer une
+     relative compatibilité avec les tribunes en UTF-8 ou autre.
+  */
+  if (http_get_line_trim(&r, s, 16384)) {
+    XMLBlock xmlb;
+    int pos;
+    clear_XMLBlock(&xmlb);
+    if ((pos = get_XMLBlock(s, strlen(s), "?xml", &xmlb))>=0) {
+      XMLAttr *a;
+      int found = 0;
+      if (board->encoding) free(board->encoding);
+      for (a = xmlb.attr; a; a = a->next) {
+        if (str_case_startswith(a->name, "encoding")) {
+          board->encoding = str_ndup(a->value,a->value_len);
+          BLAHBLAH(1,printf("%s: found encoding: value = '%s'\n", board->site->prefs->site_name, board->encoding));
+          found = 1;
+          break;
+        }
+      }
+      if (!found) board->encoding = strdup("UTF-8"); /* defaut si pas d'encoding specifie */
+    }
+    destroy_XMLBlock(&xmlb);
+  }
+
+  strbuf sb; strbuf_init(&sb, "");
+  while (http_is_ok(&r) && !errmsg) {
+    XMLBlock post; clear_XMLBlock(&post);
+    int ok = 0;
+
+    sb.len = 0; /* petit coup de flemme : ça va chier si on 
+                   enchaine les posts sur une même ligne */
+    while (http_get_line_and_convert(&r, s, sizeof s,board->encoding) > 0 && http_is_ok(&r) && sb.len < 500000) {
+      strbuf_cat(&sb, s);
+      if (get_XMLBlock(sb.str, sb.len, "post", &post)>=0) {
+        ok = 1;
+        break;
+      }
+    }
+    if (!ok) break;
+
+    char stimestamp[15];
+    char ua[BOARD_UA_MAX_LEN];
+    char msg[BOARD_MSG_MAX_LEN];
+    char login[BOARD_LOGIN_MAX_LEN];
+    int id;
+    stimestamp[0] = ua[0] = msg[0] = login[0] = 0; id = -1;
+    
+    BLAHBLAH(3, myprintf("got new post: %s\n", post.content));
+
+    XMLAttr *a = post.attr;
+    while (a) {
+      unsigned l = MIN(a->name_len, (int)((sizeof s) - 1));
+      strncpy(s, a->name, l); s[l] = 0;
+      if (strcasecmp(s, "time")==0) {
+        unsigned l = MIN((sizeof stimestamp)-1,(unsigned)a->value_len);
+        strncpy(stimestamp, a->value, l); stimestamp[l] = 0;
+      } else if (strcasecmp(s, "id")==0) {
+        if (a->value_len == 0 || !isdigit(a->value[0]))
+          id = -1000;
+        else id = atoi(a->value);
+      }
+      a = a->next;
+    }
+      
+    XMLBlock xmlb; clear_XMLBlock(&xmlb);
+    if (get_XMLBlock(post.content, post.content_len, "login",&xmlb)) {
+      unsigned l = MIN(BOARD_LOGIN_MAX_LEN-1, xmlb.content_len);
+      strncpy(login, xmlb.content, l); login[l]=0;
+      convert_to_ascii(login, login, BOARD_LOGIN_MAX_LEN);
+    }
+    if (get_XMLBlock(post.content, post.content_len, "info",&xmlb)) {
+      unsigned l = MIN(BOARD_UA_MAX_LEN-1, xmlb.content_len);
+      strncpy(ua, xmlb.content, l); ua[l]=0;
+      convert_to_ascii(ua, ua, BOARD_UA_MAX_LEN);
+    }
+    if (get_XMLBlock(post.content, post.content_len, "message",&xmlb)) {
+      char *p = str_ndup(xmlb.content, xmlb.content_len); assert(p);
+      int i;
+      /* nettoyage des codes < 32 dans le message */
+      for (i=0; i < xmlb.content_len; ++i) {
+        if ((unsigned char)p[i] < ' ') 
+          p[i] = ' ';
+      }
+      board_decode_message(board, msg, p);
+      free(p);
+    } else errmsg = "no <message> tag!";
+    destroy_XMLBlock(&xmlb);
+    
+    if (!errmsg && strlen(stimestamp) < 14) {
+      fprintf(stderr,"timestamp POURRI: '%s'\n",stimestamp); 
+      errmsg = "slip woof?"; 
+    }
+    if (!errmsg && id < 0) { 
+      errmsg="id sgn"; 
+    }
+    destroy_XMLBlock(&post);
+    if (board_find_id(board,id)) break;
+    if (!errmsg) { /* encore une victoire de xmlcoincoin */
+      flag_updating_board++;
+      if (!board_log_msg(board, ua, login, stimestamp, 
+                         msg, id, my_useragent)->in_boitakon) {
+        board->nb_msg_at_last_check++;
+        if (id > board->last_viewed_id) {
+          board->nb_msg_since_last_viewed++;
+        }
+      }
+      flag_updating_board--;
+      BLAHBLAH(1, myprintf("[%<YEL %s>] board_update: "
+                           "last_post_time=%5s - last_post_id=%d\n",
+                           board->site->prefs->site_name, 
+                           board->last_post_time, id));
+    } else if (errmsg) {
+      myfprintf(stderr, _("[%<YEL %s>] There is a problem in '%s', "
+                          "I can't parse it... error:%<YEL %s>\n"),
+                board->site->prefs->site_name,
+                board->site->prefs->backend_url, errmsg);
+    }
+  }
+  strbuf_free(&sb);
+
+  if (!http_is_ok(&r)) { 
+    http_err_flag = 1;
+    myfprintf(stderr, _("[%<YEL %s>] Error while downloading "
+                        "'%<YEL %s>' : %<RED %s>\n"), 
+	      board->site->prefs->site_name, 
+              board->site->prefs->backend_url, http_error());
+  }
+  http_request_close(&r);
+  return http_err_flag;
+}
+
 
 /*
   lecture des nouveaux messages reçus

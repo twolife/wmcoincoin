@@ -347,7 +347,7 @@ option_browser(const char *optarg,const char *optname,
 		      "replaced by the URL)"), optname);
   }
   if (strstr(s, "'%s'")) {
-    myfprintf(stderr, _("%s (linne %d) : %<YEL warning>: '%%s' == Bad, %%s == Good (all the URLs are escaped)\n"));
+    myfprintf(stderr, "%s : %<YEL warning>: '%%s' == Bad, %%s == Good (all the URLs are escaped)\n", optarg);
   }
   return NULL;
 }

@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.105 2004/05/16 12:54:29 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.106 2005/02/22 18:45:32 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -184,7 +184,6 @@ pp_unset_filter(struct _PinnipedeFilter *f)
   if (f->id) { free(f->id); f->id = NULL; f->nid = 0; }
 }
 
-
 void
 pp_visited_links_add(Pinnipede *pp, const char *s)
 {
@@ -200,6 +199,7 @@ pp_visited_links_find(Pinnipede *pp, const char *s)
 {
   int id = str_hache(s, strlen(s));
   int i;
+  assert(pp);
   for (i=pp->nb_visited_links-1; i >= 0; --i) 
     if (pp->visited_links[i] == id) return 1;
   return 0;
@@ -1478,17 +1478,17 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
     opaque_bg = 0;
     bgpixel = cccolor_pixel(pp->win_bgcolor[pp->active_tab->site->site_id]);
     
-   if (pw) {
-     int site_num;
-     int i;
-     
-     site_num = id_type_sid(pw->parent->id);
-     bgpixel = cccolor_pixel(pp->win_bgcolor[site_num]);
+    if (pw) {
+      int site_num;
+      int i;
+      
+      site_num = id_type_sid(pw->parent->id);
+      bgpixel = cccolor_pixel(pp->win_bgcolor[site_num]);
       
       /* if (pw->parent->is_answer_to_me) bgpixel = pp->answer_my_msg_bgpixel; */
       /*      if (pw->parent->is_my_message) bgpixel = pp->my_msg_bgpixel;*/
-     
-     if (ref_mi) {
+      
+      if (ref_mi) {
        if (ref_num == -1) {
 	 if (pw->parent->tstamp == ref_mi->timestamp && ref_in_window
 	     && id_type_sid(pw->parent->id) == id_type_sid(ref_mi->id)) {
@@ -1510,8 +1510,8 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
      }
    }
    
-    pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
-		 pp->transparency_mode && !opaque_bg, LINEY0(l));
+   pp_draw_line(dock, pp->lpix, pw, bgpixel, NULL, 
+                pp->transparency_mode && !opaque_bg, LINEY0(l));
 
     XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, LINEY0(l));
   }
@@ -3657,7 +3657,7 @@ static void switch_search_mode(Dock *dock) {
   if (pp->filter.filter_mode) { 
     if (pp->filter.anything && strlen(pp->filter.anything))
       pp->filter.filter_mode = 0; 
-    else pp_set_anything_filter(dock, old_s);
+    else pp_set_anything_filter(dock, old_s ? old_s : "");
   }
   else { 
     if (pp->filter.anything) { if (old_s) free(old_s); old_s = strdup(pp->filter.anything); }

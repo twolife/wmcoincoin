@@ -1,3 +1,30 @@
+--------------------------v2.5.0-e-----------------------------------------
+2005-02-21  pouaite  <c0in@altern.org>
+
+	* src/board.c: voilà c'est fait le parseur historique à été mis à la benne. Il est remplacé par XMLCoinCoin qui a déjà fait ses preuves avec les RSS.
+
+--------------------------v2.5.0-d-----------------------------------------
+	
+2005-02-15  pouaite  <c0in@altern.org>
+
+	* src/pinnipede.c: kikooo! Salut les gros nains! ça fait pas loin de 6 mois que je n'avais pas touché au bouzin. Mais puisque pas_lui< me tanne depuis des semaines pour corriger le bug du ^S^S dans le pinni, voilà c'est fait :o
+	* src/palmipede.c: accepte le middle-clic sur le totoz.
+	* src/totoz_bookmark.c: passe une url du genre "file:/home/coin/.wmcoincoin/bookmarks.html" au browser.
+	
+2004-07-02  pouaite  <c0in@altern.org>
+
+	* src/fontcoincoin.c: rooh le sale bug, je ne sais pas trop si
+	c'est un disfonctionnement de Xft, mais XftDrawChange fait parfois
+	une belle Xerror quand l'ancien drawable a été
+	détruit. Visiblement c'était ça le bug mystérieux du balltrap qui
+	tue coincoin pour de vrai.
+	
+2004-06-27  pouaite  <c0in@altern.org>
+
+	* src/prefs.c (option_browser): Zorel< a trouvé un bug dans la
+	gestion de http.browser (le bouzin plantait en essayant d'afficher
+	un message qui conseille de ne pas quoter le %s)
+
 --------------------------v2.5.0-c-----------------------------------------
 2004-05-16  pouaite  <c0in@altern.org>
 	

@@ -132,7 +132,8 @@ pp_tabs_set_pos(Pinnipede *pp) {
     pp->zmsg_y2 = pp->win_height - 1;
     pp->zmsg_h = pp->zmsg_y2-pp->zmsg_y1+1;
     pp->zmsg_x1 = 0; 
-    // pp->zmsg_x2 = pp->win_width - 1;  gere par la scrollcoin
+    pp->tabs_w = 0;
+// pp->zmsg_x2 = pp->win_width - 1;  gere par la scrollcoin
     pp->zmsg_w = pp->zmsg_x2-pp->zmsg_x1+1;
   }
 }

@@ -1,5 +1,8 @@
 #include <signal.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "pinnipede.h"
 #include "coincoin.h"
 #include <X11/extensions/shape.h>
@@ -455,10 +458,13 @@ pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
       
       f = fopen(pathimg, "w");
       if (f == NULL) {
-        myfprintf(stderr, "pp_totoz_get_image : Impossible d'ouvrir/creer %s : %s\n", pathimg, strerror(errno));
-        pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_UNKNOWN);
+        char *ptotoz = str_printf("%s/.wmcoincoin/totoz", getenv("HOME")); mkdir(ptotoz, -1);
+        f = fopen(pathimg, "w");
       }
-      else {
+      if (f == NULL) {
+        myfprintf(stderr, "pp_totoz_get_image : Impossible d'ouvrir/creer %s : %s\n", pathimg, strerror(errno));
+        pp_totoz_register_img(dock->pinnipede, imgname, PP_TOTOZ_STATUS_NOTFOUND);
+      } else {
         while( (lu = http_read(&r, buf, 1500)) > 0 && !r.telnet.error && !ferror(f) )
           fwrite(buf, lu, 1, f);        
         if ( r.telnet.error || ferror(f) ) {

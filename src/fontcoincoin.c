@@ -30,12 +30,14 @@ Display *display = 0;
 unsigned screen;
 Colormap colormap;
 Visual *visual = 0;
+Window root = None;
 
 void ccfont_initialize(Display *display_, int screen_, Visual *visual_, Colormap colormap_, Drawable d) {
   display = display_;
   screen = screen_;
   visual = visual_;
   colormap = colormap_;
+  root = RootWindow(display, screen);
   xd = XftDrawCreate(display, d, visual, colormap);
 }
 
@@ -170,11 +172,13 @@ unsigned long cccolor_pixel(CCColorId cid) {
 
 void
 ccfont_draw_string8(CCFontId fid, CCColorId cid, Drawable d, int x, int y, char *str, int len) {
+  assert(str);
   assert(ccfonts[fid] && ccfonts[fid]->xfn); 
   assert(cccolors[cid]);
   if (len == -1) len = strlen(str);
   XftDrawChange(xd, d);
   XftDrawString8(xd, &cccolors[cid]->xfc, ccfonts[fid]->xfn, x, y, str, len);
+  XftDrawChange(xd, root);
 }
 
 /* extrait de: http://www.keithp.com/~keithp/render/Xft.tutorial

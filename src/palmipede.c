@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.25 2004/05/16 12:54:29 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.26 2005/02/22 18:45:32 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.26  2005/02/22 18:45:32  pouaite
+  *** empty log message ***
+
   Revision 1.25  2004/05/16 12:54:29  pouaite
   250c
 
@@ -218,9 +221,10 @@ enum { BT_CLOSE=0, BT_CHANGE, BT_ITAL, BT_BOLD, BT_STRIKE, BT_UNDERLINE,
 #define EWC_NORMAL 0
 #define EWC_LONGWORD 1
 #define EWC_URL 2
-#define EWC_BALISE 3
-#define EWC_SPELLWORD 4
-#define EWC_NBATTR 5
+#define EWC_KNOWN_URL 3 // todo un jour..
+#define EWC_BALISE 4
+#define EWC_SPELLWORD 5
+#define EWC_NBATTR 6
 
 #ifdef SWAP
 #undef SWAP
@@ -815,6 +819,7 @@ editw_colorize(EditW *ew, unsigned char *ctab)
       if( is_url(ew->buff+word_start) != -1) {
 	for( j=word_start; j<word_end; ++j) 
 	  ctab[j] = EWC_URL;
+        
 	/* detection des mots trops longs */
       } else if( word_len>31 ) {
 	for( j=word_start; j<word_end; ++j)
@@ -1527,8 +1532,9 @@ void editw_init_colors(EditW *ew) {
   ew->win_bgcolor = ew->dark_color = ew->light_color = 
     ew->fill_bgcolor = ew->txt_fgcolor[EWC_NORMAL] = 
     ew->txt_bgcolor = ew->txt_fgcolor[EWC_LONGWORD] = 
-    ew->txt_fgcolor[EWC_BALISE] = ew->txt_fgcolor[EWC_URL] =
-    ew->txt_fgcolor[EWC_SPELLWORD] = ew->cur_bgcolor = 
+    ew->txt_fgcolor[EWC_BALISE] = ew->txt_fgcolor[EWC_URL] = 
+    ew->txt_fgcolor[EWC_KNOWN_URL] = ew->txt_fgcolor[EWC_SPELLWORD] = 
+    ew->cur_bgcolor = 
     ew->cur_fgcolor = ew->sel_bgcolor = ew->sel_fgcolor = (CCColorId)(-1);
 }
 
@@ -1542,6 +1548,7 @@ void editw_release_colors(EditW *ew) {
    cccolor_release(&ew->txt_fgcolor[EWC_LONGWORD]);
    cccolor_release(&ew->txt_fgcolor[EWC_BALISE]);
    cccolor_release(&ew->txt_fgcolor[EWC_URL]);
+   cccolor_release(&ew->txt_fgcolor[EWC_KNOWN_URL]);
    cccolor_release(&ew->txt_fgcolor[EWC_SPELLWORD]);
    cccolor_release(&ew->cur_bgcolor);
    cccolor_release(&ew->cur_fgcolor);
@@ -1564,6 +1571,7 @@ editw_reload_colors(Dock *dock, EditW *ew)
   cccolor_reset(&ew->txt_fgcolor[EWC_LONGWORD], 0xff0000);// = RGB2PIXEL(255,0,0);
   cccolor_reset(&ew->txt_fgcolor[EWC_BALISE],0x008000); // = RGB2PIXEL(0, 127, 0);
   cccolor_reset(&ew->txt_fgcolor[EWC_URL], 0x0000FF); // = RGB2PIXEL(0, 0, 255);
+  cccolor_reset(&ew->txt_fgcolor[EWC_KNOWN_URL], 0xFF00FF); // = RGB2PIXEL(0, 0, 255);
   cccolor_reset(&ew->txt_fgcolor[EWC_SPELLWORD], 0xC03262);// = RGB2PIXEL(200, 50, 100);
   cccolor_reset(&ew->cur_bgcolor, 0xff0000);// = RGB2PIXEL(255,0,0);
   cccolor_reset(&ew->cur_fgcolor, 0xffffff);
@@ -2214,7 +2222,7 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
   mx = event->x; my = event->y;
   //  BLAHBLAH(2,printf("editw click click ! %d %d\n",x,y));
 
-  if (event->button == Button1) {
+  if (event->button == Button1 || event->button == Button2) {
     b = editw_xy2minibutton(ew, mx,my); 
     if (b>=0) { 
       ew->mini[b].enfonce = 1;

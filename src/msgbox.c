@@ -19,9 +19,12 @@
  */
 
 /*
-  rcsid=$Id: msgbox.c,v 1.11 2004/02/29 19:01:27 pouaite Exp $
+  rcsid=$Id: msgbox.c,v 1.12 2005/02/22 18:45:30 pouaite Exp $
   ChangeLog:
   $Log: msgbox.c,v $
+  Revision 1.12  2005/02/22 18:45:30  pouaite
+  *** empty log message ***
+
   Revision 1.11  2004/02/29 19:01:27  pouaite
   et hop
 
@@ -182,16 +185,16 @@ msgbox_show(Dock *dock, char *text)
 				mx, my, m->w, m->h, 0,
 				cccolor_pixel(m->dark_color),
 				cccolor_pixel(m->bg_color));
-  
+
   //wa.background_pixmap = ButtonBarImage ;
   wa.event_mask =
     ExposureMask | 
     ButtonPressMask | 
     ButtonReleaseMask;
   wa.override_redirect = True ;
-  wa.save_under = True;
+  //  wa.save_under = True;
   XChangeWindowAttributes (dock->display, m->win,
-			   CWSaveUnder | CWEventMask | CWOverrideRedirect, &wa);
+			   /*CWSaveUnder | */CWEventMask | CWOverrideRedirect, &wa);
 
 
   m->mapped = 1;

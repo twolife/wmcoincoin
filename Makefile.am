@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.28 2004/04/26 20:32:15 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.29 2005/02/22 18:44:42 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.29  2005/02/22 18:44:42  pouaite
+##   *** empty log message ***
+##
 ##   Revision 1.28  2004/04/26 20:32:15  pouaite
 ##   roger demande le commit
 ##
@@ -95,7 +98,7 @@ EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_mini
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
 	     xpms/duck.xcf xpms/duck.xpm xpms/mkduck.sh \
-            xpms/badnews.xpm  xpms/bracket.xpm  xpms/logo.xpm xpms/totoz.xpm ./wmcoincoin.spec \
+            xpms/badnews.xpm  xpms/bracket.xpm  xpms/logo.xpm xpms/totoz.xpm xpms/miniduck.xpm ./wmcoincoin.spec \
              ./options ./config.rpath wmccc.glade genoptlst.sh pixmaps/cbronson.jpg pixmaps/logoh.png pixmaps/logo.xpm
 
 rpm-dist: dist

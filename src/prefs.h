@@ -370,7 +370,7 @@ SymboleDef symboles[NB_SYMBOLES] = {{{"     ",
 
 
 #define FREE_STRING(x) { if (x) { free(x); x = NULL; }}
-#define ASSIGN_STRING_VAL(x,v) { FREE_STRING(x); x = strdup(v); assert(x); }
+#define ASSIGN_STRING_VAL(x,v) { if ((void*)x != (void*)v) { FREE_STRING(x); x = strdup(v); assert(x); } }
 const char *coincoin_default_useragent_template();
 void coincoin_default_useragent(char *s, int sz);
 char *string_to_miniuarule(unsigned char *str, MiniUARule *r);
