@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.42  2005/06/11 22:47:39  pouaite
+dnl   prout?
+dnl
 dnl   Revision 1.41  2005/02/22 18:44:43  pouaite
 dnl   *** empty log message ***
 dnl
@@ -211,7 +214,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.5.0e, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.5.0g, c0in@altern.org)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -245,10 +248,32 @@ dnl don't want the -g flag
 dnl update: jjb< do want the -g flag
 dnl CFLAGS=`echo "x $CFLAGS"|sed 's/^x //; s/\(^\| \)-g\($\| \)/ /g'`
 
+
+dnl based on http://www.gnu.org/software/ac-archive/htmldoc/ac_check_cc_opt.html
+dnl from Guido Draheim <guidod@gmx.de>
+AC_DEFUN([AC_CHECK_CC_FLAG],
+[AC_MSG_CHECKING([whether ${CC} accepts [$1] ])
+
+echo 'int main(){}' > conftest.c
+if test -z "`${CC} $1 -o conftest conftest.c 2>&1`"; then
+  $2="${$2} $1"
+  echo "yes"
+else
+  echo "no"
+fi
+dnl echo "$2=${$2}"
+rm -f conftest*
+])
+      
+
 dnl additional compile flags when using gcc
 if test x$GCC = xyes; then
   CFLAGS="$CFLAGS -Wall -W -fsigned-char";
-  LDFLAGS="$LDFLAGS -rdynamic"; dnl juste pour avoir les noms de fonction dans le backtrace /o\
+dnl  if test x$CYGWIN = xno; then
+dnl    LDFLAGS="$LDFLAGS -rdynamic"; dnl juste pour avoir les noms de fonction dans le backtrace /o\
+dnl  fi
+  AC_CHECK_CC_FLAG([-rdynamic],LDFLAGS)
+  AC_CHECK_CC_FLAG([-Wno-pointer-sign],CFLAGS)
 else
           echo "Vous n'utilisez pas gcc .. attention coincoin peut avoir quelque bugs si les char ne sont pas signés"
 fi
@@ -295,7 +320,7 @@ fi
 
 build_wmccc="yes"
 AC_ARG_ENABLE(wmccc,
- [  --enable-wmccc        Builds the wmccc (requires gtk-1.2), the graphical wmcoincoin configuration tool (Default is yes)
+ [  --enable-wmccc        Builds the wmccc (requires gtk2), the graphical wmcoincoin configuration tool (Default is yes)
   --disable-wmccc         Do not build wmccc],
  [ if   test "x$enableval" = "xno" ; then
 	build_wmccc="no"
@@ -366,10 +391,15 @@ AC_CHECK_FUNCS(strerror snprintf vsnprintf select signal)
 AC_CHECK_FUNCS(uname)
 
 
-AC_DEFINE_UNQUOTED(uint8_t, unsigned char,[unsigned 8 bits integers])
-AC_DEFINE_UNQUOTED(uint16_t, unsigned short,[unsigned 16 bits integers])
-AC_DEFINE_UNQUOTED(uint32_t, unsigned int, [unsigned 32 bits integers])
-AC_DEFINE_UNQUOTED(int32_t, int, [signed 32 bits integers])
+dnl NOTE POUR PLUS TARD:
+dnl en l'an de grace 2005, le 23 mai, je, soussigné pouaite, ai pris
+dnl la decision de commenter les quatre AC_DEFINE du dessous, sur le 
+dnl conseil de la moule nommee "twolife" (qui est un macqueux tiger-ophile).
+
+dnl AC_DEFINE_UNQUOTED(uint8_t, unsigned char,[unsigned 8 bits integers])
+dnl AC_DEFINE_UNQUOTED(uint16_t, unsigned short,[unsigned 16 bits integers])
+dnl AC_DEFINE_UNQUOTED(uint32_t, unsigned int, [unsigned 32 bits integers])
+dnl AC_DEFINE_UNQUOTED(int32_t, int, [signed 32 bits integers])
 
 dnl les fonctions bidon pour cygouin
 dnl AC_CHECK_LIB(ws2_32, getaddrinfo, LIBS="-lws2_32 $LIBS")
@@ -382,7 +412,6 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 
-dnl AC_CHECK_TYPE(uint32_t,  AC_DEFINE(HAVE_U_INT32_T, 1, [dummy]))
 
 dnl those two tests were taken from openssh-3.5p1
 AC_CACHE_CHECK([for struct sockaddr_storage], ac_cv_have_struct_sockaddr_storage, [
@@ -479,15 +508,11 @@ case "$host" in
      	  AC_CHECK_LIB(wsock32,select)
 	  dnl correct a bug in cygwin: incorrect regex included in -lm
 	  LIBS="`echo ${LIBS} | sed -e 's/-lm//'`"
-	  LIBS="${LIBS} /lib/libregex.a -lm"        
+	  LIBS="${LIBS} -liconv -lm"        
 	  ;;
     *-darwin*)
           echo -e "\n${YELLOW}darwin detected, vilain macounet !${RESET}\n"
-	  echo -e "le preproc 'apple' pue de la bouche .. ajout de -no-cpp-precomp"
-          CFLAGS="$CFLAGS -no-cpp-precomp"
-	  echo -e "IMPORTANT !!!!!\n"
-          echo "Si le make foire (TRES PROBABLE) en disant 'libintl.h: No such file or directory',\n ---> faites: cp intl/libgnuintl.h src/libintl.h ./configure --with-included-gettext; make clean; make"
-	  echo ""
+	  dnl LDFLAGS="`echo ${LDFLAGS} | sed -e 's/-rdynamic//'`"
           ;;
     *GNU*)
 	  echo -e "\n${YELLOW}GNU/Hurd ! you need to shave yourself${RESET}\n"
@@ -500,7 +525,7 @@ case "$host" in
          ;;
 esac
 
-AC_CONFIG_FILES([Makefile doc/Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile scripts/Makefile platypus/Makefile])
+AC_CONFIG_FILES([Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile scripts/Makefile platypus/Makefile])
 AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
 AC_OUTPUT
 

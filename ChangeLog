@@ -1,7 +1,25 @@
+--------------------------v2.5.0-g-----------------------------------------
+2005-06-11  pouaite  <c0in@altern.org>
+	* configure.ac: integration du patch de twolife pour la compile
+	sur macosx
+
+2005-06-09  pouaite  <c0in@altern.org>
+
+	* src/totoz_bookmark.c: correction du bug signalé par lordoric (le
+	bookmark.html n'etait plus mis a jour depuis le 15/02/05).
+
+--------------------------v2.5.0-f-----------------------------------------
+2005-02-23  pouaite  <c0in@altern.org>
+
+	* src/board.c: du coup y'avait des problemes de logins d'"Anonyme"
+	* configure.ac: ça devrait mieux compiler sous cygwin
+
 --------------------------v2.5.0-e-----------------------------------------
 2005-02-21  pouaite  <c0in@altern.org>
 
-	* src/board.c: voilà c'est fait le parseur historique à été mis à la benne. Il est remplacé par XMLCoinCoin qui a déjà fait ses preuves avec les RSS.
+	* src/board.c: voilà c'est fait le parseur historique a été mis à
+	la benne. Il est remplacé par XMLCoinCoin qui a déjà fait ses
+	preuves avec les RSS.
 
 --------------------------v2.5.0-d-----------------------------------------
 	

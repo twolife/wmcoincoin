@@ -39,6 +39,7 @@ create_messagebox_dialog (void)
 
   messagebox_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (messagebox_dialog), _("Message from wmccc"));
+  gtk_window_set_type_hint (GTK_WINDOW (messagebox_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox1 = GTK_DIALOG (messagebox_dialog)->vbox;
   gtk_widget_show (dialog_vbox1);
@@ -129,6 +130,7 @@ create_new_rss_dialog (void)
 
   new_rss_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (new_rss_dialog), _("New RSS Feed"));
+  gtk_window_set_type_hint (GTK_WINDOW (new_rss_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox2 = GTK_DIALOG (new_rss_dialog)->vbox;
   gtk_widget_show (dialog_vbox2);
@@ -411,6 +413,7 @@ create_new_board_dialog (void)
 
   new_board_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (new_board_dialog), _("New Board"));
+  gtk_window_set_type_hint (GTK_WINDOW (new_board_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox2 = GTK_DIALOG (new_board_dialog)->vbox;
   gtk_widget_show (dialog_vbox2);
@@ -779,6 +782,7 @@ create_new_pop_dialog (void)
 
   new_pop_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (new_pop_dialog), _("New POP"));
+  gtk_window_set_type_hint (GTK_WINDOW (new_pop_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox2 = GTK_DIALOG (new_pop_dialog)->vbox;
   gtk_widget_show (dialog_vbox2);
@@ -997,6 +1001,7 @@ create_colorselection_dialog (void)
 
   colorselection_dialog = gtk_color_selection_dialog_new (_("Choix de la couleur"));
   gtk_window_set_resizable (GTK_WINDOW (colorselection_dialog), FALSE);
+  gtk_window_set_type_hint (GTK_WINDOW (colorselection_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   ok_button1 = GTK_COLOR_SELECTION_DIALOG (colorselection_dialog)->ok_button;
   gtk_widget_show (ok_button1);
@@ -1129,6 +1134,7 @@ create_global_pinnipede_options_dialog (void)
 
   global_pinnipede_options_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (global_pinnipede_options_dialog), _("Change pinnipede settings"));
+  gtk_window_set_type_hint (GTK_WINDOW (global_pinnipede_options_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox3 = GTK_DIALOG (global_pinnipede_options_dialog)->vbox;
   gtk_widget_show (dialog_vbox3);
@@ -1680,6 +1686,7 @@ create_edit_dialog (void)
   gtk_window_set_title (GTK_WINDOW (edit_dialog), _("Options edit"));
   gtk_window_set_modal (GTK_WINDOW (edit_dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (edit_dialog), 600, 450);
+  gtk_window_set_type_hint (GTK_WINDOW (edit_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox4 = GTK_DIALOG (edit_dialog)->vbox;
   gtk_widget_show (dialog_vbox4);
@@ -1776,6 +1783,7 @@ create_bronson_wizard (void)
 
   bronson_wizard = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (bronson_wizard), _("the wmccc wizard"));
+  gtk_window_set_type_hint (GTK_WINDOW (bronson_wizard), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox5 = GTK_DIALOG (bronson_wizard)->vbox;
   gtk_widget_show (dialog_vbox5);
@@ -2000,6 +2008,7 @@ create_sitelist_dialog (void)
   gtk_window_set_title (GTK_WINDOW (sitelist_dialog), _("WMCCC"));
   gtk_window_set_position (GTK_WINDOW (sitelist_dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_default_size (GTK_WINDOW (sitelist_dialog), 640, 460);
+  gtk_window_set_type_hint (GTK_WINDOW (sitelist_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox7 = GTK_DIALOG (sitelist_dialog)->vbox;
   gtk_widget_show (dialog_vbox7);
@@ -2312,6 +2321,7 @@ create_pinnipede_site_colors_dialog (void)
 
   pinnipede_site_colors_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (pinnipede_site_colors_dialog), _("Change some colors"));
+  gtk_window_set_type_hint (GTK_WINDOW (pinnipede_site_colors_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox9 = GTK_DIALOG (pinnipede_site_colors_dialog)->vbox;
   gtk_widget_show (dialog_vbox9);
@@ -2618,6 +2628,7 @@ create_change_board_settings_dialog (void)
 
   change_board_settings_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (change_board_settings_dialog), _("Change board settings"));
+  gtk_window_set_type_hint (GTK_WINDOW (change_board_settings_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox10 = GTK_DIALOG (change_board_settings_dialog)->vbox;
   gtk_widget_show (dialog_vbox10);
@@ -2678,7 +2689,7 @@ create_change_board_settings_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  board_check_delay_adj = gtk_adjustment_new (1, 1, 10000, 1, 10, 10);
+  board_check_delay_adj = gtk_adjustment_new (100, 10, 10000, 1, 10, 10);
   board_check_delay = gtk_spin_button_new (GTK_ADJUSTMENT (board_check_delay_adj), 1, 0);
   gtk_widget_show (board_check_delay);
   gtk_box_pack_start (GTK_BOX (hbox21), board_check_delay, FALSE, TRUE, 0);
@@ -2933,6 +2944,7 @@ create_change_rss_settings_dialog (void)
 
   change_rss_settings_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (change_rss_settings_dialog), _("Change RSS Feed settings"));
+  gtk_window_set_type_hint (GTK_WINDOW (change_rss_settings_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox10 = GTK_DIALOG (change_rss_settings_dialog)->vbox;
   gtk_widget_show (dialog_vbox10);
@@ -3157,6 +3169,7 @@ create_change_pop_settings_dialog (void)
 
   change_pop_settings_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (change_pop_settings_dialog), _("Change POP account settings"));
+  gtk_window_set_type_hint (GTK_WINDOW (change_pop_settings_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox10 = GTK_DIALOG (change_pop_settings_dialog)->vbox;
   gtk_widget_show (dialog_vbox10);
@@ -3327,6 +3340,7 @@ create_grab_cookie_dialog (void)
   grab_cookie_dialog = gtk_dialog_new ();
   gtk_widget_set_size_request (grab_cookie_dialog, 786, 470);
   gtk_window_set_title (GTK_WINDOW (grab_cookie_dialog), _("grab a cookie from your browsers"));
+  gtk_window_set_type_hint (GTK_WINDOW (grab_cookie_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox11 = GTK_DIALOG (grab_cookie_dialog)->vbox;
   gtk_widget_show (dialog_vbox11);
@@ -3387,6 +3401,7 @@ create_fontselectiondialog (void)
 
   fontselectiondialog = gtk_font_selection_dialog_new (_("Select Font"));
   gtk_container_set_border_width (GTK_CONTAINER (fontselectiondialog), 4);
+  gtk_window_set_type_hint (GTK_WINDOW (fontselectiondialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   ok_button2 = GTK_FONT_SELECTION_DIALOG (fontselectiondialog)->ok_button;
   gtk_widget_show (ok_button2);
@@ -3442,6 +3457,7 @@ create_proxy_dialog (void)
 
   proxy_dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (proxy_dialog), _("Proxy or not proxy"));
+  gtk_window_set_type_hint (GTK_WINDOW (proxy_dialog), GDK_WINDOW_TYPE_HINT_DIALOG);
 
   dialog_vbox12 = GTK_DIALOG (proxy_dialog)->vbox;
   gtk_widget_show (dialog_vbox12);

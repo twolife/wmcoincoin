@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.26 2005/02/22 18:45:32 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.27 2005/06/11 22:47:41 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.27  2005/06/11 22:47:41  pouaite
+  prout?
+
   Revision 1.26  2005/02/22 18:45:32  pouaite
   *** empty log message ***
 
@@ -2321,7 +2324,7 @@ editw_handle_button_release(Dock *dock, EditW *ew, XButtonEvent *event)
 	break;
       case BT_TOTOZBOOKMARK:
         {
-          unsigned char *s = (unsigned char*)totoz_bookmark_filename_html();
+          unsigned char *s = (unsigned char*)totoz_bookmark_url_html();
           open_url(s, event->x_root, event->y_root, (event->button == Button1 ? 1 : 2) | URL_YES_I_KNOW_WHAT_I_DO);
         }
         break;

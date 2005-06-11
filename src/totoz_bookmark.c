@@ -10,10 +10,18 @@ const char *totoz_bookmark_filename() {
   }
   return fname;
 }
-const char *totoz_bookmark_filename_html() {
+const char *totoz_bookmark_url_html() {
   static char *fname = NULL;
   if (fname == NULL) {
     fname = str_printf("file://%s/.wmcoincoin/totoz/bookmarks.html", getenv("HOME"));
+  }
+  return fname;
+}
+
+static const char *totoz_bookmark_filename_html() {
+  static char *fname = NULL;
+  if (fname == NULL) {
+    fname = str_printf("%s/.wmcoincoin/totoz/bookmarks.html", getenv("HOME"));
   }
   return fname;
 }

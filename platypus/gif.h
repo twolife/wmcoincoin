@@ -17,6 +17,7 @@
 #ifndef __cplusplus
 # include <stdio.h>
 # include <stdlib.h>
+# include <stdint.h> /* cette ligne est un patch de notre ami twolife */
 #else
 # include <cstdio>
 # include <cstdlib>

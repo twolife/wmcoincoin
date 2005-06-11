@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.30 2005/02/22 18:45:26 pouaite Exp $
+  rcsid=$Id: board.c,v 1.31 2005/06/11 22:47:41 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.31  2005/06/11 22:47:41  pouaite
+  prout?
+
   Revision 1.30  2005/02/22 18:45:26  pouaite
   *** empty log message ***
 
@@ -1897,7 +1900,9 @@ regular_board_update(Board *board, char *path) {
     if (get_XMLBlock(post.content, post.content_len, "login",&xmlb)) {
       unsigned l = MIN(BOARD_LOGIN_MAX_LEN-1, xmlb.content_len);
       strncpy(login, xmlb.content, l); login[l]=0;
-      convert_to_ascii(login, login, BOARD_LOGIN_MAX_LEN);
+      if (strcasecmp(login, "Anonyme") != 0) {
+        convert_to_ascii(login, login, BOARD_LOGIN_MAX_LEN);
+      } else login[0] = 0;
     }
     if (get_XMLBlock(post.content, post.content_len, "info",&xmlb)) {
       unsigned l = MIN(BOARD_UA_MAX_LEN-1, xmlb.content_len);

@@ -702,7 +702,7 @@ void sw_redraw(Dock *dock);
 void swallower_autoswallow(Dock *dock);
 /* totoz_bookmark.c */
 const char *totoz_bookmark_filename();
-const char *totoz_bookmark_filename_html();
+const char *totoz_bookmark_url_html();
 TotozBookmarkItem* totoz_bookmark_search(Dock *dock, const char *name);
 TotozBookmarkItem* totoz_bookmark_insert(Dock *dock, const char *name);
 void totoz_bookmark_load(Dock *dock);

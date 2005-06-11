@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-02-21 22:01+0100\n"
+"POT-Creation-Date: 2005-02-23 00:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -283,11 +283,11 @@ msgstr ""
 msgid "thread from id"
 msgstr ""
 
-#: src/msgbox.c:91
+#: src/msgbox.c:94
 msgid "MESSAGE FROM WMCOINCOIN"
 msgstr ""
 
-#: src/msgbox.c:207
+#: src/msgbox.c:210
 #, c-format
 msgid "close msgbox\n"
 msgstr ""
@@ -1484,101 +1484,101 @@ msgstr ""
 msgid "<b>disable</b> the secondary bigornophone"
 msgstr ""
 
-#: src/palmipede.c:324
+#: src/palmipede.c:327
 msgid ""
 "%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%"
 "d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:541
+#: src/palmipede.c:544
 msgid ""
 "%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,"
 "sel_anchor=%d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:640
+#: src/palmipede.c:643
 #, c-format
 msgid "wmcoincoin: Failed to set XA_PRIMARY ownership."
 msgstr ""
 
-#: src/palmipede.c:1300
+#: src/palmipede.c:1303
 msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
 msgstr ""
 
-#: src/palmipede.c:2012
+#: src/palmipede.c:2015
 msgid "====> <b>Moment "
 msgstr ""
 
-#: src/palmipede.c:2014
+#: src/palmipede.c:2017
 msgid "_o/* <b>BLAM</b>! "
 msgstr ""
 
-#: src/palmipede.c:2016
+#: src/palmipede.c:2019
 msgid "_o/* <b>paf</b>! "
 msgstr ""
 
-#: src/palmipede.c:2018
+#: src/palmipede.c:2021
 msgid "sale chauve "
 msgstr ""
 
-#: src/palmipede.c:2542
+#: src/palmipede.c:2545
 #, c-format
 msgid ""
 "<p align=center><b>wmCoinCoin Agent</b></p>Hmmm, it seems that you don't "
 "know what to say, so, if you don't mind,I suggest <font color=blue>%s</font>"
 msgstr ""
 
-#: src/palmipede.c:2552
+#: src/palmipede.c:2555
 msgid "Put here the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2555
+#: src/palmipede.c:2558
 msgid "Fold back the palmipede<p>shortcut: <b>escape</b>"
 msgstr ""
 
-#: src/palmipede.c:2556
+#: src/palmipede.c:2559
 msgid "Edit the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2556
+#: src/palmipede.c:2559
 msgid "Edit the message<p>shortcut: <b>Tab</b>"
 msgstr ""
 
-#: src/palmipede.c:2557
+#: src/palmipede.c:2560
 msgid "Insert italic<p>shortcut: <b>Alt-I</b>"
 msgstr ""
 
-#: src/palmipede.c:2558
+#: src/palmipede.c:2561
 msgid "Insert bold<p>shortcut: <b>Alt-B</b>"
 msgstr ""
 
-#: src/palmipede.c:2559
+#: src/palmipede.c:2562
 msgid "Insert teletype tag<p>shortcut: <b>Alt-T</b>"
 msgstr ""
 
-#: src/palmipede.c:2560
+#: src/palmipede.c:2563
 msgid "Overstrike text<p>shortcut: <b>Alt-S</b>"
 msgstr ""
 
-#: src/palmipede.c:2561
+#: src/palmipede.c:2564
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr ""
 
-#: src/palmipede.c:2563
+#: src/palmipede.c:2566
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr ""
 
-#: src/palmipede.c:2564
+#: src/palmipede.c:2567
 msgid "Clear"
 msgstr ""
 
-#: src/palmipede.c:2565
+#: src/palmipede.c:2568
 msgid "View the [:totoz] picture bookmark in your browser"
 msgstr ""
 
-#: src/palmipede.c:2566
+#: src/palmipede.c:2569
 msgid "Restore the default user-agent"
 msgstr ""
 
@@ -1620,25 +1620,25 @@ msgstr ""
 msgid "No new messages."
 msgstr ""
 
-#: src/board.c:755
+#: src/board.c:758
 #, c-format
 msgid "[%s] board_remove_old_msg: destroying id=%d (date=%s)\n"
 msgstr ""
 
-#: src/board.c:1256
+#: src/board.c:1259
 #, c-format
 msgid "Welcome to the message from '%.20s' in the boitakon\n"
 msgstr ""
 
-#: src/board.c:1586
+#: src/board.c:1589
 msgid "Original message: '%<CYA %s>'\n"
 msgstr ""
 
-#: src/board.c:1587
+#: src/board.c:1590
 msgid "Decoded message: '%<MAG %s>'\n"
 msgstr ""
 
-#: src/board.c:1777
+#: src/board.c:1780
 msgid ""
 "%<YEL \\o/ Maybe there just has been a race condition in the board backend !"
 "> (id=%d).\n"
@@ -1646,22 +1646,22 @@ msgid ""
 "this bugfix for coconuts.\n"
 msgstr ""
 
-#: src/board.c:1801
+#: src/board.c:1804
 msgid ""
 "[%<YEL %s>] There is a problem in '%s',  I can't parse it... error:%<YEL %"
 "s>\n"
 msgstr ""
 
-#: src/board.c:1808 src/board.c:1958
+#: src/board.c:1811 src/board.c:1956
 msgid "[%<YEL %s>] Error while downloading '%<YEL %s>' : %<RED %s>\n"
 msgstr ""
 
-#: src/board.c:1948
+#: src/board.c:1946
 msgid ""
 "[%<YEL %s>] There is a problem in '%s', I can't parse it... error:%<YEL %s>\n"
 msgstr ""
 
-#: src/board.c:2006
+#: src/board.c:2004
 msgid "DEBUG: opening '%<RED %s>'\n"
 msgstr ""
 
