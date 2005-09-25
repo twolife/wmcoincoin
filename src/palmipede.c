@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.27 2005/06/11 22:47:41 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.28 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.28  2005/09/25 12:08:55  pouaite
+  ca marche encore ca ?
+
   Revision 1.27  2005/06/11 22:47:41  pouaite
   prout?
 
@@ -190,6 +193,7 @@
 #include "spell_coin.h" 
 #include "dock.h"
 #include "site.h"
+#include "board_util.h" // pour le boards_find_id de l'antibloub
 
 #define FN_W 6
 #define FN_H 11
@@ -224,7 +228,7 @@ enum { BT_CLOSE=0, BT_CHANGE, BT_ITAL, BT_BOLD, BT_STRIKE, BT_UNDERLINE,
 #define EWC_NORMAL 0
 #define EWC_LONGWORD 1
 #define EWC_URL 2
-#define EWC_KNOWN_URL 3 // todo un jour..
+#define EWC_KNOWN_URL 3 // todo un jour.. UPDATE: done!!
 #define EWC_BALISE 4
 #define EWC_SPELLWORD 5
 #define EWC_NBATTR 6
@@ -299,6 +303,9 @@ struct _EditW {
   Pixmap clippy_pixmap;
   int clippy_w, clippy_h;
 
+  id_type antibloub_id; /* id du message ayant poste l'url bloubesque */
+  int antibloub_cnt;    /* nb de fois ou l'url bloublesque a ete postee */
+  int antibloub_need_clipouille; /* pas mal comme nom de variable :) */
   SitePrefs *prefs;
 };
 
@@ -693,7 +700,7 @@ editw_cb_handle_selectionrequest(Dock *dock, XSelectionRequestEvent *rq)
  * the cursor
  */
 static void
-editw_cb_paste_external(Dock *dock, EditW *ew, Window window, unsigned prop, int Delete)
+editw_cb_paste_external(Dock *dock, EditW *ew, Window window, Atom prop, int Delete)
 {
   unsigned long bytes_after, nitems;
   unsigned char *data;
@@ -702,7 +709,8 @@ editw_cb_paste_external(Dock *dock, EditW *ew, Window window, unsigned prop, int
 
   data = NULL;
   if (prop == None) return;
-  if ((XGetWindowProperty(dock->display, window, prop, 0, 64, Delete,
+  /* 256 -> longueur max qu'on copy est 256*4 */
+  if ((XGetWindowProperty(dock->display, window, prop, 0, 256, Delete,
     AnyPropertyType, &actual_type, &actual_fmt, &nitems, &bytes_after,
     &data) != Success))
   {
@@ -725,14 +733,11 @@ editw_cb_paste(Dock *dock, EditW *ew, int external_only)
   Atom prop;
 
   if (cb_buffer && external_only == 0) {
-    //    printf("paste buffer\n");
     editw_unselect(ew);
     editw_insert_string(ew, cb_buffer); 
   } else if (XGetSelectionOwner(dock->display, XA_PRIMARY) == None) {
-    //    printf("paste external\n");
     editw_cb_paste_external(dock, ew, dock->rootwin, XA_CUT_BUFFER0, 0);
   } else {
-    //    printf("paste else\n");
     prop = XInternAtom(dock->display, "VT_SELECTION", 0);
     XConvertSelection(dock->display, XA_PRIMARY, XA_STRING, prop, ew->win, CurrentTime);
   }
@@ -798,6 +803,9 @@ editw_colorize(EditW *ew, unsigned char *ctab)
   int word_start, word_end,word_len, i, j;
   ErrList spelled_faults;
 
+  int old_antibloub_cnt = ew->antibloub_cnt;
+  ew->antibloub_cnt = 0; 
+
   if( ew->buff_num!=0 ) { /* ainsi on evite de se taper 2 fois la boucle 
 			     ( comme pour les versions precedentes ) */
     for( i=0; ew->buff[i]; i++)
@@ -820,8 +828,13 @@ editw_colorize(EditW *ew, unsigned char *ctab)
       word_len = word_end-word_start+1; assert(word_len>0);
       /* detection des URLs */
       if( is_url(ew->buff+word_start) != -1) {
+        unsigned char *url = str_ndup(ew->buff+word_start,
+                                      word_end - word_start);
+        unsigned char c = EWC_URL;
+        if ((ew->antibloub_cnt = logged_urls_find_url(url, &ew->antibloub_id))) 
+          c = EWC_KNOWN_URL;
 	for( j=word_start; j<word_end; ++j) 
-	  ctab[j] = EWC_URL;
+	  ctab[j] = c;
         
 	/* detection des mots trops longs */
       } else if( word_len>31 ) {
@@ -861,6 +874,9 @@ editw_colorize(EditW *ew, unsigned char *ctab)
 	}
       }
     } while(ew->buff[i]);
+  }
+  if (ew->antibloub_cnt != old_antibloub_cnt) {
+    ew->antibloub_need_clipouille = 0;
   }
 }
 
@@ -1657,6 +1673,9 @@ editw_build(Dock *dock)
       ew->mini[i].w = bt_w[i]; ew->mini[i].h = 12;
     }
   }
+  ew->antibloub_id = id_type_invalid_id();
+  ew->antibloub_cnt = 0;
+  ew->antibloub_need_clipouille = 0;
   dock->editw = ew;
 }
 
@@ -1877,29 +1896,36 @@ editw_set_pinnipede_filter(Dock *dock) {
   if (!pp_ismapped(dock)) {
     pp_show(dock);
   }
-
-  blen = strlen(ew->buff);
-  curs_pos = editw_xy2strpos(ew, ew->curs_x, ew->curs_y);
-  curs_pos = MIN(curs_pos, blen);
-
-  i0 = i1 = curs_pos; 
-  while (i0 > 0 && ew->buff[i0-1] > ' ') i0--;
-  while (i1 < blen && ew->buff[i1] > ' ') i1++;
-  if (i0 < i1) {
-    char *w;
-
-    w = malloc(i1-i0+1); assert(w);
-    strncpy(w, ew->buff+i0, i1-i0);
-    w[i1-i0] = 0;
-
-    if (ew->buff_num == 0) {
-      pp_set_word_filter(dock, w);
-    } else {
-      pp_set_ua_filter(dock, w);
+  if (pp_get_filter_mode(dock)) pp_change_filter_mode(dock, 0);
+  else {
+    blen = strlen(ew->buff);
+    curs_pos = editw_xy2strpos(ew, ew->curs_x, ew->curs_y);
+    curs_pos = MIN(curs_pos, blen);
+    
+    i0 = i1 = curs_pos; 
+    while (i0 > 0 && ew->buff[i0-1] > ' ') i0--;
+    while (i1 < blen && ew->buff[i1] > ' ') i1++;
+    if (i0 < i1) {
+      char *w;
+      
+      w = malloc(i1-i0+1); assert(w);
+      strncpy(w, ew->buff+i0, i1-i0);
+      w[i1-i0] = 0;
+      
+      if (ew->buff_num == 0) {
+        pp_set_word_filter(dock, w);
+      } else {
+        pp_set_ua_filter(dock, w);
+      }
+      free(w);
     }
-
-    free(w);
   }
+}
+
+static void editw_set_pinnipede_scroll_to_bloub(Dock *dock) {
+  EditW *ew = dock->editw;
+  if (ew->antibloub_cnt && !id_type_is_invalid(ew->antibloub_id)) 
+    pp_show_message_from_id(dock, ew->antibloub_id);
 }
 
 void
@@ -2030,6 +2056,8 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       case 'z': editw_insert_string(ew, "La SuSE sa sent bon, sai libre "); break;
       case 'F':
       case 'f': editw_set_pinnipede_filter(dock); break;
+      case 'L':
+      case 'l': editw_set_pinnipede_scroll_to_bloub(dock); break;
       case XK_KP_Left:
       case XK_Left:
         editw_next_site(dock, -1); break;
@@ -2271,11 +2299,12 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
   } else if (event->button == Button1) {
     XRaiseWindow(dock->display, ew->win);
   }
-  if (event->button == Button4) {
+  /*if (event->button == Button4) {
     editw_next_site(dock,-1);
   } else if (event->button == Button5) {
     editw_next_site(dock,+1);
   }
+  */
 }
 
 void editw_change_current_site(Dock *dock, int sid) {  
@@ -2457,6 +2486,7 @@ Window editw_get_win(EditW *ew) {
   return ew->win;
 }
 
+
 void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
   const char *s[NB_MINIBT];
   int i;
@@ -2496,16 +2526,13 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "demander où est la FAQ de la tribune",
     "de signaler que WindowMaker 0.70.0 is out!",
     "de rappeler que Rational a été racheté par IBM avec une [url] qui claque",
-    "de lancer un troll sur les user-agents",
     "d'annoncer avec émotion que vous venez de dépasser les 100XP",
     "de gueuler contre le système de votes",
     "de tenter un concours de trollomètre",
     "de convaincre les moules de lancer un manual DDOS",
-    "de poster un lien sur un forum externe (hard-war, aufeminin...)",
+    "de poster un lien sur un forum externe (hardware.fr, aufeminin, forum.topchretien.org, ...)",
     "d'arrêter de mouler sur la tribune",
     "de lancer un débat sur pbpg",
-    "de demander à la cantonnade \"qu'est ce qu'une moule ?\"",
-    "de dire que la tribune hard-war est revenue",
     "de donner la météo",
     "de dire qu'aucune news n'a été modérée depuis bien longtemps",
     "de demander ce que peuvent bien faire les modérateurs",
@@ -2534,6 +2561,7 @@ void editw_balloon_test(Dock *dock, EditW *ew, int x, int y) {
     "de rappeler que les 4x4 c'est gros, laid et ça pollue",
     "d'insulter bruyamment tous les fonctionnaires de France Telecom qui sont tous des faineants et des incapables",
     "de donner votre avis sur tuxfamily",
+    "de vous moquer d'un chauve",
     NULL
   };
   char txt[512];
@@ -2597,4 +2625,35 @@ editw_check_corse(Dock *dock, unsigned keycode) {
     balloon_disable_key(dock,keycode); /* desactive temporairement la disparition du ballon au premier KeyPressEvent */
   } else if (balloon_ismapped(dock)) balloon_hide(dock);
   return (dock->editw->action == NOACTION && dock->red_button_send_cnt > 20);
+}
+
+void editw_check_bloub(Dock *dock) {
+  EditW *ew = dock->editw;
+  if (ew->antibloub_cnt && !balloon_ismapped(dock)) {
+    int x,y;
+    dock_get_icon_pos(dock, &x, &y);
+    id_type id = ew->antibloub_id;
+    board_msg_info *mi = boards_find_id(dock->sites->boards, id);
+    char *bloub0 = 0;
+    
+    char site_name[512]; site_name[0] = 0;
+    if (!id_type_is_invalid(id) && id_type_sid(id) < Prefs.nb_sites)
+      snprintf(site_name, 512, "@%s", Prefs.site[id_type_sid(id)]->site_name);
+    if (mi) {      
+      char login_name[512]; login_name[0] = 0;
+      if (mi->login) snprintf(login_name, 512, _(" by %s"), mi->login);
+      
+      if (ew->antibloub_cnt == 1)
+        bloub0 = str_printf(_("at %02d:%02d:%02d%s%s"), mi->hmsf[0], mi->hmsf[1], mi->hmsf[2], site_name,login_name);
+      else 
+        bloub0 = str_printf(_("<b>%d</b> times (first reference at %02d:%02d:%02d%s%s)"), 
+                            ew->antibloub_cnt,mi->hmsf[0], mi->hmsf[1], mi->hmsf[2], site_name,login_name);
+    } else bloub0 = str_printf(_("<b>%d</b> times (the url has left the pinnipede)"), 
+                               ew->antibloub_cnt);
+    char *bloub = str_printf(_("<b>°Bloub!°</b> It looks like you are living in the water. "
+                               "This url has already been posted %s<p>Press Alt-L to scroll "
+                               "to the url in the pinnipede, (Alt-F is also an option)"), bloub0);
+    balloon_show_with_image(dock, x, y, 64, 64, bloub, 200, dock->editw->clippy_pixmap, dock->editw->clippy_w+8, dock->editw->clippy_h);
+    free(bloub); free(bloub0);
+  }
 }

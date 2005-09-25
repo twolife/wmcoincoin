@@ -22,9 +22,12 @@
   contient les fonction gérant l'affichage de l'applet
   ainsi que les évenements
 
-  rcsid=$Id: dock.c,v 1.45 2004/05/16 12:54:29 pouaite Exp $
+  rcsid=$Id: dock.c,v 1.46 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
   $Log: dock.c,v $
+  Revision 1.46  2005/09/25 12:08:55  pouaite
+  ca marche encore ca ?
+
   Revision 1.45  2004/05/16 12:54:29  pouaite
   250c
 
@@ -1461,9 +1464,8 @@ dock_handle_button_press(Dock *dock, XButtonEvent *xbevent)
       Site *site;
       for (site = dock->sites->list; site; site = site->next) {
 	if (site->prefs->check_board) {
-	  //	  printf("%d \n",  site->board->board_refresh_cnt );
 	  ccqueue_push_board_update(site->site_id);
-	  site->board->board_refresh_cnt = 0;
+	  site->board->board_refresh_decnt = site->board->board_refresh_delay;
 	}
       }
 

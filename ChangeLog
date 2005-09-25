@@ -1,3 +1,34 @@
+--------------------------v2.5.1-a-----------------------------------------
+2005-09-24  pouaite  <c0in@altern.org>
+
+	* src/board.c: et une nouvelle feature, une: l'antibloub (patent
+	pending). Parce que comme moi vous avez envie de distribuer des
+	coups de pelle à clous quand vous venez de poster l'url d'une
+	super news yahoo sur Britney Spears et qu'un gros rabat-joie vous
+	hurle BLOUB. Cette humiliation fait désormais partie du passé,
+	l'antibloub vous signalera dans le palmi que vous vous apprêtez à
+	poster une url déjà vue!
+	
+	* src/palmipede.c (editw_cb_paste_external): correction du tres
+	vieux bug qui empechait de coller plus de 256 caracteres d'un coup
+	dans le palmi \o/
+
+	* src/palmipede.c (editw_handle_button_press): la mollette dans le
+	palmipede est officiellement désactivé, pour cause de: feature
+	trop chiante.
+
+	* src/wmcoincoin.c (update_timers): correction d'un vieux bug qui
+	faisait que certaines tribunes desactivées se chargeaient malgré
+	tout une fois au démarrage du coincoin.
+
+	* src/wmcoincoin.c (open_url): autorise les répetitions du '%s'
+	dans la commande pour lancer le browser suite à une suggestion de
+	guiguid. La commande par défaut pour firefox est désormais:
+	
+	mozilla-firefox -remote Openurl\(%s\,new-tab\) || mozilla-firefox %s& 
+
+	* src/coin_util.c: patch de MagicalTux (option translit pour iconv).
+
 --------------------------v2.5.0-g-----------------------------------------
 2005-06-11  pouaite  <c0in@altern.org>
 	* configure.ac: integration du patch de twolife pour la compile
@@ -25,9 +56,15 @@
 	
 2005-02-15  pouaite  <c0in@altern.org>
 
-	* src/pinnipede.c: kikooo! Salut les gros nains! ça fait pas loin de 6 mois que je n'avais pas touché au bouzin. Mais puisque pas_lui< me tanne depuis des semaines pour corriger le bug du ^S^S dans le pinni, voilà c'est fait :o
+	* src/pinnipede.c: kikooo! Salut les gros nains! ça fait pas loin
+	de 6 mois que je n'avais pas touché au bouzin. Mais puisque
+	pas_lui< me tanne depuis des semaines pour corriger le bug du ^S^S
+	dans le pinni, voilà c'est fait :o
+	
 	* src/palmipede.c: accepte le middle-clic sur le totoz.
-	* src/totoz_bookmark.c: passe une url du genre "file:/home/coin/.wmcoincoin/bookmarks.html" au browser.
+
+	* src/totoz_bookmark.c: passe une url du genre
+	"file:/home/coin/.wmcoincoin/bookmarks.html" au browser.
 	
 2004-07-02  pouaite  <c0in@altern.org>
 

@@ -1395,7 +1395,7 @@ create_global_pinnipede_options_dialog (void)
   combo2_items = g_list_append (combo2_items, (gpointer) _("galeon -n %s &"));
   combo2_items = g_list_append (combo2_items, (gpointer) _("konqueror %s &"));
   combo2_items = g_list_append (combo2_items, (gpointer) _("dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("netscape -remote openurl\\(%s\\) &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla-firefox -remote openurl\\(%s\\,new-tab\\) || mozilla-firefox %s &"));
   combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla %s &"));
   combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla -remote openurl\\(%s,new-tab\\) &"));
   combo2_items = g_list_append (combo2_items, (gpointer) _("opera %s &"));

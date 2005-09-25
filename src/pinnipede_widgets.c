@@ -470,7 +470,7 @@ static void pp_tabs_draw_one_tab(Dock *dock, PinnipedeTab *pt, Drawable drawable
   
   XSetForeground(dock->display, dock->NormalGC, bar_pixel);
   if (board->board_refresh_delay > 0 && board->auto_refresh) {
-    int zw = ((w-7)*MIN(board->board_refresh_cnt,board->board_refresh_delay))/board->board_refresh_delay;
+    int zw = ((w-7)*MIN(board->board_refresh_delay - board->board_refresh_decnt,board->board_refresh_delay))/board->board_refresh_delay;
     zw = (w-7 - zw);
     //	printf("zw=%d %d %d %d\n",zw,board->board_refresh_cnt,board->board_refresh_delay, pt->w);
     if (zw > 0) {
@@ -844,7 +844,7 @@ pp_tabs_handle_button_release(Dock *dock, XButtonEvent *event)
       }
     } else if (event->button == Button2) {
       ccqueue_push_board_update(pt->site->site_id);
-      pt->site->board->board_refresh_cnt = 0;
+      pt->site->board->board_refresh_decnt = pt->site->board->board_refresh_delay;
     } else if (event->button == Button3) {
       //if (pt->selected == 0) pt->selected = 1;
       if (editw_ismapped(dock->editw) == 0) {
@@ -1328,12 +1328,7 @@ pp_minib_handle_button_release(Dock *dock, XButtonEvent *event)
         } break;
       case FILTER:
         {
-          pp->filter.filter_mode = (1-pp->filter.filter_mode);
-          /* reset du scroll (necessaire, faut etre que le post 'id_base' 
-             soit bien affiché par le filtre) */
-          /*if (pp->filter.filter_mode) pp->id_base = id_type_invalid_id(); 
-            pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);*/
-          pp_update_and_redraw(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 0,0,1);
+          pp_change_filter_mode(dock, 1 - pp_get_filter_mode(dock));
         } break;
       case PLOPIFY:
         {

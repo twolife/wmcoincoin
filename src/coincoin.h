@@ -212,7 +212,7 @@ struct Board_ {
   unsigned char coin_coin_useragent[USERAGENT_MAXMAX_LEN+1];
 
   /* compteurs mis à jour dans Net_loop (25 fois/sec) */
-  int board_refresh_cnt, board_refresh_delay;
+  int board_refresh_decnt, board_refresh_delay;
 
   volatile int auto_refresh; /* refreshs auto activé desactivé par la ptite croix en bas à droite du tab */
 
@@ -595,6 +595,7 @@ void editw_erase(EditW *ew);
 int editw_insert_string(EditW *ew, const unsigned char *s); /* utilise par le pinnipede */
 void editw_move_end_of_line(EditW *ew, int shift_move); /* utilise par le pinnipede */
 int editw_check_corse(Dock *dock, unsigned keycode); /* utilise par le pinnipede */
+void editw_check_bloub(Dock *dock);
 
 /* deux fonction d'utilite generale, en depis de leur nom */
 void editw_cb_copy(Dock *dock, Window win, const char *text, int len);
@@ -651,8 +652,11 @@ void pp_check_board_updated(Dock *dock);
 void pp_animate(Dock *dock);
 void pp_set_board_updated(Dock *dock);
 void pp_check_balloons(Dock *dock, int x, int y);
+void pp_change_filter_mode(Dock *dock, int zero_or_one);
+int pp_get_filter_mode();
 void pp_set_ua_filter(Dock *dock, char *ua);
 void pp_set_word_filter(Dock *dock, char *word);
+void pp_show_message_from_id(Dock *dock, id_type id);
 void pp_save_state(Dock *dock, FILE *f);
 void pp_restore_state(Dock *dock, FILE *f);
 Site *pp_tabs_get_main_site(Dock *dock);
@@ -675,6 +679,7 @@ void troll_detector(board_msg_info *mi);
 
 
 /* board.c */
+int logged_urls_find_url(unsigned char *url, id_type *pid);
 Board *board_create(Site *site, Boards *boards);
 void board_tatouage(Board *trib, board_msg_info *it);
 /* renvoie l'age du message, en secondes */

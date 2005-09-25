@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.106 2005/02/22 18:45:32 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.107 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2731,6 +2731,19 @@ pp_set_anything_filter(Dock *dock, char *word)
   pp_refresh(dock, pp->win, NULL);	  
 }
 
+void pp_change_filter_mode(Dock *dock, int zero_or_one) {
+  Pinnipede *pp = dock->pinnipede;
+  pp->filter.filter_mode = zero_or_one;
+  /* reset du scroll (necessaire, faut etre que le post 'id_base' 
+     soit bien affiché par le filtre) */
+  /*if (pp->filter.filter_mode) pp->id_base = id_type_invalid_id(); 
+    pp_update_and_redraw(dock, pp->id_base, pp->decal_base,0,1);*/
+  pp_update_and_redraw(dock, get_last_id_filtered(dock->sites->boards, &pp->filter), 0,0,1);
+}
+
+int pp_get_filter_mode(Dock *dock) {
+  return dock->pinnipede->filter.filter_mode;
+}
 
 static void
 gogole_search(Dock *dock, int mx, int my, char *w, int quote_all, int browser_num)
@@ -3132,6 +3145,11 @@ pp_open_palmi_for_reply(Dock *dock, PostWord *pw) {
   }
 }
 
+void pp_show_message_from_id(Dock *dock, id_type id) {
+  Pinnipede *pp = dock->pinnipede;
+  pp_update_content(dock, id, 0, 0, 0);
+  pp_refresh(dock, pp->win, NULL);
+}
 static void
 pp_handle_left_clic(Dock *dock, int mx, int my)
 {
@@ -3228,9 +3246,7 @@ pp_handle_left_clic(Dock *dock, int mx, int my)
 	    }
 	  }
 	}
-
-	pp_update_content(dock, mi->id, 0, 0, 0);
-	pp_refresh(dock, pp->win, NULL);
+        pp_show_message_from_id(dock, mi->id);
 #endif
       }
     } else if (pw->attr & PWATTR_LOGIN) {
@@ -3716,7 +3732,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       for (site = dock->sites->list; site; site = site->next) {
         if (site->prefs->check_board) {
           ccqueue_push_board_update(site->site_id);
-          site->board->board_refresh_cnt = 0;
+          site->board->board_refresh_decnt = site->board->board_refresh_delay;
         }
       }
       ret++;
@@ -3875,7 +3891,7 @@ pp_handle_keypress(Dock *dock, XEvent *event)
       if (event->xkey.window == pp->win && !editw_ismapped(dock->editw)) {
         if (pp->active_tab) {
           ccqueue_push_board_update(pp->active_tab->site->site_id);
-          pp->active_tab->site->board->board_refresh_cnt = 0;
+          pp->active_tab->site->board->board_refresh_decnt = pp->active_tab->site->board->board_refresh_delay;
           ret++;
         }
       }

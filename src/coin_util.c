@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: coin_util.c,v 1.42 2004/04/28 22:19:00 pouaite Exp $
+  rcsid=$Id: coin_util.c,v 1.43 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
   $Log: coin_util.c,v $
+  Revision 1.43  2005/09/25 12:08:55  pouaite
+  ca marche encore ca ?
+
   Revision 1.42  2004/04/28 22:19:00  pouaite
   bugfixes dae + des trucs que j'ai oublie
 
@@ -1146,7 +1149,7 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
   char *out, *oute;
   /* pour eviter d'ouvrir/fermer un million d'iconv.. */
   static iconv_t cv;
-  static char *old_src_encoding = 0, *old_dest_encoding = 0;
+  static char *old_src_encoding = 0, *old_dest_encoding = 0, *dest_encoding_trans = 0;
   if (src_encoding == NULL || dest_encoding == NULL) return NULL;
   assert(src_encoding); assert(dest_encoding);
   if (!src || strlen(src) == 0 || src_encoding == NULL) return NULL;
@@ -1154,12 +1157,16 @@ wmcc_iconv(const char *src_encoding, const char *dest_encoding, char *src) {
   if (old_src_encoding == NULL || old_dest_encoding == NULL || 
       strcmp(old_src_encoding,src_encoding) ||
       strcmp(old_dest_encoding,dest_encoding)) {
-    if (old_src_encoding) { 
-      free(old_src_encoding); free(old_dest_encoding); iconv_close(cv); 
+    if (old_src_encoding) {
+      /* Bouh! La mémoire est pas libérée a la fin du programme !! */
+      free(old_src_encoding); free(old_dest_encoding); free(dest_encoding_trans); iconv_close(cv); 
     }
     old_src_encoding = strdup(src_encoding);
     old_dest_encoding = strdup(dest_encoding);
-    cv = iconv_open(old_dest_encoding, old_src_encoding);
+    dest_encoding_trans = malloc(strlen(old_dest_encoding) + 11); /* //TRANSLIT = 10; \0 = 1 */
+    strcpy(dest_encoding_trans, old_dest_encoding);
+    strcat(dest_encoding_trans, "//TRANSLIT");
+    cv = iconv_open(dest_encoding_trans, old_src_encoding);
     if (cv == (iconv_t)(-1)) {
       fprintf(stderr, "iconv_open(%s,%s) failed : %s\n", dest_encoding, src_encoding, strerror(errno));
       return NULL;

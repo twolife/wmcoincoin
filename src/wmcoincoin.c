@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.94 2004/05/16 12:54:30 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.95 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.95  2005/09/25 12:08:55  pouaite
+  ca marche encore ca ?
+
   Revision 1.94  2004/05/16 12:54:30  pouaite
   250c
 
@@ -474,7 +477,7 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
      à la bouillie que j'avais fait dans coincoin 2.01
   */
 
-  snprintf(s, CMDSZ, bcmd, secure_url);
+  snprintf(s, CMDSZ, bcmd, secure_url, secure_url, secure_url, secure_url); /* on autorise au max 4 repetitions du '%s' dans le browser_cmd */
 
   myfprintf(stderr, _("Spawning \"%<YEL %s>\"\n"), s);
   /*
@@ -873,68 +876,73 @@ wmcc_save_or_restore_state(Dock *dock, int do_restore)
 void check_balloons(Dock *dock) 
 {
 #ifndef DISABLE_BALLOONS
-  if (dock->mouse_cnt >= 2000 && dock->mouse_win != None && !balloon_ismapped(dock)) {
-    int x,y;
-
-    x = dock->mouse_x; y = dock->mouse_y;
-    if (dock->mouse_win == dock->win || dock->mouse_win == DOCK_WIN(dock)) {
-      int iconx, icony;
-      dock_get_icon_pos(dock, &iconx, &icony);
-
-      if (dock->door_state == CLOSED && dock->horloge_mode == 0) {
-	char s[2048];
-	snprintf(s,2048,_("If the balltrap is enabled, you can:<br>"
-			  "- launch plastic ducks with <font color=blue><tt>Left Click</tt></font><br>"
-			  "- quickly kill all ducks with a <font color=blue><tt>Right Click</tt></font><br>"));
-	balloon_test(dock,x,y,iconx,icony,0,3,3,57,11,
-		     s);
-	balloon_test(dock,x,y,iconx,icony,0,TROLLOSCOPE_X,TROLLOSCOPE_Y,TROLLOSCOPE_WIDTH,TROLLOSCOPE_HEIGHT,
-		     _("<p align=center><b>This is a professionnal <font color=#a00000><i>Trolloscope</i></font></b></p>"
-		     "It displays symbols corresponding to the user-agents of the last messages posted on the board. "
-		     "The relationships between useragent and (colour,symbol) are defined in the <tt>~/.wmcoincoin/options</tt> file<br>"
-		     "<font color=blue><tt>Left Click</tt></font><tab>: displays the useragent<br>"
-		     "<font color=blue><tt>Middle Click</tt></font><tab>: instant refresh of all boards<br>"
-		     "Note: if you have given your authentication cookie to wmCoinCoin and if it "
-                       "blinks blue, then someone just answered to one of your posts. "));
-	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[0].xpos, dock->leds.led[0].ypos, 9, 4,
-		     _("When this led is blue, a <b>http transfer</b> is underway. "
-		     "A <b><font color=red>red</font></b> blinking indicates a problem during the last transfer.<br>"
-		     "<font color=blue><tt>Left Click</tt></font>: shows the last error message<br>"));
-	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[1].xpos, dock->leds.led[1].ypos, 9, 4,
-                     _("This led does no blink anymore.<br>" //blinks when you have just sent a message on the board, and it is waiting for its delivery.<br>"
-		     "It is blue when the message is being sent by the palmipede, and green half a second after the effective sending.<br>"
-		     "A click on this led allows to change the scroll speed of the trolloscope:<br>"
-		     "<font color=blue><tt>Left Click</tt></font><tab>: slower<br>"
-		     "<font color=blue><tt>Right Click</tt></font><tab>: faster<br>"
-		     "<font color=blue><tt>Middle Click</tt></font><tab>: change the trolloscope resolution"));
-	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[2].xpos, dock->leds.led[2].ypos, 9, 4,
-		     _("When this led blinks green, a new article is available.<br>"
-		     "<font color=blue><tt>Left Click</tt></font><tab>: see the article<br>"
-		     "<font color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"));
-	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[3].xpos, dock->leds.led[3].ypos, 9, 4,
-		     _("When this led blinks green, you have just received a new message.<br>"
-		     "<font color=blue><tt>Left Click</tt></font>: see the new message with the external browser 1<br>"
-		     "<font color=blue><tt>Middle Click</tt></font>: see the new message with the external browser 2<br>"
-		     "<font color=blue><tt>Right Click</tt></font>: cancel all new messages"));
-	balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[4].xpos, dock->leds.led[4].ypos, 11, 5,
-		     _("When the cursor is above this led, the level of the <font color=#a00000><i>Troll-o-meter</i></font> is displayed.<br>"
-		     "<font color=blue><tt>Left Click</tt></font><tab>: INVOKE THE POWER OF <b>C01N C01N</b> !<br>"
-		     "<font color=blue><tt>Right Click</tt></font><tab>: see the statistics of the board, and your XP and votes (if you have provided your authentication cookie)<br>"
-		     "<font color=blue><tt>Middle Click</tt></font>: re-read the <tt>~/.wmcoincoin/options</tt> file"));
-	balloon_test(dock,x,y,iconx,icony,0,3,49,57,12,
-		     _("The time of the last message received on the board, and the number of seconds that have past since<br>"
-		     "<font color=blue><tt>Left Click</tt></font>: show/hide the <b>palmipede editor</b><br>"
-		     "<font color=blue><tt>Right Click</tt></font>: show/hide the <b>pinnipede teletype</b>"));
-
-      } else if (dock->door_state == OPENED && dock->horloge_mode == 0) {
-	balloon_test(dock,x,y,iconx,icony,2000,31,30,16,16,
-		 _("<b><i>DON'T PANIC</i></b>"));
+  if (dock->mouse_win != None && !balloon_ismapped(dock)) {
+    if (dock->mouse_cnt >= 2000) {
+      int x,y;
+      
+      x = dock->mouse_x; y = dock->mouse_y;
+      if (dock->mouse_win == dock->win || dock->mouse_win == DOCK_WIN(dock)) {
+        int iconx, icony;
+        dock_get_icon_pos(dock, &iconx, &icony);
+        
+        if (dock->door_state == CLOSED && dock->horloge_mode == 0) {
+          char s[2048];
+          snprintf(s,2048,_("If the balltrap is enabled, you can:<br>"
+                            "- launch plastic ducks with <font color=blue><tt>Left Click</tt></font><br>"
+                            "- quickly kill all ducks with a <font color=blue><tt>Right Click</tt></font><br>"));
+          balloon_test(dock,x,y,iconx,icony,0,3,3,57,11,
+                       s);
+          balloon_test(dock,x,y,iconx,icony,0,TROLLOSCOPE_X,TROLLOSCOPE_Y,TROLLOSCOPE_WIDTH,TROLLOSCOPE_HEIGHT,
+                       _("<p align=center><b>This is a professionnal <font color=#a00000><i>Trolloscope</i></font></b></p>"
+                         "It displays symbols corresponding to the user-agents of the last messages posted on the board. "
+                         "The relationships between useragent and (colour,symbol) are defined in the <tt>~/.wmcoincoin/options</tt> file<br>"
+                         "<font color=blue><tt>Left Click</tt></font><tab>: displays the useragent<br>"
+                         "<font color=blue><tt>Middle Click</tt></font><tab>: instant refresh of all boards<br>"
+                         "Note: if you have given your authentication cookie to wmCoinCoin and if it "
+                         "blinks blue, then someone just answered to one of your posts. "));
+          balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[0].xpos, dock->leds.led[0].ypos, 9, 4,
+                       _("When this led is blue, a <b>http transfer</b> is underway. "
+                         "A <b><font color=red>red</font></b> blinking indicates a problem during the last transfer.<br>"
+                         "<font color=blue><tt>Left Click</tt></font>: shows the last error message<br>"));
+          balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[1].xpos, dock->leds.led[1].ypos, 9, 4,
+                       _("This led does no blink anymore.<br>" //blinks when you have just sent a message on the board, and it is waiting for its delivery.<br>"
+                         "It is blue when the message is being sent by the palmipede, and green half a second after the effective sending.<br>"
+                         "A click on this led allows to change the scroll speed of the trolloscope:<br>"
+                         "<font color=blue><tt>Left Click</tt></font><tab>: slower<br>"
+                         "<font color=blue><tt>Right Click</tt></font><tab>: faster<br>"
+                         "<font color=blue><tt>Middle Click</tt></font><tab>: change the trolloscope resolution"));
+          balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[2].xpos, dock->leds.led[2].ypos, 9, 4,
+                       _("When this led blinks green, a new article is available.<br>"
+                         "<font color=blue><tt>Left Click</tt></font><tab>: see the article<br>"
+                         "<font color=blue><tt>Right Click</tt></font><tab>: mark all articles as read"));
+          balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[3].xpos, dock->leds.led[3].ypos, 9, 4,
+                       _("When this led blinks green, you have just received a new message.<br>"
+                         "<font color=blue><tt>Left Click</tt></font>: see the new message with the external browser 1<br>"
+                         "<font color=blue><tt>Middle Click</tt></font>: see the new message with the external browser 2<br>"
+                         "<font color=blue><tt>Right Click</tt></font>: cancel all new messages"));
+          balloon_test(dock,x,y,iconx,icony,0,dock->leds.led[4].xpos, dock->leds.led[4].ypos, 11, 5,
+                       _("When the cursor is above this led, the level of the <font color=#a00000><i>Troll-o-meter</i></font> is displayed.<br>"
+                         "<font color=blue><tt>Left Click</tt></font><tab>: INVOKE THE POWER OF <b>C01N C01N</b> !<br>"
+                         "<font color=blue><tt>Right Click</tt></font><tab>: see the statistics of the board, and your XP and votes (if you have provided your authentication cookie)<br>"
+                         "<font color=blue><tt>Middle Click</tt></font>: re-read the <tt>~/.wmcoincoin/options</tt> file"));
+          balloon_test(dock,x,y,iconx,icony,0,3,49,57,12,
+                       _("The time of the last message received on the board, and the number of seconds that have past since<br>"
+                         "<font color=blue><tt>Left Click</tt></font>: show/hide the <b>palmipede editor</b><br>"
+                         "<font color=blue><tt>Right Click</tt></font>: show/hide the <b>pinnipede teletype</b>"));
+          
+        } else if (dock->door_state == OPENED && dock->horloge_mode == 0) {
+          balloon_test(dock,x,y,iconx,icony,2000,31,30,16,16,
+                       _("<b><i>DON'T PANIC</i></b>"));
+        }
+        //} else if (newswin_is_used(dock) && dock->mouse_win == newswin_get_window(dock)) {
+      } else if (editw_ismapped(dock->editw) && dock->mouse_win == editw_get_win(dock->editw)) {
+        editw_balloon_test(dock, dock->editw, x, y);
+      } else if (pp_ismapped(dock) && dock->mouse_win == pp_get_win(dock)) {
+        pp_check_balloons(dock, x, y);
       }
-      //} else if (newswin_is_used(dock) && dock->mouse_win == newswin_get_window(dock)) {
-    } else if (editw_ismapped(dock->editw) && dock->mouse_win == editw_get_win(dock->editw)) {
-      editw_balloon_test(dock, dock->editw, x, y);
-    } else if (pp_ismapped(dock) && dock->mouse_win == pp_get_win(dock)) {
-      pp_check_balloons(dock, x, y);
+    } else if (dock->mouse_cnt > 1000) { /* l'antibloub doit se declencher un poil plus vite quand meme */
+      if (editw_ismapped(dock->editw))
+        editw_check_bloub(dock);
     }
   }
 #endif
@@ -1150,47 +1158,31 @@ update_timers(Dock *dock)
      l'affichage du temps avant le prochain refresh dans le pinni, ça évite des sauts)
   */
   for (site = dock->sites->list; site; site = site->next) {
+    Board *b = site->board;
     /*site->news_refresh_delay = 
       MIN(site->news_refresh_delay, 
       wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay, site->http_recent_error_cnt));*/
-    if (site->board) {
-      site->board->board_refresh_delay = 
-	MIN(site->board->board_refresh_delay, 
+    if (b) {
+      b->board_refresh_delay = 
+	MIN(b->board_refresh_delay, 
 	    wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay, site->http_recent_error_cnt));
     }
   }
 
   /* les tribunes */
   for (site = dock->sites->list; site; site = site->next) {
+    Board *b = site->board;
     if (site->prefs->check_board && ccqueue_find(Q_BOARD_UPDATE, site->site_id)==NULL) {
-      if (site->board->auto_refresh)
-	site->board->board_refresh_cnt++;
-      if (site->board->board_refresh_cnt > site->board->board_refresh_delay) {
+      if (b->auto_refresh && b->board_refresh_decnt)
+	b->board_refresh_decnt--;
+      if (b->board_refresh_decnt == 0) {
 	ccqueue_push_board_update(site->site_id);
-	site->board->board_refresh_cnt = 0;
-	site->board->board_refresh_delay = 
+	b->board_refresh_delay = 
 	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay, site->http_recent_error_cnt);
+        b->board_refresh_decnt = b->board_refresh_delay;
       }
     }
   }
-
-  /* news comments etc */
-#if 0
-  for (site = dock->sites->list; site; site = site->next) {
-    site->news_refresh_cnt++;
-    if (site->news_refresh_cnt > site->news_refresh_delay) {
-      if (site->prefs->check_news)
-	ccqueue_push_newslst_update(site->site_id);
-      if (site->prefs->check_messages)
-	ccqueue_push_messages_update(site->site_id);
-      if (site->prefs->check_comments)
-	ccqueue_push_comments_update(site->site_id);
-      site->news_refresh_cnt = 0;
-      site->news_refresh_delay = 
-	wmcc_eval_delai_rafraichissement(dock, site->prefs->news_check_delay, site->http_recent_error_cnt);
-    }
-  }
-#endif
 }
 
 /* la boucle principale (appelée 25 fois par seconde, mais uniquement aux moments 

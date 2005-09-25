@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.31 2005/06/11 22:47:41 pouaite Exp $
+  rcsid=$Id: board.c,v 1.32 2005/09/25 12:08:55 pouaite Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.32  2005/09/25 12:08:55  pouaite
+  ca marche encore ca ?
+
   Revision 1.31  2005/06/11 22:47:41  pouaite
   prout?
 
@@ -403,7 +406,7 @@ board_create(Site *site, Boards *boards)
   board->flag_answer_to_me = 0;
   board->board_refresh_delay = sp->board_check_delay*(1000/WMCC_TIMER_DELAY_MS);
   /* juste pour que le premier check se fasse avant celui des news */
-  board->board_refresh_cnt = board->board_refresh_delay-10; 
+  board->board_refresh_decnt = 10; 
   strncpy(board->coin_coin_useragent, sp->user_agent, USERAGENT_MAXMAX_LEN);
   board->coin_coin_useragent[USERAGENT_MAXMAX_LEN] = 0;
 
@@ -1014,6 +1017,92 @@ do_url_replacements(char **pmessage)
   }
 }
 
+typedef struct URLhash {
+  unsigned char md5digest[16];
+  struct URLhash *next;
+  id_type id;
+  unsigned cnt;
+} URLhash;
+
+#define URL_HASH_SZ 233
+URLhash *urlh[URL_HASH_SZ];
+
+static URLhash *
+logged_urls_find_url_(unsigned char *url_, unsigned char digest[16], unsigned *pnn) {
+  /* on canonise l'url , c'est un hommage a jean-paul II */
+  unsigned char url[2048]; strncpy(url,url_,2047); url[2047] = 0;
+  url_au_coiffeur(url,0);
+  str_tolower(url);
+  /* remplace les %xx par le car correspondant */
+  unsigned i=0,j=0;
+  while (url[i]) {
+    if (url[i] != '%' || url[i+1] == '%') url[j++] = url[i++];
+    else {
+      unsigned v; sscanf(url+i+1, "%02x", &v); if (v < 32) v = ' '; url[j] = v;
+      i+=3; j++;
+    }
+  }
+
+  /* insert your comment here */
+  md5_digest(url, digest);
+  unsigned nn = (digest[0] + digest[1]*256 + digest[2] * 65536)%URL_HASH_SZ;
+  URLhash *h = urlh[nn];
+  while (h) {
+    if (memcmp(digest, h->md5digest, 16) == 0) break;
+    h = h->next;
+  }
+  if (pnn) *pnn = nn;
+  return h;
+}
+
+static int
+logged_urls_add_url(id_type id, unsigned char *url) {
+  unsigned char digest[16];
+  unsigned nn;
+  URLhash *h = logged_urls_find_url_(url, digest, &nn);
+  if (h) { h->cnt++; return h->cnt-1; }
+  ALLOC_OBJ(h, URLhash);
+  h->next = urlh[nn]; urlh[nn] = h;
+  h->id = id;
+  h->cnt = 1;
+  memcpy(h->md5digest, digest, 16);
+  return 0;
+}
+
+/* utilise pour l'antibloub */
+int 
+logged_urls_find_url(unsigned char *url, id_type *pid) {
+  unsigned char digest[16];
+  URLhash *h = logged_urls_find_url_(url, digest, NULL);
+  if (h) {
+    if (pid) *pid = h->id;
+    return 1;
+  } else return 0;
+}
+
+/* stocke les md5 des urls recentes */
+static void
+log_urls(char *msg, id_type id)
+{
+  unsigned char url[2048];
+  for ( ; *msg; ++msg) {
+    if (*msg == '\t' && strncasecmp(msg, "\t<a href=\"", 10) == 0) {
+      unsigned char *deb_url, *fin_url, *tag_fermant;
+      deb_url = msg+10;
+      fin_url = strstr(deb_url, "\t>");
+      tag_fermant = strstr(deb_url, "\t</a");
+      if (deb_url && fin_url && tag_fermant && (tag_fermant > fin_url)) {
+        while (fin_url > deb_url+1 && *fin_url != '"') fin_url--;
+        unsigned n = MIN(fin_url-deb_url,2047);
+        strncpy(url, deb_url, n); url[n] = 0;
+        unsigned cnt = logged_urls_add_url(id, url);
+        BLAHBLAH(2,myprintf("nouvelle URL: '%<grn %s>' : %d\n", url, cnt));
+      }
+    }
+  }
+}
+
+
 inline static void
 mi_check_boitakon(Boards *boards, board_msg_info *mi)
 {
@@ -1114,6 +1203,8 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   message = nettoie_message_tags(_message);
 
   do_url_replacements(&message);
+
+  char *saved_message = strdup(message);
 
   /* emulation du wiki (en insérant les bons tags dans le message) */
   if (board->site->prefs->board_wiki_emulation) {
@@ -1279,6 +1370,10 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   troll_detector(it);
   flag_updating_board++;
 
+  if (board_is_regular_board(board))
+    log_urls(saved_message, it->id);
+
+  free(saved_message);
   free(message);
   return it;
 }

@@ -1,6 +1,9 @@
-## rcsid=$Id: Makefile.am,v 1.30 2005/06/11 22:47:39 pouaite Exp $
+## rcsid=$Id: Makefile.am,v 1.31 2005/09/25 12:08:55 pouaite Exp $
 ## ChangeLog:
 ##   $Log: Makefile.am,v $
+##   Revision 1.31  2005/09/25 12:08:55  pouaite
+##   ca marche encore ca ?
+##
 ##   Revision 1.30  2005/06/11 22:47:39  pouaite
 ##   prout?
 ##
@@ -96,7 +99,7 @@ MAINT_CHARSET = latin1
 prefix=$(DESTDIR)@prefix@
 
 SUBDIRS = intl  m4  po src scripts platypus
-EXTRA_DIST = config.rpath  xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
+EXTRA_DIST = config.rpath  MACOSX xpms/porte.h xpms/editwin_minib.xcf xpms/editwin_minib.xpm \
              xpms/coin.xpm  xpms/leds.h  xpms/leds.xcf \
              xpms/porte.xcf  xpms/weekday.xpm xpms/month.xpm \
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
@@ -121,7 +124,7 @@ nightly: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz ../wmcoincoin-cvs.tar.gz
 	(cd ..; ./up.sh ./wmcoincoin-cvs.tar.gz download/devel)
 
-pkgdata_DATA = options README MACOSX wmcoincoin.spec xpms/bracket.xpm  xpms/logo.xpm xpms/badnews.xpm \
+pkgdata_DATA = options README wmcoincoin.spec xpms/bracket.xpm  xpms/logo.xpm xpms/badnews.xpm \
 	xpms/totoz.xpm pixmaps/cbronson.jpg pixmaps/logoh.png pixmaps/logo.xpm
 
 CLEANFILES = stamp-h
