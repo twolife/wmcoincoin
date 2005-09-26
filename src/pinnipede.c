@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.107 2005/09/25 12:08:55 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.108 2005/09/26 21:40:24 pouaite Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2144,6 +2144,7 @@ pp_show(Dock *dock)
                                    xpos, ypos, pp->win_width,pp->win_height, 0,
                                    WhitePixel(dock->display, dock->screennum),
                                    pp_get_win_bgcolor(dock));
+    kb_create_input_context_for(dock, pp->win, KB_PINNIPEDE);
   }
   XMoveResizeWindow(dock->display, pp->win, xpos, ypos, pp->win_width, pp->win_height);
 
@@ -2157,7 +2158,7 @@ pp_show(Dock *dock)
     //    ResizeRedirectMask |
     KeyPressMask | 
     KeyReleaseMask | 
-      
+    FocusChangeMask |
     LeaveWindowMask;
     
   /* ça sera a changer .. pour l'instant ça ira */
@@ -2491,7 +2492,9 @@ pp_unmap(Dock *dock)
 
   if (dock->pp_win) {
     XUnmapWindow(dock->display, pp->win);
-  } XDestroyWindow(dock->display, pp->win);
+  } 
+  XDestroyWindow(dock->display, pp->win);
+  kb_release_input_context(KB_PINNIPEDE);
   pp->win = None;
 
   pp->mapped = 0;
@@ -3718,7 +3721,11 @@ pp_handle_keypress(Dock *dock, XEvent *event)
     return 1;
   }
   */
+#ifdef OLD_KBCOINCOIN
   kb_lookup_string(dock, &event->xkey);
+#else 
+  //kb_xim_lookup_key(&event->xkey, KB_PINNIPEDE);
+#endif
   /*printf("klen=%2d %08x %c state=%08x buff=%02x%02x%02x%02x\n", 
          kb_state()->klen, (int)kb_state()->ksym, (int)kb_state()->ksym, event->xkey.state,
          kb_state()->buff[0],kb_state()->buff[1],kb_state()->buff[2],kb_state()->buff[3]);*/

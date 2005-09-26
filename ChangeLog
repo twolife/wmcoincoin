@@ -1,3 +1,21 @@
+--------------------------v2.5.1-b-----------------------------------------
+2005-09-26  pouaite <c0in@altern.org>
+
+	* src/wmcoincoin.c: (x_error_handler): \o/ et maintenant c'est
+	l'odieux bug du sigpipe circulaire qui bouffe 100% de cpu quand on
+	reboute le X qui vient de passer à la casserole. oue!
+
+	* src/kbcoincoin.c (kb_xim_lookup_key): \o/ je lui ai mis sa maire
+	au bug qui faisait qu'on ne pouvait pas saisir d'accent
+	circonflexe (entre autres) dans le palmi quand le focus etait sur
+	le pinni. Maintenant que la gestion de l'"input method" est un peu
+	plus carré, il est meme possible que le bug x86_64 parte avec
+	l'eau du bain.
+	
+
+2005-09-25  pouaite <c0in@altern.org>
+	* src/wmcoincoin.c: un ptit bug cosmetique sur le refresh.
+
 --------------------------v2.5.1-a-----------------------------------------
 2005-09-24  pouaite  <c0in@altern.org>
 

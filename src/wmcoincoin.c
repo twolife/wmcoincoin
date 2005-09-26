@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.95 2005/09/25 12:08:55 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.96 2005/09/26 21:40:24 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.96  2005/09/26 21:40:24  pouaite
+  v 2.5.1b
+
   Revision 1.95  2005/09/25 12:08:55  pouaite
   ca marche encore ca ?
 
@@ -341,6 +344,7 @@
 #include "http.h"
 #include "dock.h"
 #include "site.h"
+#include "kbcoincoin.h"
 
 /* quelques images */
 #include "../xpms/coin.xpm"
@@ -958,7 +962,9 @@ wmcoincoin_dispatch_events(Dock *dock)
   while (XPending(dock->display)) {
 
     XNextEvent(dock->display, &event);
-    
+    if (XFilterEvent(&event, None))
+      continue;
+
     /* des que la souris bouge, le ballon disparait */
     balloon_check_event(dock, &event);
     
@@ -1004,8 +1010,17 @@ wmcoincoin_dispatch_events(Dock *dock)
       plopup_dispatch_event(dock, &event);
     } else {
       if (event.type == KeyPress) {
-        if (!pp_handle_keypress(dock,&event))
-          editw_handle_keypress(dock,dock->editw,&event);
+        int ok = 0;
+        if (event.xany.window == pp_get_win(dock)) {
+          kb_xim_lookup_key(&event.xkey, KB_PINNIPEDE); ok = 1;
+        } else if (event.xany.window == editw_get_win(dock->editw)) {
+          kb_xim_lookup_key(&event.xkey, KB_PALMIPEDE); ok = 1;
+        }
+        if (ok) {
+          if (!pp_handle_keypress(dock,&event)) {
+            editw_handle_keypress(dock,dock->editw,&event);
+          }
+        }
       } else if (event.type == KeyRelease) {
         if (!pp_handle_keyrelease(dock,&event))
           editw_handle_keyrelease(dock,dock->editw,&event);
@@ -1067,6 +1082,19 @@ timer_signal(int signum) {
   X_loop_request++; wmcc_tic_cnt++;
 }
 
+int x_error_handler(Display *d UNUSED, XErrorEvent *e UNUSED) {
+  fprintf(stderr, _("X11 Error. The coincoin is going down for halt NOW!\n"));
+  wmcc_save_or_restore_state(_dock, 0);
+  exit(0);
+}
+
+int x_io_error_handler(Display *d UNUSED) {
+  fprintf(stderr, _("X11 IO Error. The coincoin is going down for halt NOW!\n"));
+  wmcc_save_or_restore_state(_dock, 0);
+  exit(0);
+}
+
+
 /*
   potentiellement causé par ispell quand il y a un problème
    (genre mauvais dictionnaire, malaise d'ispell ..)
@@ -1080,8 +1108,8 @@ sigpipe_signal(int signum UNUSED) {
   if (in_sigpipe == 0) { /* bon finalement je l'ai eu le bug occasionnel de sigpipe infini quand on se delogue..
                             ça devrait un peu aider */
     in_sigpipe++;
-    BLAHBLAH(1,fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n")));
-    wmcc_save_or_restore_state(_dock, 0);
+    //BLAHBLAH(1,fprintf(stderr, _("Got a SIGPIPE ! Either ispell crashed, or you have just killed\nviolently the coincoin.\n")));
+    //wmcc_save_or_restore_state(_dock, 0);
     in_sigpipe--;
   }
 }
@@ -1181,6 +1209,7 @@ update_timers(Dock *dock)
 	  wmcc_eval_delai_rafraichissement(dock, site->prefs->board_check_delay, site->http_recent_error_cnt);
         b->board_refresh_decnt = b->board_refresh_delay;
       }
+      b->board_refresh_decnt = MIN(b->board_refresh_decnt, b->board_refresh_delay);
     }
   }
 }
@@ -2073,6 +2102,9 @@ int main(int argc, char **argv)
   if (Prefs.debug & 1) {
     XSetErrorHandler(x_error_handler_debug);
     _Xdebug = 1; /* oblige la synchronisation */
+  } else {
+    XSetErrorHandler(x_error_handler);
+    XSetIOErrorHandler(x_io_error_handler);
   }
 
 
@@ -2256,6 +2288,8 @@ int main(int argc, char **argv)
     dock_refresh_horloge_mode(dock);
   }
 
+  //kb_create_input_context_for(dock, DOCK_WIN(dock));
+
   dock->wmccc_pid = -1;
 
   /* essaye de restorer la taille / position du pinnipede / newswin */
@@ -2286,6 +2320,7 @@ int main(int argc, char **argv)
 #  endif
 #endif  
   /* launching the network update thread */
+
   ccqueue_loop(dock);
 
   return 0;

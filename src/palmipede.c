@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.28 2005/09/25 12:08:55 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.29 2005/09/26 21:40:24 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.29  2005/09/26 21:40:24  pouaite
+  v 2.5.1b
+
   Revision 1.28  2005/09/25 12:08:55  pouaite
   ca marche encore ca ?
 
@@ -1351,7 +1354,8 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
     KeyReleaseMask | 
     EnterWindowMask | 
     LeaveWindowMask | 
-    FocusChangeMask;
+    FocusChangeMask; // raaaaah necessaire pour que les Input Method fonctionnent!
+  
   //  if (! ClickOnly) wa.event_mask |= EnterWindowMask | LeaveWindowMask ;
   wa.override_redirect = (Prefs.palmipede_override_redirect ? True : False) ;
   XChangeWindowAttributes (dock->display, ew->win,
@@ -1367,8 +1371,9 @@ editw_show(Dock *dock, SitePrefs *sp, int user_agent_mode)
                            EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT,EW_SHAPED_HEIGHT);
   */
   set_window_class_hint(dock->display, ew->win, "wmcoincoin", "palmipede");
-  kb_create_input_context_for(dock, ew->win);
-
+  //#ifdef OLD_KBCOINCOIN
+  kb_create_input_context_for(dock, ew->win, KB_PALMIPEDE);
+  //#endif
   /* cree le pixmap et le rempli de noir */
   ew->pix = XCreatePixmap(dock->display, ew->win, EW_SHAPED_WIDTH, EW_SHAPED_HEIGHT, 
 			  DefaultDepth(dock->display,dock->screennum));
@@ -1410,7 +1415,9 @@ void
 editw_unmap(Dock *dock, EditW *ew)
 {
   ew->mapped = 0;
-  kb_release_input_context();
+  //#ifdef OLD_KBCOINCOIN
+  kb_release_input_context(KB_PALMIPEDE);
+  //#endif
   //  fprintf(stderr, "destroy! %lx\n", (unsigned long)ew->win);
   XDestroyWindow(dock->display, ew->win);
   //  fprintf(stderr, "destroy2!\n");
@@ -1962,9 +1969,12 @@ editw_balise_tt(EditW *ew) {
   i = editw_insert_string(ew, "<tt></tt>"); if (i<5) editw_move_cursor_rel(ew,-5);
 }
 */
-
+#ifdef OLD_KBCOINCOIN
 #define FORWARD_KEY XSendEvent(dock->display, dock->rootwin, True, KeyPressMask, event); \
   if (editw_ismapped(dock->editw)) editw_set_kbfocus(dock, ew, 1);
+#else 
+#define FORWARD_KEY ;
+#endif
 
 static void floude(Dock *dock, char *s) {
   char *msg = s; 
@@ -1992,6 +2002,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   static unsigned ctrl_mem = 0;
   static unsigned lev = 0;
   if (!editw_ismapped(dock->editw) || ew->action != NOACTION) return 0; /* animation encours */
+#ifdef OLD_KBCOINCOIN
   if ((event->xkey.state & 0xdf60) || // c'était 0xdfe0 avant xfree 4.3 :-/ altgr est devenu "iso-levl3-shift" 
       (kb_state()->input_context && XFilterEvent(event, None))) {
     //printf("forward key: \n");
@@ -1999,6 +2010,9 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     return 1;
   }
   kb_lookup_string(dock, &event->xkey);
+#else
+  //if (need_lookup) kb_xim_lookup_key(&event->xkey, KB_PALMIPEDE);
+#endif
   if (!(event->xkey.state & ControlMask) || !(event->xkey.state & ShiftMask)) { ctrl_mem = 0; lev = 0; }
   else { ctrl_mem ^= kb_state()->ksym; ctrl_mem += (kb_state()->ksym & 0xff) << 4; lev++; }
   /*printf("klen=%2d %08x %c state=%08x buff=%02x%02x%02x%02x\n", 
@@ -2027,6 +2041,8 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
     }
     return 1;
   }
+
+  //printf("editw_handle_keypress: ksym=%04x len=%d\n", (int)kb_state()->ksym, kb_state()->klen);
 
   if (kb_state()->ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
     editw_insert_char(ew, (unsigned char)'¤');
@@ -2133,8 +2149,9 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       FORWARD_KEY; break;
     }
   } else {
+#ifdef OLD_KBCOINCOIN
     kb_lookup_mb_string(dock, &event->xkey);
-    //printf("(BIS) klen=%2d %08x %c\n", kb_state()->klen, kb_state()->ksym, kb_state()->ksym);
+#endif
 
     switch (kb_state()->ksym) {
     case XK_KP_Left:
@@ -2210,12 +2227,15 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       }
       break;
     default:
+#ifdef OLD_KBCOINCOIN
       if (kb_state()->ksym <= 0x00ff && (kb_state()->ksym & 0xff)) {
-        //printf("insert kb_state()->ksym=%04x -> car = '%c'", kb_state()->ksym, buff[0]);
-	//editw_insert_char(ew, (unsigned char)(kb_state()->ksym & 0xff));
 	if (kb_state()->buff[0])
 	  editw_insert_char(ew, (unsigned char)kb_state()->buff[0]);
       }
+#else
+      if (kb_state()->klen != 0)
+        editw_insert_char(ew, (unsigned char)kb_state()->buff[0]);
+#endif
       break;
     }
     /*

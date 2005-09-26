@@ -1,10 +1,13 @@
 /*
   coin_xutil : diverses fonctions complémentaires à raster.c pour la manip des images
 
-  rcsid=$Id: coin_xutil.c,v 1.12 2004/02/29 15:01:19 pouaite Exp $
+  rcsid=$Id: coin_xutil.c,v 1.13 2005/09/26 21:40:24 pouaite Exp $
 
   ChangeLog:
   $Log: coin_xutil.c,v $
+  Revision 1.13  2005/09/26 21:40:24  pouaite
+  v 2.5.1b
+
   Revision 1.12  2004/02/29 15:01:19  pouaite
   May the charles bronson spirit be with you
 
@@ -388,7 +391,7 @@ shade_XImage(const RGBAContext *rc, XImage *ximg, TransparencyInfo *ti)
   }
 }
 
-int x11_error_occured = 0;
+static int x11_error_occured = 0;
 
 int x_error_handler_bidon(Display *dpy, XErrorEvent *err)
 {
@@ -444,7 +447,8 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
   /* transparence pure, ça va vite */
   if (ti->type == FULL_TRANSPARENCY) {
     assert(shade_pix != None);
-    XSetErrorHandler(x_error_handler_bidon);
+    int (*old_handler)(Display *, XErrorEvent *);
+    old_handler = XSetErrorHandler(x_error_handler_bidon);
 
     if (use_fake_real_transparency) {
       ximg = XGetImage(rc->dpy, RootWindow(rc->dpy, rc->screen_number), rx, ry, rw, rh, 
@@ -456,7 +460,7 @@ extract_root_pixmap_and_shade(const RGBAContext *rc, int x, int y, int w, int h,
 		rx, ry, rw, rh, dx, dy);
     }
     XSync(rc->dpy,0);
-    XSetErrorHandler(NULL); 
+    XSetErrorHandler(old_handler); 
     if (x11_error_occured) { return -1; }
     else return 0;
   }
