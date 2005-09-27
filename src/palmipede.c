@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.29 2005/09/26 21:40:24 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.30 2005/09/27 16:59:13 pouaite Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.30  2005/09/27 16:59:13  pouaite
+  2.5.1c
+
   Revision 1.29  2005/09/26 21:40:24  pouaite
   v 2.5.1b
 
@@ -1633,7 +1636,6 @@ editw_build(Dock *dock)
   ALLOC_OBJ(ew, EditW);
   ew->mapped = 0;
   ew->action = NOACTION;
-  kb_build();
   ew->buff_num = 0;
   ew->win_xpos = ew->win_ypos = 0;
   ew->undo.buff = NULL;

@@ -1,3 +1,9 @@
+--------------------------v2.5.1-c-----------------------------------------
+2005-09-27  pouaite <c0in@altern.org>
+
+	* src/kbcoincoin.c (kb_xim_lookup_key): oops petit plantage avec
+	l'autoswallow.
+
 --------------------------v2.5.1-b-----------------------------------------
 2005-09-26  pouaite <c0in@altern.org>
 

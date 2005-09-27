@@ -28,56 +28,60 @@ KeySym kb_lookup_mb_string(Dock *dock UNUSED, XKeyEvent *event) {
 Status
 kb_xim_lookup_key(XKeyEvent *event, unsigned idx)
 {
-    static char *buf = 0;
-    static int buf_len, rlen;
-    Status status;
-    XIC ic = kb_state()->input_context[idx];
+  static char *buf = 0;
+  static int buf_len, rlen;
+  Status status;
+  XIC ic = kb_state()->input_context[idx];
 
-    assert(ic);
+  if (! buf) {
+    buf_len = BASE_BUFSIZE;
+    buf = malloc(buf_len);
+  }
+  memset(buf,0,buf_len);
+
+  if (!ic) {
+    rlen = XLookupString(event, buf, buf_len,
+			 &kb_state()->ksym, NULL); //KbState_.compose_status);
+    status = (rlen == 0 ? XLookupKeySym : XLookupBoth);
+  } else {
     kb_state()->ksym = 0;
-    if (! buf) {
-	buf_len = BASE_BUFSIZE;
-	buf = malloc(buf_len);
-    }
-    memset(buf,0,buf_len);
-
-    memset(buf, 0, buf_len);
     rlen = XmbLookupString(ic, event, buf, buf_len, 
-                           &kb_state()->ksym, &status);    
+			   &kb_state()->ksym, &status);    
     if ((status == XBufferOverflow)) {
-	buf_len += BASE_BUFSIZE;
-	buf = realloc(buf, buf_len);
-        memset(buf, 0, buf_len);
-	rlen = XmbLookupString(ic, event, buf, buf_len, &kb_state()->ksym, &status);
+      buf_len += BASE_BUFSIZE;
+      buf = realloc(buf, buf_len);
+      memset(buf, 0, buf_len);
+      rlen = XmbLookupString(ic, event, buf, buf_len, &kb_state()->ksym, &status);
     }
-    unsigned i;
-    switch (status) {
-      case XLookupNone:
-        //printf("XLookupNone\n");
-        rlen = 0;
-        return 0;
-        break;
-      case XLookupKeySym:
-        //printf("XLookupKeySym ksym=%d\n", (int)kb_state()->ksym);
-        rlen = 0;
-        break;
-      case XLookupChars:
-        //printf("XLookupChars len=%d ", rlen);
-        //for (i=0; i < buf_len; ++i) printf("%02x ", (unsigned char)buf[i]);
-        //printf("\n");
-        break;
-      case XLookupBoth:
-        //printf("XLookupBoth ksym=%d len=%d ", (int)kb_state()->ksym, rlen);
-        //for (i=0; i < buf_len; ++i) printf("%02x ", (unsigned char)buf[i]);
-        //printf("\n");
-        break;
-      default:
-        assert(0);
-    }
-    kb_state()->buff = (unsigned char*)buf;
-    kb_state()->status = status;
-    kb_state()->klen = rlen;
-    return status;
+  }
+  unsigned i;
+  switch (status) {
+    case XLookupNone:
+      //printf("XLookupNone\n");
+      rlen = 0;
+      return 0;
+      break;
+    case XLookupKeySym:
+      //printf("XLookupKeySym ksym=%d\n", (int)kb_state()->ksym);
+      rlen = 0;
+      break;
+    case XLookupChars:
+      //printf("XLookupChars len=%d ", rlen);
+      //for (i=0; i < buf_len; ++i) printf("%02x ", (unsigned char)buf[i]);
+      //printf("\n");
+      break;
+    case XLookupBoth:
+      //printf("XLookupBoth ksym=%d len=%d ", (int)kb_state()->ksym, rlen);
+      //for (i=0; i < buf_len; ++i) printf("%02x ", (unsigned char)buf[i]);
+      //printf("\n");
+      break;
+    default:
+      assert(0);
+  }
+  kb_state()->buff = (unsigned char*)buf;
+  kb_state()->status = status;
+  kb_state()->klen = rlen;
+  return status;
 }
 
 void kb_create_input_context_for(Dock *dock, Window win, unsigned idx) {

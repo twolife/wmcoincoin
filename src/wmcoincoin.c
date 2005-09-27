@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.96 2005/09/26 21:40:24 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.97 2005/09/27 16:59:13 pouaite Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.97  2005/09/27 16:59:13  pouaite
+  2.5.1c
+
   Revision 1.96  2005/09/26 21:40:24  pouaite
   v 2.5.1b
 
@@ -1623,6 +1626,7 @@ void initx(Dock *dock, int argc, char **argv) {
       printf("Erreur ! echec de XOpenIM() [locale=%s], ca pue encore plus !! -- \n",setlocale (LC_ALL, ""));
     }
   }
+  kb_build();
 
 
   /* get screen and root window */
@@ -1680,6 +1684,7 @@ void initx(Dock *dock, int argc, char **argv) {
                                         0, 0, 100, 100, 0, //pp->win_width,pp->win_height, 0,
                                         BlackPixel(dock->display, dock->screennum),
                                         WhitePixel(dock->display, dock->screennum));
+    kb_create_input_context_for(dock, dock->pp_win, KB_PINNIPEDE);
   } else dock->pp_win = None;
 
 
