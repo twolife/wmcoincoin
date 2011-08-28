@@ -20,9 +20,12 @@
  */
 
 /*
-  rcsid=$Id: board.c,v 1.32 2005/09/25 12:08:55 pouaite Exp $
+  rcsid=$Id: board.c,v 1.33 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
   $Log: board.c,v $
+  Revision 1.33  2011/08/28 20:13:19  enigmatriton
+  Mise Ã  jour du dÃ©pÃ´t par rapport Ã  la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+
   Revision 1.32  2005/09/25 12:08:55  pouaite
   ca marche encore ca ?
 
@@ -1017,6 +1020,151 @@ do_url_replacements(char **pmessage)
   }
 }
 
+/* Triton> Remplace (tout aussi laborieusement)
+ * <clock time="..."[ site="..."]>nhorloge</clock> par nhorloge
+ * Pour fonctionner avec les tribunes zoreliennes
+ * (zorel, tifauv, bouchot.org, !llinfo, ...)
+ */
+void
+do_clean_zorel_clocks(char **pmessage)
+{
+  /* zorel< est bien gentil avec ses tags clock mais ca fout en l'air
+   * l'affichage dans wmcoincoin. En plus, wmcc est deja pourvu d'un fantastique
+   * detecteur de nhorloges donc on va purement et simplement virer son bordel.
+   * message     = contenu du message nettoye
+   * not_parsed  = debut du message non parse
+   * deb_clock   = debut du tag clock (tabulation initiale incluse)
+   * fin_clock   = fin de ce meme tag clock
+   * tag_fermant = debut du tag de fermeture de clock (10 car avec les tabulations)
+   */
+  unsigned char *not_parsed, *deb_clock, *fin_clock, *tag_fermant;
+  unsigned char *message = NULL;
+
+	message = malloc(1);
+	*message = '\0';
+
+  not_parsed = *pmessage;
+  assert(not_parsed);
+  /* Tant que le message n'est pas fini de parser et qu'il y a des horloges.
+   * On en profite pour noter l'endroit ou commence l'horloge dans deb_clock.
+   */
+  while (not_parsed && (deb_clock = strstr(not_parsed, "\t<clock time=\""))) {
+    fin_clock = strstr(deb_clock, "\t>");
+		/* Ca fini _apres_ "\t>" donc +2 mais seulement si non nul */
+		if (fin_clock) fin_clock += 2;
+    tag_fermant = strstr(deb_clock, "\t</clock\t>");
+    /* Si tag_fermant est non nul, fin_clock l'est forcement (= tag_fermant + 8 dans le pire des cas) */
+    if (tag_fermant && (tag_fermant > fin_clock)) {
+      /* Bon, on a trouve une horloge zorelienne a peu pres correcte.
+       * Maintenant, faut nettoyer de deb_clock à fin_clock
+       * et de tag_fermant a tag_fermant+10
+       */
+      message = str_ncat(message, not_parsed, deb_clock - not_parsed); /* Avant le tag : copie */
+      message = str_ncat(message, fin_clock, tag_fermant - fin_clock); /* La nhorloge : copiee */
+      not_parsed = tag_fermant+10; /* Pas de nhorloge dans l'intervalle, on saute */
+    }
+    else if (tag_fermant) {
+      /* Le tag semble en vrac mais on va quand même regarder la suite si elle existe */
+      message = str_ncat(message, not_parsed, (tag_fermant+10) - not_parsed);
+      not_parsed = tag_fermant + 10;
+    }
+    else if (fin_clock) {
+      /* Il n'y a pas de tag de fermeture, tant pis, on supprime celui d'ouverture. */
+      message = str_ncat(message, not_parsed, deb_clock - not_parsed); /* Avant le tag : copie */
+      message = str_cat(message, fin_clock); /* on copie la fin du message */
+      not_parsed = NULL;
+    }
+    else {
+      /* C'est pas la merde maintenant, on n'a meme pas de fin de tag. */
+      message = str_cat(message, not_parsed); /* On n'a plus qu'à copier la fin du message. */
+      not_parsed = NULL;
+    }
+    /* Si on est la fin (cas nominal ou tag en vrac) */
+    if (not_parsed && ((*not_parsed) == '\0')) {
+      not_parsed = NULL;
+    }
+  }
+	/* S'il reste une partie non lue, c'est qu'il n'y a plus d'horloge dedans, on la copie */
+	if (not_parsed) message = str_cat(message, not_parsed);
+  /* On efface le message d'origine et on le remplace par la version epuree */
+  free(*pmessage);
+  *pmessage = message;
+}
+
+/* Triton> Remplace (toujours laborieusement)
+ * <a class=" smiley ..." href="...">[:totoz]</a> par [:totoz]
+ * Pour fonctionner avec les tribunes zoreliennes
+ * (zorel, tifauv, bouchot.org, !llinfo, ...)
+ */
+void
+do_clean_zorel_totozz(char **pmessage)
+{
+  /* zorel< est bien gentil avec ses tags autour des [:totoz] mais ca fout en
+	 * l'air l'affichage dans wmcoincoin. En plus, wmcc est deja pourvu d'un
+   * extraordinaire detecteur de [:totoz] donc on va purement et simplement
+	 * virer son bordel.
+   * message     = contenu du message nettoye
+   * not_parsed  = debut du message non parse
+   * deb_totoz   = debut du tag <a class="smiley snap_nopreview"
+   * fin_totoz   = fin de ce meme tag d'ancre
+   * tag_fermant = debut du tag de fermeture de [:totoz]
+   */
+  unsigned char *not_parsed, *deb_totoz, *fin_totoz, *tag_fermant;
+  unsigned char *message = NULL;
+
+	message = malloc(1);
+	*message = '\0';
+
+  not_parsed = *pmessage;
+  assert(not_parsed);
+  /* Tant que le message n'est pas fini de parser et qu'il y a des [:totoz].
+   * On en profite pour noter l'endroit ou commence les [:totoz] dans deb_totoz.
+   */
+  while (not_parsed && (deb_totoz = strstr(not_parsed, "\t<a class=\"smiley "))) {
+    fin_totoz = strstr(deb_totoz, "\t>[:");
+		/* Ca fini _apres_ "\t>" donc +2 mais seulement si non nul */
+		if (fin_totoz) fin_totoz += 2;
+    tag_fermant = strstr(deb_totoz, "]\t</a\t>");
+		/* Le crochet fermant, c'est juste pour s'assurer du fait que c'est un [:totoz] */
+		if (tag_fermant) ++tag_fermant;
+		/* Si tag_fermant > fin_totoz et fin_totoz > 0 alors tag_fermant > 0, c'est pourtant evident */
+    if (fin_totoz && (tag_fermant > fin_totoz)) {
+      /* Bon, on a trouve un tag zorelien a peu pres correct.
+       * Maintenant, faut nettoyer de deb_totoz à fin_totoz
+       * et de tag_fermant a tag_fermant+6
+       */
+      message = str_ncat(message, not_parsed, deb_totoz - not_parsed); /* Avant le tag : copie */
+      message = str_ncat(message, fin_totoz, tag_fermant - fin_totoz); /* Le [:totoz]  : copie */
+      not_parsed = tag_fermant+6; /* Pas de [:totoz] dans l'intervalle, on saute */
+    }
+    else if (tag_fermant && fin_totoz) {
+      /* Le tag semble en vrac mais on va quand même regarder la suite si elle existe */
+      message = str_ncat(message, not_parsed, (tag_fermant+6) - not_parsed);
+      not_parsed = tag_fermant + 6;
+    }
+    else if (fin_totoz && (NULL == tag_fermant)) {
+      /* Il n'y a pas de tag de fermeture, tant pis, on supprime celui d'ouverture. */
+      message = str_ncat(message, not_parsed, deb_totoz - not_parsed); /* Avant le tag : copie */
+      message = str_cat(message, fin_totoz); /* on copie la fin du message */
+      not_parsed = NULL;
+    }
+    else {
+      /* C'est pas la merde maintenant, on n'a meme pas de fin de tag. */
+      message = str_cat(message, not_parsed); /* On n'a plus qu'à copier la fin du message. */
+      not_parsed = NULL;
+    }
+    /* Si on est la fin (cas nominal ou tag en vrac) */
+    if (not_parsed && ((*not_parsed) == '\0')) {
+      not_parsed = NULL;
+    }
+  }
+	/* S'il reste une partie non lue, c'est qu'il n'y a plus d'horloge dedans, on la copie */
+	if (not_parsed) message = str_cat(message, not_parsed);
+  /* On efface le message d'origine et on le remplace par la version epuree */
+  free(*pmessage);
+  *pmessage = message;
+}
+
 typedef struct URLhash {
   unsigned char md5digest[16];
   struct URLhash *next;
@@ -1203,6 +1351,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   message = nettoie_message_tags(_message);
 
   do_url_replacements(&message);
+  /* Triton> Le slip de zorel< est plein de morceaux */
+  do_clean_zorel_clocks(&message);
+  do_clean_zorel_totozz(&message);
 
   char *saved_message = strdup(message);
 
@@ -1676,9 +1827,11 @@ board_decode_message(Board *board, char *dest, const char *src) {
     s2 = str_substitute(s, "</u>", "\t</u\t>"); free(s); s = s2;
     s2 = str_substitute(s, "<s>", "\t<s\t>"); free(s); s = s2;
     s2 = str_substitute(s, "</s>", "\t</s\t>"); free(s); s = s2;
-    s2 = str_substitute(s, "<a href", "\t<a href"); free(s); s = s2;
+    s2 = str_substitute(s, "<a ", "\t<a "); free(s); s = s2;
     s2 = str_substitute(s, "\">", "\"\t>"); free(s); s = s2;
     s2 = str_substitute(s, "</a>", "\t</a\t>"); free(s); s = s2;
+    s2 = str_substitute(s, "<clock time", "\t<clock time"); free(s); s = s2;
+    s2 = str_substitute(s, "</clock>", "\t</clock\t>"); free(s); s = s2;
     s2 = str_substitute(s, "<!--", "\t<!--"); free(s); s = s2;
     s2 = str_substitute(s, "-->", "--\t>"); free(s); s = s2;
     strncpy(dest, s, BOARD_MSG_MAX_LEN); dest[BOARD_MSG_MAX_LEN-1] = 0; free(s);
@@ -1716,6 +1869,11 @@ regular_board_update_old(Board *board, char *path) {
   const char *board_sign_login = "<login>";
   const char *my_useragent = board->coin_coin_useragent;
   wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
+  /* Triton> D'abord, c'est plus propre que Accept: * / *
+             ensuite ca evite de recuperer un truc gzippe par le serveur web
+             parce que ce boulet de zorel< ne pense qu'a lui -__-'
+   */
+  r.accept = strdup("text/xml");
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   wmcc_log_http_request(board->site, &r);
@@ -1922,6 +2080,8 @@ regular_board_update(Board *board, char *path) {
 		    (especially with broken backends, yes it happens sometimes) */
   const char *my_useragent = board->coin_coin_useragent;
   wmcc_init_http_request_with_cookie(&r, board->site->prefs, path);
+  /* Triton> Pour les commentaires, il faut voir au dessus */
+  r.accept = strdup("text/xml");
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   wmcc_log_http_request(board->site, &r);

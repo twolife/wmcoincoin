@@ -176,6 +176,7 @@ typedef struct _GeneralPrefs{
   int http_timeout; /* en secondes */
   int http_inet_ip_version; /* 4 => IPV4 only, 6 => IPV6 only, autre => n'importe lequel */
   char *gogole_search_url;
+  char *wikipedia_search_url;
 
 
   /* pour savoir si on utilise l'icone (style windowmaker) ou bien la fenetre (style swallow kde) */
@@ -188,6 +189,7 @@ typedef struct _GeneralPrefs{
   int auto_swallow; /* tres experimental */
   
   int palmipede_override_redirect;
+  int palmipede_enable_scroll_wheel_for_boulets;
 
   int use_balloons;
   char *balloon_fn_family;

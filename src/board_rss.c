@@ -209,6 +209,10 @@ rss_board_update(Board *board, char *path) {
   prelog_clear();
   clear_XMLBlock(&xmlb);
   wmcc_init_http_request(&r, board->site->prefs, path);
+  /* Triton> Tant qu'a faire de mettre un header "Accept:", autant le mettre partout
+             Hooo, c'est cool, y'en a un prevu pour les flux rss au lieu d'un bete
+             text/xml generique et banal [:freekill]*/
+  r.accept = strdup("application/rss+xml");
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   if (!http_is_ok(&r)) { http_request_close(&r);return 1; }

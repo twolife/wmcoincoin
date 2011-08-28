@@ -20,9 +20,12 @@
 
  */
 /*
-  rcsid=$Id: wmcoincoin.c,v 1.97 2005/09/27 16:59:13 pouaite Exp $
+  rcsid=$Id: wmcoincoin.c,v 1.98 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
   $Log: wmcoincoin.c,v $
+  Revision 1.98  2011/08/28 20:13:19  enigmatriton
+  Mise à jour du dépôt par rapport à la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+
   Revision 1.97  2005/09/27 16:59:13  pouaite
   2.5.1c
 
@@ -714,6 +717,11 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
   snprintf(path, 2048, "%s", site->prefs->post_url);
 
   wmcc_init_http_request_with_cookie(&r, site->prefs, path);
+  /* Triton> Euh..., je ne suis pas sur de ce que je dois mettre ici,
+             je crois que je vais repousser � plus tard.
+             Bon, tonton zorel< a dit text/xml alors je mets text/xml 
+             hop, un truc de plus qui est fait ! Patch Accept: fini. \o/ */
+  r.accept = strdup("text/xml");
   if (dock->post_anonyme && r.cookie) { free(r.cookie); r.cookie = NULL; }
   r.type = HTTP_POST;
   r.referer = strdup(path); url_au_coiffeur(r.referer, 1);
@@ -728,10 +736,17 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
   BLAHBLAH(1,myprintf("request sent, status=%<YEL %d> (%d)\n", r.telnet.error, flag_cancel_task));
   wmcc_log_http_request(site, &r);
   if (http_is_ok(&r)) {
-    unsigned char *reponse; 
+    /* trimer servira a nettoyer les reponses pas vides de zorel< son espace est chiant */
+    unsigned char *reponse, *trimer; 
 
     reponse = http_read_all(&r, site->prefs->site_name);
-    if ( *reponse != 0 ) {
+    trimer = reponse;
+    /* nettoyage des caracteres blancs : espace, tab, CR et LF */
+    while ((*trimer == ' ') ||
+           (*trimer == '\r') ||
+           (*trimer == '\t') ||
+           (*trimer == '\n')) trimer++;
+    if ( *trimer != 0 ) {
 			char *s;
       s = formate_erreur( site->prefs->site_name, reponse ); 
       if (s) { msgbox_show(dock, s); free(s); }

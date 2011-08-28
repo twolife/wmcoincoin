@@ -162,6 +162,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVEBOOL(OPT_dock_draw_border,draw_border);
   G_SAVEBOOL(OPT_dock_iconwin,use_iconwin);
   G_SAVEBOOL(OPT_palmipede_override_wmanager, palmipede_override_redirect);
+  G_SAVEBOOL(OPT_palmipede_enable_scroll_wheel_for_boulets, palmipede_enable_scroll_wheel_for_boulets);
   G_SAVEBOOL(OPT_dock_use_balloons,use_balloons);
   G_SAVEBOOL(OPT_dock_auto_swallow,auto_swallow);
   G_SAVESTR(OPT_dock_balloons_font_family,balloon_fn_family);
@@ -177,6 +178,7 @@ prefs_write_to_file(GeneralPrefs *p, FILE *f) {
   G_SAVESTR(OPT_http_browser,browser_cmd);
   G_SAVESTR(OPT_http_browser2,browser2_cmd);
   G_SAVESTR(OPT_http_gogole_search_url, gogole_search_url);
+  G_SAVESTR(OPT_http_wikipedia_search_url, wikipedia_search_url);
   G_SAVEINT(OPT_http_timeout, http_timeout);
   G_SAVEINT(OPT_http_inet_ip_version, http_inet_ip_version);
   G_SAVESTR(OPT_pinnipede_font_family,pp_fn_family);

@@ -12,7 +12,7 @@ if [ -n "$proxy" ]; then
   proxy_option="-x "$proxy" -U "$proxy_auth
 fi
 
-siteroot="http://forum.hardware.fr/images/perso/"
+siteroot="http://totoz.eu/"
 extlist="gif,png"
 
 usage()

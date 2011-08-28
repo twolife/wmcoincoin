@@ -1,7 +1,10 @@
 /*
-  rcsid=$Id: http.h,v 1.18 2004/03/07 13:51:12 pouaite Exp $
+  rcsid=$Id: http.h,v 1.19 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
   $Log: http.h,v $
+  Revision 1.19  2011/08/28 20:13:19  enigmatriton
+  Mise à jour du dépôt par rapport à la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+
   Revision 1.18  2004/03/07 13:51:12  pouaite
   commit du dimanche
 
@@ -102,6 +105,7 @@ typedef struct {
   char *user_agent;
   char *referer;
   char *cookie;
+  char *accept; /* Triton> Accept: header/http */
 
   char **p_last_modified; /* is modified by http_skip_header */
 

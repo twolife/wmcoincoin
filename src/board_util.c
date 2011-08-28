@@ -21,9 +21,12 @@
 /*
   fonctions diverses sur la tribune
 
-  rcsid=$Id: board_util.c,v 1.19 2004/04/18 15:37:28 pouaite Exp $
+  rcsid=$Id: board_util.c,v 1.20 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
   $Log: board_util.c,v $
+  Revision 1.20  2011/08/28 20:13:19  enigmatriton
+  Mise à jour du dépôt par rapport à la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+
   Revision 1.19  2004/04/18 15:37:28  pouaite
   un deux un deux
 
@@ -562,7 +565,13 @@ check_for_horloge_ref_basic_helper(const unsigned char *ww, const char **site_na
       if (*p == (unsigned char)'�') num = 1;
       if (*p == (unsigned char)'�') num = 2;
       if (*p == ':') {
-	p++; if (*p >= '0' && *p <= '9') num = *p - '1';
+        p++; if (*p >= '0' && *p <= '9') {
+          num = *p - '1';
+          /* Triton> Magnifique patch pour le cas ou 10 posts ou plus arriveraient a la meme seconde */
+          p++; if (*p >= '0' && *p <= '9') {
+            num = (10 * (num+1)) + *p - '1';
+          }
+        }
       }
     } else s = -1;
 

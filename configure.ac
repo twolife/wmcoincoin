@@ -3,6 +3,9 @@ dnl autoconf input for wmCoinCoin
 dnl rcsid=$id$
 dnl ChangeLog: 
 dnl   $Log: configure.ac,v $
+dnl   Revision 1.46  2011/08/28 20:13:19  enigmatriton
+dnl   Mise à jour du dépôt par rapport à la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+dnl
 dnl   Revision 1.45  2005/09/27 16:59:13  pouaite
 dnl   2.5.1c
 dnl
@@ -223,7 +226,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite � la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.5.1c, c0in@altern.org)
+AC_INIT(wmcoincoin, 2.5.1f, triton@kumal.info)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -236,8 +239,8 @@ AC_CANONICAL_HOST
 COIN_ARCH="${host_cpu}-${host_vendor}-${host_os}"
 AC_SUBST(COIN_ARCH)
 case $host_os in
-  *cygwin* ) CYGWIN=yes;;
-         * ) CYGWIN=no;;
+  *cygwin* ) CYGWIN=yes; EXEEXT=".exe";;
+         * ) CYGWIN=no; EXEEXT="";;
 esac
 
 dnl internationalization macros
@@ -309,6 +312,8 @@ LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
 CFLAGS="$CFLAGS $X_CFLAGS"
 dnl  -I/usr/include/X11/Xft -I/usr/include/freetype2"
 
+dnl le PKG_CONFIG_PATH pour cygwin qui est un peu con
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/X11R6/lib/pkgconfig
 PKG_CHECK_MODULES(XFT, [xft])
 AC_SUBST(XFT_CFLAGS)
 AC_SUBST(XFT_LIBS)
@@ -339,7 +344,7 @@ AC_ARG_ENABLE(wmccc,
 
 build_wmcc_player="yes"
 AC_ARG_ENABLE(wmcoincoin_player,
- [  --enable-wmcoincoin_player Builds the wmcoincoin_player (requires imlib2) (viewer for hfr pictures)
+ [  --enable-wmcoincoin_player Builds the wmcoincoin_player (requires imlib2) (viewer for totoz.eu pictures)
   --disable-wmcoincoin_player  Do not build wmcoincoin_player],
  [ if   test "x$enableval" = "xno" ; then
 	build_wmcc_player="no"
@@ -370,7 +375,7 @@ dnl AC_SUBST(GTK_LIBS)
         dnl  AM_GLIB_GNU_GETTEXT
 
   dnl AM_PATH_GTK(1.2.0, , AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path? If you dont have gtk you wont be able to build the wmccc try running configure with --disable-wmccc))
-  WMCCC="wmccc"
+  WMCCC="wmccc$EXEEXT"
 fi
 AC_SUBST(WMCCC)
 
@@ -483,7 +488,7 @@ if test "x$build_wmcc_player" = "xyes"; then
         build_wmcc_player="no"
   else
         AC_DEFINE(HAVE_IMLIB2,1,[use imlib2 for the player])
-        WMCOINCOIN_PLAYER="wmcoincoin_player"
+        WMCOINCOIN_PLAYER="wmcoincoin_player${EXEEXT}"
         build_wmcc_player="yes"
         AC_DEFINE(HAVE_WMCOINCOIN_PLAYER,1,[wmcoincoin_player is supported])
   fi

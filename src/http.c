@@ -721,6 +721,7 @@ http_print_request(HttpRequest *r)
 
   myprintf("useragent = '%<YEL %s>'\n", r->user_agent);
   myprintf("cookie = '%<YEL %s>'\n", r->cookie);
+  myprintf("accept = '%<YEL %s>'\n", r->accept); /* Triton> Accept: header/http */
   myprintf("last_modified = '%<YEL %s>'\n", r->p_last_modified ? *r->p_last_modified : "unused");
   myprintf("is_chunk_encoded = '%<YEL %d>'\n", r->is_chunk_encoded);
   myprintf("chunk_num = '%<YEL %d>'\n", r->chunk_num);
@@ -735,6 +736,8 @@ http_print_request(HttpRequest *r)
   analyse tres rapidement la reponse du serveur
 
   si il renvoie un vrai header, avec un 200 OK ou 302 Found, ça roule
+  Triton> s'il (Tu devrais apprendre le francais mon cher pouaite<) renvoie 201 Created, c'est bon aussi
+          c'est a cause de zorel< qui fait rien qu'a donner des comportements bizarres a sa future Tribune Web 4.2
   si il renvoie autre chose (404 etc..) on renvoie r->error=1
   si il y a une connexion timeout, on renvoie r->error=2
 */
@@ -776,7 +779,8 @@ http_skip_header(HttpRequest *r)
 	      r->content_length = 0; /* ça sert à rien d'essayer de lire un truc vide 
 					c'est pas super joli de faire ça ici mais ça ira pour cette fois
 				      */
-	    } else if (r->response != 200 && r->response != 302) {
+	    } else if ((r->response != 200) && (r->response != 201) && (r->response != 302)) {
+              /* Triton> maintenant, le 201 Created renvoyé par la tribune de test de zorel n'indique plus d'erreur */
               /*if (strcasecmp("200 OK\n", buff+j+1) != 0 && 
 		strcasecmp("302 Found\n", buff+j+1) != 0 &&
 		strcasecmp("302 Moved Temporarily\n", buff+j+1) != 0) {*/
@@ -1072,7 +1076,17 @@ http_request_send(HttpRequest *r)
 			  r->referer);
   }
 
+  /* Triton>
+     le champ HttpRequest.accept a ete ajoute
+     zorel< a decide que text/xml etait mieux que * / * donc on fait comme il a dit
+     maintenant, le accept _devrait_ etre sette partout
+   */
+  if (r->accept) {
+    header = str_cat_printf(header, "Accept: %s" CRLF, r->accept);
+  }
+  else {
   header = str_cat_printf(header, "Accept: */*" CRLF);
+  }
 
   header = str_cat_printf(header, "Connection: close" CRLF);
   if (r->type == HTTP_GET) {
@@ -1163,6 +1177,7 @@ void http_request_close (HttpRequest *r) {
   FREE_STRING(r->user_agent);
   FREE_STRING(r->referer);
   FREE_STRING(r->cookie);
+  FREE_STRING(r->accept); /* Triton> Accept: header/http */
   FREE_STRING(r->post);
   r->content_length = -1;
   telnet_session_close(&r->telnet);

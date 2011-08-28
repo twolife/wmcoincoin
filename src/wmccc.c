@@ -1173,10 +1173,10 @@ tree_selection_changed_cb (GtkTreeSelection *selection, gpointer data)
 }
 */
 
-struct SiteListModel {
+typedef struct SiteListModel {
   GtkListStore *store;
   GtkTreeSelection *select;
-};
+} SiteListModel;
 
 int sitelist_iter_to_sid(GtkTreeModel *store, GtkTreeIter *iter) {
   gchar *site_name = NULL;
@@ -1209,7 +1209,7 @@ void sitelist_update_site_order() {
   }
 }
 
-void sitelist_remove_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
+void sitelist_remove_cb(GtkWidget *button UNUSED, SiteListModel *mdl) {
   GtkTreeIter iter;
   int count, j;
   sitelist_update_site_order();
@@ -1231,7 +1231,7 @@ void sitelist_remove_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   gtk_dialog_response(GTK_DIALOG(sitelist_dialog(NULL)),1); 
 }
 
-void sitelist_edit_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
+void sitelist_edit_cb(GtkWidget *button UNUSED, SiteListModel *mdl) {
   GtkTreeIter iter;
   int count, count2 = 0;
   glob.nb_selected_sites = 0;
@@ -1262,7 +1262,7 @@ void sitelist_edit_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   } else quick_message("Please concentrate yourself!\nYou forgot to select (at least) one site");
 }
 
-void sitelist_colors_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
+void sitelist_colors_cb(GtkWidget *button UNUSED, SiteListModel *mdl) {
   GtkTreeIter iter;
   int count = 0, count2 = 0;
   glob.nb_selected_sites = 0;
@@ -1280,7 +1280,7 @@ void sitelist_colors_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
   } else quick_message("Please concentrate yourself!\nYou forgot to select (at least) one site");
 }
 
-void sitelist_proxy_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
+void sitelist_proxy_cb(GtkWidget *button UNUSED, SiteListModel *mdl) {
   GtkTreeIter iter;
   int count = 0, count2 = 0;
   glob.nb_selected_sites = 0;
@@ -1299,11 +1299,11 @@ void sitelist_proxy_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl) {
                        "If you may to change proxy settings for all sites, select them all.");
 }
 
-void sitelist_new_site_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl UNUSED) {
+void sitelist_new_site_cb(GtkWidget *button UNUSED, SiteListModel *mdl UNUSED) {
   wmccc_run_dialog(DLG_BRONSON_WIZARD,TRUE);
 }
 
-void pinnipede_settings_cb(GtkWidget *button UNUSED, struct SiteListModel *mdl UNUSED) {
+void pinnipede_settings_cb(GtkWidget *button UNUSED, SiteListModel *mdl UNUSED) {
   wmccc_run_dialog(DLG_GLOBAL_PINNIPEDE_OPTIONS,FALSE);
 }
 
@@ -1344,7 +1344,7 @@ void sitelist_site_enabled_toggled_cb(GtkCellRendererToggle *cell UNUSED,
 
 
 int prepare_sitelist_dialog(int isinit) {
-  static struct SiteListModel mdl = {0,0};
+  static SiteListModel mdl = {0,0};
   GtkTreeIter   iter;
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;

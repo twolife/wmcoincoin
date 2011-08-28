@@ -1,5 +1,5 @@
 ### -*- mode: wmccoptions -*-
-###fichier d'options rcsid=$Id: options,v 1.66 2005/06/11 22:47:39 pouaite Exp $
+###fichier d'options rcsid=$Id: options,v 1.67 2011/08/28 20:13:19 enigmatriton Exp $
 
 ###vous pouvez decommenter des options et changer leur valeurs
 
@@ -399,7 +399,7 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 #OBSOLETE#[.]board.auto_refresh: on
 
 ### active la reconnaissance auto des mots du style [:totoz]
-### pour afficher l'image correspondante trouvee dans les smileys de hfr
+### pour afficher l'image correspondante trouvee dans les smileys de totoz.eu
 ### le d/l d'une image est assure par wmcc-totoz-get
 ### l'affichage par wmcoincoin_player
 #board.enable_hfr_pictures: on
@@ -470,6 +470,9 @@ board.miniua_rule: ua:".*Linux.*" => color:="#80ff80"
 ### les versions < 2.4.6 avaient cette option a true -- dans ce cas, le palmipede
 ### gere le focus lui-meme (pas toujours bien)
 #palmipede.override_wmanager: False
+
+### changement de site actif avec la roulette dans le palmi
+#palmipede.enable_scroll_wheel_for_boulets: False
 
 ### ces petits ballons d'aide peuvent être casse-couilles
 #dock.use_balloons: True

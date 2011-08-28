@@ -17,9 +17,12 @@
  */
 
 /*
-  rcsid=$Id: palmipede.c,v 1.30 2005/09/27 16:59:13 pouaite Exp $
+  rcsid=$Id: palmipede.c,v 1.31 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
   $Log: palmipede.c,v $
+  Revision 1.31  2011/08/28 20:13:19  enigmatriton
+  Mise à jour du dépôt par rapport à la version 2.5.1f sortie il y a 4 ans (le 26 septembre 2007) !
+
   Revision 1.30  2005/09/27 16:59:13  pouaite
   2.5.1c
 
@@ -2072,6 +2075,42 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       case 'g': editw_insert_string(ew, "Ta gueule pwet "); break;
       case 'Z':
       case 'z': editw_insert_string(ew, "La SuSE sa sent bon, sai libre "); break;
+      /* ci-dessous la formidable contribution de motodashi */
+      case 'J':
+      case 'j': editw_insert_string(ew, "\\o/ "); break;
+      case 'K':
+      case 'k': editw_insert_string(ew, "/o\\ "); break;
+      case 'H':
+      case 'h': editw_insert_string(ew, "[:haha]"); break;
+      case 'A':
+      case 'a': editw_insert_string(ew, "[:aloyd]"); break;
+      case 'W':
+      case 'w': editw_insert_string(ew, "[:cate winigan]"); break;
+      case 'T':
+      case 't': editw_insert_string(ew, "[:papatte]"); break;
+      case 'R':
+      case 'r': editw_insert_string(ew, "[:uxam]"); break;
+      case 'Q':
+      case 'q': editw_insert_string(ew, "sai maure icitte"); break;
+      case 'X':
+      case 'x': editw_insert_string(ew, "<b>Daubian is dying !</b>"); break;
+      /*case 'Z':
+            case 'z': editw_insert_string(ew, "<b>Merdriva is dead</b>");
+                break;*/
+      case '1': editw_insert_string(ew, "[:totoz]"); break;
+      case '2': editw_insert_string(ew, "[:infocore]"); break;
+      case '3': editw_insert_string(ew, "[:kibito]"); break;
+      case '4': editw_insert_string(ew, "[:itm]"); break;
+      case '5': editw_insert_string(ew, "[:artishow]"); break;
+      case '6': editw_insert_string(ew, "[:dodo]"); break;
+      case '7': editw_insert_string(ew, "[:pikazzz]"); break;
+      case '8': editw_insert_string(ew, "[:titoui]"); break;
+      case '9': editw_insert_string(ew, "[:m-power-bmw]"); break;
+      case '0': editw_balise(ew, _("[:"), "]"); break;
+      case '@': editw_insert_string(ew, "[:c@ssius]"); break;
+      case '^': editw_insert_string(ew, "�bloub�"); break;
+      /* end of motodashi */
+      
       case 'F':
       case 'f': editw_set_pinnipede_filter(dock); break;
       case 'L':
@@ -2126,11 +2165,11 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 
     case '_': editw_undo(dock, ew); break;
 
-    case XK_Tab:
+      /*case XK_Tab:
       {
 	editw_next_site(dock,+1);
       } break;
-
+      */
     case XK_KP_Left:
     case XK_Left:
       editw_move_prev_word(ew, event->xkey.state & ShiftMask); break;
@@ -2321,12 +2360,13 @@ editw_handle_button_press(Dock *dock, EditW *ew, XButtonEvent *event)
   } else if (event->button == Button1) {
     XRaiseWindow(dock->display, ew->win);
   }
-  /*if (event->button == Button4) {
-    editw_next_site(dock,-1);
-  } else if (event->button == Button5) {
-    editw_next_site(dock,+1);
+  if (Prefs.palmipede_enable_scroll_wheel_for_boulets) {
+    if (event->button == Button4) {
+      editw_next_site(dock,-1);
+    } else if (event->button == Button5) {
+      editw_next_site(dock,+1);
+    }
   }
-  */
 }
 
 void editw_change_current_site(Dock *dock, int sid) {  

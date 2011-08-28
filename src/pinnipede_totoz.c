@@ -26,7 +26,7 @@ struct pp_totoz {
 volatile int pp_totoz_state_cnt = 0; /* incrementé a chaque changement d'état d'une image */
 
 static pp_totoz_img*
-pp_totoz_find_img_(Pinnipede *pp, int hash, int *found) {
+pp_totoz_find_img_(Pinnipede *pp, int hash, int *found, const char *name) {
   int i0, i1;
   *found = 0;
   if (pp->totoz->nb_img == 0) return pp->totoz->img;
@@ -39,8 +39,18 @@ pp_totoz_find_img_(Pinnipede *pp, int hash, int *found) {
     else if (hash > pp->totoz->img[i2].hash) i0 = i2+1;
     else {i0 = i2; break; }
   }
-  if (hash == pp->totoz->img[i0].hash) *found = 1;
-  return pp->totoz->img + i0 + (hash <= pp->totoz->img[i0].hash?0:1);
+
+  /* on gere les collisions a la truelle */
+  while (i0 > 0 && pp->totoz->img[i0-1].hash == hash) --i0;
+  int i;
+  for (i = i0; (hash == pp->totoz->img[i].hash) && i < pp->totoz->nb_img; ++i) {
+    if (strcmp(name, pp->totoz->img[i].name) == 0) {
+      i0 = i; *found = 1;
+    }
+  }
+
+  i = i0 + (hash <= pp->totoz->img[i0].hash?0:1);
+  return pp->totoz->img + i;
 }
 
 /*
@@ -51,12 +61,17 @@ pp_totoz_register_img(Pinnipede *pp, char *imgname, int status) {
   int hash = str_hache(imgname, strlen(imgname));
   pp_totoz_img *img;
   int found;
-  img = pp_totoz_find_img_(pp,hash,&found);
+  img = pp_totoz_find_img_(pp,hash,&found,imgname);
   if (found) {
-    if (strcmp(imgname, img->name) != 0) {
+    /*if (strcmp(imgname, img->name) != 0) {
       BLAHBLAH(0,printf("ouiiiin collision de hache tout pourri: '%s' = '%s' -> "
                         "taper sur l'auteur pour qu'il cherche une vrai fonction de hachage\n", imgname, img->name));
-    }
+                        }
+                        PLUS POSSIOBLE.
+    */
+    assert(strcmp(imgname, img->name) == 0); 
+    assert(img - pp->totoz->img < pp->totoz->nb_img);
+
     if (img->status != status) pp_totoz_state_cnt++;
     img->status = status;
   } else {
@@ -74,10 +89,19 @@ pp_totoz_register_img(Pinnipede *pp, char *imgname, int status) {
     img->mime = 0;
     img->w = img->h = 0;
     pp_totoz_state_cnt++;
+
     BLAHBLAH(1, myprintf("new image registered: '%<YEL %s>'\n", imgname));
+    unsigned i, cavachier = 0; 
+    for (i=0; i < pp->totoz->nb_img; ++i) {
+      //printf(" %c %08x %s\n", (i == imgi) ? '!' : ' ', pp->totoz->img[i].hash, pp->totoz->img[i].name);
+      if (i != imgi && strcmp(imgname, pp->totoz->img[i].name)==0) {
+        cavachier = 1;
+      }
+    }
+    if (cavachier) { printf("ca va chier\n"); assert(0); }
   }
-  if (img > pp->totoz->img) assert(img->hash > (img-1)->hash);
-  if (img < pp->totoz->img+pp->totoz->nb_img-1) assert(img->hash < (img+1)->hash);
+  if (img > pp->totoz->img) assert(img->hash >= (img-1)->hash);
+  if (img < pp->totoz->img+pp->totoz->nb_img-1) assert(img->hash <= (img+1)->hash);
   return img;
 }
 
@@ -86,7 +110,9 @@ pp_totoz_img_status(Pinnipede *pp, char *imgname) {
   int hash = str_hache(imgname, strlen(imgname));
   pp_totoz_img *img;
   int found;
-  img = pp_totoz_find_img_(pp,hash,&found);
+  img = pp_totoz_find_img_(pp,hash,&found, imgname);
+
+  //printf("pp_totoz_img_status '%s' : %d %d/%d\n",imgname, found, img - pp->totoz->img, pp->totoz->nb_img);
   if (found) { return img->status; }
   else { pp_totoz_register_img(pp, imgname, PP_TOTOZ_STATUS_UNKNOWN); return PP_TOTOZ_STATUS_UNKNOWN; }
 }
@@ -434,7 +460,7 @@ pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
   HttpRequest r;
   char *imgurl=NULL, *pathimg=NULL, *pathdesc=NULL, *cmd;
   int is_found=0, i=0, lu;
-  static char siteroot[]="http://forum.hardware.fr/images/perso";
+  static char siteroot[]="http://totoz.eu";
   static char *extlist[]={"gif", "png", NULL};
   static char *mimelist[]={"image/gif", "image/png", NULL};
   char buf[1500];
@@ -447,6 +473,8 @@ pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
   while( !is_found && extlist[i] ) {
     imgurl = str_printf("%s/%s.%s", siteroot, imgfname, extlist[i]);
     wmcc_init_http_request(&r, dock->sites->list->prefs, imgurl);
+    /* Triton> Et hop, on supporte le header Accept: image/gif pour les images \o/ */
+    r.accept = strdup(mimelist[i]);
     http_request_send(&r);
 
     //printf("pp_totoz_get_image(%s,%s) : status = %d\n", imgname, extlist[i], pp_totoz_img_status(pp,imgname));

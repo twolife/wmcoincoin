@@ -850,6 +850,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->auto_swallow = 1;
   p->draw_border = 0; /* idem */
   p->palmipede_override_redirect = 1;
+  p->palmipede_enable_scroll_wheel_for_boulets = 0;
   p->dock_xpos = p->dock_ypos = 0;
   p->start_in_boss_mode = 0;
 
@@ -857,6 +858,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->browser_cmd = NULL;
   p->browser2_cmd = NULL;
   ASSIGN_STRING_VAL(p->gogole_search_url, "http://www.google.fr/search?q=%s");
+  ASSIGN_STRING_VAL(p->wikipedia_search_url, "http://fr.wikipedia.org/wiki/Special:Search?search=%s&go=Go");
   p->enable_troll_detector = 1;
   p->board_auto_dl_pictures = 0;
   p->board_enable_hfr_pictures = 0;
@@ -1001,6 +1003,7 @@ wmcc_prefs_destroy(GeneralPrefs *p)
   }
   FREE_STRING(p->board_scrinechote);
   FREE_STRING(p->gogole_search_url);
+  FREE_STRING(p->wikipedia_search_url);
   for (i=0; i < p->nb_sites; i++) { 
     assert(p->site[i]);
     wmcc_site_prefs_destroy(p->site[i]); free(p->site[i]); p->site[i] = NULL; 
@@ -1204,6 +1207,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     case OPT_palmipede_override_wmanager: { 
       CHECK_BOOL_ARG(p->palmipede_override_redirect);
     } break;
+    case OPT_palmipede_enable_scroll_wheel_for_boulets: {
+      CHECK_BOOL_ARG(p->palmipede_enable_scroll_wheel_for_boulets);
+    } break;
     case OPT_dock_use_balloons: {
       CHECK_BOOL_ARG(p->use_balloons);
     } break; 
@@ -1311,6 +1317,9 @@ wmcc_prefs_validate_option(GeneralPrefs *p, SitePrefs *sp, SitePrefs *global_sp,
     } break; 
     case OPT_http_gogole_search_url: {
       ASSIGN_STRING_VAL(p->gogole_search_url, arg);
+    } break;
+    case OPT_http_wikipedia_search_url: {
+      ASSIGN_STRING_VAL(p->wikipedia_search_url, arg);
     } break;
     case OPT_http_timeout: {
       CHECK_INTEGER_ARG(20,600, p->http_timeout);

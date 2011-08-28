@@ -80,7 +80,7 @@ totoz_bookmark_append_file(Dock *dock, const char *fname) {
     p = strrchr(line, ']'); 
     if (p == NULL || p == line
         || strncmp(line,"[:",2) || p - line < 3) {
-      printf("wrong hfr smiley in '%s' here: '%s'\n", fname, line); continue;
+      printf("wrong totoz in '%s' here: '%s'\n", fname, line); continue;
     }
     if (p[1]) { sscanf(p+1, "%d",&pop); p[1] = 0; }
     bi = totoz_bookmark_insert(dock, line);
@@ -156,10 +156,10 @@ void totoz_bookmark_save_html(Dock *dock) {
     assert(strlen(bi->name)>3); /* ben oui, [:dkskj] */
     char *realfname = pp_totoz_realfname(bi->name,0); assert(realfname);
     char *browserfname = str_substitute(realfname, "%", "%25"); /* ah ben oui sinon le browser il interprete les % ... */
-    char *hfrfname = str_ndup(bi->name+2, strlen(bi->name)-3);
-    fprintf(f, "  <li><a href=\"http://forum.hardware.fr/images/perso/%s.gif\"><img src=\"%s.gif\" alt=\"%s\"></a>%s</li>\n", 
-            hfrfname, browserfname, bi->name, bi->name);
-    free(hfrfname); free(browserfname); free(realfname);
+    char *teufname = str_ndup(bi->name+2, strlen(bi->name)-3);
+    fprintf(f, "  <li><a href=\"http://totoz.eu/%s.gif\"><img src=\"%s.gif\" alt=\"%s\"></a>%s</li>\n", 
+            teufname, browserfname, bi->name, bi->name);
+    free(teufname); free(browserfname); free(realfname);
   }
   fprintf(f, " </ul>\n</div>\n");
   fprintf(f, "</body>\n</html>");

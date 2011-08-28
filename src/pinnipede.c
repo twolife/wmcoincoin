@@ -1,5 +1,5 @@
 /*
-  rcsid=$Id: pinnipede.c,v 1.108 2005/09/26 21:40:24 pouaite Exp $
+  rcsid=$Id: pinnipede.c,v 1.109 2011/08/28 20:13:19 enigmatriton Exp $
   ChangeLog:
     Revision 1.78  2002/09/21 11:41:25  pouaite 
     suppression du changelog
@@ -2770,6 +2770,30 @@ gogole_search(Dock *dock, int mx, int my, char *w, int quote_all, int browser_nu
   }
 }
 
+
+static void
+wikipedia_search(Dock *dock, int mx, int my, char *w, int quote_all, int browser_num)
+{
+  Pinnipede *pp = dock->pinnipede;
+
+  if (Prefs.wikipedia_search_url == NULL) return;
+  if (w) {
+    char *s, *s0;
+    char *ww, *ww0;
+    ww0 = str_preencode_for_http(w);
+    if (quote_all) {
+      ww = str_printf("%%22%s%%22",ww0); free(ww0);
+    } else ww = ww0;
+    if (strlen(ww)>512) ww[512] = 0; /* faut pas pousser grand mère */
+    s0 = str_substitute(Prefs.wikipedia_search_url, "%22%s%22", ww);
+    s = str_substitute(s0, "%s", ww);
+    free(s0);
+    open_url(s, pp->win_real_xpos + mx-5, pp->win_real_ypos+my-10, browser_num);
+    free(s); free(ww); 
+  }
+}
+
+
 static char *str_simplif(char *s)
 {
   char *p, *p2;
@@ -2800,7 +2824,7 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   enum { WORD, UA_WITH_LOGIN, UA_NO_LOGIN, LOGIN, TSTAMP, THREAD, NOTHING } what_clicked;
   int hk_what_clicked = -1, plop_lvl, emph_lvl;
   enum { PUP_PLOPIF, PUP_SUPERPLOPIF, PUP_BOITAKON, PUP_HUNGRY_BOITAKON, 
-	 PUP_FILTER, PUP_GOGOLE, PUP_COPY_URL, PUP_COPY_UA, 
+	 PUP_FILTER, PUP_GOGOLE, PUP_WIKIPEDIA, PUP_COPY_URL, PUP_COPY_UA, 
          PUP_DO_TOTOZ, PUP_DO_TOTOZ_BOOKMARK, PUP_DO_TOTOZ_UNBOOKMARK, 
 	 PUP_EMPH0, PUP_EMPH1, PUP_EMPH2, PUP_EMPH3, PUP_EMPH4, PUP_TOGGLE_MINIB, PUP_SITE_CONFIG, PUP_TOGGLE_BIGORNO1, PUP_TOGGLE_BIGORNO2, 
 	 PUP_UNEMPH=10000, PUP_UNPLOP=20000
@@ -2896,6 +2920,10 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
 
   if (what_clicked != NOTHING && strlen(txt) && Prefs.gogole_search_url) {
     plopup_pushentry(dock, _("gogole search"), PUP_GOGOLE);
+  }
+
+  if (what_clicked != NOTHING && strlen(txt) && Prefs.wikipedia_search_url) {
+    plopup_pushentry(dock, _("wikipedia search"), PUP_WIKIPEDIA);
   }
 
   if (pw && (pw->attr & PWATTR_LNK)) {
@@ -2997,6 +3025,9 @@ pp_handle_button3_press(Dock *dock, XButtonEvent *event) {
   } break;
   case PUP_GOGOLE: {
     gogole_search(dock, mx, my, txt, 1, 1);
+  } break;
+  case PUP_WIKIPEDIA: {
+    wikipedia_search(dock, mx, my, txt, 1, 1);
   } break;
   case PUP_COPY_URL: {
     assert(pw);
