@@ -15,7 +15,8 @@
 
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+
 
 
  */
@@ -755,7 +756,7 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
     http_request_close(&r);
     site->http_success_cnt++;
     site->http_recent_error_cnt = 0;
-  } else if (r.response != 302) {
+  } else if (r.response != 302 && r.response != 406) {
     char *s;
     /* si la reponse n'est pas un 302 Found */
     s = str_printf(_("[%s] Damned ! There has been an error<p>%s"), site->prefs->site_name, http_error());

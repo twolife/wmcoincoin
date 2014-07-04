@@ -1,18 +1,18 @@
 %define name wmcoincoin
-%define version 2.4.6a
+%define version 2.5f
 %define release 1
 
 Summary:	wmcoincoin is a stupid dock app for linuxfr-addicted people
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
-Source:		%{name}-%{version}.tar.bz2
+Source:		%{name}-%{version}.tar.gz
 License:	GPL
 URL:		http://hules.free.fr/wmcoincoin/wmcoincoin.html
-Group:		Toys
+Group:		Internet
 BuildRoot:	%{_tmppath}/%{name}-buildroot
 Prefix:		%{_prefix}
-BuildRequires:  gtk-devel
+BuildRequires:  gtk+-devel
 BuildRequires:  imlib2-devel
 
 %description

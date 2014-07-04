@@ -125,6 +125,6 @@ nightly: dist
 	(cd ..; ./up.sh ./wmcoincoin-cvs.tar.gz download/devel)
 
 pkgdata_DATA = options README wmcoincoin.spec xpms/bracket.xpm  xpms/logo.xpm xpms/badnews.xpm \
-	xpms/totoz.xpm pixmaps/cbronson.jpg pixmaps/logoh.png pixmaps/logo.xpm
+	xpms/totoz.xpm pixmaps/cbronson.jpg pixmaps/logoh.png pixmaps/logo.xpm xpms/icon.xpm
 
 CLEANFILES = stamp-h

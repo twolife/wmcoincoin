@@ -26,8 +26,8 @@ struct {
 void update_prefs_from_obsolete_features(SitePrefs *sp) {
   char *site_url, *path_tribune_backend, *path_tribune_add;
   site_url = ObsoleteFeatures.site_url[0] ? ObsoleteFeatures.site_url : strdup("http://linuxfr.org");
-  path_tribune_backend = ObsoleteFeatures.path_tribune_backend[0] ? ObsoleteFeatures.path_tribune_backend : "board/remote.xml";
-  path_tribune_add = ObsoleteFeatures.path_tribune_add[0] ? ObsoleteFeatures.path_tribune_add : "board/add.php3";
+  path_tribune_backend = ObsoleteFeatures.path_tribune_backend[0] ? ObsoleteFeatures.path_tribune_backend : "board/index.xml";
+  path_tribune_add = ObsoleteFeatures.path_tribune_add[0] ? ObsoleteFeatures.path_tribune_add : "board";
   while (site_url[strlen(site_url)-1] == '/') site_url[strlen(site_url)-1] = 0;
   while (path_tribune_backend[0] == '/') path_tribune_backend++;
   while (path_tribune_add[0] == '/') path_tribune_add++;
@@ -732,7 +732,7 @@ wmcc_site_prefs_set_default(SitePrefs *p, int verbatim) {
   p->proxy_name = NULL;
   p->proxy_port = 1080;/* meme valeur par defaut que curl ... */
   p->proxy_nocache = 0;
-  ASSIGN_STRING_VAL(p->backend_url, "http://linuxfr.org/board/remote.xml");
+  ASSIGN_STRING_VAL(p->backend_url, "http://linuxfr.org/board/index.xml");
   p->backend_type = BACKEND_TYPE_BOARD;
   p->backend_flavour = BACKEND_FLAVOUR_UNENCODED; /* style 'moderne' par défaut */
   ASSIGN_STRING_VAL(p->post_url, "");//board/add.php3");

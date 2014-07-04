@@ -36,9 +36,9 @@
 ### equivalent de l'option '-r' -> url de la page principale
 
 #OBSOLETE#[.]http.site_url: http://linuxfr.org
-#OBSOLETE#[.]http.path_tribune_backend: board/remote.xml
-#OBSOLETE#[.]http.path_tribune_add: board/add.php3
-#OBSOLETE#[.]http.board_post: message=%s
+#OBSOLETE#[.]http.path_tribune_backend: board/index.xml
+#OBSOLETE#[.]http.path_tribune_add: board
+#OBSOLETE#[.]http.board_post: board[message]=%s
 ### les quatre options du dessus sont remplacees par:
 
 ### pour essayer de gerer un peu mieux les variations saisonnieres de codage

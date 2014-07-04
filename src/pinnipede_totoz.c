@@ -460,7 +460,7 @@ pp_totoz_get_image(Dock *dock, unsigned char *imgname) {
   HttpRequest r;
   char *imgurl=NULL, *pathimg=NULL, *pathdesc=NULL, *cmd;
   int is_found=0, i=0, lu;
-  static char siteroot[]="http://totoz.eu";
+  static char siteroot[]="http://totoz.eu"; //modif par pierre80 suite a modif sur toz.eu
   static char *extlist[]={"gif", "png", NULL};
   static char *mimelist[]={"image/gif", "image/png", NULL};
   char buf[1500];
