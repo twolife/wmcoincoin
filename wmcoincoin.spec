@@ -1,51 +1,25 @@
 %define name wmcoincoin
-%define version 2.5f
+%define version 2.6.0
 %define release 1
-
-Summary:	wmcoincoin is a stupid dock app for linuxfr-addicted people
+Summary:	Funny dock-app for browsing and interact to XML board sites    
+Summary(fr): Client pour naviguer et interagir sur des tribunes web en XML
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
 Source:		%{name}-%{version}.tar.gz
-License:	GPL
+Source1:    http://hules.free.fr/wmcoincoin/download/wmcoincoin-2.5.1f.tar.gz 
+License:	GPLv2 
 URL:		http://hules.free.fr/wmcoincoin/wmcoincoin.html
-Group:		Internet
+Group:		Applications/Communications
 BuildRoot:	%{_tmppath}/%{name}-buildroot
 Prefix:		%{_prefix}
-BuildRequires:  gtk+-devel
-BuildRequires:  imlib2-devel
+BuildRequires:  gtk+-devel imlib2-devel
+  
 
 %description
-Funny dockapp for browsing DaCode sites news and board
-WMcoincoin allows you to browse linuxfr.org, and any other site based
-on DaCode 1.2+. It handles:
-
-* the website news scrolling, warning of new ones, and with an ability
-  to display them in a window;
-* the private messages, bringing to the appropriate webpage when you
-  receive new ones;
-* tabbed browsing of multiple DaCode or Templeet sites;
-* the board, with ability to view the contents and post messages,
-  featuring advanced functions designed to detect, enhance or kill
-  the trolls.
-
-WMcoincoin, while being full of stupid things, is a real advanced
-chatting client, working all over HTTP, with a low bandwidth
-consumption.
-
+Program designed to consult and post to XML web-chats without web browser
 %description -l fr
-La fonctionnalité centrale (le gros bouton rouge), permet de poster "coin coin!"
-sur la tribune libre. Autour de ce bouton, différentes fonctionnalités annexes gravitent:
-* Affichage de l'heure du dernier post sur la tribune
-* Affichage défilant des titres des dernières news de DaLinuxFrenchPage
-Visionnage du contenu des news (sans les commentaires)
-* Trollometre incorporé, de qualité professionnelle.
-* Un véritable Trolloscope d'un modèle proche de celui qui équipe les services secrets chinois.
-* Des ballons d'aide pour toujours plus de convivialité.
-* Des stats sur le nombre de personnes qui fréquentent la tribune.
-* Le Palmipède Editor qui permet d'éditer le messages/useragent à poster avec un confort maximal.
-* Une fonction flamophone, parce que vous le valez bien.
-* Le Pinnipède Télétype, un véritable outil de décideur.
+Programme conçu pour poster sur des chats XML sans navigateur web 
 
 %prep
 rm -rf $RPM_BUILD_ROOT
@@ -53,11 +27,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %build
 %configure
-%make
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall
+make install DESTDIR=$RPM_BUILD_ROOT
 %find_lang %{name}
 
 %clean
@@ -65,15 +39,21 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
 %defattr(-,root,root,0755)
-%data README NEWS COPYING AUTHORS 
+%doc README NEWS COPYING AUTHORS 
 %{_bindir}/*
-%dir %{_datadir}/%{name}
+%{_datadir}/%{name}
 %{_datadir}/%{name}/options
 %{_datadir}/%{name}/*.xpm
+%{_datadir}/wmcoincoin
 
 %changelog
+
+* Wed Jun 6  2012 pierre80 <pierre80@voila.fr> 2.5.1f-1
+- Version 2.5.1f-1
+- clean and update spec for compatibility with fedora packages guidlines
+
 * Tue Jul 19 2003 houpla <laurent@pschit.net> 2.4.6a-1
-- version 2.4.6a
+- version 2.4.6a-1
 - clean and update spec
 
 * Sat Jun  1 2002 pouaite <c0in@altern.org> 2.3.8a-1
@@ -98,7 +78,7 @@ rm -rf $RPM_BUILD_ROOT
 - version 2.3.2
 
 * Sun Nov 18 2001 pommier julien <c0in@altern.org> 2.2.4beta-1
-- passage en v2.2.4 suites aux modifs de dacode
+- update to v2.2.4 after  modifications of dacode
 
 * Sun Nov 18 2001 pommier julien <c0in@altern.org> 2.2.3beta-2
 - renomage de remote.php3 en remote.rdf, gestion des tags '<br />'

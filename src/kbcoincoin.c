@@ -45,13 +45,13 @@ kb_xim_lookup_key(XKeyEvent *event, unsigned idx)
     status = (rlen == 0 ? XLookupKeySym : XLookupBoth);
   } else {
     kb_state()->ksym = 0;
-    rlen = XmbLookupString(ic, event, buf, buf_len, 
+    rlen = Xutf8LookupString(ic, event, buf, buf_len, 
 			   &kb_state()->ksym, &status);    
     if ((status == XBufferOverflow)) {
       buf_len += BASE_BUFSIZE;
       buf = realloc(buf, buf_len);
       memset(buf, 0, buf_len);
-      rlen = XmbLookupString(ic, event, buf, buf_len, &kb_state()->ksym, &status);
+      rlen = Xutf8LookupString(ic, event, buf, buf_len, &kb_state()->ksym, &status);
     }
   }
   unsigned i;

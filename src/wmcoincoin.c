@@ -753,10 +753,14 @@ exec_coin_coin(Dock *dock, int sid, const char *ua, const char *msg_)
       if (s) { msgbox_show(dock, s); free(s); }
       free(reponse);
     }
+    if (!site->prefs->user_cookie && r.new_cookie) {
+        site->prefs->user_cookie = strdup(r.new_cookie);
+    }
     http_request_close(&r);
     site->http_success_cnt++;
     site->http_recent_error_cnt = 0;
-  } else if (r.response != 302 && r.response != 406) {
+    site->board->last_posted_id = r.post_id;
+ } else if (r.response != 302 && r.response != 406) {
     char *s;
     /* si la reponse n'est pas un 302 Found */
     s = str_printf(_("[%s] Damned ! There has been an error<p>%s"), site->prefs->site_name, http_error());
@@ -1632,14 +1636,14 @@ void initx(Dock *dock, int argc, char **argv) {
   }
   
   /* la magie des locales */
-  XSetLocaleModifiers("@im=none"); /* si quelqu'un sait ce que ça veut dire, je suis interessé */
+//  XSetLocaleModifiers("@im=none"); /* si quelqu'un sait ce que ça veut dire, je suis interessé */
   dock->input_method = (dock->fuck_utf8 ? NULL : XOpenIM(dock->display, NULL, NULL, NULL));
   if (!dock->input_method) {
-    printf("echec de XOpenIM() [locale=%s], ca pue ! -- switching to C locale\n",setlocale (LC_ALL, ""));
-    setlocale (LC_ALL, "C");
+ //   printf("echec de XOpenIM() [locale=%s], ca pue ! -- switching to C locale\n",setlocale (LC_ALL, ""));
+ //   setlocale (LC_ALL, "C");
     dock->input_method = XOpenIM(dock->display, NULL, NULL, NULL);
     if (!dock->input_method) {
-      printf("Erreur ! echec de XOpenIM() [locale=%s], ca pue encore plus !! -- \n",setlocale (LC_ALL, ""));
+   //   printf("Erreur ! echec de XOpenIM() [locale=%s], ca pue encore plus !! -- \n",setlocale (LC_ALL, ""));
     }
   }
   kb_build();
@@ -2052,7 +2056,7 @@ int main(int argc, char **argv)
 #ifdef __CYGWIN__
   pthread_t timer_thread;
 #endif
-  setlocale (LC_ALL, "");
+  //setlocale (LC_ALL, "");
   umask(077); /* allez hop */
   /* on peut forcer la locale sans faire d'export LC_MESSAGES=blahblah
      avec l'option -l */

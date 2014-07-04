@@ -221,6 +221,8 @@ struct Board_ {
   char *rss_title; /* nul sur les boards non rss */
 
   char *encoding; /* encoding utilisé pour les POST. Déduit de l'encoding du backend */
+
+  int last_posted_id; /* id du dernier post qu'on a posté, récupéré du header X-Post-Id */
 };
 
 typedef struct SiteNameHash_ {

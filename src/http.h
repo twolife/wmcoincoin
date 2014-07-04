@@ -123,6 +123,14 @@ typedef struct {
   /*int        tic_cnt_tstamp;*/ /* -1 si le resolv n'a pas marché, 
 				sinon contient la valeur de wmcc_tic_cnt
 				à l'instant ou le connect a été tenté */
+
+  /* SeeSchloß> comme il faut tout faire soi-même ici, voilà un truc pour
+                que ce coincoin prenne en compte le X-Post-Id que renvoie
+                ma tribune [:mareek] */
+  int        post_id;
+
+  char * new_cookie; /* la requête a renvoyé un Set-Cookie */
+
   char * post;
 } HttpRequest;
 

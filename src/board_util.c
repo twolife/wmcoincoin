@@ -746,7 +746,7 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
           int i;
           for (i=0; i < 100 && s[i]; ++i) {
             if (s[i] == ']' && i >= 2) { end = s+i+1; ok_totoz = 1; break; }
-            if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-') break;
+            if (!isalnum(s[i]) && s[i] != '_' && s[i] != ' ' && s[i] != '-' && s[i] != ':') break;
           }
         }
         if (!ok_totoz) end++; /* pour relancer la machine */
@@ -754,6 +754,9 @@ board_get_tok(const unsigned char **p, const unsigned char **np,
       if (!ok_totoz) {
         /* un mot normal */
         while (*end && *end != '\t' && *end > ' ' && (*end < '0' || *end > '9') && (!(end[0] == '[' && end[1] == ':'))) end++;
+      }
+      if (ok_totoz) {
+        char ss[512]; strncpy(ss, start, MIN(end-start, max_toklen-1));ss[MIN(end-start, max_toklen-1)] = 0;
       }
     }
   }

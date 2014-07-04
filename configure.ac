@@ -226,7 +226,7 @@ dnl   Revision 1.2  2001/12/02 18:32:05  pouaite
 dnl   update suite à la modif sur http.c et a la generation automatique de src/default*.h
 dnl
 
-AC_INIT(wmcoincoin, 2.5.1g, triton@kumal.info)
+AC_INIT(wmcoincoin, 2.6.0, triton@kumal.info)
 AC_CONFIG_SRCDIR([src/wmcoincoin.c])
 
 AC_PREREQ(2.52)
@@ -246,7 +246,7 @@ esac
 dnl internationalization macros
 ALL_LINGUAS="fr"
 AM_GNU_GETTEXT
-AM_GNU_GETTEXT_VERSION(0.11.2)
+AM_GNU_GETTEXT_VERSION([0.17])
 
 
 
@@ -308,7 +308,7 @@ dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
 dnl  $X_LIBS -lX11 -lXext)
 
 
-LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS}"
+LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext ${LIBS} ${X_EXTRA_LIBS} -lfreetype"
 CFLAGS="$CFLAGS $X_CFLAGS"
 dnl  -I/usr/include/X11/Xft -I/usr/include/freetype2"
 

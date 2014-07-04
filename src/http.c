@@ -806,6 +806,31 @@ http_skip_header(HttpRequest *r)
 	    r->content_length = atoi(buff+15);
 	    BLAHBLAH(Prefs.verbosity_http,printf("content length: %d\n", r->content_length));
 	  }
+	  if (strncmp(buff, "X-Post-Id:", 10) == 0) {
+	    r->post_id = atoi(buff+10);
+	    BLAHBLAH(Prefs.verbosity_http,printf("post id: %d\n", r->post_id));
+	  }
+	  if (strncmp(buff, "Set-Cookie:", 11) == 0) {
+	    /* Format: Set-Cookie: <name>=<value>[; <name>=<value>]...
+	                           [; expires=<date>][; domain=<domain_name>]
+	                           [; path=<some_path>][; secure][; httponly] */
+	    char *garbage;
+		if (garbage = strstr(buff+11, "expires=")) {
+			r->new_cookie = strndup(buff+11, garbage - buff - 11);
+		} else if (garbage = strstr(buff+11, "domain=")) {
+			r->new_cookie = strndup(buff+11, garbage - buff - 11);
+		} else if (garbage = strstr(buff+11, "path")) {
+			r->new_cookie = strndup(buff+11, garbage - buff - 11);
+		} else if (garbage = strstr(buff+11, "secure")) {
+			r->new_cookie = strndup(buff+11, garbage - buff - 11);
+		} else if (garbage = strstr(buff+11, "httponly")) {
+			r->new_cookie = strndup(buff+11, garbage - buff - 11);
+		} else {
+			r->new_cookie = strdup(buff+11);
+		}
+
+	    BLAHBLAH(Prefs.verbosity_http,printf("new cookie: %s\n", r->new_cookie));
+	  }
 	}
 	lnum++;
 	i=0;

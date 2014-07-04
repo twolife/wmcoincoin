@@ -209,10 +209,12 @@ rss_board_update(Board *board, char *path) {
   prelog_clear();
   clear_XMLBlock(&xmlb);
   wmcc_init_http_request(&r, board->site->prefs, path);
-  /* Triton> Tant qu'a faire de mettre un header "Accept:", autant le mettre partout
-             Hooo, c'est cool, y'en a un prevu pour les flux rss au lieu d'un bete
-             text/xml generique et banal [:freekill]*/
-  r.accept = strdup("application/rss+xml");
+  /* Triton>    Tant qu'a faire de mettre un header "Accept:", autant le mettre partout
+                Hooo, c'est cool, y'en a un prevu pour les flux rss au lieu d'un bete
+                text/xml generique et banal [:freekill]
+     SeeSchloß> ouais ouais sauf qu'il y a plein de serveurs de merde qui ne comprennent
+                pas ce type, alors non [:benou] */
+  //r.accept = strdup("application/rss+xml");
   if (board->site->prefs->use_if_modified_since) { r.p_last_modified = &board->last_modified; }
   http_request_send(&r);
   if (!http_is_ok(&r)) { http_request_close(&r);return 1; }
@@ -224,7 +226,7 @@ rss_board_update(Board *board, char *path) {
   
   if (strlen(rsstxt)==0) goto RAS;
 
-  /* tentative de conversion vers iso8859-15 */
+  /* tentative de conversion vers utf8 */
   if ((pos = get_XMLBlock(rsstxt, strlen(rsstxt), "?xml", &xmlb))>=0) {
     XMLAttr *a;
     int found = 0;
@@ -238,7 +240,7 @@ rss_board_update(Board *board, char *path) {
       }
     }
     if (!found) board->encoding = strdup("UTF-8"); /* defaut si pas d'encoding specifie */
-    convert_to_iso8859(board->encoding, &rsstxt);
+    convert_to_utf8(board->encoding, &rsstxt);
   }
 
   pos = get_XMLBlock(rsstxt, strlen(rsstxt), "title", &xmlb);

@@ -1211,6 +1211,18 @@ convert_from_iso8859(const char *dest_encoding, char **psrc) {
 }
 
 void
+convert_to_utf8(const char *src_encoding, char **psrc) {
+  char *out = wmcc_iconv(src_encoding, "UTF-8", *psrc);
+  if (out) { free(*psrc); *psrc = out; }
+}
+
+void
+convert_from_utf8(const char *dest_encoding, char **psrc) {
+  char *out = wmcc_iconv("UTF-8", dest_encoding, *psrc);
+  if (out) { free(*psrc); *psrc = out; }
+}
+
+void
 strbuf_init(strbuf *sb, const char *s) {
   sb->str = NULL;
   sb->max_sz = 0;

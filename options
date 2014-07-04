@@ -108,8 +108,8 @@
 ### par defaut le pinnipede est en helvetica, mais je trouve 'verdana' (en taille 11)
 ### bien plus jolie. l'inconvenient, c'est qu'elle est plus lente a afficher...          
 ### et qu'elle n'est pas dispo sur toutes les distribs
-#pinnipede.font_family: verdana
-#pinnipede.font_size: 11
+pinnipede.font_family: unifont
+pinnipede.font_size: 11
 #[.]pinnipede.bg_color: dae6e6
 
 

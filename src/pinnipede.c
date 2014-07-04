@@ -762,7 +762,7 @@ pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
 
   if (pp->trollscore_mode) {
     fn = pv_get_font(pp, PWATTR_BD);
-    trollscore_width = ccfont_text_width8(fn, "0", 1);
+    trollscore_width = ccfont_text_width_utf8(fn, "0", 1);
   } else {
     trollscore_width = 0;
   }
@@ -774,8 +774,8 @@ pv_justif(Pinnipede *pp, PostVisual *pv, int x0, int width) {
     fn = pv_get_font(pp, pw->attr);
     assert(pw->w); assert(strlen(pw->w));
 
-    pw->xwidth = ccfont_text_xbox(fn, pw->w, strlen(pw->w), &pw->xpos, &xoffset);
-    //pw->xwidth = ccfont_text_width8(fn, pw->w, strlen(pw->w));
+    pw->xwidth = ccfont_text_xbox_utf8(fn, pw->w, strlen(pw->w), &pw->xpos, &xoffset);
+    //pw->xwidth = ccfont_text_width_utf8(fn, pw->w, strlen(pw->w));
     
     if (pw->attr & PWATTR_TROLLSCORE) {
       pw->xwidth = MAX(pw->xwidth,trollscore_width);
@@ -1273,7 +1273,7 @@ pp_draw_line(Dock *dock, Pixmap lpix, PostWord *pw,
 
 
       //XDrawString(dock->display, lpix, dock->NormalGC, pw->xpos, y, pw->w, strlen(pw->w));
-      ccfont_draw_string8(fn, color, lpix, pw->xpos, y, pw->w, -1);
+      ccfont_draw_string_utf8(fn, color, lpix, pw->xpos, y, pw->w, -1);
 
       if (pw->attr & PWATTR_U) {
 	int x1;
@@ -1552,7 +1552,7 @@ pp_refresh(Dock *dock, Drawable d, PostWord *pw_ref)
 	XFillRectangle(dock->display, pp->lpix, dock->NormalGC, 0, 0, pp->win_width, pp->fn_h);
 	XSetBackground(dock->display, dock->NormalGC, cccolor_pixel(pp->emph_color)); //WhitePixel(dock->display, dock->screennum));
 	//XSetFont(dock->display, dock->NormalGC, pp->fn_it->fid);
-        ccfont_draw_string8(pp->fn_it, pp->timestamp_color[pp->active_tab->site->site_id], 
+        ccfont_draw_string_utf8(pp->fn_it, pp->timestamp_color[pp->active_tab->site->site_id], 
                             pp->lpix, 5, ccfont_ascent(pp->fn_it), ref_comment, strlen(ref_comment));
 	//XDrawString(dock->display, pp->lpix, dock->NormalGC, 5, pp->fn_base->ascent, ref_comment, strlen(ref_comment));
 	XCopyArea(dock->display, pp->lpix, d, dock->NormalGC, 0, 0, pp->zmsg_w, pp->fn_h, pp->zmsg_x1, y);
@@ -1862,7 +1862,7 @@ pp_load_fonts(Pinnipede *pp, char *fn_family, int fn_size)
   if (pp->fn_itbd == (CCFontId)(-1)) pp->fn_itbd = ccfont_incref(pp->fn_it);
   if (pp->fn_mono == (CCFontId)(-1)) pp->fn_mono = ccfont_incref(pp->fn_base);
 
-  pp->fn_base_space_w = ccfont_text_width8(pp->fn_base, "  ", 2);
+  pp->fn_base_space_w = ccfont_text_width_utf8(pp->fn_base, "  ", 2);
   pp->fn_h = ccfont_height(pp->fn_base)+1;
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_it));
   pp->fn_h = MAX(pp->fn_h, ccfont_height(pp->fn_bd));
@@ -2297,7 +2297,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
     cnt = 0;
     while (s[cnt] && s[cnt] != '\n') {
       cnt++;
-      if (ccfont_text_width8(fn, s, cnt) > pp->zmsg_w-16) {
+      if (ccfont_text_width_utf8(fn, s, cnt) > pp->zmsg_w-16) {
 	cnt--; break;
       }
     }
@@ -2310,7 +2310,7 @@ pp_popup_show_txt(Dock *dock, unsigned char *txt)
       XSetForeground(dock->display, dock->NormalGC, BlackPixel(dock->display, dock->screennum));
       XDrawLine(dock->display, pp->win, dock->NormalGC, pp->zmsg_x1, ry1, pp->zmsg_x1+pp->zmsg_w-1, ry1);
     }
-    ccfont_draw_string8(pp->fn_bd, pp->popup_fgcolor, pp->win, pp->zmsg_x1+8, (l+1)*fn_h,
+    ccfont_draw_string_utf8(pp->fn_bd, pp->popup_fgcolor, pp->win, pp->zmsg_x1+8, (l+1)*fn_h,
                         s, cnt);
     s += cnt;
     if (*s == '\n') s++;
@@ -3449,7 +3449,7 @@ pp_selection_find_pos(Dock *dock, PostWord *first_pw, int mouse_x, PostWord **se
       len = strlen(pw->w);
       for (i = 1; i <= len; i++) {
 	int xx;
-	xx = pw->xpos+ccfont_text_width8(fn, pw->w, i);
+	xx = pw->xpos+ccfont_text_width_utf8(fn, pw->w, i);
 	if (x < xx) {
 	  break;
 	}

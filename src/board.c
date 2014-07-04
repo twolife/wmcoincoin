@@ -1476,7 +1476,9 @@ board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_mess
   update_secondes_flag(board);
 
   /* essaye de detecter si vous êtes l'auteur du message */
-  if (board->site->prefs->user_login && board->site->prefs->user_login[0] && board->just_posted_anonymous == 0) {
+  if (id == board->last_posted_id) {
+    it->is_my_message = 1;
+  } else if (board->site->prefs->user_login && board->site->prefs->user_login[0] && board->just_posted_anonymous == 0) {
     it->is_my_message = !strcasecmp(board->site->prefs->user_login, it->login);
   } else {
     /* special pour les sites qui rajoutent des trucs à la fin,
@@ -1847,7 +1849,7 @@ http_get_line_and_convert(HttpRequest *r, char *s, size_t sz, const char *encodi
   int cnt = http_get_line_trim(r, s, sz);
   if (cnt) {
     char *w = strdup(s); assert(w);
-    convert_to_iso8859(encoding, &w);
+    convert_to_utf8(encoding, &w);
     strncpy(s,w,sz); s[sz-1] = 0;
     free(w);
   }

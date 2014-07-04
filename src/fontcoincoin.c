@@ -5,6 +5,11 @@
 #include <X11/Xft/Xft.h>
 #include "coin_util.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+FT_Library ft_library;
+
 typedef int CCFontId;
 typedef int CCColorId;
 
@@ -12,6 +17,7 @@ typedef struct CCFont {
   char *fontname;
   XftFont *xfn;
   int refcnt;
+  FT_Face face;
 } CCFont;
 
 
@@ -39,6 +45,8 @@ void ccfont_initialize(Display *display_, int screen_, Visual *visual_, Colormap
   colormap = colormap_;
   root = RootWindow(display, screen);
   xd = XftDrawCreate(display, d, visual, colormap);
+
+  FT_Init_FreeType(&ft_library);
 }
 
 void
@@ -181,6 +189,17 @@ ccfont_draw_string8(CCFontId fid, CCColorId cid, Drawable d, int x, int y, char 
   XftDrawChange(xd, root);
 }
 
+void
+ccfont_draw_string_utf8(CCFontId fid, CCColorId cid, Drawable d, int x, int y, char *str, int len) {
+  assert(str);
+  assert(ccfonts[fid] && ccfonts[fid]->xfn); 
+  assert(cccolors[cid]);
+  if (len == -1) len = strlen(str);
+  XftDrawChange(xd, d);
+  XftDrawStringUtf8(xd, &cccolors[cid]->xfc, ccfonts[fid]->xfn, x, y, str, len);
+  XftDrawChange(xd, root);
+}
+
 /* extrait de: http://www.keithp.com/~keithp/render/Xft.tutorial
 
  (..) to compute the rectangle covered by a single glyph rendered at
@@ -207,8 +226,27 @@ ccfont_text_xbox(CCFontId fid, char *str, int len, short *pxstart, short *pxoff)
   return ext.width;
 }
 
+int
+ccfont_text_xbox_utf8(CCFontId fid, char *str, int len, short *pxstart, short *pxoff) {
+  XGlyphInfo ext;
+  if (len == -1) len = strlen(str);
+  XftTextExtentsUtf8(display, ccfonts[fid]->xfn, str, len, &ext);
+  if (pxstart) *pxstart = ext.x;
+  if (pxoff) *pxoff = ext.xOff;
+  return ext.width;
+}
+
 int ccfont_text_width8(CCFontId fid, char *str, int len) {
   return ccfont_text_xbox(fid,str,len,NULL,NULL);
+}
+
+int ccfont_text_width_utf8(CCFontId fid, char *str, int len) {
+  XGlyphInfo ext;
+  if (len == -1) len = strlen(str);
+  XftTextExtents8(display, ccfonts[fid]->xfn, str, len, &ext);
+  int plop = ext.width;
+  XftTextExtentsUtf8(display, ccfonts[fid]->xfn, str, len, &ext);
+  return ext.width;
 }
 
 int ccfont_text_within_width8(CCFontId fid, char *str, int len, int width, int *final_width) {

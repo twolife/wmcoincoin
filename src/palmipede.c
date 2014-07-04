@@ -102,7 +102,7 @@
   ajout menu contextuel + fix de la coloration des boutons du wmccc
 
   Revision 1.4  2002/09/07 16:21:15  pouaite
-  ça va releaser en douce
+  ?a va releaser en douce
 
   Revision 1.3  2002/08/21 01:11:49  pouaite
   commit du soir, espoir
@@ -568,8 +568,10 @@ editw_erase(EditW *ew)
 
 /* renvoie 0 si pas de pb, longueur tronquee si tronquage */
 int
-editw_insert_string(EditW *ew, const unsigned char *s)
+editw_insert_string(EditW *ew, const unsigned char *str)
 {
+  unsigned char *s = strdup(str);
+  convert_to_iso8859("UTF-8", &s);
   int ls,lb,lrest,ldec;
   int tronq;
 
@@ -2050,7 +2052,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
   //printf("editw_handle_keypress: ksym=%04x len=%d\n", (int)kb_state()->ksym, kb_state()->klen);
 
   if (kb_state()->ksym == 0x20ac) { /* vilain hack pour reconnaite l'euro (le klen == 0 !!) */
-    editw_insert_char(ew, (unsigned char)'¤');
+    editw_insert_char(ew, (unsigned char)'?');
   } else if (event->xkey.state & Mod1Mask) {
     switch (kb_state()->ksym) {
       case 'I':
@@ -2108,7 +2110,7 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
       case '9': editw_insert_string(ew, "[:m-power-bmw]"); break;
       case '0': editw_balise(ew, _("[:"), "]"); break;
       case '@': editw_insert_string(ew, "[:c@ssius]"); break;
-      case '^': editw_insert_string(ew, "°bloub°"); break;
+      case '^': editw_insert_string(ew, "?bloub?"); break;
       /* end of motodashi */
       
       case 'F':
@@ -2271,11 +2273,11 @@ editw_handle_keypress(Dock *dock, EditW *ew, XEvent *event)
 #ifdef OLD_KBCOINCOIN
       if (kb_state()->ksym <= 0x00ff && (kb_state()->ksym & 0xff)) {
 	if (kb_state()->buff[0])
-	  editw_insert_char(ew, (unsigned char)kb_state()->buff[0]);
+	  editw_insert_string(ew, kb_state()->buff);
       }
 #else
       if (kb_state()->klen != 0)
-        editw_insert_char(ew, (unsigned char)kb_state()->buff[0]);
+        editw_insert_string(ew, kb_state()->buff);
 #endif
       break;
     }
