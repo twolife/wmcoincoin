@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: wmcoincoin 2.6.0\n"
+"Project-Id-Version: wmcoincoin 2.6.1\n"
 "Report-Msgid-Bugs-To: triton@kumal.info\n"
-"POT-Creation-Date: 2012-07-02 17:31+0200\n"
+"POT-Creation-Date: 2012-08-02 18:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -608,54 +608,54 @@ msgid ""
 "sent le BEUGGUE!\n"
 msgstr ""
 
-#: src/board_util.c:696
+#: src/board_util.c:716
 #, c-format
 msgid "get_tok not recognized: (len=%d)'"
 msgstr ""
 
-#: src/board_util.c:713
+#: src/board_util.c:733
 #, c-format
 msgid "Hmmm, looks like there's an underpants problem here: %s\n"
 msgstr ""
 
-#: src/board_util.c:892
+#: src/board_util.c:913
 #, c-format
 msgid "IPOT(tm) detected"
 msgstr ""
 
-#: src/board_util.c:894
+#: src/board_util.c:915
 #, c-format
 msgid "but where is '%s' ?"
 msgstr ""
 
-#: src/board_util.c:898
+#: src/board_util.c:919
 #, c-format
 msgid "[IPOT(tm)]"
 msgstr ""
 
-#: src/board_util.c:900
+#: src/board_util.c:921
 #, c-format
 msgid "Awww, we turn around and around and around and around..."
 msgstr ""
 
-#: src/board_util.c:908
+#: src/board_util.c:929
 #, c-format
 msgid "Hello from %.30s in the boitakon ! (because %s=%.20s)"
 msgstr ""
 
-#: src/board_util.c:912
+#: src/board_util.c:933
 #, c-format
 msgid "Hello from %.30s who was eaten by the boitakon"
 msgstr ""
 
-#: src/board_util.c:914
+#: src/board_util.c:935
 #, c-format
 msgid ""
 "Hello from %.30s in the boitakon, BUT YOU HAVE JUST FOUND A BUG IN THE "
 "BOITAKON :-("
 msgstr ""
 
-#: src/board_util.c:946
+#: src/board_util.c:967
 #, c-format
 msgid "I don't fucking know %s"
 msgstr ""
@@ -1491,129 +1491,129 @@ msgstr ""
 msgid "<b>disable</b> the secondary bigornophone"
 msgstr ""
 
-#: src/palmipede.c:343
+#: src/palmipede.c:344
 msgid ""
 "%<MAG> FUCK THAT BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,sel_anchor=%"
 "d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:560
+#: src/palmipede.c:561
 msgid ""
 "%<MAG> RAH ENCORE CE BUG! x=%d y=%d curs_x=%d curs_y=%d,y_scroll=%d,"
 "sel_anchor=%d,sel_head=%d\n"
 msgstr ""
 
-#: src/palmipede.c:661
+#: src/palmipede.c:662
 #, c-format
 msgid "wmcoincoin: Failed to set XA_PRIMARY ownership."
 msgstr ""
 
-#: src/palmipede.c:1330
+#: src/palmipede.c:1331
 msgid ""
 "looks like you fucked your options file, no board has be defined: no noard, "
 "no palmipede"
 msgstr ""
 
-#: src/palmipede.c:2064
+#: src/palmipede.c:2065
 msgid "====> <b>Moment "
 msgstr ""
 
-#: src/palmipede.c:2066
+#: src/palmipede.c:2067
 msgid "_o/* <b>BLAM</b>! "
 msgstr ""
 
-#: src/palmipede.c:2068
+#: src/palmipede.c:2069
 msgid "_o/* <b>paf</b>! "
 msgstr ""
 
-#: src/palmipede.c:2070
+#: src/palmipede.c:2071
 msgid "sale chauve "
 msgstr ""
 
-#: src/palmipede.c:2108
+#: src/palmipede.c:2109
 msgid "[:"
 msgstr ""
 
-#: src/palmipede.c:2637
+#: src/palmipede.c:2638
 #, c-format
 msgid ""
 "<p align=center><b>wmCoinCoin Agent</b></p>Hmmm, it seems that you don't "
 "know what to say, so, if you don't mind,I suggest <font color=blue>%s</font>"
 msgstr ""
 
-#: src/palmipede.c:2647
+#: src/palmipede.c:2648
 msgid "Put here the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2650
+#: src/palmipede.c:2651
 msgid "Fold back the palmipede<p>shortcut: <b>escape</b>"
 msgstr ""
 
-#: src/palmipede.c:2651
+#: src/palmipede.c:2652
 msgid "Edit the user-agent"
 msgstr ""
 
-#: src/palmipede.c:2651
+#: src/palmipede.c:2652
 msgid "Edit the message<p>shortcut: <b>Tab</b>"
 msgstr ""
 
-#: src/palmipede.c:2652
+#: src/palmipede.c:2653
 msgid "Insert italic<p>shortcut: <b>Alt-I</b>"
 msgstr ""
 
-#: src/palmipede.c:2653
+#: src/palmipede.c:2654
 msgid "Insert bold<p>shortcut: <b>Alt-B</b>"
 msgstr ""
 
-#: src/palmipede.c:2654
+#: src/palmipede.c:2655
 msgid "Insert teletype tag<p>shortcut: <b>Alt-T</b>"
 msgstr ""
 
-#: src/palmipede.c:2655
+#: src/palmipede.c:2656
 msgid "Overstrike text<p>shortcut: <b>Alt-S</b>"
 msgstr ""
 
-#: src/palmipede.c:2656
+#: src/palmipede.c:2657
 msgid "Underline text<p>shortcut: <b>Alt-U</b>"
 msgstr ""
 
-#: src/palmipede.c:2658
+#: src/palmipede.c:2659
 msgid "Undo<p>shortcut: <b>Ctrl-Z</b> or <b>Ctrl-_</b>"
 msgstr ""
 
-#: src/palmipede.c:2659
+#: src/palmipede.c:2660
 msgid "Clear"
 msgstr ""
 
-#: src/palmipede.c:2660
+#: src/palmipede.c:2661
 msgid "View the [:totoz] picture bookmark in your browser"
 msgstr ""
 
-#: src/palmipede.c:2661
+#: src/palmipede.c:2662
 msgid "Restore the default user-agent"
 msgstr ""
 
-#: src/palmipede.c:2705
+#: src/palmipede.c:2706
 #, c-format
 msgid " by %s"
 msgstr ""
 
-#: src/palmipede.c:2708
+#: src/palmipede.c:2709
 #, c-format
 msgid "at %02d:%02d:%02d%s%s"
 msgstr ""
 
-#: src/palmipede.c:2710
+#: src/palmipede.c:2711
 #, c-format
 msgid "<b>%d</b> times (first reference at %02d:%02d:%02d%s%s)"
 msgstr ""
 
-#: src/palmipede.c:2712
+#: src/palmipede.c:2713
 #, c-format
 msgid "<b>%d</b> times (the url has left the pinnipede)"
 msgstr ""
 
-#: src/palmipede.c:2714
+#: src/palmipede.c:2715
 #, c-format
 msgid ""
 "<b>°Bloub!°</b> It looks like you are living in the water. This url has "

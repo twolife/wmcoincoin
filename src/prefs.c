@@ -912,7 +912,7 @@ wmcc_prefs_set_default(GeneralPrefs *p) {
   p->pp_width = 300;
   p->pp_height = 455;
   p->pp_minibar_on = 1;
-  p->pp_show_sec_mode = 0;
+  p->pp_show_sec_mode = 1;
   p->pp_html_mode = 1;
   p->pp_nick_mode = 4;
   p->pp_trollscore_mode = 1;           

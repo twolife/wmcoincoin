@@ -1392,16 +1392,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_table_attach (GTK_TABLE (table6), combo2, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  combo2_items = g_list_append (combo2_items, (gpointer) _("galeon -n %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("konqueror %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla-firefox -remote openurl\\(%s\\,new-tab\\) || mozilla-firefox %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("mozilla -remote openurl\\(%s,new-tab\\) &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("opera %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("xterm -fn 6x10 -bg white -fg black -geometry 120x70 -e w3m %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("links -g %s &"));
-  combo2_items = g_list_append (combo2_items, (gpointer) _("dillo %s &"));
+  combo2_items = g_list_append (combo2_items, (gpointer) _("xdg-open %s &"));
   gtk_combo_set_popdown_strings (GTK_COMBO (combo2), combo2_items);
   g_list_free (combo2_items);
 
@@ -1416,16 +1407,7 @@ create_global_pinnipede_options_dialog (void)
   gtk_table_attach (GTK_TABLE (table6), combo3, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  combo3_items = g_list_append (combo3_items, (gpointer) _("galeon -n %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("konqueror %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("dcop 'DCOPRef(konqueror-'`pidof konqueror`',konqueror-mainwindow#1/action/newtab)' activate && dcop `dcop| grep konqueror` konqueror-mainwindow#1 openURL %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("netscape -remote openurl\\(%s\\) &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("mozilla %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("mozilla -remote openurl\\(%s,new-tab\\) &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("opera %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("xterm -fn 6x10 -bg white -fg black -geometry 120x70 -e w3m %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("links -g %s &"));
-  combo3_items = g_list_append (combo3_items, (gpointer) _("dillo %s &"));
+  combo3_items = g_list_append (combo3_items, (gpointer) _("xdg-open %s &"));
   gtk_combo_set_popdown_strings (GTK_COMBO (combo3), combo3_items);
   g_list_free (combo3_items);
 

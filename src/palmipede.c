@@ -187,6 +187,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <X11/Xmu/Atoms.h>
 
 #include <X11/Xmd.h>
 #include <X11/keysym.h>
@@ -663,7 +664,7 @@ editw_cb_copy(Dock *dock, Window win, const char *text, int len)
   if (XGetSelectionOwner(dock->display, XA_PRIMARY) != win) {
     fprintf(stderr, _("wmcoincoin: Failed to set XA_PRIMARY ownership."));
     XChangeProperty(dock->display, dock->rootwin, XA_CUT_BUFFER0,
-		    XA_STRING, 8, PropModeReplace, cb_buffer, l);
+		    XA_UTF8_STRING(dock->display), 8, PropModeReplace, cb_buffer, l);
   }
 }
 
@@ -691,13 +692,13 @@ editw_cb_handle_selectionrequest(Dock *dock, XSelectionRequestEvent *rq)
 
   if (rq->target == xa_targets) {
     target_list[0] = (Atom32) xa_targets;
-    target_list[1] = (Atom32) XA_STRING;
+    target_list[1] = (Atom32) XA_UTF8_STRING(dock->display);
     XChangeProperty(dock->display, rq->requestor, rq->property, rq->target,
       8*sizeof(target_list[0]), PropModeReplace,
       (unsigned char*) target_list,
       sizeof(target_list)/sizeof(target_list[0]));
     ev.xselection.property = rq->property;
-  } else if (rq->target == XA_STRING) {
+  } else if (rq->target == XA_UTF8_STRING(dock->display)) {
     XChangeProperty(dock->display, rq->requestor, rq->property, rq->target,
       8, PropModeReplace, cb_buffer, strlen((char*) cb_buffer));
       ev.xselection.property = rq->property;
@@ -750,7 +751,7 @@ editw_cb_paste(Dock *dock, EditW *ew, int external_only)
     editw_cb_paste_external(dock, ew, dock->rootwin, XA_CUT_BUFFER0, 0);
   } else {
     prop = XInternAtom(dock->display, "VT_SELECTION", 0);
-    XConvertSelection(dock->display, XA_PRIMARY, XA_STRING, prop, ew->win, CurrentTime);
+    XConvertSelection(dock->display, XA_PRIMARY, XA_UTF8_STRING(dock->display), prop, ew->win, CurrentTime);
   }
 }
 
