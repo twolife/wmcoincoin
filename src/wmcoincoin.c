@@ -494,7 +494,8 @@ open_url(const unsigned char *url, int balloon_x, int balloon_y, int browser_num
   /*
     system fait appel à /bin/sh , mais on a backslashé tous les caractères embetants
   */
-  system(s);
+  if (system(s) == -1)
+	  myfprintf(stderr, "%s failed\n", s);
 }
 
 int
