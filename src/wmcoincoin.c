@@ -2177,7 +2177,7 @@ int main(int argc, char **argv)
 
 
     if ((errmsg=dock_build_pixmap_porte(dock))) {
-      fprintf(stderr, errmsg);
+      fprintf(stderr, "%s", errmsg);
     }
 
 
