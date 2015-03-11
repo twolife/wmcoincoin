@@ -105,7 +105,7 @@ EXTRA_DIST = config.rpath  MACOSX xpms/porte.h xpms/editwin_minib.xcf xpms/editw
              xpms/clock.xpm xpms/date.xpm xpms/led.xpm xpms/clippy.xpm xpms/icon.xpm \
 	     xpms/duck.xcf xpms/duck.xpm xpms/mkduck.sh \
             xpms/badnews.xpm  xpms/bracket.xpm  xpms/logo.xpm xpms/totoz.xpm xpms/miniduck.xpm ./wmcoincoin.spec \
-             ./options ./config.rpath wmccc.glade genoptlst.sh pixmaps/cbronson.jpg pixmaps/logoh.png pixmaps/logo.xpm
+             ./options ./config.rpath wmccc.glade genoptlst.sh xpms/cbronson.jpg xpms/logoh.png
 
 rpm-dist: dist
 	cp $(PACKAGE)-$(VERSION).tar.gz $(HOME)/rpm/SOURCES
@@ -125,6 +125,6 @@ nightly: dist
 	(cd ..; ./up.sh ./wmcoincoin-cvs.tar.gz download/devel)
 
 pkgdata_DATA = options README wmcoincoin.spec xpms/bracket.xpm  xpms/logo.xpm xpms/badnews.xpm \
-	xpms/totoz.xpm pixmaps/cbronson.jpg pixmaps/logoh.png xpms/icon.xpm
+	xpms/totoz.xpm xpms/cbronson.jpg xpms/logoh.png xpms/icon.xpm
 
 CLEANFILES = stamp-h
