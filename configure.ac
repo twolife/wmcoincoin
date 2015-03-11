@@ -295,43 +295,30 @@ fi
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
 
-
-AC_PATH_X
-AC_PATH_XTRA
-echo x_cflags=$X_CFLAGS libs=$LIBS pre_lib=$X_PRE_LIBS x_libs=$X_LIBS x_extra=$X_EXTRA_LIBS
-
-if test x$no_x = xyes; then
-  echo "You need to supply the path to the X headers and libraries with --x-includes=dir and --x-libraries=dir";
-  exit 1;
-fi;
-
-dnl AC_CHECK_LIB(Xpm, XpmCreatePixmapFromData,,
-dnl  AC_MSG_ERROR(The XPM library is required but wasn't found.),
-dnl  $X_LIBS -lX11 -lXext)
-
-
-LIBS="${X_PRE_LIBS} ${X_LIBS} -lX11 -lXext -lXmu ${LIBS} ${X_EXTRA_LIBS} -lfreetype"
-CFLAGS="$CFLAGS $X_CFLAGS"
-dnl  -I/usr/include/X11/Xft -I/usr/include/freetype2"
-
 dnl le PKG_CONFIG_PATH pour cygwin qui est un peu con
 export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/X11R6/lib/pkgconfig
+PKG_CHECK_MODULES(XEXT, [xext])
+AC_SUBST(XEXT_CFLAGS)
+AC_SUBST(XEXT_LIBS)
+
 PKG_CHECK_MODULES(XFT, [xft])
 AC_SUBST(XFT_CFLAGS)
 AC_SUBST(XFT_LIBS)
 
-dnl XINERAMA support (stolen from wmaker)
-dnl ================
-xinerama=yes
-AC_ARG_ENABLE(xinerama, 
-[  --disable-xinerama	  disable XInerama extension support],
-		xinerama=$enableval, xinerama=yes)
-if test x$xinerama = xyes; then
-	AC_CHECK_LIB(Xinerama, XineramaQueryScreens, [LIBS="-lXinerama $LIBS"
-                AC_DEFINE([XINERAMA],1,[define if xinerama API is supported])], xinerama=no)
-fi
+PKG_CHECK_MODULES(XMU, [xmu])
+AC_SUBST(XMU_CFLAGS)
+AC_SUBST(XMU_LIBS)
 
-
+PKG_CHECK_MODULES(FREETYPE, [freetype2])
+AC_SUBST(FREETYPE_CFLAGS)
+AC_SUBST(FREETYPE_LIBS)
+ 
+PKG_CHECK_MODULES(XINERAMA, [xinerama], [
+  AC_DEFINE([XINERAMA],1,[define if xinerama API is supported])
+  AC_SUBST(XINERAMA_CFLAGS)
+  AC_SUBST(XINERAMA_LIBS)
+], [XINERAMA=0]
+)
 
 
 build_wmccc="yes"

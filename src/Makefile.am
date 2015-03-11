@@ -123,10 +123,10 @@ wmcoincoin_SOURCES = cc_queue.c plopup.c \
 	spell_coin.c spell_coin.h
 
 wmcoincoin_CFLAGS = \
-	@XFT_CFLAGS@
+	@FREETYPE_CFLAGS@ @XEXT_CFLAGS@ @XFT_CFLAGS@ @XINERAMA_CFLAGS@ @XMU_CFLAGS@
 
 wmcoincoin_LDADD = \
-	@XFT_LIBS@ -lm
+	@FREETYPE_LIBS@ @XEXT_LIBS@ @XFT_LIBS@ @XINERAMA_LIBS@ @XMU_LIBS@ -lm
 
 wmccc_CFLAGS = \
 	@GTK_CFLAGS@
