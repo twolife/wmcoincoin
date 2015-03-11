@@ -541,7 +541,7 @@ case "$host" in
          ;;
 esac
 
-AC_CONFIG_FILES([Makefile intl/Makefile po/Makefile.in m4/Makefile src/Makefile scripts/Makefile platypus/Makefile])
+AC_CONFIG_FILES([Makefile intl/Makefile po/Makefile.in src/Makefile scripts/Makefile platypus/Makefile])
 AC_CONFIG_COMMANDS([default],[[ echo timestamp > stamp-h ]],[[]])
 AC_OUTPUT
 
