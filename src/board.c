@@ -2029,6 +2029,10 @@ regular_board_update_tsv(Board *board, HttpRequest *r) {
       offset++;
     }
 
+    if (board_find_id(board, id)) {
+      continue;
+    }
+
     length = strcspn(s + offset, "\t");
     if (length) {
       unsigned l = MIN((sizeof stimestamp)-1, length);
@@ -2079,10 +2083,6 @@ regular_board_update_tsv(Board *board, HttpRequest *r) {
 
     if (!errmsg && strlen(stimestamp) < 14) {
       fprintf(stderr, "timestamp POURRI: '%s'\n", stimestamp);
-    }
-
-    if (board_find_id(board, id)) {
-      continue;
     }
 
     if (!errmsg) { /* encore une victoire de xmlcoincoin */
