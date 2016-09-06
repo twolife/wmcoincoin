@@ -293,8 +293,11 @@ fi
 YELLOW="\\033\\1331;33m"
 RESET="\\033\\1330m"
 
-dnl le PKG_CONFIG_PATH pour cygwin qui est un peu con
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/X11R6/lib/pkgconfig
+dnl maintenant on a besoin de curl
+PKG_CHECK_MODULES(libcurl, [libcurl])
+AC_SUBST(libcurl_CFLAGS)
+AC_SUBST(libcurl_LIBS)
+
 PKG_CHECK_MODULES(XEXT, [xext])
 AC_SUBST(XEXT_CFLAGS)
 AC_SUBST(XEXT_LIBS)
