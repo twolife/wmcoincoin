@@ -95,7 +95,6 @@ typedef struct {
   /*char *host;
     int port;*/
   char *url;
-  char *host_path;
 
   char *proxy_name;
   char *proxy_user_pass;
