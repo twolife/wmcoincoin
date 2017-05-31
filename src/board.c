@@ -376,7 +376,7 @@ void board_restore_state(FILE *f, Board *board) {
 
 
 void
-board_set_viewed(Board *board, int id) {
+board_set_viewed(Board *board, int64_t id) {
   board->last_viewed_id = MAX(id,board->last_viewed_id);
   board->nb_msg_since_last_viewed = MAX(board->last_post_id - board->last_viewed_id,0);
 }
@@ -1339,7 +1339,7 @@ assert_boards_ok(Boards *boards) {
   enregistre un nouveau message
 */
 board_msg_info *
-board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int id, 
+board_log_msg(Board *board, char *ua, char *login, char *stimestamp, char *_message, int64_t id, 
               const unsigned char *my_useragent)
 {
   board_msg_info *nit, *pit, *it;
@@ -1847,7 +1847,7 @@ regular_board_update_insert_xml_post(Board *board, XMLBlock post) {
   char ua[BOARD_UA_MAX_LEN];
   char msg[BOARD_MSG_MAX_LEN];
   char login[BOARD_LOGIN_MAX_LEN];
-  int id;
+  int64_t id;
   stimestamp[0] = ua[0] = msg[0] = login[0] = 0; id = -1;
 
   char *errmsg = NULL;
@@ -1864,9 +1864,11 @@ regular_board_update_insert_xml_post(Board *board, XMLBlock post) {
       unsigned l = MIN((sizeof stimestamp)-1,(unsigned)a->value_len);
       strncpy(stimestamp, a->value, l); stimestamp[l] = 0;
     } else if (strcasecmp(s, "id")==0) {
-      if (a->value_len == 0 || !isdigit(a->value[0]))
+      if (a->value_len == 0 || !isdigit(a->value[0])) {
         id = -1000;
-      else id = atoi(a->value);
+      } else {
+        id = strtoull(a->value, NULL, 10);
+      }
     }
     a = a->next;
     free(s);
@@ -2001,7 +2003,7 @@ regular_board_update_tsv(Board *board, HttpRequest *r) {
     char *s = remaining;
     remaining = line_end + 1;
     BLAHBLAH(3, myprintf("got new post: %s\n", s));
-    int id;
+    int64_t id;
     char stimestamp[15];
     char ua[BOARD_UA_MAX_LEN];
     char msg[BOARD_MSG_MAX_LEN];
@@ -2014,10 +2016,11 @@ regular_board_update_tsv(Board *board, HttpRequest *r) {
 
     length = strcspn(s, "\t");
     if (length) {
-      char field[15];
+      char field[64];
+
       unsigned l = MIN((sizeof field)-1, length);
       strncpy(field, s, l); field[l] = 0;
-      id = atoi(field);
+      id = strtoull(field, NULL, 10);
       offset += length + 1;
     } else {
       errmsg = "no id!";
